@@ -1,0 +1,19 @@
+(=_CODE
+
+ my $dbs = LJ::get_dbs();
+ my $dbh = $dbs->{'dbh'};
+ my $dbr = $dbs->{'reader'};
+ 
+ $sth = $dbr->prepare("SELECT userid FROM randomuserset ORDER BY RAND() LIMIT 1");
+ $sth->execute;
+ my ($userid) = $sth->fetchrow_array;
+ 
+ my $user = LJ::get_username($dbs, $userid);
+ 
+ print "Location: $LJ::SITEROOT/users/$user/\n\n";
+ 
+ return "";
+
+_CODE=)(=_INFO
+NOHEADERS=>1
+_INFO=)

@@ -1,0 +1,134 @@
+(=_INFO
+NOHEADERS=>1
+_INFO=)(=_CODE
+
+	my @errors = ();
+	my $user = LJ::canonical_username($FORM{'user'});
+	my $hpassword = $FORM{'hpassword'} || &hash_password($FORM{'password'});
+	
+	my $dbs = LJ::get_dbs();
+	my $dbh = $dbs->{'dbh'};
+	my $dbr = $dbs->{'reader'};
+
+	my $quser = $dbr->quote($user);
+	
+	my $u = LJ::load_user($dbs, $user);
+	unless ($u) { push @errors, "Invalid username"; }
+
+	my $year = $FORM{'year'}+0;
+	my $month = $FORM{'month'}+0;
+
+	if (scalar(@errors)==0 && !&valid_password($u->{'password'}, \%FORM)) { push @errors, "Incorrect password."; }
+	
+	if (@errors)
+	{
+	    print "Content-type: text/html\n\n";
+	    my $ret = "";
+	    $ret .= "(=BADCONTENT=)\n<UL>\n";		
+	    foreach (@errors)
+	    {
+		$ret .= "<LI>$_\n";
+	    }
+	    $ret .= "</UL>\n";
+	    return $ret;
+	}
+
+	##### figure out what fields we're exporting
+
+	my @fields;
+	foreach my $f (qw(itemid eventtime logtime subject event security allowmask)) {
+	    if ($FORM{"field_${f}"}) {
+		push @fields, $f;
+	    }	    
+	}
+
+	#### do file-format specific initialization
+
+	my $format = "";
+	if ($FORM{'format'} eq "csv") {
+	    $format = "csv";
+	    print "Content-type: text/plain\n\n";
+	    $| = 1;
+	    if ($FORM{'header'}) {
+		print join(",",@fields), "\n";
+	    }	    
+	}
+	if ($FORM{'format'} eq "xml") {
+	    $format = "xml";
+	    print "Content-type: text/plain\n\n";
+	    $| = 1;
+	    print "<?xml version=\"1.0\"?>\n";
+	    print "<livejournal>\n";
+	}
+
+	$sth = $dbr->prepare("SELECT itemid, eventtime, logtime, security, allowmask FROM log l WHERE ownerid=$u->{'userid'} AND year=$year AND month=$month");
+	$sth->execute;
+	if ($dbh->err) { print $dbh->errstr;  }
+	my @buffer;
+	while ($_ = $sth->fetchrow_hashref) {
+	    push @buffer, $_;
+	    if (@buffer == 20) {
+		load_and_dump_buffer(\@buffer, $format);
+		@buffer = ();
+	    }
+	    
+	}
+	load_and_dump_buffer(\@buffer, $format);
+
+	sub load_and_dump_buffer
+	{
+	    my $buf = shift;
+	    my $format = shift;
+	    my $lt = LJ::get_logtext($dbs, map {
+		$_->{'itemid'}
+	    } @{$buf});
+	    foreach my $e (@{$buf}) {
+		$e->{'subject'} = $lt->{$e->{'itemid'}}->[0];
+		$e->{'event'} = $lt->{$e->{'itemid'}}->[1];
+		dump_entry($e, $format);
+	    }
+	}
+
+	sub dump_entry
+	{
+	    my $e = shift;
+	    my $format = shift;
+	    
+    	    my @vals = ();
+	    if ($format eq "xml") {
+		print "<entry>\n";
+	    }
+
+	    foreach my $f (@fields)
+	    {
+		my $v = $e->{$f};
+		if ($format eq "csv") {
+		    if ($v =~ /[\"\n\,]/) {
+			$v =~ s/\"/\"\"/g;
+			$v = "\"$v\"";
+		    }
+		}
+		if ($format eq "xml") {
+		    $v = &exml($v);
+		}
+		push @vals, $v;
+	    }
+	    if ($format eq "csv") {
+		print join(",", @vals), "\n";
+	    }
+	    if ($format eq "xml") {
+		foreach my $f (@fields) {
+		    my $v = shift @vals;
+		    print "<$f>", $v, "</$f>\n";
+		}
+		print "</entry>\n";
+	    }
+	}
+	
+	if ($format eq "xml") {
+	    print "</livejournal>\n";
+	}
+
+	return "";
+
+_CODE=)
