@@ -1,0 +1,68 @@
+(=PAGE
+TITLE=>Submit Request
+BODY<=
+
+(=_CODE
+
+ &connect_db;
+ my @errors = ();
+
+ my $u;
+ my $user;
+ my $remote;
+
+ my %req;  # the request we're building to submit
+
+ if ($FORM{'reqtype'} eq "user") 
+ {
+     $req{'reqtype'} = "user";
+     $user = LJ::canonical_username($FORM{'user'});
+     if ($FORM{'password'} eq "_REMOTE") {
+	 $remote = LJ::get_remote($dbh);
+	 if ($remote && $remote->{'user'} eq $user) {
+	     $u = LJ::load_user($dbh, $remote->{'user'});
+	     $req{'requserid'} = $remote->{'userid'};
+	 }
+     }
+     unless ($req{'requserid'}) {
+	 $u = LJ::load_user($dbh, $user);
+	 if (LJ::valid_password($u->{'password'}, \%FORM)) {
+	     $req{'requserid'} = $u->{'userid'};
+	 }
+     }
+     $req{'reqemail'} = $u->{'email'};
+ }
+ elsif ($FORM{'reqtype'} eq "email")
+ {
+     $req{'reqtype'} = "email";
+     $req{'reqemail'} = $FORM{'email'};
+ }
+
+ $req{'reqname'} = $FORM{'reqname'};
+ $req{'body'} = $FORM{'message'};
+ $req{'subject'} = $FORM{'subject'};
+ $req{'spcatid'} = $FORM{'spcatid'};
+
+ my $spid = LJ::Support::file_request($dbh, \@errors, \%req);
+ if (@errors)
+ {
+     my $ret = "";
+     $ret .= "(=BADCONTENT=)\n<ul>\n";
+     foreach (@errors)  {
+	 $ret .= "<li>$_\n";
+     }
+     $ret .= "</ul>\n";
+     return $ret;
+ }
+ 
+ $url = "$LJ::SITEROOT/support/see_request.bml?id=$spid";
+ 
+ return "Your LiveJournal support request has been filed and will be answered as soon as possible.  Your request tracking number is <B>$spid</B>.  You can track its progress here: <UL><A HREF=\"$url\">$url</A></UL>";    
+
+_CODE=)
+
+(=HR=)
+Back to the <A HREF="./">support area</A>.
+
+<=BODY
+PAGE=)
