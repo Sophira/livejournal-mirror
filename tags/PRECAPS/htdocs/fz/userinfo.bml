@@ -1,0 +1,18 @@
+(=_INFO
+NOCACHE=>1
+_INFO=)
+(=_CODE
+
+ my $ret;
+ my $user = $FORM{'user'};
+
+ my $dbs = LJ::get_dbs();
+ my $u = LJ::load_user($dbs, $user);
+
+ $ret .= "<b>$user</b><br />$u->{'name'}";
+ $ret .= "<p><a href=\"/userinfo.bml?user=$user\">userinfo</a></p>";
+
+ return $ret;
+
+_CODE=)
+

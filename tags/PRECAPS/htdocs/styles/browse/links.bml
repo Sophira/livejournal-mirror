@@ -1,0 +1,45 @@
+<base target=_top>
+(=_CODE
+
+ my $dbs = LJ::get_dbs();
+ my $dbh = $dbs->{'dbh'};
+ my $dbr = $dbs->{'reader'};
+ 
+ my $user = $FORM{'user'};
+ unless ($user) {
+     return "Enter a username.";
+ } 
+ my $quser = $dbh->quote($user);
+
+ # Faking doesn't do any harm here.
+ my $remote = LJ::get_remote_noauth();
+
+ my $dispuser = $remote->{'user'} || $user;
+
+ my $sth = $dbr->prepare("SELECT styleid, user, styledes, type, is_embedded, is_colorfree FROM style WHERE is_public='Y' AND user=$quser ORDER BY type DESC,styledes");
+ $sth->execute;
+ unless ($sth->rows) {
+   return "(=LJUSER $user LJUSER=) has no public styles.";
+ }
+
+ my $ret = "";
+ my $last = "";
+ my (undef,undef,undef,$dday,$dmon,$dyear)=localtime(time);
+ $dyear+=1900; $dmon++;
+ my %extra=();
+ $extra{'day'} = "&month=$dmon&day=$dday&year=$dyear";
+ 
+ $ret.="Styles for (=LJUSER $user LJUSER=):<br><br>";
+
+ while ($sty = $sth->fetchrow_hashref) {
+     if ($last ne $LJ::viewinfo{$sty->{'type'}}->{'des'}) {
+	 $last = $LJ::viewinfo{$sty->{'type'}}->{'des'};
+	 $ret .= "<B>$last</B><BR>\n";
+     }
+     my $view=substr($sty->{'type'},0,1);
+     $ret .= "<nobr>&nbsp;&nbsp;<A TARGET=\"main\" HREF=\"styleinfo.bml?styleid=$sty->{'styleid'}\">-</A> <A TARGET=\"main\" HREF=\"/customview.cgi?styleid=$sty->{'styleid'}&amp;user=$dispuser&amp;nooverride=1$extra{$sty->{'type'}}\">$sty->{'styledes'}</A></nobr><BR>\n";
+ }
+
+ return $ret; 
+
+_CODE=)

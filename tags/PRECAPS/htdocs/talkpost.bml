@@ -1,0 +1,403 @@
+(=PAGE
+TITLE=>Post Comment
+BODY<=
+
+(=_CODE
+
+ return LJ::server_down_html() if ($LJ::SERVER_DOWN);
+ my $dbs = LJ::get_dbs();
+ my $dbh = $dbs->{'dbh'};
+ my $dbr = $dbs->{'reader'};
+
+ &load_subjecticon;  # TODO: blech.
+
+ my $ret = "";
+
+ my $parpost;
+ my $reply;
+ 
+ if ($FORM{'replyto'} ne "") {
+     my $qparentid = $dbh->quote($FORM{'replyto'});
+     $sth = $dbh->prepare("SELECT t.posterid, t.nodetype, t.nodeid AS 'itemid', tt.subject, tt.body FROM talk t, talktext tt WHERE t.talkid=$qparentid AND tt.talkid=t.talkid");
+     $sth->execute;
+     if ($dbh->err) { return "<B>Error:</B> " . $dbh->errstr; }
+     $parpost = $sth->fetchrow_hashref;
+
+     ### load meta-data
+     $sth = $dbr->prepare("SELECT tpl.name, tp.value FROM talkproplist tpl, talkprop tp WHERE tp.talkid=$qparentid AND tp.tpropid=tpl.tpropid");
+     $sth->execute;
+     while (my ($name, $value) = $sth->fetchrow_array) {
+	 $parpost->{$name} = $value;
+     }
+     
+     unless ($parpost->{'nodetype'} eq "L" && $parpost->{'itemid'}) {
+	 return "(=H1 Error H1=)(=P You cannot reply to a non-existent post P=)";
+     }
+     $FORM{'itemid'} = $parpost->{'itemid'};
+ }
+
+ ### load the log properties
+ my %logprops;
+ my %talkprops;
+ LJ::load_log_props($dbs, [ $FORM{'itemid'} ], \%logprops);
+ if ($FORM{'replyto'}) { 
+     LJ::load_talk_props($dbs, [ $FORM{'replyto'} ], \%talkprops); 
+ }
+ 
+ my $itemid = $FORM{'itemid'}+0;
+
+ my @dbl = ($dbh);
+ if ($dbs->{'has_slave'}) { unshift @dbl, $dbr; }
+ foreach my $db (@dbl) {
+     $sth = $db->prepare("SELECT ownerid, posterid, eventtime, security, allowmask, UNIX_TIMESTAMP()-UNIX_TIMESTAMP(logtime) AS 'secondsold' FROM log WHERE itemid=$itemid");
+     $sth->execute;
+     $item = $sth->fetchrow_hashref;
+     last if $item;
+ }
+ unless ($item) {
+     return "(=H1 Error H1=)(=P No such entry. (itemid = $itemid) P=)";
+ }
+ 
+ # load the text of the item we just loaded (didn't join above so
+ # we could use slaves (no logtext on slaves))
+ {
+     my $lt = LJ::get_logtext($dbs, $itemid);
+     my $v = $lt->{$itemid};
+     $item->{'subject'} = $v->[0];
+     $item->{'event'} = $v->[1];
+ }
+
+ unless ($parpost) { $parpost = $item; }
+
+ $sth = $dbr->prepare("SELECT * FROM user WHERE userid IN ($item->{'ownerid'}, $item->{'posterid'}, $parpost->{'posterid'})");
+ $sth->execute;
+ my ($u, $up, $ur);  # user journal, user posted, user replying to
+ while ($_ = $sth->fetchrow_hashref) {
+     if ($_->{'userid'} == $item->{'ownerid'})  { $u  = $_; }
+     if ($_->{'userid'} == $item->{'posterid'}) { $up = $_; }
+     if ($_->{'userid'} == $parpost->{'posterid'}) { $ur = $_; }
+ }
+ LJ::load_user_props($dbs, $u,  "opt_showtopicstuff", "opt_notalkicons", "opt_logcommentips");
+
+ my $remote = LJ::get_remote($dbs);
+
+ if ($remote || $ENV{'HTTP_REFERER'}) {
+     my @refs;
+     if ($remote) { push @refs, "lj://user/$remote->{'user'}"; }
+     if ($ENV{'HTTP_REFERER'} =~ m!livejournal.com/talk....\.bml\?itemid=(\d+)\b!) {
+	 push @refs, "lj://entry/$1";
+     }
+ }
+
+ ####  Check security before viewing this post
+ unless (LJ::can_view($dbs, $remote, $item)) {
+     return "(=H1 Error H1=)(=P You must be logged in to view this protected entry. P=)"
+	 unless (defined $remote);
+     return "(=H1 Error H1=)(=P You are not authorized to view this protected entry. P=)";
+ }
+
+ $event = $FORM{'replyto'} eq "" ? $item->{'event'} : $parpost->{'body'};
+ my $preformatted = $FORM{'replyto'} eq "" ? $logprops{$itemid}->{'opt_preformatted'} : $parpost->{'opt_preformatted'};
+
+ LJ::expand_embedded($dbs, $itemid, $remote, \$event);
+ $event = BML::ebml(LJ::CleanHTML::clean_event(\$event, $preformatted));
+
+ $ret .= "<P>";
+ $ret .= "<TABLE><TR VALIGN=MIDDLE>";
+ my $picid = $ur->{'defaultpicid'};
+ my $pickw = $FORM{'replyto'} ? $talkprops{$FORM{'replyto'}}->{'picture_keyword'} : $logprops{$itemid}->{'picture_keyword'};
+
+ if ($pickw) {
+     my $qkw = $dbr->quote($pickw);
+     my $sth = $dbr->prepare("SELECT m.picid FROM userpicmap m, keywords k WHERE m.userid=$ur->{'userid'} AND m.kwid=k.kwid AND k.keyword=$qkw");
+     $sth->execute;
+     ($picid) = $sth->fetchrow_array;
+ }
+ if ($picid) {
+     LJ::load_userpics($dbs, \%userpics, [ $picid ]);
+     my $alt = $ur->{'name'};
+     if ($pickw) {
+	 $alt .= ": $pickw";
+     }
+     $alt = ehtml($alt);
+     $ret .= "<TD><IMG SRC=\"/userpic/$picid\" WIDTH=$userpics{$picid}->{'width'} HEIGHT=$userpics{$picid}->{'height'} ALIGN=ABSMIDDLE HSPACE=3 title=\"$alt\" alt=\"\"></TD>";
+ }
+ my $extra = "";
+ if ($FORM{'replyto'} eq "" && $up != $u) {
+     $extra = " </B>(posting in (=LJUSER $u->{'user'} LJUSER=))<B>";
+ }
+ $ret .= "<TD>";
+ if ($ur && $ur->{'user'} ne "") {
+     $ret .= "<A HREF=\"/userinfo.bml?user=$ur->{'user'}\"><IMG BORDER=0 SRC=\"$LJ::IMGPREFIX/userinfo.gif\" WIDTH=17 HEIGHT=17 ALIGN=ABSMIDDLE></A>";
+     $ret .= "<B><A HREF=\"$LJ::SITEROOT/users/$ur->{'user'}/\">" . &ehtml($ur->{'name'}) . "</A> ";
+ } else {
+     $ret .= "<B>Someone";
+ }
+ $ret .= "$extra said...</B>";
+ if ($FORM{'replyto'} eq "") {
+     my $etime = $item->{'eventtime'};
+     $etime =~ s!(\d\d\d\d)-(\d\d)-(\d\d)!LJ::date_to_view_links($u, $&)!e;
+     $ret .= "<BR><FONT SIZE=-1>@ $etime</FONT>";
+ }
+ 
+ $ret .= "</TD></TR></TABLE>";
+ 
+ ## standout bar
+ if ($FORM{'replyto'} eq "") 
+ {
+     my @linkele;
+     
+     push @linkele, "<A HREF=\"/go.bml?itemid=$itemid&amp;dir=prev\"><IMG ALIGN=ABSMIDDLE HSPACE=2 VSPACE=2 SRC=\"$LJ::IMGPREFIX/btn_prev.gif\" WIDTH=22 HEIGHT=20 ALT=\"Previous Entry\" TITLE=\"Previous Entry\" BORDER=0></A>";	
+     
+     push @linkele, "<A HREF=\"/tools/memadd.bml?itemid=$itemid\"><IMG ALIGN=ABSMIDDLE HSPACE=2 VSPACE=2 SRC=\"$LJ::IMGPREFIX/memadd.gif\" WIDTH=22 HEIGHT=20 ALT=\"Add to memories!\" title=\"Add to memories!\" BORDER=0></A>";
+     
+     if (defined $remote && ($remote->{'user'} eq $u->{'user'} ||
+			     $remote->{'user'} eq $up->{'user'} || 
+			     LJ::check_priv($dbs, $remote, "sharedjournal", $u->{'user'})))
+     {
+	 push @linkele, "<A HREF=\"/editjournal_do.bml?itemid=$itemid\"><IMG ALIGN=ABSMIDDLE HSPACE=2 VSPACE=2 SRC=\"$LJ::IMGPREFIX/btn_edit.gif\" WIDTH=22 HEIGHT=20 ALT=\"Edit Entry\" title=\"Edit Entry\" BORDER=0></A>";	     
+     }
+     
+     if ($u->{'opt_showtopicstuff'} ne "N") {
+	 push @linkele, "<A HREF=\"/topics/additem.bml?itemid=$itemid\"><IMG ALIGN=ABSMIDDLE HSPACE=2 VSPACE=2 SRC=\"$LJ::IMGPREFIX/topic_add.gif\" WIDTH=22 HEIGHT=20 title=\"Add to Topic Directory\" ALT=\"Add to Topic Directory\" BORDER=0></A>";
+     }
+     
+     push @linkele, "<A HREF=\"/tools/tellafriend.bml?itemid=$itemid\"><IMG ALIGN=ABSMIDDLE HSPACE=2 VSPACE=2 SRC=\"$LJ::IMGPREFIX/btn_tellfriend.gif\" WIDTH=22 HEIGHT=20 ALT=\"Tell a Friend!\" title=\"Tell a Friend!\" BORDER=0></A>";
+
+     push @linkele, "<A HREF=\"/go.bml?itemid=$itemid&amp;dir=next\"><IMG ALIGN=ABSMIDDLE HSPACE=2 VSPACE=2 SRC=\"$LJ::IMGPREFIX/btn_next.gif\" WIDTH=22 HEIGHT=20 ALT=\"Next Entry\" TITLE=\"Next Entry\" BORDER=0></A>";
+     
+     if (@linkele) {
+	 $ret .= "(=STANDOUT ";
+	 $ret .= join("&nbsp;&nbsp;", @linkele);
+	 $ret .= " STANDOUT=)";
+     }
+ }
+ 
+ my %current;
+ if ($logprops{$itemid}->{'current_mood'} || $logprops{$itemid}->{'current_moodid'}) {
+     LJ::load_moods($dbs);
+     $current{'Mood'} = $logprops{$itemid}->{'current_mood'};
+     my $mid = $logprops{$itemid}->{'current_moodid'};
+     if ($mid) {
+	 my $theme = $up->{'moodthemeid'};
+	 LJ::load_mood_theme($dbs, $theme);
+	 my %pic;
+	 if (&get_mood_picture($theme, $mid, \%pic)) {
+	     $current{'Mood'} = "<IMG SRC=\"$pic{'pic'}\" ALIGN=ABSMIDDLE WIDTH=$pic{'w'} HEIGHT=$pic{'h'} VSPACE=1> $LJ::CACHE_MOODS{$mid}->{'name'}";
+	 } else {
+	     $current{'Mood'} = $LJ::CACHE_MOODS{$mid}->{'name'};
+	 }
+     }
+ }
+ if ($logprops{$itemid}->{'current_music'}) {
+     $current{'Music'} = $logprops{$itemid}->{'current_music'};
+ }
+ 
+ $ret .= "<UL>";
+ 
+ ### currents
+ if ($FORM{'replyto'} eq "" && %current) 
+ {
+     $ret .= "<table border=0>\n";
+     foreach (sort keys %current) {
+	 $ret .= "<tr><td align=right><b>Current $_:</b></td><td>$current{$_}</td></tr>\n";
+     }
+     $ret .= "</table><p>\n";
+ }
+ 
+ ###
+ if ($parpost->{'subject'}) {
+     my $cleansubject = $parpost->{'subject'};
+     LJ::CleanHTML::clean_subject(\$cleansubject);
+     $ret .= "<FONT FACE=\"Arial,Helvetica\" size=+1><I><B>$cleansubject</B></I></FONT><BR>\n";
+ }
+ 
+ $ret .= $event;
+ $ret .= "</UL>";
+ 
+ $ret .= "<BR CLEAR=ALL><HR WIDTH=100% SIZE=2 ALIGN=CENTER>";	
+ ### is this in a topic?
+ if ($FORM{'replyto'} eq "")
+ {
+     my $cache = {};
+     my $in_topic = 0;
+     
+     $sth = $dbr->prepare("SELECT tptopid, status FROM topic_map WHERE itemid=$itemid");
+     $sth->execute;
+     while (my $mape = $sth->fetchrow_hashref)
+     {
+	 next unless ($mape->{'status'} eq "on");
+	 unless ($in_topic) {
+	     $in_topic = 1;
+	     $ret .= "<B>Read similar journal entries:</B><BR>";
+	 }
+	 
+	 # TODO: ljtopic doesn't yet support $dbs/$dbarg
+	 my @hier = ljtopic::get_hierarchy($dbh, { 'topid' => $mape->{'tptopid'} });
+	 $ret .= "<B>";
+	 $ret .= join(" : ", map { "<A HREF=\"$_->{'url'}\">$_->{'name'}</A>"; } @hier);
+	 $ret .= "</B><BR>";
+	 
+     }
+     
+ }
+ ### /topic
+ 
+ $ret .= "<CENTER><B><A HREF=\"talkread.bml?itemid=$itemid\">(Read comments)</A></B></CENTER>";
+ 
+ # can a comment even be made?
+ if ($logprops{$itemid}->{'opt_nocomments'}) {
+     $ret .= "(=H1 Sorry... H1=)(=P User has disabled comments for this particular post. P=)";
+     LJ::strip_bad_code(\$ret);
+     return $ret;
+ }
+ if ($u->{'opt_showtalklinks'} eq "N") {
+     $ret .= "(=H1 Sorry... H1=)(=P User has disabled comments in their journal. P=)";
+     LJ::strip_bad_code(\$ret);
+     return $ret;
+ }
+
+ $ret .= "(=H1 Post a comment in response: H1=)";
+
+ $ret .= "<FORM METHOD=POST ACTION=talkpost_do.bml>";
+  # hidden values
+ $parent = $FORM{'replyto'} || "0";
+ my $DEBUG = $FORM{'debug'} ? 1 : 0;
+ $ret .= "<INPUT TYPE=HIDDEN NAME=\"parenttalkid\" VALUE=\"$parent\">\n";
+ $ret .= "<INPUT TYPE=HIDDEN NAME=\"itemid\" VALUE=\"$itemid\">\n";
+ $ret .= "<INPUT TYPE=HIDDEN NAME=\"debug\" VALUE=\"$DEBUG\">\n";
+
+ $ret .= "<TABLE>\n";
+        
+ # from registered user or anonymous?
+ 
+ if ($u->{'opt_whocanreply'} eq "all") {
+     $ret .= "<TR VALIGN=MIDDLE><TD ALIGN=RIGHT>From:</TD><TD ALIGN=MIDDLE><INPUT TYPE=\"radio\" NAME=\"usertype\" VALUE=\"anonymous\"></TD><TD ALIGN=LEFT><B>Anonymous</B></TD></TR>\n";
+ } elsif ($u->{'opt_whocanreply'} eq "reg") {
+     $ret .= "<TR VALIGN=MIDDLE><TD ALIGN=RIGHT>From:</TD><TD ALIGN=MIDDLE>(  )</TD><TD ALIGN=LEFT COLSPAN=3><FONT COLOR=#C0C0C0><B>Anonymous</B></FONT> - this user has disabled anonymous posting.</TD></TR>\n";
+ } else {
+     $ret .= "<TR VALIGN=MIDDLE><TD ALIGN=RIGHT>From:</TD><TD ALIGN=MIDDLE>(  )</TD><TD ALIGN=LEFT COLSPAN=3><FONT COLOR=#C0C0C0><B>Anonymous</B></FONT> - this user has disabled anonymous and non-friend posting.  You may post here if <B>$u->{'user'}</B> lists you as a friend.</TD></TR>\n";
+ }
+
+ my $checked = "CHECKED";
+ if ($remote) {
+     $ret .= "<TR VALIGN=MIDDLE><TD ALIGN=RIGHT>&nbsp;</TD><TD ALIGN=MIDDLE><INPUT TYPE=\"radio\" NAME=\"usertype\" VALUE=\"cookieuser\" $checked></TD><TD ALIGN=LEFT><B>Logged in user:</B> <I>$remote->{'user'}</I>\n";
+     $ret .= "<INPUT TYPE=HIDDEN NAME=cookieuser VALUE=\"$remote->{'user'}\">\n";
+     $ret .= "</TD></TR>\n";
+     $checked = "";
+ }
+
+ $ret .= "<TR VALIGN=MIDDLE><TD>&nbsp;</TD><TD ALIGN=MIDDLE><INPUT TYPE=\"radio\" NAME=\"usertype\" VALUE=\"user\" $checked></TD><TD  ALIGN=LEFT><B>LiveJournal user (<A HREF=\"/create.bml\">create account</A>)</B></TD></TR>\n";
+ $ret .= "<TR VALIGN=MIDDLE><TD>&nbsp;</TD><TD>&nbsp;</TD><TD> <TABLE><TR VALIGN=MIDDLE ALIGN=LEFT><TD>Username: <INPUT CLASS=textbox NAME=userpost SIZE=13 MAXLENGTH=18></TD><TD>&nbsp;Password:</TD><TD><INPUT CLASS=textbox NAME=password TYPE=password MAXLENGTH=30 SIZE=13></TD></TR></TABLE> </TD></TR>\n";
+ 
+ $basesubject = "";
+ if ($FORM{'replyto'}) {
+     $basesubject = $parpost->{'subject'};
+     $basesubject =~ s/^Re:\s*//i;
+     if ($basesubject) {
+	 $basesubject = "Re: $basesubject";
+	 # double-escape it for including in the input value below.
+	 $basesubject = &ehtml($basesubject);
+	 $basesubject = &ehtml($basesubject);
+     }
+ }
+
+ # subject
+ $ret .= "<TR VALIGN=TOP><TD ALIGN=RIGHT>Subject:</TD><TD COLSPAN=4><INPUT CLASS=textbox TYPE=TEXT SIZE=50 MAXLENGTH=100 NAME=\"subject\" VALUE=\"$basesubject\"><BR>(=DE No HTML allowed in subject DE=)</TD></TR>\n";
+
+ unless ($u->{'opt_notalkicons'})
+ {
+     # spit out a pretty table of all the possible subjecticons
+     # icons defined in &load_subjecticon sub
+     $ret .= "<TR VALIGN=MIDDLE><TD>&nbsp;</TD><TD ALIGN=LEFT COLSPAN=4>\n";
+     $ret .= "<TABLE BORDER=0 CELLSPACING=3 CELLPADDING=0>\n";
+     
+     # @subjecticon_types is defined by &load_subjecticon... using this instead
+     # of @{keys %subjecticon} to preserve ordering.
+     foreach my $type (@subjecticon_types) {
+	 my $input = "";
+	 my $img = "";
+	 
+	 # go through and make radio button/icon image rows.
+	 foreach (@{$subjecticon{$type}}) {
+	     $input .= "<TD VALIGN=MIDDLE ALIGN=MIDDLE><INPUT TYPE=RADIO NAME=subjecticon VALUE=\"$_->{'id'}\"></TD>\n";
+	     $img .= "<TD VALIGN=MIDDLE ALIGN=MIDDLE>" . &show_image($_->{'id'}) . "</TD>\n";
+	 }
+	 $ret .= "<TR>";
+	 
+	 # make an option if they don't want an image
+	 if ($type eq $subjecticon_types[0]) { $ret .= "<TD ROWSPAN=5 VALIGN=MIDDLE ALIGN=MIDDLE><INPUT TYPE=RADIO NAME=subjecticon VALUE=\"none\" CHECKED><BR><I>No Image</I></TD><TD ROWSPAN=5>&nbsp;</TD>\n"; }
+	 
+	 # then splice in the icon & radio button rows...
+	 $ret .= "$input</TR>\n";
+	 $ret .= "<TR>\n$img</TR>\n";
+	 
+	 # do a HR between different $types.
+	 unless ($type eq $subjecticon_types[$#subjecticon_types]) { $ret .= "<TR><TD COLSPAN=" . scalar(@{$subjecticon{$type}}) . " VALIGN=MIDDLE ALIGN=MIDDLE><HR SIZE=1></TD></TR>\n"; }
+     }
+     # end that table, foo!
+     $ret .= "</TABLE>\n";
+     $ret .= "</TD></TR>\n";
+ }
+ 
+ $ret .= "<TR><TD ALIGN=RIGHT>&nbsp;</TD><td colspan=4>";
+ $ret .= "Don't auto-format: <input type=checkbox value=1 name=\"prop_opt_preformatted\">";
+ $ret .= LJ::help_icon("noautoformat", " ");
+ 
+ my %res;
+ if ($remote) {
+     LJ::do_request($dbs, { "mode" => "login",
+			    "user" => $remote->{'user'},
+			    "getpickws" => 1,
+			}, \%res, { "noauth" => 1, "userid" => $remote->{'userid'} });
+ }
+ if ($res{'pickw_count'}) {
+     $ret .= " <a href=\"/allpics.bml?user=$remote->{'user'}\">Picture</a> to use: ";
+     my @pics;
+     for (my $i=1; $i<=$res{'pickw_count'}; $i++) {
+	 push @pics, $res{"pickw_$i"};
+     }
+     @pics = sort { lc($a) cmp lc($b) } @pics;
+     $ret .= LJ::html_select({'name' => 'prop_picture_keyword', 
+			   'selected' => $FORM{'prop_picture_keyword'}, },
+			  ("", "(default)", map { ($_, $_) } @pics));
+     $ret .= LJ::help_icon("userpics", " ");
+ }
+ $ret .= "</td></tr>\n";
+
+ # textarea for their message body
+ $ret .= "<TR VALIGN=TOP><TD ALIGN=RIGHT>Message:</TD><TD COLSPAN=4><TEXTAREA CLASS=textbox ROWS=10 COLS=50 WRAP=VIRTUAL NAME=\"body\"></TEXTAREA>";
+ $ret .= "<br><INPUT TYPE=SUBMIT NAME=submitpost VALUE=\"Post Comment\">\n";
+
+ ## preview stuff
+ $ret .= "<INPUT TYPE=SUBMIT NAME=submitpreview VALUE=\"Preview\">\n";
+
+ if ($u->{'opt_logcommentips'} eq "A") {
+     $ret .= "<br><B>Notice!</b> This user has turned on the option that logs your IP address when posting.";
+     $ret .= LJ::help_icon("iplogging", " ");
+ }
+ if ($u->{'opt_logcommentips'} eq "S") {
+     $ret .= "<br><B>Notice!</b> This user has turned on the option that logs IP addresses of anonymous posters.";
+     $ret .= LJ::help_icon("iplogging", " ");
+ }
+
+
+ $ret .= "<BR>(=DE Paragraphs will be automatically formatted by default.  <B>Allowed HTML</B>: ";
+ foreach (sort &LJ::CleanHTML::get_okay_comment_tags()) {
+     $ret .= "&lt;$_&gt; ";
+ }
+ $ret .= "DE=)";
+
+
+ $ret .= "</TD></TR></TABLE>\n";
+ $ret .= "</FORM>\n";
+ 
+ LJ::strip_bad_code(\$ret);
+ return $ret;
+
+_CODE=)
+
+
+
+<=BODY
+PAGE=)

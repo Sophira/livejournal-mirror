@@ -1,0 +1,63 @@
+(=PAGE
+TITLE=>FAQ
+BODY<=
+
+(=H1 Frequently Asked Questions H1=)
+(=P
+Below are some frequently asked questions, and answers, too!  Oh boy.  Try to read this before you ask a new question.  If you know something we should add to this, let us know.
+P=)
+
+(=_CODE
+
+ my $dbs = LJ::get_dbs();
+ my $dbr = $dbs->{'reader'};
+
+ my %faqcat;
+ my %faqq;
+ my $ret = "";
+ $sth = $dbr->prepare("SELECT faqcat, faqcatname, catorder FROM faqcat ".
+		      "WHERE faqcat<>'int-abuse'");
+ $sth->execute;
+ while ($_ = $sth->fetchrow_hashref) {
+     $faqcat{$_->{'faqcat'}} = $_;
+ }
+ 
+ $sth = $dbr->prepare("SELECT faqid, question, sortorder, faqcat, lastmodtime ".
+		      "FROM faq WHERE faqcat<>'int-abuse'");
+ $sth->execute;
+ while ($_ = $sth->fetchrow_hashref) {
+     $faqq{$_->{'faqid'}} = $_;
+ }
+
+ foreach my $faqcat (sort { $faqcat{$a}->{'catorder'} <=> 
+				$faqcat{$b}->{'catorder'} } keys %faqcat)
+ {
+     $ret .= "(=H2 ";
+     $ret .= BMLUtil::ehtml($faqcat{$faqcat}->{'faqcatname'});
+     $ret .= " (<a href=\"faqbrowse.bml?faqcat=$faqcat\">";
+     $ret .= "view all";
+     $ret .= "</a>) H2=)\n";
+     $ret .= "<UL>\n";
+     foreach my $faqid (sort { $faqq{$a}->{'sortorder'} <=> $faqq{$b}->{'sortorder'} } grep { $faqq{$_}->{'faqcat'} eq $faqcat } keys %faqq)
+     {
+	 next unless ($faqq{$faqid}->{'question'});
+	 &main::note_mod_time($faqq{$faqid}->{'lastmodtime'});	 
+	 my $q = LJ::ehtml($faqq{$faqid}->{'question'});
+	 $q =~ s/^\s+//; $q =~ s/\s+$//;
+	 $q =~ s/\n/<BR>/g;
+	 $ret .= "<LI><A HREF=\"faqbrowse.bml?faqid=$faqid\">$q</A>\n";
+     }
+     $ret .= "</UL>\n";
+ }
+
+return $ret;
+
+_CODE=)
+
+(=HR=)
+Back to <A HREF="./">the support area</A>.
+
+<=BODY
+PAGE=)(=_C <LJDEP>
+link: htdocs/support/faqbrowse.bml, htdocs/support/index.bml
+</LJDEP> _C=)
