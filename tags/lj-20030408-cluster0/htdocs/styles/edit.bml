@@ -1,0 +1,28 @@
+<?page
+title=>Edit Style
+
+body<=
+
+<?h1 Edit a Style h1?>
+<?p
+After you <a href="/styles/create.bml"><b>create a style</b></a>, you can edit it here.  To read more about the style system, go <a href="/developer/styles.bml">here</a>.
+p?>
+
+<form action="edit_do.bml" method="post">
+
+<?standout
+<table>
+<?_code
+ return LJ::auth_fields(\%FORM);
+ _code?>
+<tr><td></td><td align="center"><input type="submit" value="Proceed..."></td></tr>
+</table>
+standout?>
+
+</form>
+
+<=body
+page?><?_c <LJDEP>
+link: htdocs/styles/create.bml, htdocs/developer/styles.bml
+post: htdocs/styles/edit_do.bml
+</LJDEP> _c?>

@@ -1,0 +1,416 @@
+<?_code
+#BML:cache:update
+
+ my $SELF = "/update.bml";
+ 
+ if (ref $_[1]) {
+     ($title, $body, $bodyopts) = map { \$_[1]->{$_} } qw(title body bodyopts);
+ } else {
+     $r_title = "";;
+     $r_body = "";
+     $r_bodyopts = "";
+     ($title, $body, $bodyopts) = (\$r_title, \$r_body, \$r_bodyopts);
+ }
+
+ $$title = $ML{'.title'};
+
+ if ($LJ::SERVER_DOWN) {
+     $$body = LJ::server_down_html();
+     return;
+ }
+
+ unless (LJ::text_in(\%FORM)) {
+     $$body = "<?badinput?>";
+     return;
+ }
+
+ my $dbs = LJ::get_dbs();
+ my $dbh = $dbs->{'dbh'};
+ my $dbr = $dbs->{'reader'};
+ my $remote = LJ::get_remote($dbs);
+
+ my $dbcm = LJ::get_cluster_master($remote);
+
+ # portal uses this, to avoid putting username/auth in hidden fields:
+ if ($FORM{'remoteuser'} ne "" && $remote && 
+     $remote->{'user'} eq $FORM{'remoteuser'}) 
+ {
+     $FORM{'user'} = $remote->{'user'};
+     $FORM{'password'} = $remote->{'password'};
+ }
+
+ if (LJ::get_cap($remote, "readonly") ||
+     ($remote && $remote->{'clusterid'} && ! $dbcm))
+ {
+     $$title = $ML{'.title.readonly'};
+     $$body = $LJ::MSG_READONLY_USER;
+     return;
+ }
+
+if ($remote && ! LJ::get_cap($remote, "can_post")) {
+    $$title = "Can't post";
+    $$body = $LJ::MSG_NO_POST || "Sorry, you cannot post at this time.";
+    return;
+}
+
+ my $mode = $FORM{'mode'} || "";  # full will be default, once portal is in.
+
+ my $spellcheck_html;
+ if ($LJ::SPELLER && $FORM{'do_spellcheck'}) {
+     $FCGI && $FCGI->Detach();  # hack work around for perl5.6+fcgi bad interaction
+     my $s = new LJ::SpellCheck { 'spellcommand' => $LJ::SPELLER,
+                                  'color' => '<?hotcolor?>', };
+     $spellcheck_html = $s->check_html(\$FORM{'event'});
+     $FCGI && $FCGI->Attach();  # </hack>
+ }
+
+ if ($mode eq "update" && $FORM{'do_spellcheck'} && $spellcheck_html) { $mode = $FORM{'oldmode'}; }
+
+ if ($mode eq "update")
+ {
+     unless (LJ::did_post()) {
+         $$title = $ML{'Error'};
+         $$body = "<?requirepost?>";
+         return;
+     }
+     
+     my %res;
+     my $flags = {};
+
+     # first, login
+     $FORM{'mode'} = "login";
+     if ($FORM{'webversion'} eq "full") {
+         $FORM{'clientversion'} = "Web/1.1";
+     } else {
+         $FORM{'clientversion'} = "Web/1.0";
+     }
+     if ($FORM{'did_spellcheck'} || $FORM{'do_spellcheck'}) {
+         $FORM{'clientversion'} .= "s";
+     }
+     if ($LJ::UNICODE) {
+         $FORM{'ver'} = "1";
+     }
+     LJ::do_request($dbs, \%FORM, \%res, $flags);
+     
+     my $message = "";
+     if ($res{'success'} eq "OK") {
+         if ($res{'message'}) {
+             $message = LJ::eall($res{'message'});
+             $message =~ s!(&quot;|&\#39;)?(https?://\S+[a-zA-Z0-9_/&=\-])!$1 ? $& : "<a href=\"$2\">$2</a>"!eg;
+         }
+     } else {
+         $$body .= "<?h1 $ML{'.loggingin'} h1?>\n";
+         $$body .= "<?p $ML{'.error.login'} <UL><LI><B><?_eh $res{'errmsg'} _eh?></B></UL> p?>";
+         return;
+     }
+
+     ## see if an "other" mood they typed in has an equivalent moodid
+     if ($FORM{'prop_current_mood'} ne "") 
+     {
+         delete $FORM{'prop_current_moodid'};
+         my $qmood = $dbr->quote(lc($FORM{'prop_current_mood'}));
+         my $sth = $dbr->prepare("SELECT moodid FROM moods WHERE mood=$qmood");
+         $sth->execute;
+         my ($moodid) = $sth->fetchrow_array;
+         if ($moodid) {
+             delete $FORM{'prop_current_mood'};
+             $FORM{'prop_current_moodid'} = $moodid;
+         }
+     }
+
+     my $sec = "public";
+     my $amask = 0;
+     if ($FORM{'security'} eq "private") { $sec = "private"; }
+     elsif ($FORM{'security'} eq "friends") { $sec = "usemask"; $amask = 1; }
+     elsif ($FORM{'security'} eq "custom") {
+         $sec = "usemask";
+         foreach my $bit (1..30) {
+             next unless $FORM{"custom_bit_$bit"};
+             $amask |= (1 << $bit);
+         }
+     }
+     $FORM{'security'} = $sec;
+     $FORM{'allowmask'} = $amask;
+     
+     # next, postevent
+     $FORM{'mode'} = "postevent";
+     delete $FORM{'clientversion'};
+     LJ::do_request($dbs, \%FORM, \%res, $flags);
+     
+     $$body .= "<?h1 $ML{'.updating'} h1?>\n";
+     if ($res{'success'} eq "OK") {
+         my $uri = "/users/$FORM{'user'}/";
+         if ($FORM{'usejournal'}) {
+             my $quj = $dbr->quote($FORM{'usejournal'});
+             my $sth = $dbr->prepare("SELECT journaltype FROM user WHERE user=$quj");
+             $sth->execute;
+             my ($type) = $sth->fetchrow_array;
+             if ($type eq "C") {
+                 $uri = "/community/$FORM{'usejournal'}/";
+             } else {
+                 $uri = "/users/$FORM{'usejournal'}/";
+             }	 
+         }
+         $$body .= "<?p ".BML::ml(".update.success",{'uri' => $uri}) ." p?>";
+
+         if ($message) {
+             $$body .= "<?h1 $ML{'.loggingin'} h1?>\n";
+             $$body .= "<?p $ML{'.servermsg'} p?><div style='margin-left: 40px'><b>$message</b></div>";
+         }
+     } else {
+         $$body .= "<?p $ML{'.error.update'} <UL><LI><B><?_eh $res{'errmsg'} _eh?></B></UL> p?>";
+         return;
+     }
+     
+     return;     
+ }
+
+ if ($mode eq "" || $mode eq "full") 
+ {
+     $$bodyopts = "onLoad=\"pageload(1);\"";
+     
+     $$body .= "<?h1 $ML{'.update.head'} h1?><?p $ML{'.update.about'} p?><?hr?>";
+     
+     $$body .= "<form method='post' action='$SELF' name='updateForm'>";
+     $$body .= "<input type='hidden' name='mode' value='update'>";
+     if ($FORM{'do_spellcheck'}) {
+         $$body .= "<input type='hidden' name='did_spellcheck' value='1'>";
+     }
+     $$body .= "<input type='hidden' name='oldmode' value='$mode'>";
+     $$body .= "<table><tr><td><table>";
+     {
+         my $opts = {};
+         if ($remote && $FORM{'user'} && $FORM{'user'} ne $remote->{'user'}) {
+             $opts = {
+                 'user' => $FORM{'user'},
+                 'noalt' => 1,  # so they don't lose their entry clicking GET url
+             };
+         }
+         $$body .= LJ::auth_fields(\%FORM, $opts);
+     }
+     $$body .= "</table></td><td>";
+
+     $$body .= "<table cellspacing='0' cellpadding='0'>";
+  
+     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+     $year+=1900;
+     $mon=sprintf("%02d", $mon+1);
+     $mday=sprintf("%02d", $mday);
+     $min=sprintf("%02d", $min);
+
+     if ($FORM{'do_spellcheck'}) {
+         $$bodyopts = "onLoad=\"pageload(0);\"";
+         $mon = $FORM{'mon'};
+         $mday = $FORM{'day'};
+         $year = $FORM{'year'};
+         $hour = $FORM{'hour'};
+         $min = $FORM{'min'};
+     }
+
+     $$body .= "<tr valign='top'><td align='right' rowspan='2'><b>$ML{'.date'}</b>&nbsp;</td><td nowrap><input name='year' size='5' maxlength='4' value='$year'>-";
+     $$body .= "<input name='mon' size='3' maxlength='2' value='$mon'>-";
+     $$body .= "<input name='day' size='3' maxlength='2' value='$mday'></td></tr>\n";
+     $$body .= "<tr><td><i>(yyyy-mm-dd)</i></td></tr>\n";
+     
+     $$body .= "<tr valign='top'><td align='right' rowspan='2'><b>$ML{'.localtime'}</b>&nbsp;</td><td>";
+     $$body .= "<input name='hour' size='3' maxlength='2' value='$hour'>:";
+     $$body .= "<input name='min' size='3' maxlength='2' value='$min'></td></tr>\n";
+     $$body .= "<tr><td><i>($ML{'.timeformat'})</i></td></tr>\n";
+
+     $$body .= "</table></td></tr></table>\n";
+     $$body .= "<noscript><p style=\"font-size: 0.85em;\">$ML{'.note'}</p></noscript>";
+
+     $$body .= "<ul><table border='0' width='90%'><tr><td>$ML{'.subject'}<br>";
+     $$body .= "<input name='subject' size='50' maxlength='100' value='" . LJ::ehtml($FORM{'subject'}) . "'><p>";
+
+     if ($spellcheck_html) {
+         $$body .= "<b>$ML{'.spellchecked'}</b><br />";
+         $$body .= $spellcheck_html;
+         $$body .= "<p>";
+     }
+
+     $$body .= "<b>$ML{'.event'}</b><br />";
+     $$body .= "<textarea name=\"event\" cols=\"50\" rows=\"10\" wrap=\"soft\" style=\"width: 99%\">";
+     $$body .= LJ::ehtml($FORM{'event'});
+     $$body .= "</textarea>";
+     $$body .= "<br /><?de ($ML{'.htmlokay'}) de?>";
+     if ($LJ::SPELLER) {
+         $$body .= "<br /><input type='checkbox' name='do_spellcheck' value='1' id='spellcheck'> <label for='spellcheck'>$ML{'.opt.spellcheck'}</label>";
+     }
+     $$body .= "</td></tr><tr><td>";
+
+     $$body .= "<div id='simplemsg'><p align='center' style='margin-top: 2px'><input type='submit' value=\"$ML{'.btn.update'}\"></p>";
+     if ($mode ne "full") 
+     {
+         $$body .= "<p style='margin-top: 10px' id='simplepara'>" .BML::ml(".simple", {'url' => "$SELF?mode=full"}) ."</p>";
+         $$body .= "<link href=\"$SELF?mode=full\" rel=\"Alternate\" title=\"$ML{'.full'}\">\n";
+         $$body .= "</div>";
+         $$body .= "<div id='fullopts' style='display: none'>";
+     } else {
+         $$body .= "<div id='fullopts'>";
+     }
+
+     $$body .= "<table>";
+
+     my $res = {};
+     
+     if (! $FORM{'altlogin'} && $remote)
+     {
+         my $err;
+         
+         $res = LJ::Protocol::do_request($dbs, "login", {
+             "ver" => $LJ::PROTOCOL_VER,
+             "username" => $remote->{'user'},
+             "getpickws" => 1,
+         }, \$err, { 
+             "noauth" => 1, 
+             "u" => $remote,
+         });
+     }
+     
+         $$body .= "<tr><td nowrap><input type='hidden' name='webversion' value='full'><?h2 $ML{'.options'} h2?>";
+     
+     if (@{$res->{'usejournals'}}) {
+         $$body .= "<p><b>$ML{'.altpost'} </b> ";
+         $$body .= LJ::html_select({ 'name' => 'usejournal', 
+                                     'selected' => $FORM{'usejournal'}, },
+                                   "", BML::ml(".defaultjournal", {'user' => $remote->{'user'}}),
+                                   map { $_, $_ } @{$res->{'usejournals'}});
+     }
+     
+     $$body .= "<p><b>$ML{'label.security.head'}</b> ";
+     my @secs = ("public", $ML{'label.security.public'},
+                 "private", $ML{'label.security.private'},
+                 "friends", $ML{'label.security.friends'});
+     
+     my $raw;
+     if (@{$res->{'friendgroups'}}) {
+         push @secs, ("custom", $ML{'label.security.custom'});
+         $raw = "onChange=\"document.getElementById('custom_boxes').style.display = (this.selectedIndex == 3) ? 'block' : 'none';\"";
+     }
+     $$body .= LJ::html_select({ 'name' => 'security', 
+                                 'selected' => $FORM{'security'}, 
+                                 'raw' => $raw,
+                             }, @secs);
+     $$body .= LJ::help_icon("security", " ");
+     
+     my $checked;
+     
+     if (@{$res->{'friendgroups'}}) {
+         my $style = "style='display: none'";
+         if ($FORM{'security'} eq "custom") { $style = ""; }
+         $$body .= "<blockquote id='custom_boxes' $style>";
+         foreach my $fg (@{$res->{'friendgroups'}}) {
+             $checked = $FORM{"custom_bit_$fg->{'id'}"} ? "checked" : "";
+             $$body .= "<input type='checkbox' name='custom_bit_$fg->{'id'}' $checked value='1'> ";
+             $$body .= LJ::ehtml($fg->{'name'}) . "<br />";
+         }
+         $$body .= "</blockquote>"
+         }
+     
+     $checked = $FORM{'prop_opt_preformatted'} ? "checked" : "";
+     $$body .= "<p> <b>$ML{'.opt.noformat'}</b><input type='checkbox' name='prop_opt_preformatted' value='1' $checked>";
+     $$body .= LJ::help_icon("noautoformat", " ", " ");
+     $$body .= "&nbsp; ";
+     $checked = $FORM{'prop_opt_nocomments'} ? "checked" : "";
+     $$body .= "<b>$ML{'.opt.nocomments'}</b><input type='checkbox' name='prop_opt_nocomments' value='1' $checked>";
+     $checked = $FORM{'prop_opt_noemail'} ? "checked" : "";
+     $$body .= "&nbsp; <b>$ML{'.opt.noemail'}</b><input type='checkbox' name='prop_opt_noemail' value='1' $checked>";
+
+     $checked = $FORM{'prop_opt_backdated'} ? "checked" : "";
+     $$body .= "<p><b>$ML{'.opt.backdate'}</b><input type='checkbox' name='prop_opt_backdated' value='1' $checked> ($ML{'.opt.backdate.about'})";
+     
+     if (@{$res->{'pickws'}}) {
+         my @sortedpics = sort { lc($a) cmp lc($b) } @{$res->{'pickws'}};
+         $$body .= "<p><b>".BML::ml(".picture", {'url' => "$LJ::SITEROOT/allpics.bml?user=$remote->{'user'}"})."</b> ";
+         $$body .= LJ::html_select({'name' => 'prop_picture_keyword', 
+                                    'selected' => $FORM{'prop_picture_keyword'}, },
+                                   ("", $ML{'.opt.defpic'}, map { ($_, $_) } @sortedpics));
+         $$body .= LJ::help_icon("userpics", " ");
+     }
+
+     $$body .= "<p><b>$ML{'.currmood'}</b>";
+
+     LJ::load_moods($dbs);
+     my @sel;
+     foreach my $moodid (sort { $LJ::CACHE_MOODS{$a}->{'name'} cmp 
+                                    $LJ::CACHE_MOODS{$b}->{'name'} } keys %LJ::CACHE_MOODS)
+     {
+         push @sel, $moodid, $LJ::CACHE_MOODS{$moodid}->{'name'};
+     }
+
+     $$body .= LJ::html_select({'name' => 'prop_current_moodid',
+                                'selected' => $FORM{'prop_current_moodid'}, },
+                               ("", $ML{'.noneother'}, @sel));
+
+     $$body .= " $ML{'.other'} <input name='prop_current_mood' size='15' maxlength='30' value='" . LJ::ehtml($FORM{'prop_current_mood'}) . "'>";
+     $$body .= "<p><b>$ML{'.currmusic'}</b> <input name='prop_current_music' size='40' maxlength='60' value='" . LJ::ehtml($FORM{'prop_current_music'}) . "'>";
+     $$body  .= "</td></tr><tr><td align='center'><input type='submit' value='$ML{'.btn.update'}'>";
+
+     $$body .= "</table>";
+
+     $$body .= "</div>";
+     $$body .= "</td></tr>\n";
+     $$body .= "</td></tr></table></ul></form>";
+
+ unless ($remote) {
+     $$body .= "<?h1 $ML{'lostinfo.head'} h1?><?p $ML{'lostinfo.text'} p?>";
+ }
+ return;
+}
+
+_code?><?page
+title=><?_code return $_[1] ? $_[1]->{'title'} : $r_title; _code?>
+body=><?_code return $_[1] ? $_[1]->{'body'} : $r_body; _code?>
+bodyopts=><?_code return $_[1] ? $_[1]->{'bodyopts'} : $r_bodyopts; _code?>
+head<=
+<script language="JavaScript"><!--
+
+  function settime() {
+     function twodigit (n) {
+        if (n < 10) { return "0" + n; }
+        else { return n; }
+    }
+
+        now = new Date();
+        f = document.updateForm;
+        // javascripts getYear method is brain-dead:
+        f.year.value = now.getYear() < 1900 ? now.getYear() + 1900 : now.getYear();
+        f.mon.value = twodigit(now.getMonth()+1);
+        f.day.value = twodigit(now.getDate());
+        f.hour.value = twodigit(now.getHours());
+        f.min.value = twodigit(now.getMinutes());
+ }
+
+function showfull (e) {
+    if (! e) var e = window.event;
+    if (!document.getElementById) return false;
+    var fullopts = document.getElementById('fullopts');
+    fullopts.style.display = 'block';
+    var simplemsg = document.getElementById('simplemsg');
+    simplemsg.style.display = 'none';
+
+     e.cancelBubble = true;
+     if (e.stopPropagation) e.stopPropagation();
+     return false;
+}
+
+     function pageload (dotime) {
+         if (dotime) settime();
+         if (!document.getElementById) return false;
+         var spara = document.getElementById('simplepara');
+         if (! spara) return false;
+         spara.onclick = showfull;
+     }
+
+// -->
+</script>
+
+<=head
+page?><?_c <LJDEP>
+lib: LJ::SpellCheck
+link: htdocs/users, htdocs/download/index.bml, htdocs/moodlist.bml
+link: htdocs/update.bml, htdocs/lostinfo.bml, htdocs/support/faqbrowse.bml
+link: htdocs/allpics.bml
+post: htdocs/update.bml
+</LJDEP> _c?>

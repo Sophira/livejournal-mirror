@@ -1,0 +1,64 @@
+<?_code
+
+ $title = $ML{'.title'};
+ $body = "";
+
+ my $dbs = LJ::get_dbs();
+ my $dbh = $dbs->{'dbh'};
+ my $sth;
+
+ ### is there a user out there?
+ ###
+ my $remote = LJ::get_remote($dbh);
+ unless ($remote) {
+     $body = "<?h1 $ML{'Sorry'}.. h1?><?p $ML{'.label.logoutfirst'} p?>";
+     return;
+ }
+
+ ### get info about the community
+ ###
+ my $cuserid = $FORM{'cuserid'}+0;
+ my $qcomm = $dbh->quote($FORM{'comm'});
+ my $extrawhere = $FORM{'comm'} ? "AND u.user=$qcomm" : "AND c.userid=$cuserid";
+ $sth = $dbh->prepare("SELECT u.user, u.userid, u.name, c.membership, c.postlevel FROM user u, community c WHERE u.userid=c.userid $extrawhere");
+ $sth->execute;
+ my $ci = $sth->fetchrow_hashref();
+
+ ### does this community even exit?
+ ###
+ unless ($ci) {
+     $body .= "<?h1 $ML{'Error'} h1?><?p $ML{'.label.infoerror'} p?>";
+     return;
+ }
+ 
+ if ($FORM{'confirm'}) 
+ {
+     ### remove user from community's friends list
+     ###
+     $dbh->do("DELETE FROM friends WHERE userid=$ci->{'userid'} AND friendid=$remote->{'userid'}");
+     
+     $body .= "<?h1 $ML{'.success'} h1?><?p ".BML::ml('.label.removed',{'commuser'=>$ci->{'user'},'commname'=>$ci->{'name'}})." p?>";
+
+     LJ::clear_rel($dbs, $ci, $remote, 'P');
+     
+ }   
+ else 
+ {
+     $body .= "<?h1 $ML{'.sure'} h1?><?p ".BML::ml('.label.buttontoleave',{'commname'=>$ci->{'name'}});
+     $body .= '<form method="post" action="leave.bml">';
+     $body .= "<input type=\"hidden\" name=\"cuserid\" value=\"$ci->{'userid'}\" />";
+     $body .= '<input type="hidden" name="confirm" value="1" /><center>';
+     $body .= '<input type="submit" value="'.$ML{'.button.leave'}.'" /></center></form> p?>';
+     return;
+ }
+
+ return;
+
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+page?><?_c <LJDEP>
+link: htdocs/login.bml, htdocs/userinfo.bml
+post: htdocs/community/leave.bml
+</LJDEP> _c?>
+

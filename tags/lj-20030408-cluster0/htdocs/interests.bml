@@ -1,0 +1,283 @@
+<?page
+title=><?_ml .title _ml?>
+body<=
+
+<?_code
+#line 6
+ return "<?badinput?>" unless LJ::text_in(\%FORM);
+
+ my $dbs = LJ::get_dbs();
+ my $dbh = $dbs->{'dbh'};
+ my $dbr = $dbs->{'reader'};
+
+ my $sth;
+ my $qintid = $FORM{'intid'}+0;
+ my $qinterest = $dbr->quote($FORM{'int'});
+ my $interest;
+
+ if ($FORM{'view'} eq "popular") 
+ {
+     my $ret = "";
+     $ret .= "<?h1 $ML{'.popular.head'} h1?><?p $ML{'.popular.text'} p?>";
+ 
+     $sth = $dbr->prepare("SELECT statkey, statval FROM stats WHERE ".
+                          "statcat='pop_interests' ORDER BY statval DESC, statkey ASC");
+     $sth->execute;
+     
+     $ret .= "<P><TABLE><TR><TD><B>$ML{'.interest'}</B></TD><TD><B>$ML{'.count'}</B></TD></TR>\n";
+     while (my ($int, $count) = $sth->fetchrow_array)
+     {
+         next if ($count == 1);
+         LJ::text_out(\$int);
+         my $eint = LJ::eurl($int);
+         $ret .= "<TR><TD><A HREF=\"/interests.bml?int=$eint\">$int</A></TD><TD>$count</TD></TR>\n";
+     }
+     $ret .= "</TABLE>\n";
+     return $ret;
+ }
+
+ if ($FORM{'mode'} eq "add") 
+ {
+     my $remote = LJ::get_remote($dbs);
+     my $ret;
+     unless ($remote) {
+         $ret .= "<?h1 $ML{'Error'} h1?><?p $ML{'.error.add.mustlogin'} p?>";
+         return $ret;
+     }
+     my $qintid = $FORM{'intid'}+0;
+
+     # force them to either come from the interest.bml page, or have posted the request.
+     # if both fail, ask them to confirm with a post form.
+     
+     unless (BML::get_client_header('Referer') =~ /^\Q$LJ::SITEROOT\E\/interests\.bml\?/ || LJ::did_post())
+     {
+         $sth = $dbh->prepare("SELECT interest FROM interests WHERE intid=$qintid");
+         $sth->execute;
+         my ($int) = $sth->fetchrow_array;
+         LJ::text_out(\$int);
+
+         $ret .= "<?h1 $ML{'.add.confirm.head'} h1?>";
+         $ret .= "<?p " .BML::ml(".add.confirm.text", {'interest' => $int});
+         $ret .= "<form method=post action=\"/interests.bml\">";
+         $ret .= "<input type=hidden name=mode value=add>";
+         $ret .= "<input type=hidden name=intid value=$qintid>";
+         $ret .= "<center><input type=submit value=\"" .BML::ml(".add.btn.text", {'interest' => $int}) ."\"></center>";
+         $ret .= "</form> p?>";
+         return $ret;	 
+     }
+
+     $sth = $dbr->prepare("SELECT COUNT(*) FROM userinterests WHERE userid=$remote->{'userid'}");
+     $sth->execute;
+     my ($count) = $sth->fetchrow_array;
+
+     if ($count >= 150) {
+         $ret .= "<?h1 $ML{'.add.toomany.head'} h1?><?p " .BML::ml(".add.toomany.text", {'maxinterests' => "150"}) ." p?>";
+         return $ret;
+     }
+   
+     $dbh->do("INSERT INTO userinterests (userid, intid) VALUES ($remote->{'userid'}, $qintid)");
+     unless ($dbh->err) {
+         $dbh->do("UPDATE interests SET intcount=intcount+1 WHERE intid=$qintid");
+     }
+     
+     $ret .= "<?h1 $ML{'.add.added.head'} h1?><?p $ML{'.add.added.text'} p?>";
+     return $ret;
+ }
+
+ if ($FORM{'mode'} eq "findsim") 
+ {
+     if ($LJ::DISABLED{'interests-findsim'}) {
+         return $ML{'error.tempdisabled'};
+     }
+
+     my $ret = "";
+     $ret .= "<?h1 $ML{'.findsim.head'} h1?><?p $ML{'.findsim.text'} p?>";
+     
+     my $remote = LJ::get_remote($dbs);
+     if (LJ::get_cap($remote, "findsim")) {
+         $ret .= "<center><form method='get'><input type='hidden' name='mode' value='findsim_do' />";
+         $ret .= "$ML{'.findsim.simtouser'} <input name='user' value='$remote->{'user'}' /> <input type='submit' value=\"$ML{'.findsim.btn.find'}\" /></form>$ML{'.findsim.searchwait'}</center>";
+     } else {
+         $ret .= "<?p $ML{'.findsim.account.notallowed'} p?>";
+         unless ($remote) {
+             $ret .= "<?p $ML{'.findsim.account.notloggedin'} p?>";
+         }
+     }
+     return $ret;
+ }
+
+ if ($FORM{'mode'} eq "findsim_do")
+ {
+     if ($LJ::DISABLED{'interests-findsim'}) {
+         return $ML{'error.tempdisabled'};
+     }
+
+     my $remote = LJ::get_remote($dbs);
+     unless (LJ::get_cap($remote, "findsim")) {
+         return $ML{'.findsim_do.account.notallowed'};
+     }
+
+     my $ret = "";
+     my $u = LJ::load_user($dbs, $FORM{'user'});
+     return "<?h1 $ML{'Error'} h1?><?p $ML{'error.username_notfound'} p?>" unless $u;
+
+     my @ints;
+     my %intcount;
+     my $sth = $dbr->prepare("SELECT i.intid, i.intcount FROM userinterests ui, interests i ".
+                             "WHERE ui.userid=$u->{'userid'} AND ui.intid=i.intid");
+     $sth->execute;
+     while (my ($intid, $count) = $sth->fetchrow_array) {
+         push @ints, $intid;
+         $intcount{$intid} = $count || 1;
+     }
+     return "<?h1 $ML{'Error'} h1?><?p " .BML::ml(".findsim_do.notdefined", {'user' => "<?ljuser $u->{'user'} ljuser?>"}) ." p?>" 
+         unless @ints;
+
+     my %pt_count;
+     my %pt_weight;
+     foreach my $int (@ints) {
+         # the magic's in this limit clause.  that's what makes this work.  perfect 
+         # results?  no.  but who cares if somebody that lists "music" or "women"
+         # doesn't get an extra point towards matching you.  we care about more unique interests.
+         my $sth = $dbr->prepare("SELECT userid FROM userinterests WHERE intid=$int LIMIT 500");
+         $sth->execute;
+         while (my $uid = $sth->fetchrow_array) {
+             next if $uid == $u->{'userid'};
+             $pt_weight{$uid} += (1 / log($intcount{$int}+1));
+             $pt_count{$uid}++;
+         }
+     }
+
+     my %magic;  # balanced points
+     foreach (keys %pt_count) {
+         $magic{$_} = $pt_weight{$_}*10 + $pt_count{$_};
+     }
+     
+     my @matches = sort { $magic{$b} <=> $magic{$a} } keys %magic;
+     if (@matches > 150) { @matches = @matches[0..149]; }
+     my $sth = $dbr->prepare("SELECT userid, user FROM useridmap WHERE userid IN (" . join(",",@matches) . ")");
+     $sth->execute;
+     my %username;
+     while (my ($id, $name) = $sth->fetchrow_array) {
+         $username{$id} = $name;
+     }
+
+     unless (@matches) {
+         return "<?h1 $ML{'.findsim_do.nomatch.head'} h1?><?p " .BML::ml(".findsim_do.nomatch.text", {'user' => "<?ljuser $u->{'user'} ljuser?>"}) .". p?>";
+     }
+
+     $ret .= "<?h1 $ML{'.findsim_do.similar.head'} h1?><?p " .BML::ml(".findsim_do.similar.text", {'user' => "<?ljuser $u->{'user'} ljuser?>"}) .". p?>";
+
+     $ret .= "<p><table cellpadding='3'><tr valign='bottom'><td><b>#</b></td><td width='250'><b>$ML{'User'}</b></td><td><b>$ML{'.findsim_do.magic'}</b></td></tr>\n";
+     my $count;
+     foreach my $uid (@matches) 
+     {
+         $count++;
+         $ret .= "<tr>";
+         $ret .= "<td>$count</td>";
+         $ret .= "<td><?ljuser $username{$uid} ljuser?></td>";
+         $ret .= sprintf("<td>%.3f</td>", $magic{$uid});
+         $ret .= "</tr>\n";
+     }
+     $ret .= "</table></p>\n";
+
+     $ret .= "<?h1 $ML{'.findsim_do.magic.head'} h1?><?p $ML{'.findsim_do.magic.text'} p?>";
+     return $ret;
+ }
+
+ if ($FORM{'intid'} || $FORM{'int'}) 
+ {
+     my $intcount;
+     my $where = $FORM{'intid'} ? "intid=$qintid" : "interest=$qinterest";
+     $sth = $dbr->prepare("SELECT interest, intid, intcount FROM interests WHERE $where");
+     $sth->execute;
+     ($interest, $intid, $intcount) = $sth->fetchrow_array;
+     unless ($interest) { return "<?h1 $ML{'Error'} h1?><?p $ML{'.error.findsim_do.intnotfound'} p?>"; }
+     $qintid = $intid+0;
+
+     if ($intcount > 2000) {
+         my $eint = LJ::eurl($interest);
+         return BML::redirect("$LJ::SITEROOT/directory.bml?int_like=$eint&opt_format=simple");
+     }
+     
+     my $ret = "";
+     my $remote = LJ::get_remote_noauth();
+
+     ### communities
+
+     my $list;
+     my $count = 0;
+     $sth = $dbr->prepare("SELECT u.user, u.name FROM user u, userinterests ui WHERE u.userid=ui.userid AND ui.intid=$qintid AND u.journaltype='C' AND u.statusvis='V' ORDER BY u.user LIMIT 1000");
+     $sth->execute;
+     while ($_ = $sth->fetchrow_hashref) {
+         $count++;
+         LJ::text_out(\$_->{'name'});
+         my $name = LJ::ehtml($_->{'name'});
+         $list .= "<li><?ljcomm $_->{'user'} ljcomm?> - $name\n";
+     }
+
+     my $matchcount;
+     if ($count) {
+         $matchcount = BML::ml($count == 1 ? ".match" : ".matches", {'count' => $count });
+         $ret .= "<?h1 $ML{'.communities.head'} h1?><?p " .BML::ml(".communities.text", {'interest' => $interest}) ." p?>";
+         $ret .= "<p><b>$matchcount</b><ul>";
+         $ret .= $list;
+         $ret .= "</ul></p>";
+     }
+
+     ### hook
+     LJ::run_hooks("interests_bml", {
+         'intid' => $qintid,
+         'int' => $interest,
+         'ret' => \$ret,
+     });
+
+     ##### users
+
+     $ret .= "<?h1 $ML{'.users.head'} h1?><?p " .BML::ml(".users.text", {'interest' => $interest}) ."  ";
+     if ($remote) {
+         $ret .= BML::ml(".addint", {'qintid' => $qintid}) ."  ";
+     }
+     $ret .= "$ML{'.morestuff'} p?>";
+
+     my $list;
+     my $count = 0;
+     $list .= "<UL>\n";
+     # FIXME: LIMIT 1000 is a temporary hack.  better solution:  redirect to directory; allow for free users.
+     $sth = $dbr->prepare("SELECT u.user, u.name FROM user u, userinterests ui WHERE u.userid=ui.userid AND ui.intid=$qintid AND u.journaltype='P' AND u.statusvis='V' ORDER BY u.user LIMIT 1000");
+     $sth->execute;
+     while (my ($iuser, $iname) = $sth->fetchrow_array) {
+         $count++;
+         LJ::text_out(\$iname);
+         my $name = LJ::ehtml($iname);
+         $list .= "<li><?ljuser $iuser ljuser?> - $name\n";
+     }
+     $list .= "</ul>\n";
+
+     $matchcount = BML::ml($count == 1 ? ".match" : ".matches", {'count' => $count });
+     $ret .= "<p><b>$matchcount</b>";
+     $ret .= $list;
+
+     ## end
+     return $ret;
+ }
+
+ my $ret = "";
+ $ret .= "<?h1 $ML{'.interests.head'} h1?><?p $ML{'.interests.text'} p?>";
+ $ret .= "<FORM METHOD=GET><UL>";
+ $ret .= "<LI><A HREF=\"/interests.bml?view=popular\">$ML{'.interests.viewpop'}</A>\n";
+ $ret .= "<LI><A HREF=\"/interests.bml?mode=findsim\">$ML{'.interests.findsim1'}</A> -- $ML{'.interests.findsim2'}\n" unless ($LJ::DISABLED{'interests-findsim'});
+ $ret .= "<LI>$ML{'.interested.in'} <INPUT NAME=int SIZE=20><INPUT TYPE=SUBMIT VALUE=\"$ML{'.interested.btn.find'}\">\n";
+ $ret .= "</UL></FORM>\n";
+ $ret .= $ML{'.nointerests.text'};
+ 
+ return $ret;
+
+_code?>
+
+<=body
+page?><?_c <LJDEP>
+link: htdocs/interests.bml, htdocs/editinfo.bml
+post: htdocs/interests.bml
+form: htdocs/interests.bml
+</LJDEP> _c?>

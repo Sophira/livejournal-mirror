@@ -1,0 +1,286 @@
+<?_code
+
+ use strict;
+ use vars qw(%FORM $title $body);
+
+ my $dbs = LJ::get_dbs();
+ my $dbh = $dbs->{'dbh'};
+ my $dbr = $dbs->{'reader'};
+
+ my $remote = LJ::get_remote($dbs);
+
+ $title = $ML{'title'};
+ $body = "";
+
+ unless (defined $remote) {
+     $body = $ML{'.error.login'};
+     return;
+ }
+
+
+ $FORM{'oldkeywords'} = [ split('\0', $FORM{'oldkeywords'}) ];
+
+ unless (LJ::text_in(\%FORM)) {
+     $body = "<?badinput?>";
+     return;
+ }
+
+ my %secopts = ( 'public' => $ML{'label.security.public'},
+                 'friends' => $ML{'label.security.friends'},
+                 'private' => $ML{'label.security.private'}, );
+
+ my $sth;
+ my $journal = $FORM{'journal'};
+ my $itemid = $FORM{'itemid'}+0;
+ my $ditemid = $itemid;
+ my $ju;
+ my $dbcr;
+ my $jid = 0;  # journal id
+ my $anum;
+
+ if ($journal) {
+     $ju = LJ::load_user($dbs, $journal);
+     unless ($ju) {
+         $title = $ML{'Error'};
+         $body = $ML{'error.nojournal'};
+         return;
+     }
+     $anum = $itemid % 256;
+     $itemid = int($itemid / 256);
+     $jid = $ju->{'userid'};
+     $dbcr = LJ::get_cluster_reader($ju);
+
+     $sth = $dbcr->prepare("SELECT l.journalid AS 'ownerid', l.posterid, l.eventtime, ls.subject, l.security, l.allowmask, UNIX_TIMESTAMP()-UNIX_TIMESTAMP(l.logtime) AS 'secondsold', l.anum FROM log2 l, logtext2 ls WHERE ls.journalid=$jid AND l.journalid=$jid AND ls.jitemid=l.jitemid AND l.jitemid=$itemid");
+ } else {
+     $sth = $dbr->prepare("SELECT l.ownerid, l.posterid, l.eventtime, ls.subject, l.security, l.allowmask, UNIX_TIMESTAMP()-UNIX_TIMESTAMP(l.logtime) AS 'secondsold' FROM log l, logtext ls WHERE ls.itemid=l.itemid AND l.itemid=$itemid");     
+ }
+ $sth->execute;
+ my $log = $sth->fetchrow_hashref;
+
+ # if the entry is pre-UTF-8 conversion, the
+ # subject may need conversion into UTF-8
+ if ($LJ::UNICODE) {
+     my %props = ();
+     if($journal) {
+         LJ::load_props($dbs, "log");
+         LJ::load_log_props2($dbcr, $log->{'ownerid'}, [ $itemid ], \%props);
+     } else {
+         LJ::load_log_props($dbr, [ $itemid ], \%props);
+     }
+     if ($props{$itemid}->{'unknown8bit'}) {
+         my $u = LJ::load_userid($dbs, $log->{'ownerid'});
+         my ($error, $subj);
+         $subj = LJ::text_convert($dbs, $log->{'subject'}, $u, \$error);
+         $log->{'subject'} = $subj unless $error;
+     }
+     LJ::text_out(\$log->{'subject'});
+ }
+
+ # check to see if it already is memorable (thus we're editing, not adding);
+ $sth = $dbr->prepare("SELECT memid, des, security FROM memorable WHERE ".
+                      "userid=$remote->{'userid'} AND journalid=$jid AND jitemid=$ditemid");
+ $sth->execute;
+ my $memory = $sth->fetchrow_hashref;
+ 
+ if ($FORM{'mode'} eq "") 
+ {
+     my ($des, $keywords);
+
+     my @all_keywords;
+     my %selected_keyword;
+     $sth = $dbr->prepare("SELECT DISTINCT k.keyword FROM keywords k, memkeyword mk, memorable m WHERE k.kwid=mk.kwid AND mk.memid=m.memid AND m.userid=$remote->{'userid'}");
+     $sth->execute;
+     while (my ($kw) = $sth->fetchrow_array) {
+         push @all_keywords, $kw;
+     }
+     @all_keywords = sort @all_keywords;
+
+     if (defined $memory) {
+         $title = $ML{'.title.edit_memory'};
+         $des = $memory->{'des'};
+         $sth = $dbr->prepare("SELECT k.keyword FROM keywords k, memkeyword mk WHERE mk.kwid=k.kwid AND mk.memid=$memory->{'memid'}");
+         $sth->execute;
+         while (my ($kw) = $sth->fetchrow_array) {
+             next if ($kw eq "*");
+             if ($keywords) { $keywords .= ", "; }
+             $keywords .= $kw;
+             $selected_keyword{$kw} = 1;
+         }
+         if (!$log || ($jid && $log->{'anum'} != $anum))
+         {
+             $dbh->do("DELETE FROM memorable WHERE memid=$memory->{'memid'}");
+             $dbh->do("DELETE FROM memkeyword WHERE memid=$memory->{'memid'}");
+             $title = $ML{'Error'};
+             $body = $ML{'.error.entry_deleted'};
+             return;
+         }
+
+     } 
+     elsif (!$log || ($jid && $log->{'anum'} != $anum))
+     {
+         $title = $ML{'Error'};
+         $body = $ML{'error.noentry'};
+         return;
+     }
+     else 
+     {
+         my $user = LJ::get_username($dbs, $log->{'ownerid'});
+         my $dt = substr($log->{'eventtime'}, 0, 10);
+         $des = "$dt: $user: $log->{'subject'}";
+     }
+
+     $des = LJ::ehtml($des);
+     $keywords = LJ::ehtml($keywords);
+     LJ::text_out(\$des);
+     LJ::text_out(\$keywords);
+
+     $body .= $ML{'add_previous'};
+     $body .= "<FORM METHOD=POST>";
+     $body .= "<input type='hidden' name='itemid' value='$ditemid'>";
+     $body .= "<input type='hidden' name='journal' value='$ju->{'user'}'>" if $ju;
+     $body .= "<input type=hidden name=mode value=\"save\">";
+     $body .= "<TABLE cellpadding=4>";
+
+     $body .= "<TR><TD ALIGN=RIGHT VALIGN=TOP><B>$ML{'.description'}</B></TD><TD><input name=des value=\"$des\" maxlength=@{[ LJ::CMAX_MEMORY ]} size=40><BR><FONT SIZE=-1>$ML{'.description.text'}</FONT></TD></TR>\n";
+     
+     $body .= "<TR><TD ALIGN=RIGHT VALIGN=TOP><B>$ML{'.keywords'}</B></TD><TD><input name=keywords maxlength=@{[ LJ::CMAX_KEYWORD ]} size=40><BR><FONT SIZE=-1>$ML{'.keywords.text'}";
+
+     if (@all_keywords) {
+         my $size = scalar(@all_keywords);
+         if ($size > 15) { $size = 15; }
+         $body .= "$ML{'.keywords.select'}<ul><select name=oldkeywords multiple size=$size>";
+         foreach my $kw (@all_keywords) {
+             my $sel = $selected_keyword{$kw} ? " selected" : "";
+             LJ::text_out(\$kw);
+             $body .= "<option$sel>$kw</option>\n";
+         }
+         $body .= "</select></ul>$ML{'.multiple_selections'}";
+     } else {
+         $body .= "$ML{'.keywords.example'}</FONT>";
+     }
+
+
+     $body .= "</TD></TR>\n";
+     $body .= "<TR><TD ALIGN=RIGHT VALIGN=TOP><B>Security:</B></TD><TD><SELECT name=security>";
+     foreach my $sec ("public", "friends", "private") {
+         my $sel = (defined $memory && $memory->{'security'} eq $sec) ? "SELECTED" : "";
+         $body .= "<OPTION VALUE=\"$sec\" $sel>$secopts{$sec}\n";
+     }
+     $body .= "</SELECT>\n";
+     $body .= "<BR><FONT SIZE=-1>$ML{'.whocansee'}</FONT></TD></TR>\n";
+     $body .= "<TR><TD></TD><TD><INPUT type=submit value=\"$ML{'.form.submit'}\"> ";
+     if (defined $memory) { $body .= "<INPUT type=reset value=\"$ML{'.form.reset'}\">"; }
+     $body .= "</td></tr>";
+     $body .= "</TABLE>";
+
+     return;
+ }
+
+ if ($FORM{'mode'} eq "save") 
+ {
+     if (! $FORM{'des'}) {
+         # then we're deleting.
+         if (defined $memory) {
+             $dbh->do("DELETE FROM memorable WHERE memid=$memory->{'memid'}");
+             $dbh->do("DELETE FROM memkeyword WHERE memid=$memory->{'memid'}");
+             $title = $ML{'.title.deleted'};
+             $body = "<?h1 $ML{'.error.deleted.title'} h1?><?p " . 
+                     BML::ml(".error.deleted.body", { 'desc' => $memory->{'des'} }) .
+                     "p?>";
+             return;	     
+         } else {
+             $title = $ML{'Error'};
+             $body = "<?h1 $ML{'.error.nodescription.title'} h1?><?p ";
+             $body .= BML::ml('.error.nodescription.body');
+             $body .= " p?>";
+             return;
+         }
+     }
+
+     #### we're inserting/replacing now into memories
+     my @keywords;
+     { 
+         my %kws;
+         foreach (split(/\s*,\s*/, $FORM{'keywords'})) { $kws{$_} = 1; }
+         # oldkeywords were split at the beginning
+         foreach (@{$FORM{'oldkeywords'}}) { $kws{$_} = 1; }
+         @keywords = keys %kws;
+     }
+     if (scalar(@keywords) > 5) { 
+         $title = $ML{'Error'};
+         $body = "<?h1 $ML{'Error'} h1?><?p $ML{'.error.fivekeywords'} p?>";
+         return;
+     }
+     @keywords = grep { s/^\s+//; s/\s+$//; $_; } @keywords;
+     push @keywords, "*" unless (@keywords);
+     my @kwid;
+
+     foreach my $kw (@keywords) {
+         if (length($kw) > 40) {
+             $title = $ML{'Error'};
+             $body = "<?h1 $ML{'Error'} h1?><?p " . 
+                     BML::ml(".error.maxsize", { 'keyword' => $kw }) . "p?>";
+             return;
+         }
+
+         my $kwid = LJ::get_keyword_id($dbs, $kw);
+         push @kwid, $kwid;
+     }
+
+     unless (exists $secopts{$FORM{'security'}}) {
+         $title = $ML{'Error'};
+         $body = $ML{'.error.invalid_security'};
+         return;
+     }
+
+     $FORM{'des'} = LJ::text_trim($FORM{'des'}, LJ::BMAX_MEMORY, LJ::CMAX_MEMORY);
+     my $qdes = $dbh->quote($FORM{'des'});
+     my $qsec = $dbh->quote($FORM{'security'});
+
+     ## this is easiest... just delete it, then add it again.
+     if (defined $memory) {
+         $dbh->do("DELETE FROM memkeyword WHERE memid=$memory->{'memid'}");
+     }
+
+     my $memid;
+
+     if (defined $memory) 
+     {
+         $memid = $memory->{'memid'};
+         $sth = $dbh->prepare("UPDATE memorable SET des=$qdes, security=$qsec WHERE memid=$memid");
+         $sth->execute;
+     } 
+     else 
+     {
+         $sth = $dbh->prepare("INSERT INTO memorable (memid, userid, journalid, jitemid, des, security) ".
+                              "VALUES (NULL, $remote->{'userid'}, $jid, $ditemid, $qdes, $qsec)");
+         $sth->execute;
+         $memid = $dbh->{'mysql_insertid'};
+     }
+     if (@kwid) {
+         my $sql = "INSERT IGNORE INTO memkeyword (memid, kwid) VALUES ";
+         # IGNORE exists so no error is logged in mysql replication binlog (bad in 3.23.x)
+         $sql .= join(",", map { "($memid,$_)" } @kwid);
+         $dbh->do($sql);
+     }
+
+     $title = $ML{'.title.added'};
+     $body = "<?h1 $ML{'.body.added.header'} h1?><?p $ML{'.body.added.body'} p?>";
+     return;
+ }
+
+ $title = $ML{'Error'};
+ $body = $ML{'error.unknownmode'};
+
+ return;
+_code?><?page
+title=><?_code return $title; _code?>
+body<=
+<?_code
+ return $body;
+_code?>
+<=body
+page?><?_c <LJDEP>
+link: htdocs/login.bml
+post: htdocs/tools/memadd.bml
+</LJDEP> _c?>

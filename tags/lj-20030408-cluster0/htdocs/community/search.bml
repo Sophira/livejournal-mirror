@@ -1,0 +1,167 @@
+<?_info
+localblocks<=
+crit<=
+{F}
+<TR BGCOLOR=#D0D0D0>
+<TD><INPUT TYPE=CHECKBOX NAME="%%code%%" VALUE=1></TD>
+<TD><B>%%name%%</B>
+</TR>
+<TR><TD>&nbsp;</TD><TD>%%form%%</TD></TR>
+<=crit
+bar<=
+{F}
+<TR BGCOLOR=#D0D0D0>
+<TD>&nbsp;</TD>
+<TD><B>%%name%%</B>
+</TR>
+<TR><TD>&nbsp;</TD><TD>%%form%%</TD></TR>
+<=bar
+<=localblocks
+_info?><?page
+title=><?_ml .title _ml?>
+body<=
+
+<?h1 <?_ml .label.searchcomm _ml?> h1?>
+<?p
+<?_ml .label.selecriteria _ml?>
+p?>
+
+<?hr?>
+
+<CENTER>
+
+<FORM ACTION="/directory.bml">
+<INPUT TYPE=HIDDEN NAME="s_com" VALUE=1>
+<TABLE CELLPADDING=4 CELLSPACING=0 BORDER=0>
+
+<!--- location --->
+<?crit
+name=><?_ml .label.bylocation _ml?>
+code=>s_loc
+form<=
+
+<TABLE>
+<TR><TD ALIGN=RIGHT><?_ml .label.country _ml?></TD><TD>
+<SELECT NAME="loc_cn">
+<?_code
+
+ my $dbs = LJ::get_dbs();
+ LJ::load_codes($dbs, { "country" => \%countries });
+ my $ret = "";
+ foreach (sort { $countries{$a} cmp $countries{$b} } keys %countries)
+ {
+     my $sel = $_ eq "US" ? " SELECTED" : "";
+     $ret .= "<OPTION VALUE=\"$_\"$sel>$countries{$_}\n";
+ }
+ return $ret; 
+ 
+_code?>
+</SELECT></TD></TR>
+<TR><TD ALIGN=RIGHT><?_ml .label.stateprovince _ml?></TD><TD><INPUT NAME="loc_st"></TD></TR>
+<TR><TD ALIGN=RIGHT><?_ml .label.city _ml?></TD><TD><INPUT NAME="loc_ci"></TD></TR>
+</TABLE>
+
+<=form
+crit?>
+
+<!---- update time ----->
+<?crit
+name=><?_ml .label.bytime _ml?>
+code=>s_ut
+form<=
+<?_ml .label.updated _ml?>
+<SELECT NAME="ut_days">
+<OPTION VALUE="">-------
+<OPTION VALUE="1"><?_ml .sel.day _ml?>
+<OPTION VALUE="7"><?_ml .sel.week _ml?>
+<OPTION VALUE="30"><?_ml .sel.month _ml?>
+</SELECT>
+<=form
+crit?>
+
+<!---- interest ----->
+<?crit
+name=><?_ml .label.byinterest _ml?>
+code=>s_int
+form<=
+<?_ml .userlikes _ml?> <INPUT NAME="int_like" SIZE=30>
+<=form
+crit?>
+
+<!---- has member ----->
+<?crit
+name=><?_ml .label.hasmember _ml?>
+code=>s_fr
+form<=
+<?_ml .contasmember _ml?>
+<=form
+crit?>
+
+<!----- other ------>
+<?bar
+name=><?_ml .label.othercriteria _ml?>
+form<=
+<INPUT TYPE=CHECKBOX NAME="s_withpic" VALUE=1> <?_ml .checkbox.onlywithpics _ml?>
+<=form
+bar?>
+
+<!---- output formatting ----->
+<?bar
+name=><?_ml .label.displayoptions _ml?>
+form<=
+
+<TABLE>
+<TR>
+<TD ALIGN=RIGHT>
+<?_ml .label.outputformat _ml?>
+</TD><TD>
+<SELECT NAME="opt_format">
+<OPTION VALUE="com" SELECTED><?_ml .sel.commview _ml?>
+<OPTION VALUE="pics"><?_ml .sel.bypicture _ml?>
+<OPTION VALUE="simple"><?_ml .sel.simple _ml?>
+</SELECT>
+</TD></TR>
+
+<TR>
+<TD ALIGN=RIGHT>
+<?_ml .label.sortmethod _ml?>
+</TD><TD>
+<SELECT NAME="opt_sort">
+<OPTION VALUE="name" SELECTED><?_ml .sel.communityname _ml?>
+<OPTION VALUE="ut"><?_ml .sel.updatetime _ml?>
+<OPTION VALUE="user"><?_ml .sel.username _ml?>
+</SELECT>
+</TD></TR>
+
+<TR>
+<TD ALIGN=RIGHT>
+<?_ml .label.records _ml?>
+</TD><TD>
+<SELECT NAME="opt_pagesize">
+<OPTION VALUE="25">25
+<OPTION VALUE="50">50
+<OPTION VALUE="100" SELECTED>100
+<OPTION VALUE="200">200
+</SELECT>
+</TD></TR>
+
+</TABLE>
+<=form
+bar?>
+
+<!--- submit --->
+<TR BGCOLOR=#E0E0E0><TD COLSPAN=2 ALIGN=CENTER>
+  <INPUT TYPE=SUBMIT VALUE="<?_ml .button.search _ml?>">
+  <INPUT TYPE=RESET VALUE="<?_ml .button.clear _ml?>">
+</TD></TR>
+
+</TABLE>
+</FORM>
+
+</CENTER>
+
+<=body
+page?>
+<?_c <LJDEP>
+form: htdocs/directory.bml
+</LJDEP> _c?>

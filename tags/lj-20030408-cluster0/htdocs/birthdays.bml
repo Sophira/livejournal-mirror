@@ -1,0 +1,44 @@
+<?_code
+
+ $title = "Birthdays";
+ $body = "";
+
+ my $dbs = LJ::get_dbs();
+ my $dbh = $dbs->{'dbh'};
+ my $dbr = $dbs->{'reader'};
+
+ my $remote = LJ::get_remote($dbs);
+ unless ($remote) {
+     $body .= "<?h1 Login first... h1?><?p To use this feature, you must first <a href=\"/login.bml?ret=1\">login</a>. p?>";
+     return;
+ }
+
+ $body .= "Below are the birthdays for everybody that you list as a friend.";
+ my $lastmon = 0;
+
+ my $sth;
+ $sth = $dbr->prepare("SELECT u.user, u.name, MONTH(bdate) AS 'month', DAYOFMONTH(bdate) AS 'day' FROM friends f, user u WHERE f.userid=$remote->{'userid'} AND f.friendid=u.userid AND u.journaltype='P' AND u.statusvis='V' AND u.allow_infoshow='Y' AND MONTH(bdate) != 0 AND DAYOFMONTH(bdate) != 0 ORDER BY 3, 4");
+ $sth->execute;
+ while (my $bday = $sth->fetchrow_hashref) {
+     LJ::text_out(\$bday->{'name'});
+     if ($bday->{'month'} != $lastmon) {
+         if ($lastmon) { $body .= "</ul>\n"; }
+         $lastmon = $bday->{'month'};
+         $body .= "<?h1 " . LJ::Lang::month_long("EN", $lastmon) . " h1?><ul>\n";
+     }
+     my $day = sprintf("%2s", $bday->{'day'});
+     $day =~ s/ /&nbsp;/;
+     my $name = LJ::ehtml($bday->{'name'});
+     $body .= "<b><tt>$day</tt></b>: <?ljuser $bday->{'user'} ljuser?> - $name<br />\n";
+     
+ }
+
+ return;
+
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+page?><?_c <LJDEP>
+link: htdocs/login.bml
+</LJDEP> _c?>
+

@@ -1,0 +1,64 @@
+<?_code # -*- mode: bml -*- 
+{
+    use strict;
+    use vars qw($body %FORM %POST);
+
+    $body = "";
+
+    my $dbs = LJ::get_dbs();
+    my $u = LJ::get_remote($dbs);
+
+    unless ($u) {
+        $body = "$ML{'.loggedout.already'}";
+        return;
+    }
+
+    if ($POST{'action:killall'}) {
+        LJ::kill_session($u);     # destroys the current cookie
+        LJ::kill_all_sessions($u);
+        LJ::set_remote(undef);
+        $body = $ML{'.loggedout.killedall'};
+        return;
+    }
+
+    if ($u->{'_session'} && 
+        $FORM{'user'} eq $u->{'user'} &&
+        $FORM{'sessid'} == $u->{'_session'}->{'sessid'})
+    {
+        LJ::kill_session($u);
+        LJ::set_remote(undef);
+        $body = "$ML{'.loggedout.success'}";
+        return;
+    }
+
+    $body .= "<form>";
+    $body .= LJ::html_hidden("user", $u->{'user'});
+    $body .= LJ::html_hidden("sessid", $u->{'_session'}->{'sessid'});
+    $body .= "<?h1 $ML{'.logout.head'} h1?><?p $ML{'.logout.text'} ";
+    $body .= "<blockquote><input type='submit' value='$ML{'.logout.btn'}'></blockquote> p?></form>";
+
+    # do they have any other sessions?
+
+    my $udbs = LJ::get_cluster_set($u);
+    my $udbr = $udbs->{'reader'};
+
+    my $curid = $u->{'_session'}->{'sessid'} || 0;
+
+    my $sessions = $udbr->selectcol_arrayref("SELECT sessid FROM sessions WHERE ".
+					     "userid=$u->{'userid'} AND timeexpire > UNIX_TIMESTAMP() ".
+                                             "AND sessid <> $curid");
+    if (@$sessions) {
+        $body .= "<form method='post'>";
+        $body .= LJ::html_hidden("action:killall", '1');
+        $body .= "<?h1 $ML{'.killall.head'} h1?><?p $ML{'.killall.text'} ";
+        $body .= "<blockquote><input type='submit' value='$ML{'.killall.btn'}'></blockquote> p?></form>";
+    }
+
+    return;
+
+}
+
+_code?><?page
+title=><?_ml .title _ml?>
+body=><?_code return $body; _code?>
+page?>

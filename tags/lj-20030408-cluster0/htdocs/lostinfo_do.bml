@@ -1,0 +1,136 @@
+<?_info
+nocache=>1
+_info?><?page
+title=><?_ml .title _ml?>
+body<=
+
+<?_code
+
+ return LJ::server_down_html() if ($LJ::SERVER_DOWN);
+
+ my $dbs = LJ::get_dbs();
+ my $dbh = $dbs->{'dbh'};
+ my $dbr = $dbs->{'reader'};
+
+ my @errors = ();
+
+ if ($FORM{'lostpass'})
+ {
+     my $user = LJ::canonical_username($FORM{'user'});
+     my $quser = $dbr->quote($user);
+     my $email = LJ::trim($FORM{'email_p'});
+
+     my $u = LJ::load_user($dbs, $user);
+
+     if (! $u)
+     {
+         push @errors, $ML{'error.username_notfound'};
+     }
+
+     # can we send them the password where they want it?
+     # if blank email, then yes.
+     elsif ($email eq "") {
+         $email = $u->{'email'};
+     }
+
+     # if their current email address, then yes.
+     # otherwise, check:
+     # if an old validated email address, then yes.
+
+     elsif (lc($email) ne lc($u->{'email'})) 
+     {
+         my $qe = $dbr->quote($email);
+         my $sth = $dbr->prepare("SELECT COUNT(*) FROM infohistory WHERE userid=$u->{'userid'} AND what='email' AND oldvalue=$qe AND other='A'");
+         $sth->execute;
+         ($okay) = $sth->fetchrow_array;
+
+         unless ($okay) {
+             push @errors, $ML{'.error1.text'};
+         }
+     }
+
+     return LJ::bad_input(@errors) if @errors;
+
+     my $body;
+     $body .= BML::ml('.lostpasswordmail.part1', {
+                 'sitename' => $LJ::SITENAME,
+                 'username' => $u->{'user'},
+                 'password' => $u->{'password'},
+                 'emailadr' => $u->{'email'}     }) . "\n\n";
+     if ($u->{'status'} ne "A") {
+         my $aa = {};
+         $aa = LJ::register_authaction($dbs, $u->{'userid'}, "validateemail", $u->{'email'});
+         $body .= $ML{'.lostpasswordmail.part2'} . "\n\n";
+         $body .= "    $LJ::SITEROOT/confirm/$aa->{'aaid'}.$aa->{'authcode'}\n\n";
+     }
+     $body .= BML::ml('.lostpasswordmail.part3', {
+                 'remoteip' => BML::get_remote_host() . " (" . BML::get_remote_ip() . ")" }) . "\n\n";
+     my $mline = $ML{'.lostpasswordmail.part4'};
+     $body .= $mline . "\n\n" if ($mline ne "");
+     $body .= BML::ml('.lostpasswordmail.part5', {
+                 'journalurl' => "$LJ::SITEROOT/users/$u->{'user'}/",
+                 'updateurl'  => "$LJ::SITEROOT/update.bml?$u->{'user'}",
+                 'rooturl'    => "$LJ::SITEROOT/" }) . "\n";
+
+     LJ::send_mail({
+         'to' => $email,
+         'from' => $LJ::ADMIN_EMAIL,
+         'fromname' => $LJ::SITENAME,
+         'charset' => 'utf-8',
+         'subject' => $ML{'.lostpasswordmail.subject'},
+         'body' => $body,
+     }) or die "Error: couldn't send email";
+
+     return "<?h1 $ML{'.password_mailed.title'} h1?>\n<?p $ML{'.password_mailed.text'} p?>";
+ }
+
+
+ if ($FORM{'lostuser'})
+ {
+     my $sendto = "";
+     my $email = LJ::trim($FORM{'email_u'});
+     my $qe = $dbh->quote($email);
+
+     $sth = $dbr->prepare("SELECT user, status FROM user WHERE email=$qe");
+     $sth->execute;
+     my @users;
+     while (my ($ru, $rs) = $sth->fetchrow_array) {
+         push @users, $ru;
+     }
+
+     unless (@users) {
+         push @errors, BML::ml('.error.no_usernames_for_email', {'address'=>$qe});
+     }
+     
+     return LJ::bad_input(@errors) if @errors;
+     
+     my $body;
+     $body .= "This is your requested username reminder from $LJ::SITENAME.  Below are the usernames you have registered for the email address $email:\n\n";
+     foreach my $ru (@users) {
+         $body .= "          $ru\n";
+     }
+
+     $body .= "\nThis information was requested on the website from " . BML::get_remote_host() . 
+         " (" . BML::get_remote_ip() . ").\n\n";
+     $body .= "Regards,\n$LJ::SITENAME Team\n\n$LJ::SITEROOT/\n";
+
+     LJ::send_mail({
+         'to' => $email,
+         'from' => $LJ::ADMIN_EMAIL,
+         'fromname' => $LJ::SITENAME,
+         'charset' => 'utf-8',
+         'subject' => "Lost Username",
+         'body' => $body,
+     }) or die "Error: couldn't send email";
+
+     return "<?h1 $ML{'.username_mailed.title'} h1?>\n<?p $ML{'.username_mailed.text'} p?>";
+ }
+
+ return $ML{'error.nobutton'};
+
+_code?>
+
+<=body
+page?><?_c <LJDEP>
+</LJDEP> _c?>
+

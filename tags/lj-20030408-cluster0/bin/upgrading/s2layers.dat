@@ -1,0 +1,36 @@
+################################################################
+# base filename         layer type      parent
+
+core1                   core            -
+i18nc/en1               i18nc           core1
+i18nc/fr1               i18nc           core1
+i18nc/ru1               i18nc           core1
+i18nc/ja1               i18nc           core1
+
+classic/layout          layout          core1
+classic/en              i18n            classic/layout
+classic/themes          theme+          classic/layout
+
+cleansimple/layout      layout          core1
+cleansimple/en          i18n            cleansimple/layout
+cleansimple/themes      theme+          cleansimple/layout
+
+generator/layout        layout          core1
+generator/en            i18n            generator/layout
+generator/themes        theme+          generator/layout
+
+magazine/layout         layout          core1
+magazine/en             i18n            magazine/layout
+magazine/themes         theme+          magazine/layout
+
+notepad/layout          layout          core1
+notepad/en              i18n            notepad/layout
+#notepad/themes          theme+          notepad/layout
+
+punquin/layout          layout          core1
+punquin/en              i18n            punquin/layout
+punquin/themes          theme+          punquin/layout
+
+tabularindent/layout    layout          core1
+tabularindent/en        i18n            tabularindent/layout
+tabularindent/themes    theme+          tabularindent/layout

@@ -1,0 +1,4 @@
+<!ENTITY % books   SYSTEM "books.ent">
+<!ENTITY % authors SYSTEM "authors.ent">
+%books;
+%authors;

@@ -1,0 +1,189 @@
+<?page
+title=>Support Requests
+body<=
+
+<?_code
+ 
+ my $dbs = LJ::get_dbs();
+ my $dbh = $dbs->{'dbh'};
+ my $dbr = $dbs->{'reader'};
+
+ my ($ret, $sth);
+
+ my $remote = LJ::get_remote($dbr);
+ LJ::Support::init_remote($dbr, $remote);
+
+ my $cats = LJ::Support::load_cats($dbr);
+
+ my $filtercat = $FORM{'cat'};
+ $filtercat = "" unless ($filtercat =~ /^[\w\-]+$/);
+ my $filterwhere;
+
+ if ($filtercat eq "_nonpublic") {
+     $filterwhere = " AND s.spcatid IN (0";
+     foreach my $cat (values %$cats) {
+         if (! $cat->{'public_read'} && LJ::Support::can_read_cat($dbr, $cat, $remote)) {
+             $filterwhere .= ", $cat->{'spcatid'}";
+         }
+     }
+     $filterwhere .= ")";
+ } elsif ($filtercat eq "_nonprivate") {
+     $filterwhere = " AND s.spcatid IN (0";
+     foreach my $cat (values %$cats) {
+         if ($cat->{'public_read'}) {
+             $filterwhere .= ", $cat->{'spcatid'}";
+         }
+     }
+     $filterwhere .= ")";
+ } else {
+     my $fcat = LJ::Support::get_cat_by_key($cats, $filtercat);
+     if (LJ::Support::can_read_cat($dbr, $fcat, $remote)) {
+         $filterwhere = " AND s.spcatid=$fcat->{'spcatid'}";
+     } else {
+         $filtercat = "";
+     }
+ }
+
+my $total_open;
+
+ if ($FORM{'state'} eq "closed")
+ {
+     $ret .= "<?h1 Recently Closed Support Requests h1?><?p Below are all support requests that have been recently closed.  To return to the open requests, <a href=\"./help.bml?cat=$filtercat\">click here</a>. p?>";
+     
+     $sth = $dbr->prepare("SELECT s.* FROM support s WHERE s.state='closed' AND s.timeclosed>UNIX_TIMESTAMP()-(3600*24) $filterwhere ORDER BY timecreate DESC");
+
+ }
+ elsif ($FORM{'state'} eq "youreplied") 
+ {
+     $ret .= "<?h1 Requests you replied to h1?><?p This shows all open requests you've replied to. p?>";
+
+     unless ($remote) {
+         return "<?h1 Error h1?><?p You must be logged in to filter on requests that you've replied to. p?>";
+     }
+     
+     $sth = $dbr->prepare("SELECT DISTINCT s.* FROM support s, supportlog sl WHERE s.spid=sl.spid AND s.state='open' AND sl.userid=$remote->{'userid'} $filterwhere GROUP BY s.spid ORDER BY timecreate DESC");
+     
+ }
+ else 
+ {
+     $ret .= "<?h1 Open Support Requests h1?><?p Below are all support requests that are open (they just came in and haven't been touched yet) or answered (either awaiting to be closed by the person needing help, or the person requested they still need help).  The <a href=\"./help.bml?state=closed&amp;cat=$filtercat\">closed reports</a> are also available.  If you help somebody out and they confirm you helped them, you get the number of points indicated in the status column.  These points will show up on your userinfo page. p?>";
+ 
+     $total_count = $dbr->selectrow_array("SELECT COUNT(*) FROM support s WHERE s.state='open' $filterwhere");
+     unless ($total_count) {
+         return "<?h1 No support requests! h1?><?p The support queue is currently empty.  :-) p?>";
+     }
+     my $all = BML::self_link({ 'all' => 1 });
+     $ret .= "<p>[<b>$total_count</b> <a href='$all'>total</a> open requests]";
+
+     unless ($FORM{'all'}) {
+         $filterwhere .= " AND s.timecreate > UNIX_TIMESTAMP()-60*60*24*30";
+     }
+
+     $sth = $dbr->prepare("SELECT s.* FROM support s WHERE s.state='open' $filterwhere ORDER BY timecreate DESC");
+ }
+ $sth->execute;
+
+
+ # filter line:
+ $ret .= "<form method=get>Show only ";
+ $ret .= "<select name=state>";
+ {
+     my @states = ("" => "Open",
+                   "closed" => "Closed",
+                   "green" => "Green");
+     if ($remote) {
+         push @states, ("youreplied", "You Replied");
+     }
+     while (@states) {
+         my ($skey, $sname) = splice(@states, 0, 2);
+         my $sel = $FORM{'state'} eq $skey ? " selected" : "";
+         $ret .= "<option value=\"$skey\"$sel>$sname</option>";
+     }
+ }
+ $ret .= "</select>";
+
+ $ret .= " requests of type: <select name=cat>";
+ $ret .= "<option value=\"\">(All)</option>";
+ my @filter_cats = LJ::Support::filter_cats($remote, $cats);
+ if (LJ::check_priv($dbr, $remote, "supportread")) {
+     unshift @filter_cats, { 'catkey' => '_nonpublic',
+                             'catname' => '(Non-Public)' };
+     unshift @filter_cats, { 'catkey' => '_nonprivate',
+                             'catname' => '(Non-Private)' };
+ }
+ foreach my $cat (@filter_cats)
+ {
+     my $sel = $filtercat eq $cat->{'catkey'} ? " SELECTED" : "";
+     $ret .= "<option value=\"$cat->{'catkey'}\"$sel>$cat->{'catname'}</option>";
+ }
+ $ret .= "</select>\n";
+ $ret .= "<input type=submit value=\"Filter\"></form>";
+ # /filter line
+ 
+
+ $ret .= "<p><table cellpadding=4 cellspacing=1 border=1 bgcolor=#ffffff><tr bgcolor=#d0d0d0>\n";
+ $ret .= "<td><b>ID#</b></td>\n";
+ $ret .= "<td><b>Summary</b></td>\n";
+ $ret .= "<td><b>Problem Area</b></td>\n";
+ $ret .= "<td><b>Posted</b></td>\n";
+ $ret .= "<td><b>Status</b></td>\n";
+ $ret .= "</tr>";
+
+ while ($sp = $sth->fetchrow_hashref)
+ {
+     LJ::Support::fill_request_with_cat($sp, $cats);
+     next unless (LJ::Support::can_read($dbr, $sp, $remote));
+
+     my $status = "open";
+     my $barbg = "BGCOLOR=#D0EED0";
+     if ($sp->{'timeclosed'}) { 
+         $status = "closed"; 
+         $barbg = "BGCOLOR=#EED0D0";
+     }
+     elsif ($sp->{'timelasthelp'} > $sp->{'timetouched'}+5) { 
+         $status = "answered<BR>awaiting close"; 
+         $barbg = "BGCOLOR=#EEEED0";
+     }
+     elsif ($sp->{'timelasthelp'} && $sp->{'timetouched'} > $sp->{'timelasthelp'}+5) { 
+         $status = "answered<BR><B>still needs help</B>"; 
+         $barbg = "BGCOLOR=#D0EED0";	 
+     }
+       
+     next if ($FORM{'state'} eq "green" && $barbg ne "BGCOLOR=#D0EED0");
+       
+     my $summary = LJ::ehtml($sp->{'subject'});
+     my $secold = time() - $sp->{'timecreate'};
+     my $age = LJ::ago_text($secold);
+     my $probarea = $sp->{_cat}->{'catname'};
+     my $points = LJ::Support::calc_points($sp, $secold);
+
+     unless ($status eq "closed") {
+         $status .= "<BR>($points point";
+         if ($points > 1) { $status .= "s"; }
+         $status .= ")";
+     }
+
+     $ret .= "<tr valign=top $barbg>\n";
+     $ret .= "<td><b><a href=\"see_request.bml?id=$sp->{'spid'}\">$sp->{'spid'}</a></b></td>\n";
+     $ret .= "<td><b>$summary</b></td>\n";
+     $ret .= "<td>$probarea</td>\n";
+     $ret .= "<td nowrap><font size=-1>$age</font></td>\n";
+     $ret .= "<td nowrap><font size=-1>$status</font></td>\n";
+     $ret .= "</tr>";
+
+ }
+ $ret .= "</table>\n";
+
+ return $ret;
+
+_code?>
+
+<?hr?>
+Back to the <A HREF="./">support area</A>.
+
+<=body
+page?><?_c <LJDEP>
+link: htdocs/support/help.bml, htdocs/support/see_request.bml
+link: htdocs/support/index.bml
+form: htdocs/support/help.bml
+</LJDEP> _c?>

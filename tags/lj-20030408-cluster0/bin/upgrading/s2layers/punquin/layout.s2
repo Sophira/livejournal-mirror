@@ -1,0 +1,491 @@
+# -*-s2-*-
+
+layerinfo type = "layout";
+layerinfo name = "Punquin Elegant";
+layerinfo redist_uniq = "punquin/layout";
+layerinfo previews = "punquin/punquin.jpg";
+
+# Colors
+property Color body_bgcolor { 
+    des = "Page background color";
+    s1color = "stronger_accent";
+}
+property Color main_bgcolor {
+    des = "Background of text areas";
+    s1color = "page_back";
+}
+property Color main_fgcolor {
+    des = "Text color";
+    s1color = "page_text";
+}
+property Color subject_color { 
+    des = "Color of entry subjects";
+    s1color = "page_text_em";
+}
+property Color title_color { 
+    des = "Color of headers and titles";
+    s1color = "page_text_title";
+}
+property Color border_color { 
+    des = "Color of borders";
+    s1color = "weak_back";
+}
+property Color link_color {
+    des = "Link color";
+    s1color = "page_link";
+}
+property Color vlink_color {
+    des = "Visited link color";
+    s1color = "page_vlink"; 
+}
+property Color alink_color { 
+    des = "Active link color";
+    s1color = "page_alink";
+}
+
+# Layout Options
+property bool show_recent_userpic {
+    des = "Show the userpic on the recent entries page?"; 
+}
+property string sidebar_position {
+    des = "Position of the sidebar relative to the main content";
+    values = "left|Left|right|Right";
+}
+
+# Added Text
+property string text_gotop {
+    des = "Link text to 'top of the page'";
+    noui = 1;
+}
+
+property use font_base;
+property use font_fallback;
+
+property use page_recent_items;
+property use text_post_comment;
+property use text_read_comments;
+
+property use page_friends_items;
+property use text_post_comment_friends;
+property use text_read_comments_friends;
+
+set font_base = "Verdana, Arial, Helvetica";
+set font_fallback = "sans-serif";
+set show_recent_userpic = false;
+set sidebar_position = "left";
+set page_recent_items = 20;
+set page_friends_items = 20;
+
+set text_gotop = "Go to Top";
+
+set body_bgcolor = "#6666cc";
+set main_bgcolor = "#ffffff";
+set main_fgcolor = "#000000";
+set subject_color = "#c00000";
+set title_color = "#8b1a1a";
+set border_color = "#eeeeff";
+set link_color = "#000050";
+set vlink_color = "#500050";
+set alink_color = "#ff00c0";
+
+function print_stylesheet ()
+{
+    var string font = "$*font_base, $*font_fallback";
+    print """
+body {
+    background-color:  $*body_bgcolor;
+    color:             $*main_fgcolor;
+    font:              normal normal 10pt $font;
+}
+a {
+    text-decoration:   none;
+    color:             $*link_color;
+    background:        transparent;
+    font:              normal normal 10pt $font;
+}
+a:visited {
+    color:             $*vlink_color;
+    background:        transparent;
+}
+a:active {
+    color:             $*alink_color;
+    background:        transparent;
+}
+#title {
+    font:              normal bold 10pt $font;
+    color:             $*title_color;
+    text-align:        center;
+}
+.date {
+    font:              normal bold 12pt $font;
+    color:             $*title_color;
+    text-align:        right;
+}
+.comments {
+    font:              normal normal 8pt $font;
+}
+hr.seperator {
+    color:             $*border_color;
+}
+.siteplug {
+    font:              normal normal 8pt $font;
+}
+#yearheader {
+    text-align:        right;
+    color:             $*title_color;
+    font:              normal bold 12pt $font;
+}
+th.monthheader {
+    color:             $*title_color;
+}
+th.daysheader {
+    color:             $*subject_color;
+}
+
+/* Tables. Fun. */
+
+table#main {
+    border:            solid 0px $*body_bgcolor;
+}
+table.standard {
+    border:            solid 5px $*border_color;
+    background-color:  $*main_bgcolor;
+    color:             $*main_fgcolor;
+    font:              normal normal 10pt $font;
+}
+table.standard td {
+    background-color:  $*main_bgcolor;
+    color:             $*main_fgcolor;
+    font:              normal normal 10pt $font;
+}
+    """;
+}
+
+
+function Page::lay_sidebar_navigation () { }
+
+function print_sidebar(Page p) {
+    var string title = $p->title();
+    var string userpic;
+    var Image up_img = $p.journal.default_pic;
+    if (defined $up_img) {
+        $userpic = """<p align="center"><img border="0" src="$up_img.url" height="$up_img.height" width="$up_img.width" alt="" /></p>""";
+    }
+
+    var string website;
+    if ($p.journal.website_url != "") {
+        $website = """<a href="$p.journal.website_url">&gt; $p.journal.website_name</a><br />""";
+    }
+
+    var string links;
+    $links = $links + ($p.view == "recent" ?
+                       "&gt; $*text_view_recent<br />\n" :
+                       "&gt; <a href='$p.base_url/'>$*text_view_recent</a><br />\n");
+    $links = $links + ($p.view == "friends" ?
+                       "&gt; $*text_view_friends<br />\n" : 
+                       "&gt; <a href='$p.base_url/friends/'>$*text_view_friends</a><br />\n");
+    $links = $links + ($p.view == "calendar" ? 
+                       "&gt; $*text_view_archive<br />\n" : 
+                       "&gt; <a href='$p.base_url/calendar/'>$*text_view_archive</a><br />\n");
+
+    # Table Wrapper
+    "<!-- Begin Main Sidebar -->\n<td valign='top' align='$*sidebar_position'>";
+    "<table width='150' class='standard' cellpadding='5' cellspacing='0'>\n";
+    "<tr valign='top'><td align='left'>";
+
+    # Title
+    "<div style='text-align:center'><span style='color: $*title_color'><strong>$title</strong></span></div>\n";
+
+    # Links
+    "<p>$links\n$website\n&gt;<a href='$*SITEROOT/users/$p.journal.username/info'> profile</a><br />\n";
+    $p->lay_sidebar_navigation();
+
+    # Userpic
+    "</p>"; if($userpic != "") { "<div style='text-align:center'>$userpic</div>"; }
+
+    # End Table
+    "</td></tr></table>\n<!-- End Main Sidebar -->";
+}
+
+function print_gotop (Page p)
+{
+    "<td valign='bottom' align='$*sidebar_position'>\n<!-- Begin Small Sidebar -->\n";
+    "<table width='150' class='standard' cellpadding='5' cellspacing='0'>\n";
+    "<tr valign='top'><td align='left'>\n";
+    $p->lay_sidebar_navigation();
+    "<br /><a href='#top'>&gt; $*text_gotop</a><br>\n</td></tr></table>\n<!-- End Small Sidebar -->";
+}
+
+function Page::print () 
+{
+    var string title = $this->title();
+    var string main_position = $*sidebar_position == "left" ? "right" : "left"; 
+
+    # Head
+    "<html><head>\n<link rel='stylesheet' href='$.stylesheet_url' type='text/css'/>\n";
+    print $.head_content;
+    "<title>$title</title>\n</head>\n";
+
+    # Body
+    "<body>\n<a name='top'></a><div align='center'>\n";
+
+    # Table wrapper
+    "<table id='main' cellpadding='5' cellspacing='0' width='90%'>\n<tr>";
+
+    if ($*sidebar_position == "left") { print_sidebar($this); }
+
+    # Main content
+    "<td valign='top' align='$main_position' rowspan='2'>\n<!-- Begin Main -->\n";
+    "<table class='standard' width='100%' height='90%' cellpadding='5' cellspacing='0'><tr valign='top'><td>\n";
+    $this->print_body();
+    "</td></tr></table>\n<!-- End Main -->\n</td>";
+
+    if ($*sidebar_position == "right") { print_sidebar($this); }
+
+    # Go to top
+    "</tr><tr>";
+    print_gotop($this);
+    "</tr><tr>";
+
+    # Plug the site!
+    "<td colspan='2' align='$main_position'>\n";
+    "<a href='$*SITEROOT/'>$*SITENAME</a></td>\n";
+
+    "</tr></table></center></body></html>";
+}
+
+function print_entry (Page p, Entry e, Color bgcolor, Color fgcolor)
+{
+    var string time = $e.time->time_format();
+    if ($e.new_day) {
+        "<p class='date'>"; print $e.time->date_format("%%month%% %%dayord%%, %%yyyy%%"); "</p>";
+        "<hr class='seperator' />";
+    }
+
+    "<table border='0' cellpadding='2' cellspacing='0'><tr>";
+
+    if ($p.view == "friends" or
+        $e.poster.username != $e.journal.username or
+        $*show_recent_userpic == true)
+    {
+        # Lots of muddled logic. Yay.
+
+        """<td valign=top align="middle" style="background-color: $bgcolor" width="100">
+        <span style="color: $fgcolor">""";
+        if ($p.view == "friends") { 
+            """<a href='""" + $e.journal->base_url() + """'><b>$e.journal.username</b></a><br />""";
+        }
+        if ($e.poster.username != $e.journal.username) {
+            if ($p.view == "friends") { 
+                """[<a href='""" + $e.poster->base_url() + """'><span style="color: $fgcolor">$e.poster.username</span></a>]<br />""";
+            } else {
+                """<a href='""" +  $e.poster->base_url() + """'><span style="color: $fgcolor"><b>$e.poster.username</b></span></a><br />""";
+            }
+        }
+        if (defined $e.userpic) {
+            if (($*show_recent_userpic == false) and 
+	        ($p.view != "friends") and
+		($p.journal_type != "C") ) { }
+            else { """<img border="0" src="$e.userpic.url" width="$e.userpic.width" height="$e.userpic.height" alt="" />""";
+            }
+        }
+        "</span></td>";
+    }
+    "<td valign='top'><strong>$time";
+    if ($e.subject != "") { " - <span style='color: $*subject_color'>$e.subject</span>"; }
+
+    if ($e.security != "") {
+        " "; $e.security_icon->print();
+    }
+    "</strong><br />";
+    print $e.text; "<br />";
+    if (size $e.metadata) {
+        foreach var string k ($e.metadata) {
+            var string key = $k;
+            var string val = $e.metadata{$k};
+            if ($k == "mood") {
+                $key = $*text_meta_mood;
+            } elseif ( $k == "music" ) {
+	        $key = $*text_meta_music;
+	    }		
+            if ($k == "mood" and defined $e.mood_icon) {
+                var Image i = $e.mood_icon;
+                $val = "<img src='$i.url' width='$i.width' height='$i.height' align='absmiddle' alt='[mood icon]' /> $val";
+            }
+            "<strong>$key:</strong> $val<br />";
+        }
+    }
+    "</td></tr></table>";
+    $e.comments->print(); 
+}
+
+function Page::print_entry (Entry e) 
+{
+    print_entry($this, $e, null Color, null Color);
+}
+
+function FriendsPage::print_entry (Entry e) {
+    var Friend f = $.friends{$e.journal.username};
+    print_entry($this, $e, $f.bgcolor, $f.fgcolor);
+}
+
+function RecentPage::print_body {
+    foreach var Entry e ($.entries) {
+        $this->print_entry($e);
+    }
+}
+
+function FriendsPage::print_body {
+    foreach var Entry e ($.entries) {
+        $this->print_entry($e);
+    }
+}
+
+
+function RecentPage::lay_sidebar_navigation () {
+    var int total = size $.entries;
+    var string nav = "";
+    if ($.nav.backward_url != "") {
+        $nav = """<a href="$.nav.backward_url">&gt; previous $total entries</a>""";
+    }
+    if ($.nav.forward_url != "" and $.nav.backward_url != "") {
+        $nav = "$nav<br />";
+    }
+    if ($.nav.forward_url != "") {
+        $nav = """$nav<a href="$.nav.forward_url">&gt; next $total entries</a>""";
+    }
+    print $nav;
+}
+
+function CommentInfo::print ()
+{
+    if (not $.enabled) {
+        "<p align='right' class='comments'>&nbsp;</p>";
+        return;
+    }
+    "<p align='right' class='comments'>(";
+    if ($.count > 0 or $.screened) {
+        $this->print_readlink();
+        "&nbsp;|&nbsp;";
+    }
+    $this->print_postlink();
+    ")</p>";
+}
+
+function YearPage::print_body {
+    "<p id='yearheader'>$.year</p>\n";
+    foreach var YearMonth m ($.months) {
+        $this->print_month($m);
+    }
+}
+
+function YearPage::print_year_links ()
+{
+    foreach var YearYear y ($.years) {
+        if ($y.displayed) {
+            "&gt; $y.year<br />";
+        } else {
+            "<a href=\"$y.url\">&gt; $y.year</a><br />";
+        }
+    }
+}
+
+function YearPage::lay_sidebar_navigation () 
+{
+    $this->print_year_links();
+}
+
+function YearPage::print_month(YearMonth m)
+{
+    if (not $m.has_entries) { return; }
+    # Table Wrapper
+    "<center><p><table border='1' cellpadding='4' width='80%'>\n";
+
+    # Month Header
+    "<tr align='center'><th colspan='7' class='monthheader'>\n";
+    print $m->month_format();
+    "</th></tr>\n";
+
+    # Weekdays Header
+    "<tr align='center'>\n";
+    foreach var int d ($.weekdays) {
+        "<th class='daysheader'>"+$*lang_dayname_short[$d]+"</th>\n";
+    }
+    "</tr>\n";
+
+    # Weeks
+    foreach var YearWeek w ($m.weeks) {
+        $w->print();
+    }
+
+    # Footer
+    "<tr><td colspan='7'><div style='text-align: center'><a href='$m.url'>view subjects</a></div></td></tr>\n";
+
+    # End Table
+    "</table></p></center>\n";
+}
+
+function YearWeek::print () {
+    "<tr>";
+    if ($.pre_empty) { "<td colspan='$.pre_empty'>&nbsp;</td>"; }
+    foreach var YearDay d ($.days) {
+        "<td valign='top'><strong>$d.day</strong><div style='text-align: center'>";
+        if ($d.num_entries) {
+            "<a href='$d.url'>$d.num_entries</a>";
+        } else {
+            "&nbsp;";
+        }
+        "</div></td>\n";
+    }
+    if ($.post_empty) { "<td colspan='$.post_empty'>&nbsp;</td>"; }
+    "</tr>";
+}
+
+function DayPage::print_body() {
+    if (not $.has_entries) {
+        "<table width='100%'><tr><td><p class='date'>\n";
+        print $.date->date_format("%%month%% %%dayord%%, %%yyyy%%");
+        "</p><hr class='seperator' width='100%' /></td></tr>";
+        "<tr><td><blockquote align='center'>"; print ehtml($*text_noentries_day); "</blockquote></td></tr></table>";
+    } else {
+        foreach var Entry e ($.entries) {
+            $this->print_entry($e);
+        }
+    }
+
+    var string tprev = ehtml($*text_day_prev);
+    var string tnext = ehtml($*text_day_next);
+
+    "<hr class='seperator' width='100%' />\n";
+    "<table width='100%'><tr align='middle'>\n";
+
+    "<td width='33%' align='left'><a href='$.prev_url'>$tprev</a></td>\n";
+    "<td align='center' width='33%'>[<a href='"; print $this.journal->base_url(); "/calendar'>$*text_view_archive</a>]</td>\n";
+    "<td width='33%' align='right'><a href='$.next_url'>$tnext</a></td>\n";
+
+    "</tr></table>";
+}
+
+function print_theme_preview ()
+{
+    """
+<table width="100%" style="background-color: $*body_bgcolor; border: solid 1px #000000"><tr><td style="color:$*main_fgcolor">
+  <table bgcolor="$*border_color" border="0" cellpadding="5" cellspacing="0" width="60%" align="center">
+    <tr><td valign="center" align="center">
+      <table width="100%" height=90% bgcolor="$*main_bgcolor" border="0" cellpadding="5" cellspacing="0">
+        <tr valign="top"><td>
+          <p align="right"><font color="$*title_color" face="verdana,arial,helvetica" size="3">
+            <strong>December 18th, 2002</strong></font><hr noshade color="$*border_color" size="1" width="100%" />
+          </p>
+          <font face="verdana,arial,helvetica" size="2">
+          <b>01:22 am - <font color="$*subject_color">Test</font></b><font face="verdana,arial,helvetica" size="2"><br />
+          Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit. 
+          Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.</font>
+          <p align="right">(<a style="color: $*link_color" href="#">Read # Comments</a> | <a style="color: $*vlink_color" href="#">Leave a comment</a>)</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</td></tr></table>
+    """;
+}

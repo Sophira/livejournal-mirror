@@ -1,0 +1,232 @@
+<?_code
+
+ $title = "Edit User Pictures";
+ $body = "";
+ $su = "";           # switch user bar
+ @errors = ();
+ 
+ unless (LJ::text_in(\%FORM)) {
+     $body = "<?badinput?>";
+     return;
+ }
+
+ my $dbs = LJ::get_dbs();
+ my $dbh = $dbs->{'dbh'};
+ my $dbr = $dbs->{'reader'};
+
+ my $u;
+ my $remote = LJ::get_remote($dbs);
+ my $err;
+ my $user = LJ::get_effective_user($dbs, {
+     'remote' => $remote,
+     'form' => \%FORM,
+     'out_err' => \$err,
+     'out_u' => \$u,
+ });
+
+ if ($err) {
+     $title = "Error";
+     $body = LJ::bad_input($err);
+     return;
+ }
+ 
+ unless ($user) {
+     
+     $body .= "<?h1 Authenticate h1?><?p Enter the username and password of the journal you want to modify the user pictures for. p?>";
+     
+     $body .= "<form method='post' action='editpics.bml'>";
+     $body .= "<?standout <table>\n";
+     $body .= LJ::auth_fields_2($dbs, \%FORM);
+     $body .= "<tr><td></td><td><input type='submit' value='Proceed...'></td></tr>";
+     $body .= "</table> standout?>\n";
+     $body .= "</form>";
+     return;
+ }
+
+ my $authlink;
+ $authlink = "?authas=$FORM{'authas'}" if ($FORM{'authas'} && $FORM{'authas'} ne "(remote)");
+ $authlink ||= "?user=$user" if ($FORM{'user'});
+
+ $u = LJ::load_user($dbs, $user) unless $u;
+
+ if (LJ::get_cap($u, "readonly")) {
+     $title = "Read-only mode";
+     $body = $LJ::MSG_READONLY_USER;
+     return;
+ }
+
+ my $dbb;
+ if ($u->{'dversion'} >= 2) {
+     $dbb = LJ::get_cluster_master($u);
+     unless ($dbb) {
+         $title = "Error",
+         $body = "Database temporarily unavailable.";
+         return;
+     }
+ }
+ 
+ ### save mode
+
+ if ($FORM{'mode'} eq "save") 
+ {
+     $dbh->do("DELETE FROM userpicmap WHERE userid=$u->{'userid'}");
+
+     $sth = $dbr->prepare("SELECT picid, width, height FROM userpic WHERE userid=$u->{'userid'}");
+     $sth->execute;
+     
+     my @delete;
+     my %picid_of_kwid;
+
+     while (my $pic = $sth->fetchrow_hashref)
+     {
+         if ($FORM{"delete_$pic->{'picid'}"}) {
+             # delete this one
+             push @delete, $pic->{'picid'};
+         }
+         else 
+         {
+             my @keywords = split(/\s*,\s*/, $FORM{"kw_$pic->{'picid'}"});
+             @keywords = grep { s/^\s+//; s/\s+$//; $_; } @keywords;
+             foreach my $kw (@keywords) {
+                 my $kwid = LJ::get_keyword_id($dbs, $kw);
+                 next unless $kwid;
+                 if ($picid_of_kwid{$kwid}) {
+                     push @errors, "You used the keyword \"$kw\" for multiple pictures.  One was randomly chosen, but likely not the one you wanted.  You may want to go back and fix that.";
+                 }
+                 $picid_of_kwid{$kwid} = $pic->{'picid'};
+             }
+         }
+     }
+
+     if (@delete) {
+         my $id_in = join(", ", @delete);
+         $dbh->do("DELETE FROM userpic WHERE picid IN ($id_in)");
+         if ($dbb) {
+             # clustered blobs
+             $dbb->do("DELETE FROM userpicblob2 WHERE userid=$u->{'userid'} ".
+                      "AND picid IN ($id_in)");
+         } else {
+             # non-clustered blobs
+             $dbh->do("DELETE FROM userpicblob WHERE picid IN ($id_in)");
+         }
+     }
+
+     if (%picid_of_kwid) {
+         my $sql = "REPLACE INTO userpicmap (userid, kwid, picid) VALUES ";
+         $sql .= join(",", map { "($u->{'userid'}, $_, $picid_of_kwid{$_})" } keys %picid_of_kwid);
+         $dbh->do($sql);
+     }
+
+     my $new_default = $FORM{'defaultpic'}+0;
+     if ($FORM{"delete_$FORM{'defaultpic'}"}) { $new_default = 0; } # deleting your default
+     if ($new_default != $u->{'defaultpicid'}) {
+         $dbh->do("UPDATE user SET defaultpicid=$new_default WHERE userid=$u->{'userid'}");
+     }
+
+     $body .= "<?h1 Saved h1?><?p Your new picture keywords and defaults have been saved.  You can view them <a href=\"/allpics.bml?user=$u->{'user'}\">here</a>. p?>";
+
+     if (@errors) {
+         $body .= "<?p Some errors occured, though, processing your request: <UL>";
+         foreach (@errors) { $body .= "<LI>$_"; }
+         $body .= "</UL> p?>";
+     }
+     
+     return;
+ }
+
+ #### edit mode
+
+ $title = "Edit User Pictures";
+
+ my %keywords = ();
+ $sth = $dbr->prepare("SELECT m.picid, k.keyword FROM userpicmap m, keywords k WHERE m.userid=$u->{'userid'} AND m.kwid=k.kwid");
+ $sth->execute;
+ while (my ($pic, $keyword) = $sth->fetchrow_array) {
+     LJ::text_out(\$keyword);
+     push @{$keywords{$pic}}, $keyword;
+ }
+ 
+ $sth = $dbr->prepare("SELECT picid, width, height FROM userpic WHERE userid=$u->{'userid'}");
+ $sth->execute;
+ my $piccount = 0;
+
+ while (my $pic = $sth->fetchrow_hashref)
+ {
+     my $pid = $pic->{'picid'};
+
+     if ($piccount++ == 0) {
+
+         $body .= "<?h1 Current Pictures h1?><?p Here are the pictures you've uploaded in the past.  You can assign keywords to them so you can use them by keyword later, select which one to use as your default, or delete old ones.  To upload a new one, <a href='/uploadpic.bml$authlink'>go here</a>. p?>";
+
+         if ($remote) {
+             $body .= "<form method='post'>";
+             $body .= "<?h1 Switch Journal h1?><?p Work with journal: ";
+             $body .= LJ::make_shared_select($dbs, $remote, \%FORM);
+             $body .= " <input type='submit' value='Switch'> p?></form>";
+         }
+
+         $body .= "<form method='post'>";
+         $body .= "<input type='hidden' name='mode' value='save'>";
+         if ($FORM{'user'}) {
+             $body .= "<input type='hidden' name='user' value='$user'>\n";
+             my $hpass = LJ::hash_password($u->{'password'});
+             $body .= "<input type='hidden' name='hpassword' value='$hpass'>\n";
+         } else {
+             $body .= "<input type='hidden' name='authas' value='$FORM{'authas'}'>\n";
+         }
+
+
+         $body .= "<ul><table cellpadding='5' border='0' cellspacing='1'>";
+             
+     }
+     $body .= "<tr valign='middle'>";
+     $body .= "<td align='center'><img src='$LJ::USERPIC_ROOT/$pid/$u->{'userid'}' width='$pic->{'width'}' height='$pic->{'height'}'></td>";
+     $body .= "<td>";
+
+     $body .= "<table>";
+     
+     {
+         my $sel = $u->{'defaultpicid'} == $pic->{'picid'} ? "checked='1'" : "";
+         $body .= "<tr><td align='right'><b><label for='$pid-def'>Default:</label></b></td><td> <input id='$pid-def' type='radio' name='defaultpic' value='$pid' $sel>&nbsp;&nbsp;&nbsp;<b><label for='$pid-del'>Delete:</label></b> <input type='checkbox' name='delete_$pid' value='1' id='$pid-del'></TD></TR>\n";
+     }
+
+     {
+         my $eh_keywords = join(", ", sort { lc($a) cmp lc($b) } @{$keywords{$pic->{'picid'}}});
+         $eh_keywords = LJ::eall($eh_keywords);
+         $body .= "<tr><td align='right'><b><label for='$pid-key'>Keywords:</label></b></td><td> <input id='$pid-key' size='30' name='kw_$pic->{'picid'}' value=\"$eh_keywords\"></td></tr>\n";
+     }
+
+     $body .= "</TABLE>\n";
+
+
+     $body .= "</TD>";
+     $body .= "</TR>\n";     
+
+ }
+
+ if ($piccount) {
+     $body .= "<tr><td></td><td align=left>&nbsp;<b><label for='nodefpic'>No Default Picture</label></b>&nbsp;";
+     $body .= LJ::html_check({ 'name' => 'defaultpic', 
+                               'value' => 0,
+                               'type' => 'radio',
+                               'selected' => ! $u->{'defaultpicid'}, 
+                               'raw' => "id='nodefpic'",
+                           });
+     $body .= "</td><td>&nbsp;</td></tr>\n";
+     $body .= "<TR><TD></TD><TD>&nbsp;<P><INPUT TYPE=SUBMIT VALUE=\"Save Settings\"></TD></TR>\n";
+     $body .= "</TABLE>";
+     $body .= "</FORM>";
+ } else {
+     $body = "<?h1 No Pictures h1?><?p You have no pictures uploaded.  To upload one, go <A HREF='/uploadpic.bml$authlink'>here</A>. p?>";
+ }
+ 
+ return;
+
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+switchuser=><?_code return $su; _code?>
+page?><?_c <LJDEP>
+link: htdocs/login.bml, htdocs/allpics.bml, htdocs/uploadpic.bml
+post: htdocs/editpics.bml
+</LJDEP> _c?>

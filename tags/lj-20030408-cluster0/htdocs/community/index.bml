@@ -1,0 +1,15 @@
+<?page
+title=><?_ml .title _ml?>
+body<=
+
+<?_include
+bml=>1
+code=>0
+file=>community
+_include?>
+
+<=body
+page?><?_c <LJDEP>
+# NONE
+</LJDEP> _c?>
+

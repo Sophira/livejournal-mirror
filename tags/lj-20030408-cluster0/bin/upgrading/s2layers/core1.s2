@@ -1,0 +1,1251 @@
+# -*-s2-*-
+
+##[ layerinfo ]
+
+layerinfo "type" = "core";
+layerinfo "name" = "LiveJournal S2 Core, v1";
+layerinfo "redist_uniq" = "core1";
+layerinfo "majorversion" = "1";
+layerinfo "author_name" = "LiveJournal Webmaster";
+layerinfo "author_email" = "webmaster@livejournal.com";
+
+##[ S2 core classes ]
+
+class int
+{
+    function builtin zeropad(int digits) : string
+    "Return the int as a string with at least \$digits characters long, left-padded with zeroes.";
+}
+
+class string
+{
+    function builtin substr(int start, int length) : string
+    "Returns up to \$length characters from string, skipping \$start characters from the beginning.";
+
+    function builtin ends_with (string sub) : bool
+    "Returns true if string ends in \$sub";
+
+    function builtin starts_with (string sub) : bool
+    "Returns true if string begins with \$sub";
+
+    function builtin contains (string sub) : bool
+    "Return true if string contains \$sub";
+
+    function builtin lower : string
+    "Returns string in lower case.";
+
+    function builtin upper : string
+    "Returns string in upper case";
+
+    function builtin upperfirst : string
+    "Return string with the first character capitalized.";
+
+    function builtin length() : int
+    "Return the number of characters in the string.";
+
+    function builtin repeat(int n) : string
+    "Returns the string repeated n times";
+}
+
+class Color
+"Represent a color"
+{
+  var readonly int r "Red value, 0-255.";
+  var readonly int g "Green value, 0-255.";
+  var readonly int b "Blue value, 0-255.";
+  var  string as_string "HTML hex encoded: #rrggbb";
+  function builtin Color(string s) : Color "Constructor for color class.  Lets you make a Color object from a string of form #rrggbb";
+
+  function builtin red(int r) "Set the red value. (0-255)";
+  function builtin green(int g) "Set the green value. (0-255)";
+  function builtin blue(int b) "Set the blue value. (0-255)";
+  function builtin red() : int "Get the red value.";
+  function builtin green() : int "Get the green value.";
+  function builtin blue() : int "Get the blue value.";
+  function builtin brighter() : Color "Make color brighter, by 5%.";
+  function builtin brighter(int p) : Color "Make color brighter, by percent given.";
+  function builtin darker() : Color "Make color darker, by 5%.";
+  function builtin darker(int p) : Color "Make color darker, by percent given.";
+  function builtin inverse() : Color "Invert color.";
+  function builtin average(Color other) : Color "Returns color averaged with \$other color.";
+}
+
+##[ site-core classes ]
+
+class Date
+{
+    var int year "Year; 4 digits.";
+    var int month "Month; 1-12.";
+    var int day "Day; 1-31.";
+
+    function builtin day_of_week() : int
+    "Returns the day of the week this date falls on, from Sunday=1 to Saturday=7";
+
+    function builtin date_format (string fmt) : string
+    "Returns date formatted as indicated by \$fmt.  One of: short, med, long, med_day, long_day.  Or a custom format.  Default is 'short'.  TODO: document %% vars.";
+}
+
+class DateTime extends Date
+{
+    var int hour "Hour; 0-23.";
+    var int min "Minute; 0-59.";
+    var int sec "Second; 0-59.";
+
+    function builtin time_format () : string
+    "Returns time formatted as normal.";
+
+    function builtin time_format (string fmt) : string
+    "Returns time formatted as indicated by \$fmt, or normal if blank.";
+}
+
+
+class Image
+"Generic HTML image handler"
+{
+    var string url "URL of the image";
+    var int width "Width in pixels";
+    var int height "Height in pixels";
+
+    function print ()
+    "Print an HTML tag for this Image";
+
+    function print (string alttext)
+    "Print an HTML tag for this Image with given alttext";
+
+    function print (string{} opts)
+    "Print the HTML for an image, Supported keys are 'href' to create a link to the image source
+     and 'a_attr' which adds attributes to the anchor tag if a link is to be printed.";
+
+    function as_string () : string
+    "Return the HTML tag for this image";
+
+    function as_string (string{} opts) : string
+    "Return the HTML for an image, Supported keys are 'href' to create a link to the image source
+     and 'a_attr' which adds attributes to the anchor tag if a link is to be printed.";
+}
+
+class Link
+"A link or a button"
+{
+    var string url "URL which the link points to";
+    var string caption "The caption for the link";
+    var Image icon 
+    "A suggestion from the server as to which icon to use. layouts/users can override this of course. 
+    alt text works similarly to [member[Link.caption]].";
+
+    function print_button
+    "Output this Link as a clickable button using [member[Link.image]]";
+
+    function print_text
+    "Output this Link as a simple HTML link.";
+
+    function as_string() : string
+    "Return the simple HTML link.";
+}
+
+class ItemRange
+"Represents a range of items which optionally contain items."
+{
+  var bool all_subitems_displayed "True if the subitems in this range represent the entire set. In this case, all of the URL members are blank.";
+  var int num_subitems_displayed "The number of subitems in this range.";
+  var int total "The total number of items that are navigable to.";
+  var int current "The currently-active item.";
+  var int from_subitem "The index of the first subitem in this range.";
+  var int to_subitem "The index of the last subitem in this range.";
+  var int total_subitems "The number of subitems.";
+  var string url_next "URL for the 'next' link.  Blank if there isn't a next URL."; 
+  var string url_prev "URL for the 'previous' link.  Blank if there isn't a previous URL.";
+  var string url_first "URL for the 'first' link.  Blank if already on the first page.";
+  var string url_last "URL for the 'last' link.  Blank if already on the last page.";
+  function builtin url_of(int n) : string "Returns the URL to use to link to the nth item";
+
+  function print () "Prints the item range links";
+  function print(string labeltext) "Prints the item range links with the given \$labeltext";
+}
+
+### LJ Specific Classes
+
+class CommentInfo
+"Information about comments attached to something"
+{
+    var string read_url "URL pointer to the 'Read Comments' view.";
+    var string post_url "URL pointer to the 'Post Comments' view.";
+    var int count "Current number of comments available to be read by the viewer.";
+    var bool screened "Set to true if there are screened comments and remote user can unscreen them.";
+    var bool enabled "Set to false if comments disabled journal-wide or just on this item.";
+
+    function print
+    "Print all comment related links";
+    function print_readlink
+    "Print the formatted link to the 'Read Comments' view";
+    function print_postlink
+    "Print the formatted link to the 'Post Comments' view";
+}
+
+class UserLite
+"A 'lite' userinfo structure which only requires a single, simple db query to build"
+{
+    var string username "Canonical Username, ex: johnqpub";
+    var string name "User's formatted name, ex: John Q. Public";
+    var string journal_type "Type of account: P (personal), C (community), Y (syndicated), S (shared), etc";
+
+    function base_url () : string "Returns URL of user's journal.";
+    function as_string() : string;
+    function print ();
+}
+
+class Entry
+"A journal entry"
+{
+    var string subject "Entry subject";
+    var string text "Entry text. (Will be blank on some viewtypes, like 'month' view)";
+    var DateTime time "The user specificed time of this entry";
+
+    var string security "The security level of the entry ('private', 'protected'), or blank if public.";
+    var Image security_icon "A little icon which should be displayed somewhere on an entry to represent the security setting";
+
+    var UserLite poster "Author of the journal entry";
+    var UserLite journal "Journal the entry has been posted to";
+
+    var string{} metadata "Post metadata. Keys: 'music', 'mood'";
+    var Image mood_icon "Mood icon, or null.";
+    var CommentInfo comments "Comment information on this entry";
+
+    var bool new_day "Is this entry on a different day to the previous one?";
+    var bool end_day "Is this the last entry of a day?";
+    var Image userpic "The userpic selected to relate to this entry";
+    var Link{} links "Hash of links that the server suggests be linked from this entry, eg to edit an entry if a user is viewing their own journal.";
+    var int itemid "Server stored ID number for this entry";
+    var string permalink_url "A URL at which this specific entry can be viewed, for linking purposes.";
+
+    function print_metadata ();
+    function builtin plain_subject () : string
+        "Return entry's subject as plain text, with all HTML removed.";
+}
+
+### Userinfo
+
+class Friend extends UserLite 
+"Represents a friends or friendof list"
+{
+    var Color bgcolor "Background color selected for friend";
+    var Color fgcolor "Foreground color selected for friend";
+}
+
+class User extends UserLite 
+"A more information-rich userinfo structure"
+{
+    var Image default_pic "Information about default userpic";
+    var string website_url "URL pointer to user's website";
+    var string website_name "'pretty' name of user's website";
+}
+
+### Pages
+
+class Page
+"Base template for all views"
+{
+    var string view "The view type (recent, friends, archive, month, day, entry)";
+    var User journal "User whose journal is being viewed";
+    var string journal_type "Journal type, ex: 'P' (personal), 'C' (community), etc.";
+    var string base_url "The base URL of the journal being viewed.";
+    var string{} view_url
+    "Links to top-level views where id equals the name of the view being linked to. 
+    (if one of views == \$.view, already looking at that view)";
+
+    var string[] views_order "An array of view identifiers which can be used to order the views hash.";
+    var string head_content 
+    "Extra tags supplied by the server to go in the <head> section of the output HTML document. Layouts 
+    should include this in the head section if they are writing HTML.";
+ 
+    var string stylesheet_url 
+    "The URL to use in a link element for the server-supported external stylesheet to put stuff in it)";
+    
+    var string global_title 
+    "A title selected by the user for their whole journal.";
+
+    function print
+    "The main entry point that LiveJournal calls. Layouts should override this to create HTML that's the
+    same for all view types, and use \$this->title, \$this->head and \$this->body to include view-specific
+    content into the template.";
+
+    function view_title : string
+    "Return a title for this particular page, such as \"Friends' Recent Entries\" for the friends view,
+    or a date for the day view. Should be overridden in i18n layers. Ideally, layout layers should never touch
+    this.  See [member[Page.title]].";
+
+    function title : string 
+    "Return a relevant combination of [member[global_title]] and [method[Page::view_title()]]. Should be
+    overridden in layout layers.";
+    
+    function print_body 
+    "Call from [method[Page::print()]] to render parts of the view that are specific to the view, eg print
+    the recent set of journal entries, recent friends entries, or rows of user information";
+ 
+    function print_entry(Entry e) 
+    "Output a journal entry. Layouts should override this and the inherited versions in RecentPage, FriendsPage
+    and DayPage to change how entries display.";
+    
+    function print_entry_poster(Entry e) 
+    "Output a line of text which says who posted an entry (just \"user\", or \"user posting in somejournal\")";
+
+    function builtin get_latest_month() : YearMonth
+    "Returns information about the latest month the user posted (or the current month, if no posts), so that the page may include a mini-calendar or similar features.";
+
+}
+
+class RecentNav {
+    var int version        "Currently version 1.  A new method of navigation has been frequently discussed, so this is planning for the future";
+
+    # version 1 attributes:
+    var int skip            "Indicates how many entries are being skipped back.";
+    var string forward_url  "URL to go forward in time, or blank if furthest forward.";
+    var int forward_skip    "Number of items we'd be skipping going forward.";
+    var int forward_count   "Number of items we'd be potentially seeing going forward.";
+    var string backward_url "URL to go backward in time, or blank if furthest back server will allow.";
+    var int backward_skip   "Number of items we'd be skipping going back more.";
+    var int backward_count  "Number of items we'd be potentially seeing going backward.";
+}
+
+class RecentPage extends Page 
+"Most recent entries page, formally known as the LASTN view in the previous style system"
+{
+    var Entry[] entries
+    "Array of entries available to be seen by the viewer of the page.";
+
+    var RecentNav nav;
+}
+
+class FriendsPage extends RecentPage
+"Friends most recent entries"
+{
+    var Friend{} friends
+    "A mapping from friend username to color association information.  There will only be keys for friends whose entries are in the entries array.";
+}
+
+class DayPage extends Page 
+"View entries by specifc day"
+{
+    var Date prev_date "Previous day";
+    var Date next_date "Next day";
+    var string prev_url "URL to previous day";
+    var string next_url "URL to next day";
+    var bool has_entries "True if there are entries on the specified day";
+    var Entry[] entries "Array of entries available to be seen by the viewer of the page";
+    var Date date "Date of the current day";
+}
+
+### Archive classes
+
+class YearYear
+"Information on how to link to a year in the year archive"
+{
+    var int year "Number of the year, eg 2001.";
+    var string url "URL to link to for this year.";
+    var bool displayed "If this is the year currently being displayed, this will be true.";
+}
+
+class YearDay 
+"Information on how to link to a day in the year archive"
+{
+    var int day "Day of month number";
+    var Date date "Date of day";
+
+    # http://zilla.livejournal.org/show_bug.cgi?id=504
+    # var bool is_today "True if the day represents the current day.";
+
+    var int num_entries "Number of entries made on this day";
+    var string url "A URL to view the day, if there are entries, else blank.";
+}
+
+class YearWeek
+"Represents a 'week' on the year archive"
+{
+    var int pre_empty "How many days at the start of the week are blank? (From previous month)";
+    var int post_empty "How many days at the end of the week are blank? (From next month)";
+    var YearDay[] days "An array of the days of the week (0=sunday)";
+
+    function print()
+    "Print formatted week";
+}
+
+class YearMonth 
+"A month on the calendar page"
+{
+    var bool has_entries "If this is false, you probably don't want to display this month.";
+    var int month "The number of the month";
+    var int year "The number of the year";
+    var YearWeek[] weeks "An array of the weeks of the month (for ease of building a row-per-week calendar)";
+    var string url "A url to link to in order to view this month.";
+
+    function builtin month_format () : string
+    "Returns month formatted long (February 1980)";
+    function builtin month_format (string fmt) : string
+    "Returns time formatted as indicated by \$fmt, or long if blank .";
+}
+
+class YearPage extends Page 
+"Entire calendar page for a single year"
+{
+    var int year "The year being viewed";
+    var YearYear[] years "Information for linking to other years";
+    var YearMonth[] months "12 months objects, even if no entries are in that month.";
+    var int[] weekdays 
+    "Integers representing the days of the week. This will start on Monday (2) or Sunday (1) depending on 
+     the property setting for start-of-week and go to Sunday (1) or Saturday (7)";
+
+    function print_month(YearMonth m)
+    "Print the calendar cell for the given month";
+
+    function print_year_links()
+    "Print the navigation links to move between years";
+}
+
+class MonthDay extends YearDay
+"Summaries of posts by given day"
+{
+    var Entry[] entries "Only populated on the month view. Entry text not present.";
+
+    function print_subjectlist 
+    "Print a list of entry summaries including subjects";
+}
+
+class MonthPage extends Page 
+"A page which contains a list of posts made in that month"
+{
+    var MonthDay[] days "The days of the month containing entries.";
+    var Link prev "A link to the previous month";
+    var Link next "A link to the next month";
+
+    function builtin print_navform()
+    "Print out a form which can be used to select a month and year.";
+}
+
+
+##[ Built-in Functions ]
+
+function builtin eurl (string s) : string
+"URL escape";
+
+function builtin ehtml (string s) : string
+"Escapes all HTML tags and entities from the text";
+
+function builtin etags (string s) : string
+"Escapes all HTML tags (but not entities) from text";
+
+function builtin rand (int high) : int
+"Returns a random integer between 1 and \$high, inclusive.";
+
+function builtin rand (int low, int high) : int
+"Returns a random integer between \$low and \$high, inclusive.";
+
+function builtin alternate (string a, string b) : string
+"With each call, this function will alternate between the two values and return one of them.
+Useful for making tables whose rows alternate in background color.";
+
+function builtin zeropad (int n, int digits) : string
+"Returns the number padded with zeroes so it has the amount of digits indicated.";
+
+function builtin zeropad (string n, int digits) : string
+"Returns the number padded with zeroes so it has the amount of digits indicated.";
+
+function builtin striphtml (string s) : string 
+"Similar to ehtml, but the HTML tags are stripped rather than escaped.";
+
+function builtin viewer_logged_in() : bool
+"Returns true if the user viewing the page is logged in. It's recommended that your page links to the site
+login page if the user isn't logged in.";
+
+function builtin viewer_is_owner() : bool
+"Returns true if the user viewing the page is both logged in, and is the owner of the content in question.
+Useful for returning links to manage information, or edit entries.";
+
+function builtin get_page () : Page
+"Gets the top-level [class[Page]] instance that LiveJournal ran the [method[Page::print()]] method on.";
+
+function builtin get_url(string user, string view) : string 
+"Returns a URL to the specified view for the specified user. Views use the same names as elsewhere. (recent, friends, archive, month, userinfo)";
+
+function builtin get_url(UserLite user, string view) : string
+"Returns a URL to the specified view for the specified user. Views use the same names as elsewhere. (recent, friends, archive, month, userinfo)";
+
+function builtin string(int i) : string
+"Return the given integer as a string";
+
+function builtin int(string s) : int
+"Convert the string to an integer and return";
+
+function builtin set_content_type(string text)
+"Set the HTTP Content-type response header (for example, if outputting XML). Must be called before printing any data.";
+
+function builtin get_plural_phrase(int n, string prop) : string
+"Picks the phrase with the proper plural form from those in the property \$prop, passing \$n to [func[lang_map_plural(int)]] to get the proper form for the current language, and then substituting the # character with \$n.  Also, returned string is HTML-escaped.";
+
+##[ properties ]
+
+property string lang_current {
+        noui = 1;
+        des = "Current language code.  So layouts can change date/time formats more safely if they want.";
+}
+set lang_current = "en";  # core is English.
+
+property string lang_fmt_date_short {
+    noui = 1; 
+    des = "Short date format.  All numeric.";
+}
+set lang_fmt_date_short = "%%m%%/%%d%%/%%yy%%";
+
+property string lang_fmt_date_med {
+    noui = 1; 
+    des = "Medium date format.  Abbreviated month name, no day of the week.";
+}
+set lang_fmt_date_med = "%%mon%%. %%dayord%%, %%yyyy%%";
+
+property string lang_fmt_date_med_day {
+    noui = 1; 
+    des = "Medium date format with day of week.  Abbreviated month name and abbreviated day of the week.";
+}
+set lang_fmt_date_med_day = "%%da%%, %%mon%%. %%dayord%%, %%yyyy%%";
+
+property string lang_fmt_date_long {
+    noui = 1; 
+    des = "Long date format.  With full month name, but no day of the week.";
+}
+set lang_fmt_date_long = "%%month%% %%dayord%%, %%yyyy%%";
+
+property string lang_fmt_date_long_day {
+    noui = 1; 
+    des = "Long date format.  With full month name and full day of the week.";
+}
+set lang_fmt_date_long_day = "%%day%%, %%month%% %%dayord%%, %%yyyy%%";
+
+property string lang_fmt_time_short {
+    noui = 1; 
+    des = "Time format.";
+}
+set lang_fmt_time_short = "%%hh%%:%%min%% %%a%%m";
+
+property string lang_fmt_month_short {
+    noui = 1; 
+    des = "Short month format.";
+}
+set lang_fmt_month_short = "%%m%%/%%yy%%";
+
+property string lang_fmt_month_med {
+    noui = 1; 
+    des = "Medium month format.";
+}
+set lang_fmt_month_med = "%%mon%% %%yyyy%%";
+
+property string lang_fmt_month_long {
+    noui = 1; 
+    des = "Long month format.";
+}
+set lang_fmt_month_long = "%%month%% %%yyyy%%";
+
+property string[] lang_monthname_long {
+    noui = 1;
+    des = "Months of the year.  Indexed from 1 (January) to 12 (December).";
+}
+set lang_monthname_long = [ "", "January",  "February", "March",
+                            "April", "May", "June",
+                            "July", "August", "September",
+                            "October", "November", "December" ];
+
+property string[] lang_monthname_short {
+    noui = 1;
+    des = "Months of the year, in their short forms.  Indexed from 1 (Jan) to 12 (Dec).";
+}
+set lang_monthname_short = [ "", "Jan",  "Feb", "Mar",
+                             "Apr", "May", "Jun",
+                             "Jul", "Aug", "Sep",
+                             "Oct", "Nov", "Dec" ];
+
+property string[] lang_dayname_long {
+    noui = 1;
+    des = "Days of the week.  Indexed from 1 (Sunday) to 7 (Saturday).";
+}
+set lang_dayname_long = [ "", "Sunday", "Monday",  "Tuesday", "Wednesday", 
+                          "Thursday", "Friday", "Saturday" ];
+
+property string[] lang_dayname_short {
+    noui = 1;
+    des = "Days of the week, in their short forms.  Indexed from 1 (Sun) to 7 (Sat).";
+}
+set lang_dayname_short = [ "", "Sun", "Mon",  "Tue", "Wed", 
+                           "Thu", "Fri", "Sat" ];
+
+property string IMGDIR {
+    noui = 1;
+    des = "A URL which can be safely prepended onto a path starting with / where sitewide image resources can be found.";
+}
+property string SITENAME {
+    noui = 1;
+    des = "Actual name of the host site.";
+}
+property string SITEROOT {
+    noui = 1;
+    des = "Site URL which can be safely prepended onto paths starting with /";
+}
+
+property int page_recent_items {
+    des = "Number of journal entries to show on recent entry page";
+    min = 1;
+    max = 50;
+}
+property int page_friends_items {
+    des = "Number of journal entries to show on friends page";
+    min = 5;
+    max = 50;
+}
+set page_recent_items = 20;
+set page_friends_items = 20;
+
+property string page_day_sortorder {
+    des = "Order of entries shown on a Day page";
+    values = "forward|Least recent first|reverse|Most recent first";
+}
+property string page_archiveyear_sortorder {
+    des = "Order of months shown on the year archive page";
+    values = "forward|Least recent first|reverse|Most recent first";
+}
+set page_day_sortorder = "forward";
+set page_archiveyear_sortorder = "forward";
+
+property string text_meta_music {
+    des = "Text for 'Current Music'";
+}
+set text_meta_music = "Current Music";
+
+property string text_meta_mood {
+    des = "Text for 'Current Mood'";
+}
+set text_meta_mood = "Current Mood";
+
+property string text_post_comment {
+    des = "Link text to leave a comment.";
+    example = "Leave a comment";
+}
+property string text_read_comments {
+    des = "Link text to read comments.";
+    format = "plurals";
+    example = "1 comment // # comments";
+}
+set text_post_comment = "Leave a comment";
+set text_read_comments = "1 comment // # comments";
+
+property string text_post_comment_friends {
+    des = "Link text to leave a comment on friends view entry.";
+    example = "Leave a comment";
+}
+property string text_read_comments_friends {
+    des = "Link text to read comments on a friends view entry.";
+    format = "plurals";
+    example = "1 comment // # comments";
+}
+set text_post_comment_friends = "Leave a comment";
+set text_read_comments_friends = "1 comment // # comments";
+
+property string text_skiplinks_back {
+    des = "Text to show in a link to skip back through entries";
+    maxlength = 20;
+    "size" = 15;
+    example = "Go back #";
+    note = "Include a # character to insert the number of entries that will be viewable when skipping back.";
+}
+property string text_skiplinks_forward {
+    des = "Text to show in a link to skip forward through entries";
+    maxlength = 20;
+    "size" = 15;
+    example = "Go forward #";
+    note = "Include a # character to insert the number of entries that will be viewable when skipping forward.";
+}
+property string text_skiplinks_forward_words {
+    des = "Text to show in a link to skip forward through entries";
+    maxlength = 20;
+    "size" = 15;
+    example = "Go forward";
+}
+set text_skiplinks_back="Previous #";
+set text_skiplinks_forward="Next #";
+
+property string text_view_recent {
+    des = "Text used to link to the 'Recent Entries' view.";
+    maxlength = 20;
+    "size" = 15;
+    example = "Recent Posts";
+}
+property string text_view_friends {
+    des = "Text used to link to the 'Friends' view.";
+    maxlength = 20;
+    "size" = 15;
+    example = "My Friends' Entries";
+}
+property string text_view_friends_comm {
+    des = "Text used to link to the 'Friends' view for a community.";
+    maxlength = 20;
+    "size" = 15;
+    example = "Members' Journals";
+}
+property string text_view_archive {
+    des = "Text used to link to the archive view.";
+    maxlength = 20;
+    "size" = 15;
+    example = "Journal Archive";
+}
+property string text_view_userinfo {
+    des = "Text used to link to the 'User Information' view.";
+    maxlength = 20;
+    "size" = 15;
+    example = "My Profile";
+}
+property string text_view_month {
+    des = "Text used to link to a list of subjects for a month.";
+    maxlength = 20;
+    "size" = 15;
+    example = "View Subjects";
+}
+set text_view_recent = "Recent Entries";
+set text_view_friends = "Friends";
+set text_view_archive = "Archive";
+set text_view_userinfo = "User Info";
+set text_view_month = "View Subjects";
+
+property string text_nosubject {
+    des = "Text to replace a subject line when no subject is specified";
+    maxlength = 20;
+    size = 10;
+    example = "No Subject";
+    note = "This only appears in places where a subject line is required, such as on a month view.";
+}
+set text_nosubject = "No Subject";
+
+property string text_noentries_recent {
+    des = "Text do display when there are no entries on the recent or friends views";
+    maxlength = 255;
+    size = 50;
+}
+set text_noentries_recent = "There are no entries to display.";
+
+property string text_noentries_day {
+    des = "Text do display when there are no entries on the day view";
+    maxlength = 255;
+    size = 50;
+}
+set text_noentries_day = "There were no entries on this day.";
+
+property string text_permalink {
+    des = "Text for a entry's permanent link";
+    maxlength = 50;
+    size = 20;
+}
+set text_permalink = "Link";
+
+
+property string font_base {
+    des = "Preferred Font";
+    maxlength = 25;
+    "size" = 10;
+    example = "Arial";
+    note = "Leave blank if you don't care.";
+}
+set font_base = "";   # In core, default is not to care. Layouts will probably specify fonts the author likes instead.
+
+property string font_fallback {
+    des = "Alternative font style";
+    values = "sans-serif|Sans-serif|serif|Serif|cursive|Cursive|monospace|Monospaced|none|Use browser's default";
+    note = "This general style will serve as a fallback if your preferred font is unavailable.";
+}
+set font_fallback = "none"; # Default in core is to let the browser handle it.
+
+property string reg_firstdayofweek {
+    des = "Calendar weeks start on";
+    values = "sunday|Sunday|monday|Monday";
+}
+set reg_firstdayofweek = "sunday";
+
+property string text_day_prev {
+    des = "Text to link to the previous day";
+    example = "Previous Day";
+    maxlength = 20;
+}
+property string text_day_next {
+    des = "Text to link to the next day";
+    example = "Next Day";
+    maxlength = 20;
+}
+set text_day_prev = "Previous Day";
+set text_day_next = "Next Day";
+
+##[ global function implementations ]
+
+function lang_map_plural (int n) : int {
+    if ($n == 1) { return 0; } # singular
+    return 1;             # plural
+}
+
+function prop_init ()
+  "This function is the first thing called and is the place to set properties based on the values of other properties.  It's called before the style system looks at its builtin properties, so if you need to conditionally setup something based on your own custom properties, do it here.  You can't print from this function."
+{
+  # do nothing, just exist.
+}
+
+function print_stylesheet ()
+  "Prints a stylesheet, the URL of which can be referenced by [member[Page.stylesheet_url]].  This is another S2 entry point, in addition to [member[Page::print()]]." {
+}
+
+function htmlattr(string name, string value) : string 
+"If the value isn't blank, return in HTML attribute format with a leading space.  HTML of name is not escaped."
+{
+    if ($value != "") {
+        $name = $name->lower();
+        return " $name=\"" + ehtml($value )+ "\"";
+    } else {
+        return "";
+    }
+}
+function htmlattr(string name, int value) : string {
+    return htmlattr($name, string($value));
+}
+
+### Language
+
+function lang_ordinal(int num) : string
+"Make an ordinal number from a cardinal number"
+{
+    if ($num % 100 >= 4 and $num % 100 <= 20) { return $num+"th"; }
+    if ($num % 10 == 1) { return $num+"st"; }
+    if ($num % 10 == 2) { return $num+"nd"; }
+    if ($num % 10 == 3) { return $num+"rd"; }
+    return $num+"th";
+}
+
+function lang_ordinal(string num) : string 
+"Make an ordinal number from a cardinal number"
+{
+    return lang_ordinal(int($num)); 
+}
+
+
+function lang_viewname(string viewid) : string 
+"Get some words representing a view"
+{
+    if ($viewid == "recent") { return $*text_view_recent; }
+    if ($viewid == "archive") { return $*text_view_archive; }
+    if ($viewid == "friends") { return $*text_view_friends; }
+    if ($viewid == "day") { return "Day"; }
+    if ($viewid == "month") { return "Month"; }
+    if ($viewid == "userinfo") { return $*text_view_userinfo; }
+    if ($viewid == "commentread") { return "Read Comments"; }
+    if ($viewid == "commentpost") { return "Post Comment"; }
+    return "Unknown View";
+}
+
+### Navigation
+
+
+### Image Manipulation
+
+function Image::as_string(string{} opts) : string {
+    var string img = "";
+    if ($opts{"href"} != "") { $img = $img + "<a href=\"$opts{"href"}\" $opts{"a_attr"}>"; }
+    $img = $img + $this->as_string();
+    if ($opts{"href"} != "") { $img = $img + "</a>"; }
+
+    return $img;
+}
+
+function Image::as_string() : string {
+    var string img = """<img src="$.url" """;
+#    var string ealt = ehtml($.alt);
+    $img = $img + htmlattr("height", $.height); 
+    $img = $img + htmlattr("width", $.width);
+#    $img = $img + " alt=\"" + ehtml($.alt) + "\""; 
+#    foreach var string attr ($.attributes) {
+#        $img = $img + htmlattr($attr, $.attributes{$attr});
+#    }
+    $img = $img + " />";
+
+    return $img;
+}
+
+function Image::print (string{} opts)
+{
+    print $this->as_string($opts);
+}
+
+function Image::print (string alttext)
+{
+    # TODO: use alttext
+    print $this->as_string();
+}
+
+function Image::print
+{
+    print $this->as_string();
+}
+
+function userinfoicon(UserLite user) : Image {
+    var Image uimage;
+    $uimage.width = 17;
+    $uimage.height = 17;
+#    $uimage.alt = "User Information";
+#    $uimage.attributes{"align"} = "absmiddle";
+#    $uimage.attributes{"border"} = "0";
+
+    if ($user.journal_type == "C") {
+        $uimage.url = "$*IMGDIR/community.gif";
+    } elseif ($user.journal_type == "N") {
+        $uimage.url = "$*IMGDIR/newsinfo.gif";
+    } else {
+        $uimage.url = "$*IMGDIR/userinfo.gif";
+    }
+    return $uimage;
+}
+
+### UserLite functions
+
+function UserLite::base_url() : string {
+    if ($.journal_type == "C") {
+        return "$*SITEROOT/community/$.username";
+    }
+    return "$*SITEROOT/users/$.username";
+}
+
+function UserLite::as_string() : string {
+    var Image uiimg;
+    #$uiimg = userinfoicon($this);
+    return "<a href=\"" + get_url($this,"userinfo") + "\"></a><b><a" + htmlattr("title",$.name) + " href=\""+$this->base_url()+"\">$.username</a></b>";
+    #return "<a href=\"" + get_url($this,"userinfo") + "\">" + $uiimg->as_string() + "</a><b><a" + htmlattr("title",$.name) + " href=\""+$this->base_url()+"\">$.username</a></b>";
+}
+
+function UserLite::print() {
+    print $this->as_string();
+}
+
+function Friend::as_string() : string {
+    var Image uiimg;
+    $uiimg = userinfoicon($this);
+    var string style = "";
+    $style = "color: $.fgcolor; background: $.bgcolor;";
+    return "<a" + htmlattr("style",$style) + " href=\"" + get_url($this,"userinfo") + "\">" + $uiimg->as_string() + "</a>" +
+    "<b><a" + htmlattr("style",$style) + htmlattr("title",$.name) + " href=\""+$this->base_url()+"\">$.username</a></b>";
+}
+
+function Friend::print() {
+    print $this->as_string();
+}
+
+### Generic Page Functions
+
+function Page::view_title() : string {
+    return lang_viewname($.view);
+}
+function FriendsPage::view_title() : string {
+    if ($.journal.journal_type == "C") {
+        return $*text_view_friends_comm;
+    } else {
+        return $*text_view_friends;
+    }
+}
+function DayPage::view_title : string {
+    return $.date->date_format("long");
+}
+function YearPage::view_title() : string {
+    return string($.year);
+}
+function Page::title() : string {
+    var string title = $.global_title;
+    if ($title == "") {
+        $title = $.journal.name;
+    }
+    if ($.view != "recent") {
+        $title = $title + " - " + $this->view_title();
+    }
+    return $title;
+}
+function server_sig() {
+    """Powered by <a href="$*SITEROOT/">$*SITENAME</a>""";
+}
+function Page::print() {
+    """<html>\n<head>\n<title>""";
+    print $this->title();
+    "</title>\n$.head_content";
+    if ($*font_base != "" or $*font_fallback != "none") {
+
+"""<style type="text/css">
+<!--
+body, td, th, table, p, div {
+    font-family: """;
+        if ($*font_base != "") {
+            "\"$*font_base\"";
+            if ($*font_fallback != "none") {
+                ", ";
+            }
+        }
+        if ($*font_fallback != "none") {
+            print $*font_fallback;
+        }
+        ";\n}\n--></style>\n";
+    }
+    "</head>\n<body>\n";
+    if (defined $.journal.default_pic) {
+        $.journal.default_pic->print();
+    }
+    "<h1>";
+    print $this->title();
+    "</h1>\n";
+
+    #print_linklist($.views,$.view,$.viewsorder);
+    $this->print_body();
+    """\n<hr><address>""";
+    server_sig();
+    """</address>\n</body></html>""";
+}
+
+function Page::print_body() {
+    """<p>Error: There is no body renderer for viewtype <tt>$.view</tt> defined.</p>""";
+}
+
+function Page::print_entry_poster(Entry e) {
+    $e.poster->print();
+    if ($.view == "friends" and $e.poster.username != $e.journal.username) {
+        " posting in ";
+        $e.journal->print();
+    }
+}
+function Page::print_entry(Entry e) {
+    ## For most styles, this will be overridden by FriendsPage::print_entry and such.
+    """<div class="entry" id="entry$e.itemid">\n""";
+    "<h3>";
+    $this->print_entry_poster($e);
+    if ($e.subject != "") {
+        ": $e.subject";
+    }
+    if ($e.security != "") {
+        " "+$e.security_icon->as_string();
+    }
+    "</h3>\n";
+    """<div class="entrytext">\n$e.text\n</div>\n""";
+    $e->print_metadata();
+    if ($e.comments.enabled) {
+        $e.comments->print();
+    }
+    "</div>\n\n";
+}
+function FriendsPage::print_entry(Entry e) {
+    ## For most styles, this will be overridden by FriendsPage::print_entry and such.
+    """<div class="entry" id="entry$e.itemid">\n""";
+    var Color bg;
+    var Color fg;
+    $bg=$.friends{$e.journal.username}.bgcolor;
+    $fg=$.friends{$e.journal.username}.fgcolor;
+    "<h3 style=\"color: " + $fg + "; background: " + $bg + " none;\">";
+    $this->print_entry_poster($e);
+    if ($e.subject != "") {
+        ": $e.subject";
+    }
+    if ($e.security != "") {
+        $e.security_icon->print($e.security);
+    }
+    "</h3>\n";
+    """<div class="entrytext">\n$e.text\n</div>\n""";
+    $e->print_metadata();
+    if ($e.comments.enabled) {
+        $e.comments->print();
+    }
+    "</div>\n\n";
+}
+function Entry::print_metadata() {
+    if (size $.metadata) {
+        "<div class=\"metadata\">\n";
+        foreach var string m ($.metadata) {
+            #$.metadata{$m}->print();
+        }
+        "</div>\n";
+    }
+}
+
+### RecentPage and related functions
+
+function RecentPage::print_body {
+    # Creator for both the Recent and Friends views, since they are similar
+    # If someone wants to do the two views differently, they can create
+    # FriendsPage::print_body since FriendsPage extends RecentPage.
+
+    foreach var Entry e ($.entries) {
+        if ($e.end_day) {
+            "</div>";
+        }
+        if ($e.new_day) {
+            """<div class="day" id="dayYYYYMMMDD">\n<h2>""";
+            print $e.time->date_format("long_day");
+            "</h2>\n";
+        }
+        # Print the entry
+        $this->print_entry($e);
+    }
+}
+
+
+### Year view
+
+function YearPage::print_body {
+    $this->print_year_links();
+    foreach var YearMonth m ($.months) {
+        $this->print_month($m);
+    }
+}
+function YearPage::print_year_links() {
+    """<ul>\n""";
+    foreach var YearYear y ($.years) {
+        if ($y.displayed) {
+            """<li class="active">$y.year</li>\n""";
+        } else {
+            """<li><a href="$y.url">$y.year</a></li>\n""";
+        }
+    }
+    """</ul>\n""";
+}
+function YearPage::print_month(YearMonth m) {
+    if (not $m.has_entries) { return; }
+    """<table style="margin-left: 25%; margin-right: 25%; margin-top: 1em; margin-bottom: 1em;
+       border-collapse: collapse; border: 1px solid;" border="1">\n
+       <tr><th colspan="7" style="text-align: center; border: 1px solid;">""";
+    print $m->month_format();
+    """</th></tr>\n""";
+    foreach var int d ($.weekdays) {
+        "<th>"+$*lang_dayname_short[$d]+"</th>\n";
+    }
+    "</tr>\n";
+    foreach var YearWeek w ($m.weeks) {
+        $w->print();
+    }
+    """<tr><td colspan="7" style="text-align: center; border: 1px solid;">
+        <a href="$m.url">$*text_view_month</a></td></tr>\n""";
+    "</table>";
+}
+
+function YearWeek::print() {
+   """<tr valign="top" style="height: 2em;">\n""";
+   if ($.pre_empty > 0) {
+      """<td class="emptyday" colspan="$.pre_empty">&nbsp;</td>\n""";
+   }
+   foreach var YearDay d ($.days) {
+       """<td style="border: 1px solid;">\n""";
+       """<div style="text-align: right;">$d.day</div>\n""";
+       if ($d.num_entries > 0) {
+           """<div style="text-align: center;"><a href="$d.url">$d.num_entries</a></div>\n""";
+       }
+       """</td>\n""";
+   }
+   if ($.post_empty > 0) {
+      """<td colspan="$.post_empty">&nbsp;</td>\n""";
+   }
+   "</tr>";
+}
+
+function MonthPage::print_body {
+    "<div class=\"monthnav\">";
+    $.prev->print_button();
+    $this->print_navform();
+    $.next->print_button();
+    "</div>\n<dl>";
+    foreach var MonthDay d ($.days) {
+        "<dt><a href=\"$d.url\">";
+        print lang_ordinal($d.day);
+        "</a></dt>\n<dd>";
+        $d->print_subjectlist();
+        "</dd>\n";
+    }
+    "</dl>\n";
+}
+
+function MonthDay::print_subjectlist() {
+    "<table>\n";
+    foreach var Entry e ($.entries) {
+        "<tr><td>";
+        print $e.time->date_format("short");
+        "</td><td>";
+        if ($e.poster.username != $e.journal.username) {
+            $e.poster->print();
+        }
+        "</td><td>";
+        if ($e.subject != "") {
+            "<a href=\"$e.permalink_url\">"+striphtml($e.subject)+"</a>";
+        } else {
+            "<a href=\"$e.permalink_url\" style=\"font-style: italic;\">($*text_nosubject)</a>";
+        }
+        "</td></tr>\n";
+    }
+    "</table>";
+}
+
+### Day view
+
+function DayPage::print_body() {
+    if ($.has_entries) {
+        "<div class=\"day\" id=\"dayyymmmmmdddd\">\n<h2>";
+        print $.date->date_format("long");
+        "</h2>\n";
+
+        foreach var Entry e ($.entries) {
+            $this->print_entry($e);
+        }
+
+        "</div>";
+    } else {
+        "<p>"+ehtml($*text_noentries_day)+"</p>";
+    }
+
+    "<div class=\"skiplinks\">\n";
+    "<a href=\""+ehtml($.prev_url)+"\">"+ehtml($*text_day_prev)+"</a> | ";
+    "<a href=\""+ehtml($.next_url)+"\">"+ehtml($*text_day_next)+"</a>\n</div>";
+
+}
+
+### CommentInfo functions
+
+function CommentInfo::print_readlink {
+    var Page p = get_page();
+    "<a href=\"$.read_url\">"+
+        get_plural_phrase($.count, $p.view == "friends" ? 
+                          "text_read_comments_friends" : "text_read_comments")+
+    "</a>";
+}
+function CommentInfo::print_postlink() {
+    var Page p = get_page();
+    "<a href=\"$.post_url\">"+ehtml($p.view == "friends" ? $*text_post_comment_friends : $*text_post_comment)+"</a>";
+}
+function CommentInfo::print() {
+    if (not $.enabled) { return; }
+    """<div style="text-align: right;">\n(""";
+    if ($.count > 0 or $.screened) {
+        $this->print_readlink();
+        " | ";
+    }
+    $this->print_postlink();
+    ")</div>";
+}
+
+### Link object functions
+
+function Link::print_button {
+    if ($.url == "") { return; }
+    """<a href="$.url">""";
+    #$.icon.alt="[" + $.caption + "]";
+#    $.icon.attributes{"border"}="0";
+    $.icon->print();
+    "</a>";
+}
+function Link::print_text {
+    if ($.url == "") { return; }
+    print $this->as_string();
+}
+function Link::as_string() : string {
+    return """<a href="$.url">$.caption)</a>""";
+}
+
+
+
+

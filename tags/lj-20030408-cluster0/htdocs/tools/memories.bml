@@ -1,0 +1,160 @@
+<?_code
+
+ use strict;
+ use vars qw(%FORM $title $body);
+
+ my $dbs = LJ::get_dbs();
+ my $dbh = $dbs->{'dbh'};
+ my $dbr = $dbs->{'reader'};
+
+ my $remote = LJ::get_remote($dbs);
+
+ my $sth;
+
+ $title = "";
+ $body = "";
+
+ my $user = LJ::canonical_username($FORM{'user'});
+ if ($FORM{'user'} && ! $user) {
+     $body = $ML{'error.malformeduser'};
+     return;
+ }
+
+ if ($user eq "" && defined $remote) {
+     $user = $remote->{'user'};
+ }
+
+ my $u = LJ::load_user($dbs, $user);
+ unless ($u) {
+     $title = $ML{'Error'};
+     $body = $ML{'error.username_notfound'};
+     return;
+ }
+ my $userid = $u->{'userid'};
+
+ if ($u->{'journaltype'} eq "R") {
+    LJ::load_user_props($dbr, $u, "renamedto");
+    return BML::redirect("/tools/memories.bml?user=$u->{'renamedto'}");
+ }
+
+ if ($u->{'statusvis'} eq "S") {
+     $title = $ML{'error.suspended.title'};
+     $body = "<?h1 $ML{'error.suspended.name'} h1?><?p " . BML::ml('error.suspended.text',{'sitename'=>$LJ::SITENAME,'user'=>$user}) . " p?>";
+     return;
+ }
+
+ if ($u->{'statusvis'} eq "D") {
+     $title = $ML{'error.deleted.title'};
+     $body = "<?h1 $ML{'error.deleted.name'} h1?><?p " . BML::ml('error.deleted.text',{'user'=>$user}) . " p?>";
+     return;
+ }
+
+ if ($u->{'statusvis'} eq "X") {
+     $title = $ML{'error.purged.title'};
+     $body = "<?h1 $ML{'error.purged.name'} h1?><?p $ML{'error.purged.text'} p?>";
+     return;
+ }
+
+ my %filters = ("all" => $ML{'.filter.all'},
+                "own" => BML::ml(".filter.own", { 'user' => $user }),
+                "other" => $ML{'.filter.other'});
+ my $filter = $FORM{'filter'} || "all";
+ unless (defined $filters{$filter}) { $filter = "all"; }
+
+ my $secwhere = "AND m.security='public'";
+ if ($remote) {
+     if ($remote->{'userid'} == $userid) {
+         $secwhere = "";
+     } elsif (LJ::is_friend($dbs, $userid, $remote->{'userid'})) {
+         $secwhere = "AND m.security IN ('public', 'friends')";
+     }
+ }
+
+ if ($FORM{'keyword'}) 
+ {
+     my $qkw = $dbh->quote($FORM{'keyword'});
+     if ($FORM{'keyword'} eq "*") {
+         $title = $ML{'.title.memorable'};
+         $body .= "<?h1 $ML{'.title.memorable'} h1?><?p " . BML::ml(".body.memorable", { 'user' => $user }) . " p?>";
+     } else {
+         $title = BML::ml(".title.keyword", { 'keyword' => $FORM{'keyword'}, 'user' => $user });
+         $body .= BML::ml(".body.keyword", { 'keyword' => $FORM{'keyword'}, 'user' => $user });
+     }
+     $body .= "<?p <A HREF=\"/tools/memories.bml?user=$user\">&lt;&lt; $ML{'.back'}</A> p?>";
+
+     my $extrawhere = "";
+     if ($filter eq "own" || $filter eq "other") {
+         my $op = $filter eq "own" ? "=" : "<>";
+         $extrawhere = "AND m.journalid $op $userid";
+     }
+     
+     $sth = $dbr->prepare("SELECT m.memid, u.user, m.journalid, m.jitemid, m.des, m.security FROM memorable m, memkeyword mk, keywords k LEFT JOIN useridmap u ON m.journalid=u.userid WHERE k.keyword=$qkw AND mk.memid=m.memid AND mk.kwid=k.kwid AND m.userid=$userid $secwhere $extrawhere ORDER BY m.memid");
+     $sth->execute;
+    
+     $body .= "<UL>\n";
+     while (my $mem = $sth->fetchrow_hashref)
+     {
+         my $eh_des = LJ::ehtml($mem->{'des'});
+         LJ::text_out(\$eh_des);
+         my $edit = "";
+         my $jargent = $mem->{'user'} ? "journal=$mem->{'user'}&amp;" : "";
+         if ($remote && $remote->{'user'} eq $user) {
+             $edit = " [<a href=\"/tools/memadd.bml?${jargent}itemid=$mem->{'jitemid'}\">$ML{'.edit'}</a>]";
+         }
+         $body .= "<p><li><a href=\"/talkread.bml?${jargent}itemid=$mem->{'jitemid'}\"><b>$eh_des</b></a>$edit<br /><font size='-1'><b>$mem->{'user'}</b></font></li>";
+     }
+     $body .= "</ul>";
+     return;
+ }
+
+ $title = $ML{'.title.memorable'};
+ $body .= BML::ml(".body.list_categories", { 'user' => $user });
+
+ if ($filter eq "all") {
+     $sth = $dbr->prepare("SELECT k.keyword, COUNT(*) AS 'count' FROM memorable m, memkeyword mk, keywords k WHERE mk.memid=m.memid AND mk.kwid=k.kwid AND m.userid=$userid $secwhere GROUP BY k.keyword ORDER BY k.keyword");
+ } else {
+     my $op = $filter eq "own" ? "=" : "<>";
+     $sth = $dbr->prepare("SELECT k.keyword, COUNT(*) AS 'count' FROM memorable m, memkeyword mk, keywords k WHERE mk.memid=m.memid AND mk.kwid=k.kwid AND m.userid=$userid $secwhere AND m.journalid $op $userid GROUP BY k.keyword ORDER BY k.keyword");     
+ }
+ $sth->execute;
+ 
+ $body .= "<FORM METHOD=GET>";
+ $body .= "<INPUT TYPE=HIDDEN NAME=user VALUE=\"$user\">";
+ $body .= "Filter entries: <SELECT NAME=\"filter\">";
+ foreach my $filt ("all", "own", "other") {
+     my $sel = $filter eq $filt ? "SELECTED" : "";
+     $body .= "<OPTION VALUE=\"$filt\" $sel>$filters{$filt}\n";
+ }	     
+ $body .= "</SELECT> <INPUT TYPE=SUBMIT VALUE=\"$ML{'.form.switch'}\">";
+ $body .= "</FORM>";
+ 
+ my $rows = 0;
+ while (my $row = $sth->fetchrow_hashref)
+ {
+     $rows++;
+     if ($rows==1) {
+         $body .= "<UL>";
+     }
+     my $noun = $row->{'count'}==1 ? $ML{'.entry'} : $ML{'.entries'};
+     my $ue_keyword = LJ::eurl($row->{'keyword'});
+     my $keyword = $row->{'keyword'};
+     LJ::text_out(\$keyword);
+     if ($keyword eq "*") { $keyword = $ML{'.uncategorized'}; }
+     $body .= "<LI><B><A HREF=\"/tools/memories.bml?user=$user&amp;keyword=$ue_keyword&amp;filter=$filter\">$keyword</A></B>: $row->{'count'} $noun\n";
+ }
+ unless ($rows) {
+     $body .= "<?h1 $ML{'.error.noentries.title'} h1?><?p $ML{'.error.noentries.body'} p?>";
+ } else {
+     $body .= "</UL>";
+}
+ return;
+
+_code?><?page
+title=><?_code return $title; _code?>
+body<=
+<?_code return $body; _code?>
+<=body
+page?><?_c <LJDEP>
+link: htdocs/tools/memories.bml, htdocs/tools/memadd.bml, htdocs/talkread.bml
+form: htdocs/tools/memories.bml
+</LJDEP> _c?>

@@ -1,0 +1,2465 @@
+;; -*- coding: utf-8 -*-
+/allpics.bml.current=Current Pictures
+
+/allpics.bml.default=<u>Default</u>
+
+/allpics.bml.edit=You may be interested in <a href='/editpics.bml'>editing your picture keywords</a> or <a href='/uploadpic.bml'>uploading a new picture</a>.
+
+/allpics.bml.error.noparam=You need to specify a user parameter.
+
+/allpics.bml.keywords=Keywords:
+
+/allpics.bml.nopics.text=You have no pictures uploaded. To upload one, go <a href='/uploadpic.bml'>here</a>.
+
+/allpics.bml.nopics.text.other=This user has not uploaded any user pictures.
+
+/allpics.bml.nopics.title=No Pictures
+
+/allpics.bml.pics=Here are the user pictures for [[user]].
+
+/allpics.bml.title=User Pictures
+
+/community/create.bml.button.createcommunity=Create Community
+
+/community/create.bml.commsite=Community website
+
+/community/create.bml.error.accountnotfound=Maintainer account not found.
+
+/community/create.bml.error.invalidmpasw=Invalid password for community account.
+
+/community/create.bml.error.invalidpassword=Invalid password for maintainer account.
+
+/community/create.bml.error.maintainertype=Maintainer account must be a person, not another shared account.
+
+/community/create.bml.error.samenames=Maintainer account and community account cannot be the same.
+
+/community/create.bml.label.accforcomm=This is the account that you want to turn into a community.  It must <a href="/create.bml">already be created</a>, but should not already be in use by an individual because after this tons of different people will be able to potentially post in it.
+
+/community/create.bml.label.admconsole=<A HREF="/admin/console/">Admin console</A> - to add/remove people that are able to post</UL>
+
+/community/create.bml.label.anybodycan=<B>All Members</B><BR>Anybody can post immediately, once they're a member.
+
+/community/create.bml.label.closedmemb=<B>Closed Membership</B><BR>You have to approve people's requests to join.
+
+/community/create.bml.label.commacc=Community Account
+
+/community/create.bml.label.commcreated=Your community is now set up.
+
+/community/create.bml.label.comminfo=Community info
+
+/community/create.bml.label.commopts=Community Options
+
+/community/create.bml.label.create=Create Community
+
+/community/create.bml.label.createcomm=From here you can create a community account.  A community is a special type of account that other users can join, and post in.  For example of a community, check out the <a href="/userinfo.bml?user=seattle">Seattle Party Community</a>.
+
+/community/create.bml.label.howoperates=Choose how your community operates.  You can change these later.
+
+/community/create.bml.label.mainaccount=Maintainer Account
+
+/community/create.bml.label.membership=Membership
+
+/community/create.bml.label.mustbereal=This account is the one that runs the community.  This account must be a real person account... not another community account.
+
+/community/create.bml.label.openmemb=<B>Open Membership</B><BR>Anybody can join without getting approved.
+
+/community/create.bml.label.password=Password:
+
+/community/create.bml.label.postaccess=Posting Access
+
+/community/create.bml.label.rellinks=Relevant links:
+
+/community/create.bml.label.selcan=<B>Select Members</B><BR>Only some members are able to post, once they've been given access by the maintainer account..
+
+/community/create.bml.label.username=Username:
+
+/community/create.bml.label.whocanjoin=Who can join your community?
+
+/community/create.bml.label.whocanpost=Who can post to this community?
+
+/community/create.bml.success=Success
+
+/community/create.bml.title=Create Community
+
+/community/index.bml.title=Community Center
+
+/community/join.bml.button.join=Join Community
+
+/community/join.bml.label.addtofriends=Add "[[maintainer]]" to friends list.<br>
+
+/community/join.bml.label.allowposting=This community allows posting by all members, so you now have access to post in it.  If you already have a LiveJournal client open on your computer you'll have to log out and log back in for this journal to show up in your list of journals you can post to.
+
+/community/join.bml.label.auth=Although you are now listed as a member, this community only allows posting by authorized users.  Contact one of the maintainers if you desire posting access. Below is the list of maintainers for this community: [[admins]]
+
+/community/join.bml.label.authpost=Although you are now listed as a member, this community only allows posting by authorized users.  Contact <a href="/userinfo.bml?user=[[maintainer]]">the community maintainer</a> if you desire posting access.
+
+/community/join.bml.label.banned=The maintainer(s) of this community has banned you from joining.
+
+/community/join.bml.label.closed=This community is closed.  If you're interested in joining it, please contact one of its maintainers. Below is the list of maintainers for this community: [[admins]]
+
+/community/join.bml.label.closedcomm=This community is closed.  If you're interested in joining it, please contact <a href="/userinfo.bml?user=[[maintainer]]">its maintainer</a>.
+
+/community/join.bml.label.commlogged=You're logged in as a shared/community account, not your personal account.
+
+/community/join.bml.label.errorcomminfo=The specified community information is not valid.
+
+/community/join.bml.label.expls=Press the button below to join the "[[maintainer]]" community. Uncheck the box below if you want to join the community without seeing community entries on your friends page.
+
+/community/join.bml.label.loginfirst=To join a community you must first <a href="/login.bml?ret=1">log in</a>.
+
+/community/join.bml.label.membernow=You are now a member of the <a href="/userinfo.bml?user=[[username]]">[[commname]] Community</a>
+
+/community/join.bml.label.sure=You sure?
+
+/community/join.bml.success=Success
+
+/community/join.bml.title=Join Community
+
+/community/leave.bml.button.leave=Leave Community
+
+/community/leave.bml.label.buttontoleave=Press the button below to leave the "[[commname]]" community.
+
+/community/leave.bml.label.infoerror=The specified community information is not valid.
+
+/community/leave.bml.label.logoutfirst=To leave a community you must first <a href="/login.bml?ret=1">log in</a>.
+
+/community/leave.bml.label.removed=You are now removed from the <a href="/userinfo.bml?user=[[commuser]]">[[commname]] Community</a>
+
+/community/leave.bml.success=Success
+
+/community/leave.bml.sure=You sure?
+
+/community/leave.bml.title=Leave Community
+
+/community/manage.bml.commlist.actions=<b>Actions</b>
+
+/community/manage.bml.commlist.actmembers=<b>[<a href='[[link]]'>Members</a>]</b>
+
+/community/manage.bml.commlist.actsettings=<b>[<a href='[[link]]'>Settings</a>]</b>
+
+/community/manage.bml.commlist.header=Your communities
+
+/community/manage.bml.commlist.none=<i>You are not managing any communities.</i>
+
+/community/manage.bml.commlist.text=Here are the communities that you manage or co-manage:
+
+/community/manage.bml.commlist.title=<b>Title</b>
+
+/community/manage.bml.commlist.username=<b>Username</b>
+
+/community/manage.bml.create.header=Create a community
+
+/community/manage.bml.create.text=You can also <a href='[[link]]'><b>create a new community</b></a>.
+
+/community/manage.bml.title=Community Management
+
+/community/members.bml.error.noaccess=Only community maintainers are able to edit membership lists. You are not a maintainer of community [[comm]].
+
+/community/members.bml.error.nocomm=Community not found.
+
+/community/members.bml.key.admin=<b>Administrates</b>
+
+/community/members.bml.key.member=<b>Member</b>
+
+/community/members.bml.key.moderate=<b>Moderates</b>
+
+/community/members.bml.key.name=<b>Name</b>
+
+/community/members.bml.key.post=<b>Able to post</b>
+
+/community/members.bml.manage=[<a href='[[link]]'><b>&lt;&lt;</b></a> Manage communities]
+
+/community/members.bml.name=<b>Community name:</b> [[name]]
+
+/community/members.bml.nextlink=<i>(Next page...)</i>
+
+/community/members.bml.prevlink=<i>(Previous page...)</i>
+
+/community/members.bml.settings=[<a href='[[link]]'>Settings</a>]
+
+/community/members.bml.success.header=Success
+
+/community/members.bml.success.message=Your changes have been successfully saved.
+
+/community/members.bml.success.return=<a href='[[link]]'>Return to the list</a>
+
+/community/members.bml.title=Community Members
+
+/community/members.bml.update=Update settings
+
+/community/search.bml.button.clear=Clear Form
+
+/community/search.bml.button.search=Search!
+
+/community/search.bml.checkbox.onlywithpics=Only communities with pictures
+
+/community/search.bml.contasmember=Contains user <INPUT NAME="fr_user" SIZE=15 MAXLENGTH=15> as a member.
+
+/community/search.bml.label.byinterest=By Interest
+
+/community/search.bml.label.bylocation=By Location
+
+/community/search.bml.label.bytime=By Journal Update Time
+
+/community/search.bml.label.city=City:
+
+/community/search.bml.label.country=Country:
+
+/community/search.bml.label.displayoptions=Display Options
+
+/community/search.bml.label.hasmember=Has Member
+
+/community/search.bml.label.othercriteria=Other Criteria
+
+/community/search.bml.label.outputformat=Output Format:
+
+/community/search.bml.label.records=Records per page:
+
+/community/search.bml.label.searchcomm=Search Communities
+
+/community/search.bml.label.selecriteria=Select the criteria below that you'd like to find communities by.  The results returned are the intersection of all search criteria.  In other words, each checkbox you click means "AND", not "OR".
+
+/community/search.bml.label.sortmethod=Sorting Method:
+
+/community/search.bml.label.stateprovince=State/Province:
+
+/community/search.bml.label.updated=Updated in last 
+
+/community/search.bml.sel.bypicture=By Picture
+
+/community/search.bml.sel.communityname=Community Name
+
+/community/search.bml.sel.commview=Community View
+
+/community/search.bml.sel.day=day
+
+/community/search.bml.sel.month=month
+
+/community/search.bml.sel.simple=Simple
+
+/community/search.bml.sel.updatetime=Update Time
+
+/community/search.bml.sel.username=User Name
+
+/community/search.bml.sel.week=week
+
+/community/search.bml.title=Community Search
+
+/community/search.bml.userlikes=User likes:
+
+/community/settings.bml.button.changecommunity=Update Settings
+
+/community/settings.bml.button.createcommunity=Create Community
+
+/community/settings.bml.error.badpassword=Invalid community password
+
+/community/settings.bml.error.hasentries=This account already has entries and cannot be converted.
+
+/community/settings.bml.error.maintainertype=Maintainer account must be a person, not another shared account.
+
+/community/settings.bml.error.noaccess=Only community maintainers are able to edit community settings. You are not a maintainer of community [[comm]].
+
+/community/settings.bml.error.notcomm=Not a community account.
+
+/community/settings.bml.error.notfound=Community account not found.
+
+/community/settings.bml.error.samenames=Maintainer account and community account cannot be the same.
+
+/community/settings.bml.label.admconsole=<a href='/admin/console/'>Admin console</a> - to add/remove people that are able to post
+
+/community/settings.bml.label.anybodycan=<b>All Members</b><br />Anybody can post immediately, once they're a member.
+
+/community/settings.bml.label.changeheader=Change Community Settings
+
+/community/settings.bml.label.changetext=Here you can change the settings for the community you own or maintain.
+
+/community/settings.bml.label.closedmemb=<b>Closed Membership</b><br />You have to approve people's requests to join.
+
+/community/settings.bml.label.commchanged=Your community settings have been changed.
+
+/community/settings.bml.label.commcreate=This is the account that you want to turn into a community.  It must <a href="/create.bml">already be created</a>, but should not already be in use by an individual because after this tons of different people will be able to potentially post in it.
+
+/community/settings.bml.label.commcreated=Your community is now set up.
+
+/community/settings.bml.label.commheader=Community Account
+
+/community/settings.bml.label.comminfo=Community info
+
+/community/settings.bml.label.commopts=Community Options
+
+/community/settings.bml.label.commsite=Community website
+
+/community/settings.bml.label.community=Community:
+
+/community/settings.bml.label.createheader=Create Community
+
+/community/settings.bml.label.createtext=From here you can create a community account.  A community is a special type of account that other users can join, and post in.  For example of a community, check out the <a href="/userinfo.bml?user=seattle">Seattle Party Community</a>.
+
+/community/settings.bml.label.howoperates=Choose how your community operates.  You can change these later.
+
+/community/settings.bml.label.maintainer=Maintainer:
+
+/community/settings.bml.label.maintainer.login=If this is not the maintainer account, <a href='/login.bml?ret=1'>login</a> as somebody else.
+
+/community/settings.bml.label.membership=Membership
+
+/community/settings.bml.label.nmcan=<b>Non-Members Can Post</b><br />Users can post to this community without having to join it.
+
+/community/settings.bml.label.nmcant=<b>Non-Members Cannot Post</b><br />Users have to join this community in order to post in it.
+
+/community/settings.bml.label.nmheader=Non-Member Posting
+
+/community/settings.bml.label.nmtext=Can users post to this community without having to join it?
+
+/community/settings.bml.label.openmemb=<b>Open Membership</b><br />Anybody can join without getting approved.
+
+/community/settings.bml.label.password=Password:
+
+/community/settings.bml.label.postaccess=Posting Access
+
+/community/settings.bml.label.rellinks=Relevant links:
+
+/community/settings.bml.label.selcan=<b>Select Members</b><br />Only some members are able to post, once they've been given access by the maintainer account..
+
+/community/settings.bml.label.username=Username:
+
+/community/settings.bml.label.whocanjoin=Who can join your community?
+
+/community/settings.bml.label.whocanpost=Who can post to this community?
+
+/community/settings.bml.manage=[<a href='[[link]]'><b>&lt;&lt;</b></a> Manage communities]
+
+/community/settings.bml.members=[<a href='[[link]]'>Members</a>]
+
+/community/settings.bml.name=<b>Community name:</b> [[name]]
+
+/community/settings.bml.success=Success
+
+/community/settings.bml.title.create=Create Community
+
+/community/settings.bml.title.modify=Community Settings
+
+/create.bml.age.check.question=Are you under 13 years of age?
+
+/create.bml.age.check.yes=Yes, I am under 13 years old.
+
+/create.bml.age.head=Age
+
+/create.bml.aolnotice.head=Notice to AOL Users
+
+/create.bml.aolnotice.text=If you are an <b>AOL User</b>, make sure you go to <b>Keyword: <i>Mail Controls</i></b> and <b>turn off</b> any of AOL's "useful" mail controls.  You must be able to receive mail from the Internet or you will not recieve your confirmation code.  If your parents have this restricted, perhaps you really shouldn't be using [[sitename]].
+
+/create.bml.btn.proceed=Proceed...
+
+/create.bml.clusterselect.cluster=Cluster:
+
+/create.bml.clusterselect.clusternum=Cluster [[number]]
+
+/create.bml.clusterselect.head=Cluster Selection
+
+/create.bml.clusterselect.nocluster=No Cluster
+
+/create.bml.clusterselect.text=Please select the cluster you want to create this account on. <b>Note:</b>  This is a debugging/test option only.  In production, users won't pick this, or know anything about it.
+
+/create.bml.create.head=Creating a New Journal
+
+/create.bml.create.text=Creating a new LiveJournal is easy, just follow the instructions below!
+
+/create.bml.email.head=Your email address
+
+/create.bml.email.input.head=Email Address:
+
+/create.bml.email.text=For verification and security purposes, we need your email address.  It will never ever, under any any circumstances, be sold or given away to spammers.  We hate that more than anything.  Read our <a href="/legal/privacy.bml" TARGET="privacy">privacy policy</a> for more information.
+
+/create.bml.error.coppa.under13=Sorry, due to COPPA restrictions, you cannot use the LiveJournal service until you're 13 years old.  Please come back on your 13th birthday.
+
+/create.bml.error.email.blank=You must provide your email address.
+
+/create.bml.error.email.lj_domain=You cannot use a [[domain]] alias when creating an account.  Please enter a different email address.
+
+/create.bml.error.email.nospaces=No spaces allowed in email address.  If you're on AOL, remember that your Internet Email address is your screen name with all spaces removed, followed by <b>@aol.com</b>
+
+/create.bml.error.password.asciionly=You can only use ASCII symbols in the password.
+
+/create.bml.error.password.blank=You must enter a password.
+
+/create.bml.error.password.nomatch=Passwords do not match.
+
+/create.bml.error.postrequired=POST required.
+
+/create.bml.error.username.blank=Please supply a name or handle/alias.
+
+/create.bml.error.username.inuse=Username already in use; please select a different one.
+
+/create.bml.error.username.iscode=Username appears to be an invite code, not a username.
+
+/create.bml.error.username.mustenter=You must enter a username.
+
+/create.bml.error.username.reserved=Sorry, that is a reserved username.
+
+/create.bml.name.head=Your Name
+
+/create.bml.name.input.head=Name:
+
+/create.bml.name.text=What's your name or handle?  This will appear at the top of your journal, and in the user directory should you choose to be listed in it.  You do not have to provide your full name or even your real name.
+
+/create.bml.password.head=Password
+
+/create.bml.password.input.head1=Password:
+
+/create.bml.password.input.head2=Re-type password:
+
+/create.bml.password.text=Select a password.
+
+/create.bml.proceed.btn.proceed=Proceed...
+
+/create.bml.proceed.head=Proceed
+
+/create.bml.proceed.text=Press the button below and you're on your way to having your very own LiveJournal!
+
+/create.bml.proceed.warning=Only press <b>Proceed</b> <i>once</i>!!
+
+/create.bml.success.btn.enterinfo=Enter Personal Information
+
+/create.bml.success.head=Success!
+
+/create.bml.success.text1=Your journal has been created.  Important registration information has been emailed to <FONT FACE=Arial SIZE=+1><B>[[email]]</B></FONT> containing further instructions.  <B>Note: </B>  You have exactly <I>seven days</I> to confirm your journal creation.  If you still haven't gone and set it up after seven days the username of <B>[[username]]</B> will be automatically deleted and somebody else may use it.
+
+/create.bml.success.text2=Your LiveJournal will be available at:
+
+/create.bml.success.text3=Now, please take the time to fill in some information about yourself.  It's mostly optional, but it lets us get an idea of who's using LiveJournal.
+
+/create.bml.title=Create New Journal
+
+/create.bml.useacctcodes.entercode=To create a new account, enter an account creation code:
+
+/create.bml.useacctcodes.welcome=Welcome
+
+/create.bml.username.box.head=Username:
+
+/create.bml.username.forpaidaccts=Or, for paid accounts:
+
+/create.bml.username.head=Username
+
+/create.bml.username.ljaddress=Your journal will be at these addresses:
+
+/create.bml.username.text=Each [[sitename]] user must have their own unique username.  Your username is what appears in the address to your journal and what you use to log into the [[sitename]] server.  It also shows up when you post comments in other people's journal.
+
+/create.bml.username.username=username
+
+/editinfo.bml.allowshowcontact.about<<
+You should keep this option enabled.  This lets other people be able to contact 
+you by showing your email address, ICQ number, and AOL Instant Messenger screenname 
+all on your LiveJournal.
+.
+
+/editinfo.bml.allowshowcontact.email=If visible, email address to be displayed:
+
+/editinfo.bml.allowshowcontact.email.actual_only=Actual address only
+
+/editinfo.bml.allowshowcontact.email.both=Both (actual + [[domain]])
+
+/editinfo.bml.allowshowcontact.email.lj_only=Site address only
+
+/editinfo.bml.allowshowcontact.email.neither=Neither. Don't show any email address.
+
+/editinfo.bml.allowshowcontact.email.no_show=Don't show email address
+
+/editinfo.bml.allowshowcontact.email.show=Show email address
+
+/editinfo.bml.allowshowcontact.email.withdomainaddr<<
+With the option above, you may also choose to hide your email address
+(while still showing other contact information), only show your site email address,
+only show your real address, or show them both.
+.
+
+/editinfo.bml.allowshowcontact.email.withoutdomainaddr<<
+With the option above, you may also choose to hide your email address
+(while still showing other contact information).
+.
+
+/editinfo.bml.allowshowcontact.title=Show your contact information on your LiveJournal?
+
+/editinfo.bml.allowshowinfo.about=Turn this on if you want your city/state/country and birthday to be visible to other users.
+
+/editinfo.bml.allowshowinfo.title=Show location &amp; birthday?
+
+/editinfo.bml.autotranslate.about<<
+Use this option to tell LiveJournal which encoding to assume for your entries and comments entered before the site was converted to Unicode. 
+If you write in English, choose "Western European" here.
+.
+
+/editinfo.bml.autotranslate.header=Auto-translate older entries from:
+
+/editinfo.bml.bday.title=Birthday
+
+/editinfo.bml.bday.year.opt=year is optional
+
+/editinfo.bml.bdayreminders.about=If you want to get email reminding you of birthdays for your friends on LiveJournal, click this box.
+
+/editinfo.bml.bdayreminders.header=Send me birthday reminders
+
+/editinfo.bml.bio.about=Here you can enter a little mini-biography about yourself that will show up on your user-info page.
+
+/editinfo.bml.bio.header=About You
+
+/editinfo.bml.blockrobots.about<<
+If you check this option, robots will be told to go away.  
+Not all robots respect the rules, but the popular search sites' robots do.
+.
+
+/editinfo.bml.blockrobots.header=Block Robots/Spiders from indexing your journal
+
+/editinfo.bml.city.title=City
+
+/editinfo.bml.country.choose=Pick a country
+
+/editinfo.bml.country.title=Country
+
+/editinfo.bml.donotlog=No
+
+/editinfo.bml.email.title=Email
+
+/editinfo.bml.enableboards.about=Check this if you want people to be able to reply to journal entries you post.  (the journal style you select must also support this)
+
+/editinfo.bml.enableboards.header=Enable message boards
+
+/editinfo.bml.encoding.about=Don't worry about this stuff.  In general, only international users that write in several different languages will need to change anything here.
+
+/editinfo.bml.encoding.header=Encoding Options
+
+/editinfo.bml.error.email.lj_domain<<
+You cannot enter an @[[domain]] email address.  
+Enter your real address in that field.  
+If you're a paid user, your [[user]]@[[domain]] address will forward to your real address.  
+To choose which email address (or both) is displayed publicly, see the option below the "Show your Contact Information" option.
+.
+
+/editinfo.bml.error.email.no_space<<
+No spaces are allowed in an email address.  
+If you're on AOL, remember that your Internet Email address is your screen name with all spaces removed, followed by <b>@aol.com</b>
+.
+
+/editinfo.bml.error.excessive_int<<
+Sorry, you listed too many interests.  The limit is 150, but you've listed [[intcount]].  
+Any changes you made to your interests were not saved.  Go back and cut down your list, 
+then save again.
+.
+
+/editinfo.bml.error.invalidbio<<
+Your stored bio contains invalid characters. You must visit 
+the <a href='/utf8convert.bml'><b>conversion page</b></a> to convert it 
+to Unicode.
+.
+
+/editinfo.bml.error.invalidints<<
+Your currently stored list of interests contains invalid characters. You must visit 
+the <a href='/utf8convert.bml'><b>conversion page</b></a> to convert it 
+to Unicode.
+.
+
+/editinfo.bml.error.invalidname<<
+Your name contains invalid characters. You must visit 
+the <a href='/utf8convert.bml'><b>conversion page</b></a> to convert it 
+to Unicode.
+.
+
+/editinfo.bml.error.locale.country_ne_state=You specified United States as your country, but you typed in a non-US state in the "other state" field.
+
+/editinfo.bml.error.locale.invalid_country=Somehow you selected an invalid country.
+
+/editinfo.bml.error.locale.state_ne_country=You specified a non-US country but selected a US state.
+
+/editinfo.bml.error.locale.zip_ne_state<<
+Your zip code does not match the state you specified.  
+Either correct the information, or erase one or both of the state and zip code fields.
+.
+
+/editinfo.bml.error.locale.zip_requires_us<<
+You entered a zip-code but you did not select United States as you country.  
+We only collect zip code information about people in the US.  
+Please go back and remove the zip code or select United States as your country.
+.
+
+/editinfo.bml.error.tm.require.number=If you're going to use text messaging, you must enter your phone number.
+
+/editinfo.bml.error.tm.require_provider<<
+If you're going to use text messaging, you must select your service provider.  
+If yours is not listed, please contact us with information about how your service's text messaging feature works so we can add support for it.
+.
+
+/editinfo.bml.finished.about=When done, press the "Save Changes" button below:
+
+/editinfo.bml.finished.header=Done?
+
+/editinfo.bml.finished.save_button=Save Changes
+
+/editinfo.bml.gender.title=Gender
+
+/editinfo.bml.getreplies.about=Check this if you want to get email updates when people reply to your journal entries in the message boards.
+
+/editinfo.bml.getreplies.header=Get message board replies
+
+/editinfo.bml.hidefriendof.about=If you check this, the list of people that list you as a friend is hidden on your profile page.
+
+/editinfo.bml.hidefriendof.header=Hide "Friend of" list
+
+/editinfo.bml.howhear.about<<
+Just for curiousity's sake, where did you hear about [[sitename]] from?  
+If it was a specific person, enter their username, if it 
+was from another source/article/link/website, enter the appropriate information.
+.
+
+/editinfo.bml.howhear.header=Curiosity
+
+/editinfo.bml.htmlemail.about<<
+Check this if your email program fully supports HTML in your email.  
+Many clients try to support it but fail horribly.  
+If you uncheck it, LiveJournal will only send text emails.
+.
+
+/editinfo.bml.htmlemail.header=Send HTML Emails
+
+/editinfo.bml.int.about<<
+If you want other people to be able to search the directory and find you by interest, 
+list below everything you're interested in, separated by commas.  
+Short single-word phrases are best.  <b>Rule of thumb:</b> You should be able to put 
+the interest in the sentence "I like ________".  When referring to nouns, use the 
+plural form for consistency.  "I like DVDs" instead of "I like DVD".
+.
+
+/editinfo.bml.int.ex.bad=<FONT COLOR=#FF0000><B>BAD</B></FONT> Example: <B>I like lots of bands and watching movies and talking to friends and going to clubs.</B>  That sort of stuff goes in your bio above.
+
+/editinfo.bml.int.ex.good=<FONT COLOR=#009000><B>GOOD</B></FONT> Example: <B>biking, snow skiing, computers, dvds, mp3s, cheese, women</B>
+
+/editinfo.bml.int.header=Interests
+
+/editinfo.bml.login.enterinfo=Enter your username and password to modify your personal information.
+
+/editinfo.bml.login.forgot.header=Forget something?
+
+/editinfo.bml.login.forgot.recover=If you forgot your username or password, <a href='lostinfo.bml'>recover it here!</a>.
+
+/editinfo.bml.logip.always=Always
+
+/editinfo.bml.logip.anon_only=Anonymous posters only
+
+/editinfo.bml.logip.header=Log IP addresses of people replying?
+
+/editinfo.bml.mangleaddress.about<<
+If you have the above option selected and are afraid spam-robots will find your email 
+address on LiveJournal, select this option and your email address will be modified 
+so your email address won't be found by email-collecting robots.
+.
+
+/editinfo.bml.mangleaddress.header=Mangle your displayed email address
+
+/editinfo.bml.name.title=Name
+
+/editinfo.bml.numcomments.about=Check this if you want to append the comment count to URLs to make your browser possibly display the links in a different color.
+
+/editinfo.bml.numcomments.header=Add &amp;nc=xx to comment URLs
+
+/editinfo.bml.optional=Optional
+
+/editinfo.bml.opt_in.about<<
+If you want to know when we add some cool new feature to LiveJournal, check this box.  
+The emails you get will be pretty rare, no more than once or twice a month usually.  
+Your email address will not be visible to other users, and you can turn this off at anytime.
+.
+
+/editinfo.bml.opt_in.header=Send me LiveJournal news.
+
+/editinfo.bml.persinfo.disclaimer<<
+Fill in some quick information about yourself, for our own curiosity and statistical purposes. 
+We're not going to do anything evil or annoying with this information, we'd just like to see 
+who and where our users are.  Please, fill it in correctly.  If you're concerned, 
+read our <a href="/legal/privacy.bml">privacy policy</a>.
+.
+
+/editinfo.bml.persinfo.header=Personal Information
+
+/editinfo.bml.screen.all=All
+
+/editinfo.bml.screen.anon=Anonymous
+
+/editinfo.bml.screen.header=Which replies do you want screened by default?
+
+/editinfo.bml.screen.none=None
+
+/editinfo.bml.screen.nonfriends=By non-friends
+
+/editinfo.bml.screen.nonmembers=By non-members
+
+/editinfo.bml.security.header=Security
+
+/editinfo.bml.security.visibility.anybody=Anybody
+
+/editinfo.bml.security.visibility.everybody=Everybody
+
+/editinfo.bml.security.visibility.friends=Friends only
+
+/editinfo.bml.security.visibility.regusers=Registered Users
+
+/editinfo.bml.settings.about=Select below your personal privacy options and preferences.
+
+/editinfo.bml.settings.header=LiveJournal Options
+
+/editinfo.bml.showsubjicons.about<<
+By default, a bunch of icons are shown that people can use when replying to your messages.  
+A lot of users feel these are ugly and a waste of space, so uncheck this box if you'd like to never see them again. <tt>:-)</tt>
+.
+
+/editinfo.bml.showsubjicons.header=Show subject icons
+
+/editinfo.bml.state.other=Or, type other state/province/territory
+
+/editinfo.bml.state.title=State
+
+/editinfo.bml.state.us=US States
+
+/editinfo.bml.success.header=Success!
+
+/editinfo.bml.success.message=Your information and <a href="/users/[[user]]/">journal</a> settings and <a href="/userinfo.bml?user=[[user]]">profile</a> have been updated.
+
+/editinfo.bml.switch.button=Switch
+
+/editinfo.bml.switch.header=Switch Journal
+
+/editinfo.bml.switch.workwith=Work with journal:
+
+/editinfo.bml.title=Edit Personal Information
+
+/editinfo.bml.tm.about=<a href="/support/faqbrowse.bml?faqid=30">about this feature</a>
+
+/editinfo.bml.tm.details=<a href="/tools/textmessage.bml?mode=details">details</a>
+
+/editinfo.bml.tm.phonenum=Full phone number:
+
+/editinfo.bml.tm.sec.about=Enable text messaging from other users.
+
+/editinfo.bml.tm.sec.title=Security Level:
+
+/editinfo.bml.tm.servprov=Service Provider
+
+/editinfo.bml.tm.title=Text Messaging
+
+/editinfo.bml.topicdir.about=If you check this, other users will be able to easily add your journal entries to the hierarchial <a href="/topics/">topic directory</a>.
+
+/editinfo.bml.topicdir.header=Allow Topic Directory Inclusion
+
+/editinfo.bml.translatemailto.about<<
+In case you chose to receive message board replies by email, and your email client doesn't handle Unicode (UTF-8) 
+messages very well, use this option to specify a different encoding into which LiveJournal will automatically translate the text of comments sent to you.
+.
+
+/editinfo.bml.translatemailto.header=Translate email notifications into: 
+
+/editinfo.bml.unbanusers.about=You have the following users banned from posting in your journal.  Check the checkbox by their username to remove the ban on them.
+
+/editinfo.bml.unbanusers.header=Unban Users
+
+/editinfo.bml.userpic.about<<
+Below is the miniature picture you have uploaded to represent you 
+throughout the LiveJournal site and in your journal and in your friends' journals:
+.
+
+/editinfo.bml.userpic.edit=To delete this picture, or upload a new one, <a href="/uploadpic.bml" target="_blank">go here</a>.
+
+/editinfo.bml.userpic.header=Your Picture
+
+/editinfo.bml.userpic.none=no image uploaded
+
+/editinfo.bml.webpagename.title=Webpage Name
+
+/editinfo.bml.webpageurl.title=Webpage URL
+
+/editinfo.bml.whoreply.header=Who can reply to your entries?
+
+/editinfo.bml.zip.title=ZIP Code
+
+/editinfo.bml.zip.usonly=5 digit ZIP code; US residents only
+
+/editjournal.bml.btn.proceed=Proceed...
+
+/editjournal.bml.certainday=Certain Day:
+
+/editjournal.bml.enterlogin=Enter your username and password to modify or delete your past journal entries.
+
+/editjournal.bml.lostinfo.head=Forget something?
+
+/editjournal.bml.lostinfo.text=If you forgot your username or password, <a href="lostinfo.bml">recover it here</a>.
+
+/editjournal.bml.recententries=most recent entries
+
+/editjournal.bml.recententry=Most recent entry
+
+/editjournal.bml.title=Edit Journal Entries
+
+/editjournal.bml.viewwhat=View What Entries:
+
+/editjournal_do.bml.btn.edit=Edit Selected Entry
+
+/editjournal_do.bml.btn.save=Save Journal Entry
+
+/editjournal_do.bml.continue.head=Press to continue...
+
+/editjournal_do.bml.continue.text=After you select an item to edit or delete, press the Edit button below.
+
+/editjournal_do.bml.currmood=Current <A HREF="/moodlist.bml">Mood</A>:
+
+/editjournal_do.bml.currmusic=Current Music:
+
+/editjournal_do.bml.date=Date:
+
+/editjournal_do.bml.default=default
+
+/editjournal_do.bml.edit.text=Edit the fields of your journal entry you'd like to modify and press the save button at the bottom of the page.  To delete the entry, just delete all the text and press save... the entry will be deleted.
+
+/editjournal_do.bml.error.getting=There was an error getting the journal entries to edit:
+
+/editjournal_do.bml.error.modify=An error occured modifying your journal:
+
+/editjournal_do.bml.error.mustlogin=You have to be logged in to directly edit a journal entry of yours.
+
+/editjournal_do.bml.error.nofind=Could not find selected journal entry.
+
+/editjournal_do.bml.event=Event:
+
+/editjournal_do.bml.localtime=Local time:
+
+/editjournal_do.bml.noneother=None, or other:
+
+/editjournal_do.bml.opt.backdate=Backdate Entry:
+
+/editjournal_do.bml.opt.backdate.about=won't show on friends view
+
+/editjournal_do.bml.opt.nocomments=Disallow Comments:
+
+/editjournal_do.bml.opt.noemail=Don't email Comments:
+
+/editjournal_do.bml.opt.noformat=Don't auto-format:
+
+/editjournal_do.bml.other=Other:
+
+/editjournal_do.bml.pickentry.head=Pick an entry to edit
+
+/editjournal_do.bml.pickentry.text=Select which item you want to edit and press the edit button at the bottom of the page.
+
+/editjournal_do.bml.picture=<a href="[[url]]">Picture</a> to use:
+
+/editjournal_do.bml.save.head=Press to save...
+
+/editjournal_do.bml.save.text=After you're done editing your journal entry, press Save.
+
+/editjournal_do.bml.subject=<B>Subject:</B> <I>(optional, for use on longer entries)</I>
+
+/editjournal_do.bml.success.delete=Journal entry was deleted.
+
+/editjournal_do.bml.success.edit=Journal entry was modified.  You may view it <a href="[[url]]">here</a>.
+
+/editjournal_do.bml.success.head=Success
+
+/editjournal_do.bml.timeformat=24 hour time
+
+/editjournal_do.bml.title=Edit Journal Entries
+
+/export.bml.btn.proceed=Proceed...
+
+/export.bml.description=This feature lets you download your entire journal to a custom format for backup purposes.
+
+/export.bml.fields=Fields:
+
+/export.bml.format.csv=CSV (Comma Separated Values)
+
+/export.bml.format.xml=XML
+
+/export.bml.label.encoding=Encoding:
+
+/export.bml.label.field.allowmask=Allow Mask
+
+/export.bml.label.field.currents=Current Mood &amp; Music
+
+/export.bml.label.field.event=<b>Event</b>
+
+/export.bml.label.field.eventtime=Event Time (from user's clock)
+
+/export.bml.label.field.itemid=ID Number
+
+/export.bml.label.field.logtime=Log Time (from system's clock)
+
+/export.bml.label.field.security=Security Level
+
+/export.bml.label.field.subject=Subject
+
+/export.bml.label.format=Format:
+
+/export.bml.label.header=Header
+
+/export.bml.label.month=Select month:
+
+/export.bml.label.month.month=mm:
+
+/export.bml.label.month.year=yyyy:
+
+/export.bml.label.notranslation=Do not translate between encodings
+
+/export.bml.label.what=Export what:
+
+/export.bml.title=Export Journal
+
+/export.bml.what.entries=Journal entries
+
+/friends/add.bml.add.header=Success
+
+/friends/add.bml.add.text=User <?ljuser [[user]] ljuser?> was added to your friend list.  You can view your friends page <a href="[[url]]">here</a>.
+
+/friends/add.bml.add.title=Friend Added!
+
+/friends/add.bml.btn.add=Add [[user]]
+
+/friends/add.bml.btn.modify=Modify
+
+/friends/add.bml.btn.remove=Remove
+
+/friends/add.bml.colors.bg=Background
+
+/friends/add.bml.colors.fg=Foreground
+
+/friends/add.bml.colors.header=Colors
+
+/friends/add.bml.colors.hover=(Hover your mouse over a color to see its name)
+
+/friends/add.bml.colors.text=You may also optionally select the colors that will represent [[user]] in your friends list.
+
+/friends/add.bml.confirm.header=Add <b>[[user]]</b> as a friend?
+
+/friends/add.bml.confirm.text=To add <b>[[user]]</b> to your friends list, click the button below.
+
+/friends/add.bml.confirm.title=Add Friend
+
+/friends/add.bml.error1.header=Login First
+
+/friends/add.bml.error1.text<<
+To add a user to your friends list you must first go and <a href="/login.bml?ret=1">log in</a>.  If you don't
+already have an account you can <a href="/create.bml">create one</a> to track your friend's journals. 
+.
+
+/friends/add.bml.error1.title=Add Friend
+
+/friends/add.bml.error2.text=Invalid or missing username given.  To add a friend, go to the <a href="/friends/edit.bml">edit friends</a> page.
+
+/friends/add.bml.error3.text=You already have <b>[[user]]</b> listed as a friend.  However, you can modify the colors you've chosen to represent him/her.
+
+/friends/add.bml.error3.title=Modify Friend
+
+/friends/add.bml.groups.header=Friends Groups
+
+/friends/add.bml.groups.nogroup=No friend groups setup.
+
+/friends/add.bml.groups.text=What friend groups do you want to put this user in?  Friend groups are used for filtering your friends list view and also for group-based viewing security of items.
+
+/friends/add.bml.remove.header=Success
+
+/friends/add.bml.remove.text=User <?ljuser [[user]] ljuser?> was removed from your friend list.  You can view your friends page <a href="[[url]]">here</a>.
+
+/friends/add.bml.remove.title=Friend Removed!
+
+/friends/edit.bml.btn.proceed=Proceed...
+
+/friends/edit.bml.edit.head=Edit Your Friends
+
+/friends/edit.bml.edit.text=Enter your username and password to modify your friends.  To use this, you must already have your own LiveJournal account.  You can make your own LiveJournal from the <a href="/create.bml">create journal page</a>.  Once you have defined your fellow LiveJournal-using friends, you'll be able to easily keep track of what they're all doing, as they're doing it.
+
+/friends/edit.bml.title=Edit Friends
+
+/friends/editgroups.bml.btn.ge.del=Delete
+
+/friends/editgroups.bml.btn.ge.new=New
+
+/friends/editgroups.bml.btn.ge.ren=Rename
+
+/friends/editgroups.bml.btn.gs.private=Private
+
+/friends/editgroups.bml.btn.gs.public=Public
+
+/friends/editgroups.bml.btn.mv.down=Move down
+
+/friends/editgroups.bml.btn.mv.up=Move up
+
+/friends/editgroups.bml.confirm.delete=Are you sure you wish to delete this custom friends group?
+
+/friends/editgroups.bml.done.btn=Save Changes
+
+/friends/editgroups.bml.done.header=Done?
+
+/friends/editgroups.bml.done.text=When you are done, press the button below to save your changes.
+
+/friends/editgroups.bml.error.max30|notes=It is important for the JavaScript on this page to work that this string remains a single line without linebreaks. Additionally, it must not contain any quotation marks.
+/friends/editgroups.bml.error.max30=You have reached the maximum limit of 30 custom friends groups. If you have deleted one or more groups but have not saved the changes yet, do so now, then come back to this page and reload it. You will then be able to create new custom friends groups.
+
+/friends/editgroups.bml.error.text=The server returned the following error message:
+
+/friends/editgroups.bml.group.public=(public)
+
+/friends/editgroups.bml.ingroup=In group:
+
+/friends/editgroups.bml.ingroup.not=Not in group:
+
+/friends/editgroups.bml.login.header=Login First
+
+/friends/editgroups.bml.login.text=To edit your custom friends groups, you must first <a href="/login.bml?ret=1">log in</a>.
+
+/friends/editgroups.bml.prompt.newname=Enter the name for the new custom friends group:
+
+/friends/editgroups.bml.prompt.rename=Rename this custom friends group to:
+
+/friends/editgroups.bml.saved.header=Saved
+
+/friends/editgroups.bml.saved.text=Your custom friends groups are now saved.
+
+/friends/editgroups.bml.text<<
+This page allows you to edit your custom friends groups.  Custom friends groups are used
+for setting security on items and for filtering your friends page.
+This page requires JavaScript to work.
+.
+
+/friends/editgroups.bml.text.sec<<
+<strong>Security note:</strong> If you wish to delete a group and make a new group,
+do <strong>not</strong> do this by renaming one group and then editing it.
+If you do this, all your old entries which are accessible to the old group will
+then be accessible to the new group.
+.
+
+/friends/editgroups.bml.title=Edit Custom Friends Groups
+
+/friends/editgroups.bml.yourgroups=Your custom friends groups:
+
+/friends/edit_do.bml.addfriends.head=Add Friends
+
+/friends/edit_do.bml.addfriends.text=Enter your friends' LiveJournal user names in the boxes below, and pick what background and foreground colors you want to associate with them....
+
+/friends/edit_do.bml.background=Background
+
+/friends/edit_do.bml.bgcolor=Background Color:
+
+/friends/edit_do.bml.btn.close=Close
+
+/friends/edit_do.bml.btn.save=Save Changes
+
+/friends/edit_do.bml.btn.toggle=Toggle Preview Window
+
+/friends/edit_do.bml.done.head=Done?
+
+/friends/edit_do.bml.done.text=When done, press the "Save Changes" button below...
+
+/friends/edit_do.bml.error.updating=There was an error updating your friends list:
+
+/friends/edit_do.bml.fellowfriends.head=Fellow Friends
+
+/friends/edit_do.bml.fellowfriends.text=The following people have listed you as their friend... You may want to list them as your friend too.  More than anything this is provided as a reference so you know their LiveJournal usernames too.  You are under no obligation to add them to your list.
+
+/friends/edit_do.bml.foreground=Foreground
+
+/friends/edit_do.bml.friend=Friend
+
+/friends/edit_do.bml.hover=Hover your mouse over a color to see its name
+
+/friends/edit_do.bml.mrcolor=Mr. Color Viewer
+
+/friends/edit_do.bml.name=Name
+
+/friends/edit_do.bml.needmore=If you need to add more friends than you have room for on this form, save the changes below, then come back to add more.
+
+/friends/edit_do.bml.nofriends.head=No Friends?
+
+/friends/edit_do.bml.nofriends.text=You do not currently have any friends defined.  However, we're sure you have to have a few friends!  <tt>:)</tt>  Just enter their LiveJournal names below....
+
+/friends/edit_do.bml.opt.delete=Delete?
+
+/friends/edit_do.bml.success.head=Success
+
+/friends/edit_do.bml.success.text=Your friends have been updated.  You may view your newly updated friends page <a href="[[url]]">here</a>.
+
+/friends/edit_do.bml.textcolor=Text Color:
+
+/friends/edit_do.bml.title=Edit Friends
+
+/friends/edit_do.bml.user=User
+
+/friends/edit_do.bml.viewer=Color Viewer
+
+/friends/edit_do.bml.yourfriends.head=Your Friends
+
+/friends/edit_do.bml.yourfriends.text=You have the following friends currently defined:
+
+/friends/index.bml.title=Friends Tools
+
+/interests.bml.add.added.head=Added!
+
+/interests.bml.add.added.text=The interest has been added to your list.
+
+/interests.bml.add.btn.text=Add [[interest]]
+
+/interests.bml.add.confirm.head=Confirm
+
+/interests.bml.add.confirm.text=To add <b>[[interest]]</b> as an interest, click the button below.
+
+/interests.bml.add.toomany.head=Sorry...
+
+/interests.bml.add.toomany.text=You already have [[maxinterests]] interests defined.
+
+/interests.bml.addint=If you're also interested in this and would like to be added to this list, <a href="/interests.bml?mode=add&amp;intid=[[qintid]]">click here</A>.
+
+/interests.bml.communities.head=Relevant Communities
+
+/interests.bml.communities.text=The following communities are also interested in <b>"[[interest]]"</b>.
+
+/interests.bml.count=Count
+
+/interests.bml.error.add.mustlogin=You have to be logged in to add an interest this way. 
+
+/interests.bml.error.findsim_do.intnotfound=Interest wasn't found.
+
+/interests.bml.findsim.account.notallowed=However, your account type doesn't let you use this tool.
+
+/interests.bml.findsim.account.notloggedin=You're also not <a href='/login.bml?ret=1'>logged in</a>, so your account type can't be determined.
+
+/interests.bml.findsim.btn.find=Find!
+
+/interests.bml.findsim.head=Similar Users
+
+/interests.bml.findsim.searchwait=<b>Please note:</b> Search will take several seconds.  Be patient.
+
+/interests.bml.findsim.simtouser=Similar to User:
+
+/interests.bml.findsim.text=This tool lets you find users with the most similar interests to a given user.  More fun stuff can be found on the <A HREF="/interests.bml">interests page</A>.
+
+/interests.bml.findsim_do.account.notallowed=Sorry, your account type doesn't let you use this tool.
+
+/interests.bml.findsim_do.magic=Magic<br />Index
+
+/interests.bml.findsim_do.magic.head=Magic Index?
+
+/interests.bml.findsim_do.magic.text=Each matching user gets computed a magic index, which is a weighting of two factors:  the raw number of like interests, and some extra points for sharing uncommon interests.
+
+/interests.bml.findsim_do.nomatch.head=No Matches
+
+/interests.bml.findsim_do.nomatch.text=No users are similar to [[user]].
+
+/interests.bml.findsim_do.notdefined=User [[user]] has no defined interests.
+
+/interests.bml.findsim_do.similar.head=Similar Users
+
+/interests.bml.findsim_do.similar.text=The following are the most related users to [[user]]
+
+/interests.bml.interest=Interest
+
+/interests.bml.interested.btn.find=Find
+
+/interests.bml.interested.in=Find people interested in:
+
+/interests.bml.interests.findsim1=Find similar people
+
+/interests.bml.interests.findsim2=see who has the most number of common interests with you
+
+/interests.bml.interests.head=Interests
+
+/interests.bml.interests.text=Here are some fun things you can do with interests...
+
+/interests.bml.interests.viewpop=View popular interests
+
+/interests.bml.match=[[count]] match:
+
+/interests.bml.matches=[[count]] matches:
+
+/interests.bml.morestuff=More fun stuff can be found on the <A HREF="/interests.bml">interests page</A>.
+
+/interests.bml.nointerests.text=Don't have any interests listed?  Add some by going to the <A HREF="/editinfo.bml">Edit Personal Info & Settings</A> page.
+
+/interests.bml.popular.head=Popular Interests
+
+/interests.bml.popular.text=The following are the most popular interests.
+
+/interests.bml.title=Interests
+
+/interests.bml.toomany.body=There are [[intcount]] people and/or communities listing this as an interest.  A list will not be shown.
+
+/interests.bml.toomany.head=Many matches
+
+/interests.bml.users.head=Interested users
+
+/interests.bml.users.text=The following users are also interested in <b>[[interest]]</b>.
+
+/login.bml.bindip.label=Bind to IP address:
+
+/login.bml.bindip.no=No (works with all ISPs)
+
+/login.bml.bindip.yes=Yes (safer)
+
+/login.bml.error.mustenterusername=You must <a href='/login.bml'>enter a username</a>.
+
+/login.bml.expire.btn.neverexpire=Change expiration mode to NEVER
+
+/login.bml.expire.btn.sessiononly=Change expiration mode to SESSION ONLY
+
+/login.bml.expire.neverexpire.text=Your login will <b>never expire</b>, so if you're at a public internet terminal, a school, library, or other place where people may be using this computer shortly, make sure you log out when you're done!  Or, change your login mode to expire when you close your browser:
+
+/login.bml.expire.sessiononly.text=Your login will expire after you close your browser.  If this is your own computer and you're the only user, you may want to set your login expiration such that it never expires:
+
+/login.bml.links.head=Links
+
+/login.bml.links.link1=Your <a href='/users/[[username]]/friends'>friends page</a>.
+
+/login.bml.links.link2=Your <a href='/todo/'>to-do list</a>.
+
+/login.bml.links.text=In the future this page will have all sorts of links and relevant information, but for now here are a few places you may want to go:
+
+/login.bml.loggedin.head=Logged in!
+
+/login.bml.loggedin.text=You are now logged in.
+
+/login.bml.login.btn.changeopts=Change Options
+
+/login.bml.login.btn.login=Login...
+
+/login.bml.login.expiration=Expiration:
+
+/login.bml.login.forget=Forget?
+
+/login.bml.login.head=Login
+
+/login.bml.login.never=Never
+
+/login.bml.login.otheropts=Other Options:
+
+/login.bml.login.password=Password:
+
+/login.bml.login.text1=To login to [[sitename]], enter your username and password below.  <b>New Users:</b> To create an account, <a href='/create.bml'>go here</a>.
+
+/login.bml.login.text2=You may also specify when your login expires.  By default your login will expire when you close your browser, which is best on public computers.  However, if you're the only user of your computer and nobody else has access to it, you may choose to remain logged in forever.
+
+/login.bml.login.username=Username:
+
+/login.bml.login.whenbrowsercloses=When browser closes
+
+/login.bml.logout.btn=Log Out
+
+/login.bml.title=Login
+
+/login.bml.whylogin.benefit1=You won't have to enter your username/password anywhere on the site anymore.
+
+/login.bml.whylogin.benefit2=You'll be able to view "protected" journal entries from your friends that give you access to read them.
+
+/login.bml.whylogin.benefit3=A lot of features are only visible or accessible when you're logged in.
+
+/login.bml.whylogin.head=Why Login?
+
+/login.bml.whylogin.text=Here are some of the main benefits of logging in:
+
+/logout.bml.already.head=Already logged out
+
+/logout.bml.already.text=You are already logged out.
+
+/logout.bml.killall.btn=Expire all my sessions
+
+/logout.bml.killall.head=Other sessions
+
+/logout.bml.killall.text=You have other active sessions, from other computers. Do you want to expire all your sessions, and not just this one?
+
+/logout.bml.loggedout.already=Already logged out.
+
+/logout.bml.loggedout.head=Logged out
+
+/logout.bml.loggedout.killedall=All your sessions have been expired.
+
+/logout.bml.loggedout.success=Logged out.
+
+/logout.bml.loggedout.text=You are now logged out.
+
+/logout.bml.logout.btn=Log out.
+
+/logout.bml.logout.head=Log out?
+
+/logout.bml.logout.text=Click the button below to log out.
+
+/logout.bml.title=Logout
+
+/lostinfo.bml.btn.proceed=Proceed
+
+/lostinfo.bml.enter_email=Enter your email address:
+
+/lostinfo.bml.enter_email_optional=Email address:  (optional)
+
+/lostinfo.bml.enter_username=Enter your username:
+
+/lostinfo.bml.lostpassword.text=If you've lost your password, enter your username and optionally, the email address you'd like the password sent to.  Note that the email address must be one you've used at LiveJournal before and had confirmed at one point.  If you leave the email field blank, it'll be mailed to your current address.
+
+/lostinfo.bml.lostpassword.title=Lose your password?
+
+/lostinfo.bml.lostusername.text=If you've lost your username, enter your email address and we'll send you your username.
+
+/lostinfo.bml.lostusername.title=Lose your username?
+
+/lostinfo.bml.title=Lost Information
+
+/lostinfo_do.bml.error.no_usernames_for_email=No username(s) for this email address: [[address]] .
+
+/lostinfo_do.bml.error1.text=You never used that email address with this account or it was never validated.
+
+/lostinfo_do.bml.lostpasswordmail.part1<<
+*** This is an automated email.  You do not need to respond to it. ***
+
+This is your requested password reminder from [[sitename]].
+Below is your username, password, and email address your journal is
+registered under.
+
+          Username: [[username]]
+          Password: [[password]]
+     EMail Address: [[emailadr]]
+.
+
+/lostinfo_do.bml.lostpasswordmail.part2=To validate your email address, go here:
+
+/lostinfo_do.bml.lostpasswordmail.part3<<
+This information was requested on the website from [[remoteip]].
+
+If you didn't request to have this password emailed to you, don't panic.
+After all, you're the one who's seeing this email, and not the other person.
+It's possible that the user who made the request is mistaken and
+believes that he or she controls this username. It's also possible that
+someone made a typo in a username or email address.
+.
+
+/lostinfo_do.bml.lostpasswordmail.part4=
+
+/lostinfo_do.bml.lostpasswordmail.part5<<
+Useful links:
+
+  Your LiveJournal:
+    [[journalurl]]
+
+  Update your journal online:
+    [[updateurl]]
+
+Regards,
+The site team
+
+[[rooturl]]
+.
+
+/lostinfo_do.bml.lostpasswordmail.subject=Lost Password
+
+/lostinfo_do.bml.password_mailed.text=Success.  Your password has been mailed.
+
+/lostinfo_do.bml.password_mailed.title=Password mailed!
+
+/lostinfo_do.bml.title=Lost Information
+
+/lostinfo_do.bml.username_mailed.text=Success.  Your username has been mailed.
+
+/lostinfo_do.bml.username_mailed.title=Username mailed!
+
+/modify.bml.btn.proceed=Proceed...
+
+/modify.bml.lostinfo.head=Forget something?
+
+/modify.bml.lostinfo.text=If you forgot your username or password, <a href="lostinfo.bml">recover it here!</a>.
+
+/modify.bml.modify.head=Modify Your Journal
+
+/modify.bml.modify.text=Enter your username and password to modify options that affect the appearance your journal. If you'd like to add a new journal entry, you want to go <A HREF="/update.bml">here</A>.
+
+/modify.bml.title=Modify Journal
+
+/modify_do.bml.availablestyles.head=Available Styles
+
+/modify_do.bml.availablestyles.userstyles=User Styles:
+
+/modify_do.bml.colortheme.about=Here you can select what color theme will be applied to the layout options you pick above.  Or, if you don't like the provided colors, specify your own!  If you come up with something really sexy looking, let us know and we'll name a theme after it.
+
+/modify_do.bml.colortheme.area.head=Usage Area
+
+/modify_do.bml.colortheme.color.head1=Color
+
+/modify_do.bml.colortheme.color.head2=(#rrggbb or name)
+
+/modify_do.bml.colortheme.customcolors=Custom Colors
+
+/modify_do.bml.colortheme.defaulttheme=Default Theme
+
+/modify_do.bml.colortheme.head=Color Theme
+
+/modify_do.bml.domainalias.about=If you have a domain name already registered (or which you're planning on registering) and would like it to automatically load your LiveJournal, enter it here:
+
+/modify_do.bml.domainalias.domainname=Domain name:
+
+/modify_do.bml.domainalias.example=Example: <i>my-journal.com</i>
+
+/modify_do.bml.domainalias.head=Domain Aliasing
+
+/modify_do.bml.domainalias.helptext=For this to work, you'll need to arrange to have your domain name's DNS point to the same IP address of [[sitename]].
+
+/modify_do.bml.done.btn.savechanges=Save Changes
+
+/modify_do.bml.done.head=Done?
+
+/modify_do.bml.done.text=When done, press the "Save Changes" button below...
+
+/modify_do.bml.error.dupdomainalias=Another user has already registered themselves as using your selected domain alias.
+
+/modify_do.bml.error.stylenotavailable=One of the styles you've selected is not available.  This is either the result of somebody deleting the style, or you trying to pick one that you don't have access to.
+
+/modify_do.bml.friends.about=Here are options that control how your friends page looks.
+
+/modify_do.bml.friends.head=Friends View
+
+/modify_do.bml.friends.opt.usesharedpic.about=This option controls what picture you see on your friends page when a user posts in a shared or community journal.  If you check it, then you'll see the community's icon.  If you leave it unchecked, then you'll see the person that's actually posting's personal user icon.
+
+/modify_do.bml.friends.opt.usesharedpic.head=Use shared journal pictures instead of poster's user picture
+
+/modify_do.bml.journaloptions.about=From here you can customize the look of your LiveJournal pages.  If you're really curious how everything works, read the <A HREF="/developer/" TARGET=_blank>developer information</A>.  Otherwise, we'll assume you're satisifed with the basic options below:
+
+/modify_do.bml.journaloptions.head=Journal Options
+
+/modify_do.bml.journalstatus.about=If you want to delete or undelete your journal, this is where you do it.  Once you delete your journal you have 30 days to undelete it, just in case you change your mind.  After 30 days, the journal will be permanently deleted and there will be no way to recover it.
+
+/modify_do.bml.journalstatus.head=Journal Activation Status
+
+/modify_do.bml.journalstatus.select.activated=Activated
+
+/modify_do.bml.journalstatus.select.deleted=Deleted
+
+/modify_do.bml.journalstatus.select.head=Status:
+
+/modify_do.bml.journalstatus.select.suspended=Suspended
+
+/modify_do.bml.moodicons.about=When posting journal entries you can also specify your current mood.  Different users have submitted different sets of mood icons that you can use.  Or, select "None" if you don't want any pictures beside your moods.  (or, you don't even have to use the Current Mood feature at all.)
+
+/modify_do.bml.moodicons.head=Mood Icons
+
+/modify_do.bml.moodicons.opt.forcefriends.about=Force this mood theme for all friends on your friends page
+
+/modify_do.bml.moodicons.personal=Personal Themes:
+
+/modify_do.bml.moodicons.preview=preview
+
+/modify_do.bml.moodicons.select=Select mood icon set:
+
+/modify_do.bml.overrides.about=You can ignore this section.  This is for tweaking very specific things about your page layout.  See the <A HREF="/developer/" TARGET=_blank>developer section</A> for details.  Also note that overrides are for overriding only one or two things about a style.  If you'd like to override everything, you need to <A HREF="/styles/create.bml" TARGET=_blank>create your own style</A>.
+
+/modify_do.bml.overrides.box.head=Overrides:
+
+/modify_do.bml.overrides.head=Style Overrides
+
+/modify_do.bml.overrides.note=Please note that not all style variables can be overridden. See the <a href="/developer/varlist.bml">documentation</a> for more details.
+
+/modify_do.bml.overrides.warning=THIS IS <U>NOT</U> WHERE YOU TYPE YOUR JOURNAL!!
+
+/modify_do.bml.pagelayoutstyle.about=Setting this controls how your journal is laid out on the screen.
+
+/modify_do.bml.pagelayoutstyle.head=Page Layout Style
+
+/modify_do.bml.pagelayoutstyle.warning=Your account type only permits you to select between a small number of default styles.
+
+/modify_do.bml.success.head=Success
+
+/modify_do.bml.success.text=Your journal settings have been updated.  You can view your journal <A HREF="[[url]]">here</A>.
+
+/modify_do.bml.title=Modify Journal
+
+/setlang.bml.select=Select your preferred language:
+
+/setlang.bml.switch=Switch
+
+/setlang.bml.title=Set Language
+
+/support/encodings.bml.edit.header=I cannot edit my entries in the web interface!
+
+/support/encodings.bml.edit.text<<
+<?p <b>Short answer:</b> <i>(applicable if you write your journal in English)</i>: Go to your 
+<a href="/editinfo.bml">personal settings page</a>. Find an option
+neat the bottom of the page that is called <b>Auto-convert older entries from:</b>. Choose
+"Western European (Windows)" from the pull-down menu and save your settings. Your entries should
+now be editable. p?>
+
+<?p <b>Long answer</b>: In order to allow you to edit a non-Unicode entry, LiveJournal code needs to 
+know which encoding that entry has been posted in. For users of English and other West European 
+languages, this will normally be "Western European (Windows)", although if that doesn't work well
+for quote characters and other similar meta-characters, try "Western European (ISO)". Users
+writing in other languages should select their encoding; if it isn't in the supplied list, 
+contact <a href="/support/">Support</a> and explain the problem.  p?>
+
+<?p Note that "non-Unicode entry" may mean either a journal entry posted before LiveJournal underwent
+the conversion to Unicode, or a new journal entry posted recently with a client program that 
+is not Unicode-compatible.  p?>
+.
+
+/support/encodings.bml.editcl.header=I cannot edit my entries in the client program!
+
+/support/encodings.bml.editcl.text<<
+<?p If there is a newer version of your client program that supports Unicode,
+upgrade. If not, you will be able to edit entries which contain ASCII symbols only (basically
+the Latin alphabet and the usual punctuation signs). For entries any fancy symbols or other 
+languages you will have to resort to editing via the web interface, which works fine in any case. p?>
+.
+
+/support/encodings.bml.groups.header=I cannot edit my friend lists with my client program!
+
+/support/encodings.bml.groups.text<<
+<?p This is probably due to you having friend groups with names that aren't exclusively ASCII (for
+example, written in non-Latin languages or containing accent symbols). In order to successfully
+work with such group names, you have to use a Unicode-supporting client. Alternatively, you
+can rename your groups to ASCII-only names on the 
+<a href="/friends/editgroups.bml">group editing page</a> and then use your client program. p?>
+.
+
+/support/encodings.bml.overview.header=What is this all about?
+
+/support/encodings.bml.overview.text<<
+<?p LiveJournal uses Unicode to store and display everything: 
+text of journal entries, comments, names and personal information... everything. 
+Unicode is a very powerful standard for working with text. 
+For example, it allows users to store and input information in many languages at once. 
+It supports the intrastructure of translating and maintaining the user interface in 
+languages other than English. p?>
+
+<?p Journal entries and comments which had been stored before LiveJournal switched
+to Unicode need to be converted to Unicode on-the-fly in order for the user to be able 
+to view or edit them. This page explains how to deal with some of the common problems in
+that area. p?>
+.
+
+/support/encodings.bml.still.header=Still stumped?
+
+/support/encodings.bml.still.text=<?p You can try asking your question in the <a href="/support/">Support Area</a>. p?>
+
+/support/encodings.bml.title=Encodings
+
+/support/faqbrowse.bml.backfaq=Back to <a href="faq.bml">the FAQ</a>.
+
+/support/faqbrowse.bml.backsupport=Back to <a href="./">the support area</a>.
+
+/support/faqbrowse.bml.error.nofaq=The specified FAQ does not exist.
+
+/support/faqbrowse.bml.lastupdated=Last Updated:
+
+/support/faqbrowse.bml.title=FAQ Question
+
+/talkmulti.bml.deleted.body=The comments have been deleted. You can view the rest of the thread <a href="[[link]]">here</a>.
+
+/talkmulti.bml.deleted.title=Comments deleted
+
+/talkmulti.bml.error.comms_deleted=One of the comments has been deleted since. For security reasons, please go back and try again.
+
+/talkmulti.bml.error.inconsistent_data=The supplied data is inconsistent.
+
+/talkmulti.bml.error.invalid=Invalid parameters specified.
+
+/talkmulti.bml.error.invalid_mode<<
+You have not selected one of the actions. Please go back and choose
+if you would like to screen, unscreen, or delete the comments.
+.
+
+/talkmulti.bml.error.login=You are not logged in.
+
+/talkmulti.bml.error.none_selected=You have not selected any comments.
+
+/talkmulti.bml.error.privs.delete=You do not have permission to delete these comments.
+
+/talkmulti.bml.error.privs.screen=You do not have permission to screen these comments.
+
+/talkmulti.bml.error.privs.unscreen=You do not have permission to unscreen these comments.
+
+/talkmulti.bml.screened.body=The comments have been screened. You can view them <a href="[[link]]">here</a>.
+
+/talkmulti.bml.screened.title=Comments screened
+
+/talkmulti.bml.title.delete=Delete Multiple Comments
+
+/talkmulti.bml.title.screen=Screen Multiple Comments
+
+/talkmulti.bml.title.unscreen=Unscreen Multiple Comments
+
+/talkmulti.bml.unscreened.body=The comments have been unscreened. You can view them <a href="[[link]]">here</a>.
+
+/talkmulti.bml.unscreened.title=Comments unscreened
+
+/talkpost.bml.allowedhtml=Allowed HTML
+
+/talkpost.bml.error.cannotreplynopost=You cannot reply to a non-existent post 
+
+/talkpost.bml.error.nocommentsjournal=User has disabled comments in their journal.
+
+/talkpost.bml.error.nocommentspost=User has disabled comments for this particular post.
+
+/talkpost.bml.error.noreplypost=Replyto post not found (deleted?)
+
+/talkpost.bml.error.noreply_screened=This comment is screened and you have no permissions to see it or reply to it.
+
+/talkpost.bml.label.picturetouse= <a href='/allpics.bml?user=[[username]]'>Picture</a> to use: 
+
+/talkpost.bml.loganonip=<b>Notice!</b> This user has turned on the option that logs IP addresses of anonymous posters.
+
+/talkpost.bml.loginq=Login?
+
+/talkpost.bml.logyourip=<b>Notice!</b> This user has turned on the option that logs your IP address when posting.
+
+/talkpost.bml.nosubjecthtml=No HTML allowed in subject
+
+/talkpost.bml.opt.anonymous=Anonymous
+
+/talkpost.bml.opt.defpic=(default)
+
+/talkpost.bml.opt.friendsonly=- this user has disabled anonymous and non-friend posting.  You may post here if [[username]] lists you as a friend.
+
+/talkpost.bml.opt.from=From:
+
+/talkpost.bml.opt.ljuser=LiveJournal user:
+
+/talkpost.bml.opt.loggedin=<b>Logged in user:</b> [[username]]
+
+/talkpost.bml.opt.message=Message:
+
+/talkpost.bml.opt.noanonpost=- this user has disabled anonymous posting.
+
+/talkpost.bml.opt.noautoformat=Don't auto-format: 
+
+/talkpost.bml.opt.noimage=No Image
+
+/talkpost.bml.opt.preview=Preview
+
+/talkpost.bml.opt.spellcheck=Spell check entry before posting
+
+/talkpost.bml.opt.subject=Subject:
+
+/talkpost.bml.opt.submit=Post Comment
+
+/talkpost.bml.opt.willscreen=(will be screened)
+
+/talkpost.bml.opt.willscreenfriend=(will be screened if not a friend)
+
+/talkpost.bml.paraformat=Paragraphs will be automatically formatted by default.
+
+/talkpost.bml.postresponse=Post a comment in response:
+
+/talkpost.bml.title=Post Comment
+
+/talkpost.bml.usermismatch<<
+You have entered a username, but you have deselected the 'LiveJournal user' option.
+
+Please either clear the user textbox or select the relevant posting mode and try again.
+.
+
+/talkpost.bml.warnscreened=<b>Notice:</b> This comment is screened. Replying to it will automatically un-screen it and make it visible.
+
+/talkpost_do.bml.error.badpassword=Incorrect password given for the username specified.  You can recover your password <a href='/lostinfo.bml'>here</a> if you've forgotten it.
+
+/talkpost_do.bml.error.badusername=The LiveJournal username you specified does not exist.  You can recover your username <a href='/lostinfo.bml'>here</a> if you've forgotten it, or you may post as "Anonymous" instead.
+
+/talkpost_do.bml.error.banned=You are not allowed to post in this user's journal.
+
+/talkpost_do.bml.error.blankmessage=Your message was blank.  Please type at least something in the message field.
+
+/talkpost_do.bml.error.confused_identity=You entered a username, but selected to post anonymously or as the currently logged in user.  Go back and decide which you really want to do.
+
+/talkpost_do.bml.error.deleted=Your journal has been deleted.  You can't post messages.
+
+/talkpost_do.bml.error.friendsonly=Only friends of [[user]] may post in this journal.
+
+/talkpost_do.bml.error.lostcookie=Your login cookie seems to have disappeared?
+
+/talkpost_do.bml.error.manybytes=Sorry, but your comment of [[current]] exceeds the maximum byte length of [[limit]]. Please go back, shorten it, and try posting it again.
+
+/talkpost_do.bml.error.manychars=Sorry, but your comment of [[current]] characters exceeds the maximum character length of [[limit]]. Please go back, shorten it, and try posting it again.
+
+/talkpost_do.bml.error.mustlogin=You must be logged in or using a username/password to reply to this protected entry.
+
+/talkpost_do.bml.error.noanon=You can't post anonymously in this person's journal.
+
+/talkpost_do.bml.error.noauth=You are not authorized to reply to this protected entry.
+
+/talkpost_do.bml.error.nocomments=User has disabled commenting on this journal entry.
+
+/talkpost_do.bml.error.noparent=Cannot reply to a non-existent comment.
+
+/talkpost_do.bml.error.notafriend=Sorry, user <b>[[user]]</b> does not list you as a friend, and they've set the "friends only" option for who can reply to their journal.
+
+/talkpost_do.bml.error.nousername=You did not enter your LiveJournal username.  You can choose to post as "Anonymous" if you don't have a LiveJournal user account.
+
+/talkpost_do.bml.error.noverify=Sorry, you aren't allowed to post comments in other people's journals until your email address has been verified.  If you've lost the confirmation email to do this, you can have it resent from the <a href='/lostinfo.bml'>lost information page</a>.
+
+/talkpost_do.bml.error.postshared=You can't post as a shared or community account.  Shared accounts represent groups of people, not individual people.
+
+/talkpost_do.bml.error.screened=You have no permission to reply to this screened comment.
+
+/talkpost_do.bml.error.suspended=Your journal has been suspended.  You can't post messages.
+
+/talkpost_do.bml.error.testacct=Test accounts can only be used in test account journals.
+
+/talkpost_do.bml.opt.preview=Preview
+
+/talkpost_do.bml.opt.spellcheck=Spell check entry before posting
+
+/talkpost_do.bml.preview=This is how your comment will look when posted. Using the form below, you can edit your comment further, or you can submit it as-is.
+
+/talkpost_do.bml.preview.subject=<b>Subject: </b>
+
+/talkpost_do.bml.preview.submit=Submit
+
+/talkpost_do.bml.preview.title=Preview
+
+/talkpost_do.bml.success.loggedin=You are now logged in.
+
+/talkpost_do.bml.success.message=Your comment has been added.  You can view it <a href="[[link]]">here</a>.
+
+/talkpost_do.bml.success.screened.comm=Your comment has been added.  According to this community's settings, it was marked as screened, and will be visible only to you and the community maintainers until they choose to unscreen it. You can view your comment <a href="[[link]]">here</a>.
+
+/talkpost_do.bml.success.screened.user=Your comment has been added.  According to this journal's settings, it was marked as screened, and will be visible only to you and the journal's owner until the owner chooses to unscreen it. You can view your comment <a href="[[link]]">here</a>.
+
+/talkpost_do.bml.success.title=Success
+
+/talkpost_do.bml.success.unscreened=Additionally, the screened comment you were replying to has been unscreened and is now visible.
+
+/talkpost_do.bml.title=Post Comment
+
+/talkread.bml.anonuser=<i>(Anonymous)</i>
+
+/talkread.bml.confirm.action=Are you sure you wish to delete the selected comments?
+
+/talkread.bml.deletedpost=<b>(Deleted post)</b>
+
+/talkread.bml.deleteduser=<i>(Deleted user: [[username]])</i>
+
+/talkread.bml.fromip=(from [[ip]])
+
+/talkread.bml.noreplies=No replies
+
+/talkread.bml.nosubject=(no subject)
+
+/talkread.bml.pageofpages=Page [[page]] of [[total]]
+
+/talkread.bml.replysuspended=<b>(Reply from suspended user)</b>
+
+/talkread.bml.screenedpost=<b>(Screened Post)</b>
+
+/talkread.bml.select=Select
+
+/talkread.bml.subjectdeleted=[deleted]
+
+/talkread.bml.talkmulti.delete=Delete
+
+/talkread.bml.talkmulti.des=<b>Mass action</b> on selected comments:
+
+/talkread.bml.talkmulti.screen=Screen
+
+/talkread.bml.talkmulti.submit=Perform Action
+
+/talkread.bml.talkmulti.unscreen=Unscreen
+
+/talkread.bml.title=Read Comments
+
+/talkscreen.bml.error.login=You must be logged in to work with screened comments.
+
+/talkscreen.bml.error.privs.screen=You do not have permission to screen this comment.
+
+/talkscreen.bml.error.privs.unscreen=You do not have permission to unscreen this comment.
+
+/talkscreen.bml.screen.doit=Yes, screen this comment
+
+/talkscreen.bml.screen.sure.body=Are you sure you want to screen this comment?
+
+/talkscreen.bml.screen.sure.title=Screen this comment?
+
+/talkscreen.bml.screened.body=The comment has been screened. You can view it <a href="[[link]]">here</a>.
+
+/talkscreen.bml.screened.title=Success
+
+/talkscreen.bml.title=Screened Comment
+
+/talkscreen.bml.unscreen.doit=Yes, unscreen this comment
+
+/talkscreen.bml.unscreen.sure.body=Are you sure you want to unscreen this comment?
+
+/talkscreen.bml.unscreen.sure.title=Unscreen this comment?
+
+/talkscreen.bml.unscreened.body=The comment has been unscreened. You can view it <a href="[[link]]">here</a>.
+
+/talkscreen.bml.unscreened.title=Success
+
+/tools/memadd.bml.add_previous<<
+<?h1 Add to memories... h1?>
+<?p To add the journal entry you were just viewing to your "memories", fill out the form below. p?>
+.
+
+/tools/memadd.bml.body.added.body=Your list of memorable posts has been updated.
+
+/tools/memadd.bml.body.added.header=Success
+
+/tools/memadd.bml.description=Description:
+
+/tools/memadd.bml.description.text<<
+  Give this journal entry a description that you can remember it by.  
+  To delete this entry from your list of memorable posts, enter a blank description.
+.
+
+/tools/memadd.bml.error.deleted.body=The journal entry previously described as "[[desc]]" has been removed from your list of memorable posts.
+
+/tools/memadd.bml.error.deleted.title=Memory deleted
+
+/tools/memadd.bml.error.entry_deleted=Journal entry no longer exists.  Memory deleted.
+
+/tools/memadd.bml.error.fivekeywords=Only 5 keywords/categories are allowed per memorable post.
+
+/tools/memadd.bml.error.invalid_security=Invalid or missing security option.
+
+/tools/memadd.bml.error.login=You must be <a href="/login.bml?ret=1">logged in</a> to use this feature.  Go login and you'll be brought back here.
+
+/tools/memadd.bml.error.maxsize=This keyword exceeds the maximum allowed size: "[[keyword]]"
+
+/tools/memadd.bml.error.nodescription.body<<
+To add a journal entry to your list of memories, you need to provide a description.  
+To delete a memory, you can edit it and remove the description, but you didn't already have this entry in your memories.
+.
+
+/tools/memadd.bml.error.nodescription.title=No description
+
+/tools/memadd.bml.form.reset=Reset
+
+/tools/memadd.bml.form.submit=Submit
+
+/tools/memadd.bml.keywords=Keywords:
+
+/tools/memadd.bml.keywords.example=Example:  <B>Funny, Geeky, Romantic</B>
+
+/tools/memadd.bml.keywords.select=Or, you can also select keywords you've used in the past:
+
+/tools/memadd.bml.keywords.text<<
+  Why is this post memorable?
+  Enter zero to five keywords or categories so you can find it back later.
+.
+
+/tools/memadd.bml.login.enterinfo=Enter username and password of the account you wish to save the memory into.
+
+/tools/memadd.bml.login.forgot.header=Forget something?
+
+/tools/memadd.bml.login.forgot.recover=If you forgot your username or password, <a href='lostinfo.bml'>recover it here!</a>.
+
+/tools/memadd.bml.multiple_selections=Hold down 'Control' while clicking keywords to select multiple ones.
+
+/tools/memadd.bml.security.friendsonly=Friends Only
+
+/tools/memadd.bml.security.private=Private
+
+/tools/memadd.bml.security.public=Public 
+
+/tools/memadd.bml.title=Add to Memories
+
+/tools/memadd.bml.title.added=Added
+
+/tools/memadd.bml.title.deleted=Deleted
+
+/tools/memadd.bml.title.edit_memory=Edit Memorable Entry
+
+/tools/memadd.bml.whocansee<<
+  Who can see that you've marked this post as memorable?
+  Everybody, only people you list as a friend, or just you?
+.
+
+/tools/memories.bml.back=Back
+
+/tools/memories.bml.body.keyword<<
+<?h1 [[keyword]] h1?>
+<?p The following is a list of "[[keyword]]" journal entries that user <B>[[user]]</B> found memorable. p?>
+.
+
+/tools/memories.bml.body.list_categories<<
+<?h1 Memorable Posts h1?>
+<?p The following is a list of categories that user <b>[[user]]</b> has placed memorable journal entries in. p?>
+.
+
+/tools/memories.bml.body.memorable=The following is a list of uncategorized journal entries that user <B>[[user]]</B> found memorable.
+
+/tools/memories.bml.edit=edit
+
+/tools/memories.bml.entries=entries
+
+/tools/memories.bml.entry=entry
+
+/tools/memories.bml.error.noentries.body<<
+  This could be because 
+  1) the user hasn't defined any memorable events, 
+  2) the user's memorable events are protected and you don't have access to view them, or 
+  3) the user doesn't have any memories that match your filter criteria.
+.
+
+/tools/memories.bml.error.noentries.title=No memories found.
+
+/tools/memories.bml.filter.all=All memories
+
+/tools/memories.bml.filter.other=Only other entries
+
+/tools/memories.bml.filter.own=Only '[[user]]' entries
+
+/tools/memories.bml.form.switch=Switch
+
+/tools/memories.bml.title.keyword=Memorable [[keyword]] Posts
+
+/tools/memories.bml.title.memorable=Memorable Posts
+
+/tools/memories.bml.uncategorized=Uncategorized
+
+/update.bml.altpost=Journal to post in:
+
+/update.bml.btn.update=Update Journal
+
+/update.bml.currmood=Current <a href="/moodlist.bml">Mood</a>:
+
+/update.bml.currmusic=Current Music:
+
+/update.bml.date=Date:
+
+/update.bml.default=default
+
+/update.bml.defaultjournal=([[user]]) -- default
+
+/update.bml.error.login=Error logging on:
+
+/update.bml.error.update=Error updating journal:
+
+/update.bml.event=Event:
+
+/update.bml.full=Full Update Page
+
+/update.bml.htmlokay=HTML okay; by default, newlines will be auto-formatted to <tt>&lt;BR&gt;</tt>
+
+/update.bml.localtime=Local time:
+
+/update.bml.loggingin=Logging in to server...
+
+/update.bml.login.success=Login successful.  Hello, [[name]]!
+
+/update.bml.noneother=None, or other:
+
+/update.bml.note=<b>Note:</b> The time/date above is from our server.  Correct them for your timezone before posting.
+
+/update.bml.opt.backdate=Backdate Entry:
+
+/update.bml.opt.backdate.about=won't show on friends view
+
+/update.bml.opt.defpic=(default)
+
+/update.bml.opt.nocomments=Disallow Comments:
+
+/update.bml.opt.noemail=Don't email Comments:
+
+/update.bml.opt.noformat=Don't auto-format:
+
+/update.bml.opt.spellcheck=Spell check entry before posting
+
+/update.bml.options=Optional Settings
+
+/update.bml.other=Other:
+
+/update.bml.picture=<a href="[[url]]">Picture</a> to use:
+
+/update.bml.security.custom=Custom...
+
+/update.bml.security.friends=Friends
+
+/update.bml.security.head=Security Level:
+
+/update.bml.security.private=Private
+
+/update.bml.security.public=Public
+
+/update.bml.servermsg=Also, the server has a message for you:
+
+/update.bml.simple=You're looking at the simple page.  For more options, <a href="[[url]]">click here</a>.
+
+/update.bml.spellchecked=Your spell-checked post:
+
+/update.bml.subject=<b>Subject:</b> <i>(optional, for use on longer entries)</i>
+
+/update.bml.timeformat=24 hour time
+
+/update.bml.title=Update Journal
+
+/update.bml.title.readonly=Read-only mode
+
+/update.bml.update.about=If you don't want to <a href="/download/">download a client</a> for your computer, or if one doesn't exist for your computer, you may use this page to update your LiveJournal.  This is also useful if you're on vacation or away from your primary computer.
+
+/update.bml.update.head=Update your Journal...
+
+/update.bml.update.success=Update successful.  You may view your updated journal <a href="[[uri]]">here</a>.
+
+/update.bml.updating=Updating journal...
+
+/uploadpic_do.bml.error.urlerror=An error ocurred while trying to fetch your image.
+
+/userinfo.bml.about.comm=About
+
+/userinfo.bml.about.user=Bio
+
+/userinfo.bml.body.leave= You may <a href="/community/leave.bml?comm=[[commname]]">leave the community</a> at any time.
+
+/userinfo.bml.canpost=[[user]] can post to [[comm]]
+
+/userinfo.bml.closedmembership.body=This is a closed community.  To become a member you must contact <a href="userinfo.bml?user=[[cowner]]">its maintainer</a>.
+
+/userinfo.bml.comminfo.body=Below is information about the "[[commname]]" community on LiveJournal.
+
+/userinfo.bml.comminfo.name=Community Information
+
+/userinfo.bml.date.never=<i>Never.</i>
+
+/userinfo.bml.error.malfname=Malformed username.
+
+/userinfo.bml.error.notloggedin=If you wish to view your own user profile, you need to <a href='/login.bml?ret=1'>login</a>.
+
+/userinfo.bml.friendof.comm=Watched by
+
+/userinfo.bml.friendof.hidden=(hidden)
+
+/userinfo.bml.friendof.syndreadcount=Number of Readers
+
+/userinfo.bml.friendof.user=Friend of
+
+/userinfo.bml.friends.comm=Members
+
+/userinfo.bml.friends.user=Friends
+
+/userinfo.bml.label.addbuddy=Add Buddy
+
+/userinfo.bml.label.adduser=Add User
+
+/userinfo.bml.label.aolim=AOL IM:
+
+/userinfo.bml.label.birthdate=Birthdate:
+
+/userinfo.bml.label.clientsused=<a href="[[siteroot]]/download/">Clients</a> used:
+
+/userinfo.bml.label.comments=Comments:
+
+/userinfo.bml.label.composted=<b>Posted:</b> [[num]] - 
+
+/userinfo.bml.label.comreceived=<b>Received:</b> [[num]]
+
+/userinfo.bml.label.datecreated=Date created:
+
+/userinfo.bml.label.dateupdated=Date updated:
+
+/userinfo.bml.label.email=Email:
+
+/userinfo.bml.label.icquin=ICQ UIN:
+
+/userinfo.bml.label.interests=Interests
+
+/userinfo.bml.label.intsnotshown=<b>... [[intnotshown]] interests not shown</b>
+
+/userinfo.bml.label.jabber=Jabber:
+
+/userinfo.bml.label.journalentrs=Journal entries:
+
+/userinfo.bml.label.location=Location:
+
+/userinfo.bml.label.memberof=Member of
+
+/userinfo.bml.label.memories=Memories:
+
+/userinfo.bml.label.moredetails=(more details...)
+
+/userinfo.bml.label.msnusername=MSN Username:
+
+/userinfo.bml.label.name=Name:
+
+/userinfo.bml.label.nofriends=<i>None listed.</i>
+
+/userinfo.bml.label.reqfinduser=Only users with 'finduser' priv can lookup users by userid.
+
+/userinfo.bml.label.sendmessage=Send Message
+
+/userinfo.bml.label.shared=Shared Journal Access:
+
+/userinfo.bml.label.supportpoints=Support points
+
+/userinfo.bml.label.syndicatedfrom=Syndicated from:
+
+/userinfo.bml.label.syndicatedstatus=Syndication Status:
+
+/userinfo.bml.label.textmessage=<nobr>Text<br>Message</nobr>:
+
+/userinfo.bml.label.todo=To-Do List
+
+/userinfo.bml.label.user=User:
+
+/userinfo.bml.label.viewfriends=View Friends
+
+/userinfo.bml.label.viewlabel=View [[label]]
+
+/userinfo.bml.label.viewmembers=View Members
+
+/userinfo.bml.label.website=Website:
+
+/userinfo.bml.label.yahooid=Yahoo! ID:
+
+/userinfo.bml.membership.body=To join this community, <a href="/community/join.bml?comm=[[commname]]">click here</a>.
+
+/userinfo.bml.memories.entries=[[count]] entries
+
+/userinfo.bml.memories.entry=[[count]] entry
+
+/userinfo.bml.monitor.comm=Monitor Community
+
+/userinfo.bml.monitor.user=Add this user to your friends list
+
+/userinfo.bml.nonexist.body=There does not exist a user with the username <b>[[user]]</b>.  Sorry.
+
+/userinfo.bml.nonexist.name=Unknown user
+
+/userinfo.bml.openmembership.body=This an open-membership community.  To join, <a href="/community/join.bml?comm=[[username]]">click here</a>.
+
+/userinfo.bml.posthere=[[user]] can post to [[comm]]
+
+/userinfo.bml.rpmembership.body= Although it's open, the setting for this community is that only select users are able to post to it.  To request access, contact <a href="userinfo.bml?user=[[cowner]]">its maintainer</a>.
+
+/userinfo.bml.sendmessage.body=<a href="[[link]]">Send <b>[[user]]</b> a text message</a><br />on his/her cellphone/pager.
+
+/userinfo.bml.syn.last.never=Never
+
+/userinfo.bml.syn.lastcheck=Last checked:
+
+/userinfo.bml.syn.nextcheck=Next check:
+
+/userinfo.bml.syn.parseerror=Error Messsage:
+
+/userinfo.bml.syndinfo.body<<
+If you would like articles from the syndicated site to appear on your friends page,
+you can <a href="[[addtofriends]]">add this journal to your friends list</a>.
+.
+
+/userinfo.bml.syndinfo.name=Syndication Journal
+
+/userinfo.bml.tellafriend=Tell a Friend!
+
+/userinfo.bml.timeupdate.dayago=1 day ago
+
+/userinfo.bml.timeupdate.daysago=[[num]] days ago
+
+/userinfo.bml.timeupdate.hourago=1 hour ago
+
+/userinfo.bml.timeupdate.hoursago=[[num]] hours ago
+
+/userinfo.bml.timeupdate.minuteago=1 minute ago
+
+/userinfo.bml.timeupdate.minutesago=[[num]] minutes ago
+
+/userinfo.bml.timeupdate.secondago=1 second ago
+
+/userinfo.bml.timeupdate.secondsago=[[num]] seconds ago
+
+/userinfo.bml.timeupdate.weekago=1 week ago
+
+/userinfo.bml.timeupdate.weeksago=[[num]] weeks ago
+
+/userinfo.bml.title=User Info
+
+/userinfo.bml.title.communityinfo=Community Info
+
+/userinfo.bml.title.syndicated=Syndicated Account
+
+/userinfo.bml.userinfo.body=Below is user information for [[username]].  If you are this user, you can edit your information (or choose what information is considered public) at <a href="[[siteroot]]/editinfo.bml">the Edit Info page</a>.
+
+/userinfo.bml.userinfo.name=User Information
+
+BML.parse_multipart.parse=Error parsing upload
+
+BML.parse_multipart.toolarge=Upload too large
+
+BML.parse_multipart.unknowntype=Unknown content type
+
+btn.search=Search
+
+Email=Email
+
+email.newacct.body<<
+Congratulations, you have a new [[sitename]] account!
+
+To complete your journal creation and verify your email address, go
+here:
+
+   [[regurl]]
+
+The URL that your new journal is located at is:
+
+   [[siteroot]]/users/[[username]]/
+
+and also:
+
+   [[siteroot]]/~[[username]]/
+
+Below is your LiveJournal username and password:
+
+   Username: [[username]]
+   Password: [[password]]
+
+Enjoy!
+
+[[sitename]] Team
+[[siteroot]]/
+.
+
+email.newacct.subject=Welcome to [[sitename]]
+
+Error|notes=typically used inside an H1 tag to announce an error.
+Error=Error
+
+error.badpassword=Incorrect Password.
+
+error.dberror=A database error occurred:
+
+error.deleted.name=Deleted
+
+error.deleted.text=This journal has been deleted.  If you are [[user]], you have a period of 30 days from the deletion time to undelete the journal.  After 30 days we will delete all content permanently from our servers.
+
+error.deleted.title=Deleted Account
+
+error.ipbanned=Your IP address is temporarily banned for exceeding the login failure rate.
+
+error.malformeduser=Malformed username.
+
+error.nobutton=No button pressed?
+
+error.nodb=Database temporarily unavailable.
+
+error.nodbmaintenance=This part of the database is temporarily down for maintenance.  Try again in a few minutes.
+
+error.noentry=No such journal entry.
+
+error.nojournal=Unknown Journal
+
+error.noremote=You have to <a href="/login.bml">login</a> in order to use this page.
+
+error.procrequest=There was an error processing your request:
+
+error.purged.name=Deleted
+
+error.purged.text=This journal has been deleted and purged.
+
+error.purged.title=Purged Account
+
+error.suspended.name=Suspended
+
+error.suspended.text=This journal has been either temporarily or permanently suspended by [[sitename]] for policy violation.  If you are [[user]], contact us for more information.
+
+error.suspended.title=Suspended Account
+
+error.tempdisabled=This is disabled temporarily.
+
+error.unknownmode=Unknown mode.
+
+error.usernameinvalid=Username contains invalid characters.
+
+error.usernamelong=Username is too long, 15 character max.   
+
+error.username_notfound=Username not found.
+
+Help=Help
+
+label.security.custom=Custom...
+
+label.security.friends=Friends
+
+label.security.head=Security Level:
+
+label.security.private=Private
+
+label.security.public=Public
+
+label.switch.button=Switch
+
+label.switch.header=Switch Journal
+
+label.switch.workwith=Work with journal:
+
+langname.en=English
+
+ljlib.pageofpages=Page [[page]] of [[total]]
+
+lostinfo.head=Forget something?
+
+lostinfo.text=If you forgot your username or password, <a href="lostinfo.bml">recover it here</a>.
+
+Password=Password
+
+password.max30=Passwords may not be longer than 30 characters.
+
+portal.bdays.count.des=By default, the 5 friends with the soonest birthdays are shown.
+
+portal.bdays.count.name=Birthdays to Display
+
+portal.bdays.portalname=Birthdays
+
+portal.bdays.portaltitle=Birthdays
+
+portal.login.portalname=Login Box
+
+portal.memories.entriesnoun=entries
+
+portal.memories.entrynoun=entry
+
+portal.memories.portalname=Memorable Posts
+
+portal.memories.portaltitle=Memorable Posts
+
+portal.ministats.active=Active:
+
+portal.ministats.title=User Stats
+
+portal.ministats.total=Total:
+
+portal.popfaq.portalname=10 Most Viewed FAQs
+
+portal.popfaq.portaltitle=10 Most Viewed FAQs
+
+portal.randuser.count.des=By default, 1 random user is shown, but you can have up to 10 vertically in the narrow columns, or 5 horizontally in a wide column
+
+portal.randuser.count.name=Number of random users to show
+
+portal.randuser.error.tableempty=There are no random users. Contact admin.
+
+portal.randuser.hidename.des=By default, the random user name is shown.  Check this to remove it.
+
+portal.randuser.hidename.name=Hide Name
+
+portal.randuser.hidepic.des=By default, the random user picture is shown, if available.  Check this to remove it.
+
+portal.randuser.hidepic.name=Hide User Picture
+
+portal.randuser.portalname=Random User
+
+portal.randuser.portaltitle=Random User
+
+portal.randuser.portaltitleplural=Random Users
+
+portal.recent.error.noentries=Sorry. No entries.
+
+portal.recent.error.notsetup=You have to configure this box.  Click the plus symbol to setup the journal you'd like to watch here.
+
+portal.recent.error.userstatus=User has deleted or suspended their account.
+
+portal.recent.items.description=By default, only the most interest entry is shown.
+
+portal.recent.items.name=Items to display
+
+portal.recent.journal.description=What journal do you want to see the recent items from?
+
+portal.recent.journal.name=Journal
+
+portal.recent.nosubject=(No Subject)
+
+portal.recent.permlink=Link
+
+portal.recent.portalname=Recent Entry View
+
+portal.recent.portaltitle=Recent Entry Box
+
+portal.recent.showtext.description=By default only subjects will be shown.
+
+portal.recent.showtext.name=Include Text
+
+portal.stats.journalentyest=Journal entries yesterday
+
+portal.stats.portalname=Site Statistics
+
+portal.stats.portaltitle=Statistics
+
+portal.stats.totalusers=Total users
+
+portal.update.mode.des=Full mode gives you a ton of extra posting options ... including posting in communities and setting your current mood, music, and picture.  Simple mode is nicer if you hardly use those features and would prefer not to see it all.
+
+portal.update.mode.full=Full
+
+portal.update.mode.name=Mode
+
+portal.update.mode.simple=Simple
+
+portal.update.portalname=Journal Update
+
+portal.update.portaltitle=Update Your Journal
+
+protocol.bad_password=Your password is too easy to guess.  It's recommended that you change it, otherwise you risk having your journal hijacked.  Visit [[siteroot]]/changepassword.bml to change your password.
+
+protocol.hello_test=Hello Test Account!
+
+protocol.mail_bouncing=You are currently using a bad email address.  All mail we try to send you is bouncing.  We require a valid email address for continued use.  Visit the support area for more information.
+
+protocol.must_revalidate=You need to validate your new email address.  Your old one was good, but since you've changed it, you need to re-validate the new one.  Visit [[siteroot]]/support for more information.
+
+protocol.not_validated=You are currently not validated.  You may continue to use [[sitename]], but please validate your email address for continued use.  See the instructions that were mailed to you when you created your journal, or see [[siteroot]]/support/ for more information.
+
+protocol.old_win32_client=There are significantly newer Windows LiveJournal clients available, and we recommend that you upgrade.  Visit [[siteroot]]/download/ to download a newer client.
+
+protocol.readonly=Your account is temporarily in read-only mode.  Some operations will fail for a few minutes.
+
+Sorry|notes=typically used to announce that the requested action can't be done.
+Sorry=Sorry
+
+talk.anonwrote=Someone wrote,
+
+talk.anonwrote_comm=Someone wrote in [[commlink]],
+
+talk.btn.preview=Preview
+
+talk.commentpermlink=link
+
+talk.commentpost=Post a new comment
+
+talk.commentsread=Read comments
+
+talk.curname_Mood=<b>Current mood:</b>
+
+talk.curname_Music=<b>Current music:</b>
+
+talk.error.bogusargs=Bogus arguments
+
+talk.error.comm_deleted=This comment has been deleted.
+
+talk.error.deleted=This journal is deleted.
+
+talk.error.deleted.title=Deleted
+
+talk.error.mustlogin=You must be logged in to view this protected entry.
+
+talk.error.nocomment=The comment does not exist.
+
+talk.error.noentry=No such entry.
+
+talk.error.nojournal=Error: couldn't determine journal from arguments.
+
+talk.error.nosuchjournal=No such journal
+
+talk.error.notauthorised=You are not authorized to view this protected entry.
+
+talk.error.suspended=This journal/poster is suspended.
+
+talk.error.suspended.title=Suspended
+
+talk.parentlink=Parent
+
+talk.readsimilar=Read similar journal entries:
+
+talk.replytothis=Reply to this
+
+talk.somebodywrote=[[realname]] ([[userlink]]) wrote,
+
+talk.somebodywrote_comm=[[realname]] ([[userlink]]) wrote in [[commlink]],
+
+talk.spellcheck=Check spelling during preview
+
+talk.threadlink=Thread
+
+uploadpic.error.toolarge=Image uploaded is too large.  File size cannot exceed [[maxsize]].
+
+Username=Username
+

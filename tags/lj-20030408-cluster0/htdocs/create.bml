@@ -1,0 +1,382 @@
+<?page
+title=><?_ml .title _ml?>
+body<=
+<?_code 
+
+ return LJ::server_down_html() if ($LJ::SERVER_DOWN);
+
+ return "<?badinput?>" unless LJ::text_in(\%FORM);
+ 
+ my $mode = $FORM{'mode'};
+
+ # with no mode, decide which screen the user sees first, based
+ # on whether or not this LJ installation lets in free users
+ if ($mode eq "") {
+     $mode = $LJ::USE_ACCT_CODES ? 
+         ($FORM{'code'} ? "codesubmit" : "entercode")
+             : "getinfo"; 
+ }
+ 
+ my ($dbs, $dbh, $dbr);
+ my $remote;
+
+ my $connect_db = sub {
+     $dbs = LJ::get_dbs();
+     $dbh = $dbs->{'dbh'};
+     $dbr = $dbs->{'reader'};
+ };
+ 
+ my $got_remote = 0;
+ my $get_remote = sub {
+     return if $got_remote;
+     $connect_db->() unless $dbs;
+     $remote = LJ::get_remote($dbs);
+     $got_remote = 1;
+ };
+
+ my %errors;
+ my $error_msg = sub {
+     my $key = shift;
+     my $pre = shift;
+     my $post = shift;
+     my $msg = $errors{$key};
+     return unless $msg;
+     return "$pre<?inerr $msg inerr?>$post";
+ };
+ 
+ # validate a code they've entered and throw them back to entercode
+ # mode if it's invalid
+ if ($LJ::USE_ACCT_CODES && ($mode eq "codesubmit" || $mode eq "submit"))
+ {
+     my $code = $FORM{'code'};
+     $connect_db->();
+     my $error;
+     my $userid = 0;  # acceptable userid for double-click protection
+     if ($mode eq "submit") {
+         my $u = LJ::load_user($dbs, $FORM{'user'});
+         $userid = $u->{'userid'};
+     }
+     $errors{'code'} = $error
+         unless (LJ::acct_code_check($dbs, $code, \$error, $userid));
+     if (%errors) {
+         $mode = "entercode";
+     } elsif ($mode eq "codesubmit") {
+         $mode = "getinfo";
+     } 
+ }
+
+ # MODE: entercode - enter an account code to proceed making an account
+ if ($LJ::USE_ACCT_CODES && $mode eq "entercode")
+ {
+     my $ret;
+     my $v;
+
+     $ret .= "<form method=\"post\" action=\"create.bml\">\n";
+     $ret .= "<input type=\"hidden\" name=\"mode\" value=\"codesubmit\">\n";
+
+     $ret .= "<?h1 $ML{'.useacctcodes.welcome'} h1?><?p $ML{'.useacctcodes.entercode'} p?>";
+
+     $v = LJ::ehtml($FORM{'code'});
+     $ret .= "<?standout Code: <input type=\"text\" name=\"code\" value=\"$v\" size=\"13\" maxlength=\"12\"> <input type=\"submit\" value=\"$ML{'.btn.proceed'}\">";
+     $ret .= $error_msg->('code', '<br>');     
+     $ret .= " standout?>";
+     $ret .= "</form>\n";
+
+     open (REM, "$LJ::HOME/htdocs/inc/account-codes");
+     while (<REM>) {
+         $ret .= $_;
+     }	
+     close REM;
+
+     return $ret;
+ }
+ 
+ # MODE: submit - try to create an account.  might change mode
+ #       if there are errors, we'll populate %errors and 
+ #       return to "getinfo" mode below
+ if ($mode eq "submit") 
+ {
+     return "<b>$ML{'Error'}</b>: $ML{'.error.postrequired'}" unless LJ::did_post();
+     
+     my $user = LJ::canonical_username($FORM{'user'});
+     my $name = $FORM{'name'};
+     $name =~ s/[\n\r]//g;
+     my $email = LJ::trim(lc($FORM{'email'}));
+
+     $connect_db->();
+     
+     my $quser = $dbh->quote($user);
+     my $qemail = $dbh->quote($email);
+     my $qname = $dbh->quote($name);
+     
+     if (length($user) > 15) { 
+         $errors{'username'} = "$ML{'error.usernamelong'}";
+     }
+     if ($FORM{'user'} && ! $user) { 
+         $errors{'username'} = "$ML{'error.usernameinvalid'}";
+     }
+     unless ($FORM{'user'}) { 
+         $errors{'username'} = "$ML{'.error.username.mustenter'}"; 
+     }
+     foreach my $re ("^system\$", @LJ::PROTECTED_USERNAMES) {
+         next unless ($user =~ /$re/);
+
+         # you can give people sharedjournal priv ahead of time to create
+         # reserved communities:
+         $get_remote->();
+         next if LJ::check_priv($dbs, $remote, "sharedjournal", $user);
+
+         $errors{'username'} = "$ML{'.error.username.reserved'}";
+     }
+
+     # see if they're confused and entered a valid account code
+     # for their username (happens often)
+     if ($LJ::USE_ACCT_CODES && $user =~ /^.....a[ab].....$/) {
+         # see if the acctcode is valid and unused
+         my ($acid, $auth) = LJ::acct_code_decode($user);
+         my $is_valid = $dbh->selectrow_array("SELECT COUNT(*) FROM acctcode ".
+                                              "WHERE acid=? AND rcptid=0",
+                                              undef, $acid);
+         $errors{'username'} = "$ML{'.error.username.iscode'}"
+             if $is_valid;
+     }
+     
+     my $u = LJ::load_user($dbs, $user);
+     my $second_submit = 0;
+     if ($u) {
+         my $in_use = 1;
+
+         if ($u->{'email'} eq $FORM{'email'}) {
+             if (LJ::login_ip_banned($u)) {
+                 # brute-force possible going on
+             } else {
+                 if ($u->{'password'} eq $FORM{'password1'}) {
+                     # oh, they double-clicked the submit button 
+                     $second_submit = 1;
+                     $in_use = 0;
+                 } else {
+                     LJ::handle_bad_login($u);                     
+                 }
+             }
+         }
+
+         if ($in_use) {
+             $errors{'username'} = "$ML{'.error.username.inuse'}"; 
+         }
+     }
+ 
+     unless ($name) { 
+         $errors{'name'} = "$ML{'.error.username.blank'}"; 
+     }
+
+     $FORM{'password1'} = LJ::trim($FORM{'password1'});
+     $FORM{'password2'} = LJ::trim($FORM{'password2'});
+
+     if ($FORM{'password1'} ne $FORM{'password2'}) { 
+         $errors{'password'} = "$ML{'.error.password.nomatch'}"; 
+     } else {
+         my @checkpass = LJ::run_hooks("bad_password", $FORM{'password1'});
+         if (@checkpass && $checkpass[0]->[0]) {
+             $errors{'password'} = "Bad password: $checkpass[0]->[0]";
+         }
+     }
+     if (! $FORM{'password1'}) { 
+         $errors{'password'} = "$ML{'.error.password.blank'}";
+     } elsif (length $FORM{'password1'} > 30) {
+         $errors{'password'} = "$ML{'password.max30'}";
+     }
+
+     unless (LJ::is_ascii($FORM{'password1'})) {
+         $errors{'password'} = "$ML{'.error.password.asciionly'}";
+     }
+
+     if ($FORM{'under13'}) {
+         return "$ML{'.error.coppa.under13'}";
+     }
+
+     # check the email address
+     {
+         my @email_errors;
+         check_email($email, \@email_errors);
+         if ($LJ::USER_EMAIL and $email =~ /\@\Q$LJ::USER_DOMAIN\E$/i) {
+             push @email_errors, BML::ml(".error.email.lj_domain",
+                                         {domain => $LJ::USER_DOMAIN});
+         }
+         $errors{'email'} = join(", ", @email_errors) if @email_errors;
+     }
+
+
+     # Note: goto is evil.  this is the first time I've used it in perl.
+     #       I wish 'last' or 'next' would break out of an if block.
+     goto SUBMITERRORS if %errors;
+
+     my $qclusterid = ($LJ::ALLOW_CLUSTER_SELECT
+                       ? $FORM{'cluster_id'}
+                       : LJ::new_account_cluster()) + 0;
+
+     my $qdversion = $qclusterid ? 2 : 0;
+
+     $qpassword = $dbh->quote($FORM{'password1'});
+     my $userid = $u->{'userid'}+0;
+     unless ($second_submit)
+     {
+         my $caps   = int($LJ::NEWUSER_CAPS);
+         my $status = ($LJ::EVERYONE_VALID ? 'A'  : 'N');
+         $dbh->do("INSERT INTO user (user, email, password, status, caps, name, clusterid, dversion) ".
+                  "VALUES ($quser, $qemail, $qpassword, '$status', $caps, $qname, $qclusterid, $qdversion)");
+         if ($dbh->err)
+         {
+             return "<?h1 $ML{'Error'} h1?><?p $ML{'error.procrequest'} <B>" . $dbh->errstr . "</B> p?>";
+         }
+         $userid = $dbh->{'mysql_insertid'};
+         $dbh->do("REPLACE INTO useridmap (userid, user) VALUES ($userid, $quser)");
+         $dbh->do("REPLACE INTO userusage (userid, timecreate) VALUES ($userid, NOW())");
+
+         # if we're using account codes on this site, mark the code as used
+         if ($LJ::USE_ACCT_CODES) {
+             my ($acid, $auth) = LJ::acct_code_decode($FORM{'code'});
+             $dbh->do("UPDATE acctcode SET rcptid=$userid WHERE acid=$acid");
+             if ($dbh->err) { return $dbh->errstr; }
+         }
+
+         # if we have initial friends for new accounts, add them.
+         foreach my $friend (@LJ::INITIAL_FRIENDS) {
+             my $friendid = LJ::get_userid($dbs, $friend);
+             LJ::add_friend($dbs, $userid, $friendid)
+                 if $friendid;
+         }
+
+         LJ::run_hooks("post_create", {
+             'dbs' => $dbs,
+             'userid' => $userid,
+             'user' => $user,
+             'code' => $FORM{'code'},
+         });
+     }
+     
+     my $aa = {};
+     if ($userid) {
+         $aa = LJ::register_authaction($dbs, $userid, "validateemail", $email);
+     }
+
+     my $body = BML::ml('email.newacct.body', {
+         "email" => $email,
+         "regurl" => "$LJ::SITEROOT/confirm/$aa->{'aaid'}.$aa->{'authcode'}",
+         "username" => $user,
+         "password" => $FORM{'password1'},
+         "sitename" => $LJ::SITENAME,
+         "siteroot" => $LJ::SITEROOT,
+         "admin_email" => $LJ::ADMIN_EMAIL,
+         "bogus_email" => $LJ::BOGUS_EMAIL,
+     });
+     
+     LJ::send_mail({
+         'to' => $email,
+         'from' => $LJ::ADMIN_EMAIL,
+         'fromname' => $LJ::SITENAME,
+         'charset' => 'utf-8',
+         'subject' => BML::ml('email.newacct.subject', {'sitename' => $LJ::SITENAME}),
+         'body' => $body,
+     });
+
+     $ret = "<?h1 $ML{'.success.head'} h1?><?p ".BML::ml(".success.text1", {'email' => $email, 'username' => $user}) ." p?>";
+     $ret .= "<?p $ML{'.success.text2'} p?><?standout <font size='+1' face='arial'><b><a href=\"$LJ::SITEROOT/users/$user/\">$LJ::SITEROOT/users/$user/</a></b></font> standout?>";
+     $ret .= "<?p $ML{'.success.text3'} p?>";
+     
+     $ret .= "<center><form method='post' action=\"/editinfo.bml\">";
+     $ret .= "<INPUT TYPE=HIDDEN NAME=user VALUE=\"$user\">\n";
+     $ret .= "<INPUT TYPE=HIDDEN NAME=hpassword VALUE=\"" . LJ::hash_password($FORM{'password1'}) . "\">\n";
+     $ret .= "<INPUT TYPE=SUBMIT VALUE=\"$ML{'.success.btn.enterinfo'} ---&gt;\">\n";
+     $ret .= "</FORM></CENTER>\n";
+     
+     return $ret;
+    
+ }
+
+ SUBMITERRORS:
+ if ($mode eq "getinfo" || %errors)
+ {
+     my $ret;
+     my $v;
+
+     $ret .= "<?h1 $ML{'.create.head'} h1?><?p $ML{'.create.text'} p?><?hr?>";
+     $ret .= "<form action=\"create.bml\" method=\"post\">\n";
+     $ret .= "<input type=\"hidden\" name=\"mode\" value=\"submit\">\n";
+     $ret .= "<input type=\"hidden\" name=\"code\" value=\"" . LJ::ehtml($FORM{'code'}) . "\">\n";     
+
+     $ret .= "<?h2 $ML{'.username.head'} h2?>";
+     $ret .= "<?p ".BML::ml(".username.text", {'sitename' => $LJ::SITENAME}) ." p?>";
+     
+     $v = LJ::ehtml($FORM{'user'});
+     $ret .= "<?standout <table><tr><td align=\"center\"><table><tr><td>$ML{'.username.box.head'}<br /><input value=\"$v\" type=\"text\" name=\"user\" size=\"15\" maxlength=\"15\"></td></tr></table></td></tr>";
+     $ret .= "<tr><td>";
+     $ret .= $error_msg->('username', '', '<br>');
+     $ret .= "<font face=\"Arial,Helvetica\" size=\"-1\">&nbsp;<br />";
+     $ret .= "<b>$ML{'.username.ljaddress'}</b><br />&nbsp;&nbsp;&nbsp;&nbsp;<?siteroot?>/users/<i>$ML{'.username.username'}</i>/<br />&nbsp;&nbsp;&nbsp;&nbsp;<?siteroot?>/<i>~$ML{'.username.username'}</i>/<br />";
+     if ($LJ::USER_VHOSTS) {
+         unless ($LJ::EVERYONE_PAID) {
+             $ret .= "<b>$ML{'.username.forpaidaccts'}</b><br />";
+         }
+         $ret .= "&nbsp;&nbsp;&nbsp;&nbsp;http://<I>$ML{'.username.username'}</I>.$LJ::USER_DOMAIN/<br>";
+     }
+     $ret .= "</font></td></tr>";
+     $ret .= "</table> standout?>";
+
+     #### name
+     $v = LJ::ehtml($FORM{'name'});
+     $ret .= "<?h2 $ML{'.name.head'} h2?><?p $ML{'.name.text'} p?><?standout $ML{'.name.input.head'}<br /><input value=\"$v\" type=\"text\" name=\"name\" size=\"40\" maxlength=\"100\">";
+     $ret .= $error_msg->('name', '<br>', '');
+     $ret .= " standout?>";
+     
+     $ret .= "<?h2 $ML{'.email.head'} h2?><?p $ML{'.email.text'} p?>";
+
+     ### email address
+     $v = LJ::ehtml($FORM{'email'});     
+     $ret .= "<?standout <table width=\"250\"><tr><td valign=\"top\" align=\"left\">$ML{'.email.input.head'}<br /><input value=\"$v\" type=\"text\" name=\"email\" size=\"40\" maxlength=\"50\">";
+     $ret .= $error_msg->('email', '<br>', '');
+     $ret .= "</td></tr></table> standout?>";
+
+     $ret .= "<?h2 $ML{'.password.head'} h2?><?p $ML{'.password.text'} p?>";
+
+     ### password
+     $ret .= "<?standout $ML{'.password.input.head1'}<br /><input type=\"password\" name=\"password1\" size=\"30\" maxlength=\"31\"><br />$ML{'.password.input.head2'}<br /><input type=\"password\" name=\"password2\" size=\"30\" maxlength=\"31\">";
+     $ret .= $error_msg->('password', '<br>', '');
+     $ret .= " standout?>";
+
+     if ($LJ::COPPA_CHECK)
+     {
+         $ret .= "<?h2 $ML{'.aolnotice.head'} h2?><?p ".BML::ml(".aolnotice.text", {'sitename' => $LJ::SITENAME}) ." p?>";
+
+         $ret .= "<?h2 $ML{'.age.head'} h2?><?p $ML{'.age.check.question'} <blockquote><input type=\"checkbox\" value=\"1\" name=\"under13\"> $ML{'.age.check.yes'}</blockquote>  p?>";
+     }
+
+     if ($LJ::ALLOW_CLUSTER_SELECT) {
+         $ret .= "<?h2 $ML{'.clusterselect.head'} h2?><?p $ML{'.clusterselect.text'} p?>";
+         $ret .= "<?standout $ML{'.clusterselect.cluster'}<br />";
+         $ret .= LJ::html_select({ 'name' => 'cluster_id' },
+                                 "0", "$BML{'.clusterselect.nocluster'}", 
+                                 map { $_, BML::ml(".clusterselect.clusternum", {'number' => $_}) } @LJ::CLUSTERS);
+         $ret .= " standout?>"; 
+     }
+
+     $ret .= "<?h2 $ML{'.proceed.head'} h2?><?p $ML{'.proceed.text'} p?>";
+
+     $ret .= "<?standout <center><input type=\"submit\" value=\"$ML{'.proceed.btn.proceed'}\"><br />";
+     $ret .= "<font size=\"-1\">$ML{'.proceed.warning'}</font>";
+     $ret .= "</center> standout?>";
+     $ret .= "</form>";
+
+     return $ret;
+ }
+
+ return "$ML{'error.unknownmode'}: <b>$mode</b>";
+
+_code?>
+
+<=body
+page?><?_c <LJDEP>
+link: htdocs/legal/privacy.bml
+post: htdocs/create.bml, htdocs/editinfo.bml
+file: htdocs/inc/account-codes
+hook: post_create
+</LJDEP> _c?>

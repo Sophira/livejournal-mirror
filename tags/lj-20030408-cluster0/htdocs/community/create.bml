@@ -1,0 +1,3 @@
+<?_code
+BML::redirect('/community/settings.bml?mode=create');
+_code?>

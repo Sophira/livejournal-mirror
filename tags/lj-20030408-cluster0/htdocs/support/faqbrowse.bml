@@ -1,0 +1,91 @@
+<?page
+title=><?_ml .title _ml?>
+body<=
+
+<?_code
+
+ my $curlang = BML::get_language();
+ my $deflang = BML::get_language_default();
+ my $altlang = $curlang ne $deflang;
+ my ($mll, $mld);
+ if ($altlang) {
+     $mll = LJ::Lang::get_lang($curlang);
+     $mld = LJ::Lang::get_dom("faq");
+     $altlang = 0 unless $mll && $mld;
+ }
+
+ my $id = $FORM{'faqid'} + 0;
+ my $ret = "";
+ 
+ my $dbs = LJ::get_dbs();
+ my $dbh = $dbs->{'dbh'};
+ my $dbr = $dbs->{'reader'};
+
+ my $remote = LJ::get_remote($dbs);
+ 
+ my $where = "faqid=$id";
+ if ($FORM{'faqcat'}) {
+     $where = "faqcat=" . $dbh->quote($FORM{'faqcat'});
+ }
+ my $sth = $dbr->prepare("SELECT faqid, question, answer, lastmoduserid, ".
+                         "DATE_FORMAT(lastmodtime, '%Y-%m-%d'), ".
+                         "UNIX_TIMESTAMP(lastmodtime) FROM faq ".
+                         "WHERE $where ORDER BY sortorder");
+ $sth->execute;
+ if ($dbh->err) { return "<p>$sql</p><p>" . $dbh->errstr . "</p>"; }
+
+ my $count = 0;
+ while (my ($faqid, $question, $answer, $lastmoduserid, 
+            $lastmodtime, $unixmodtime) = $sth->fetchrow_array)
+ {
+     # it'd be better to load them in a batch, but this works for now:
+     if ($altlang) {
+         $question = LJ::Lang::get_text($curlang, "$faqid.1question", $mld->{'dmid'});
+         $answer   = LJ::Lang::get_text($curlang, "$faqid.2answer",   $mld->{'dmid'});
+     }
+
+     my $q = "";
+     my $a = "";
+     my $lastmodwho;
+     $lastmodwho = LJ::get_username($dbs, $lastmoduserid);
+     
+     $dbh->do("REPLACE INTO faquses (faqid, userid, dateview) ".
+              "VALUES ($id, $remote->{'userid'}, NOW())") if $remote;
+
+     BML::note_mod_time($unixmodtime);
+     
+     $q = LJ::ehtml($question);
+     $q =~ s/^\s+//; $q =~ s/\s+$//;
+     $q =~ s/\n/<BR>/g;
+     
+     $a = LJ::ehtml($answer);
+     $a =~ s/^\s+//; $a =~ s/\s+$//;
+     $a =~ s/\n( +)/"\n" . "&nbsp;&nbsp;"x length($1)/eg;
+     $a =~ s/\n/<BR>/g;
+     
+     $a =~ s!(&quot;|&#39;)?(https?://\S+[a-zA-Z0-9_/&=\-])!$1 ? $& : "<a href=\"$2\">$2</a>"!eg;
+
+     $ret .= "<?h1 $q h1?><blockquote>$a</blockquote>";
+
+     if ($lastmodwho) {
+         $ret .= "<p align=\"right\"><b><?_ml .lastupdated _ml?></b><br />$lastmodwho, $lastmodtime</p>";
+     }
+     $count++;
+ }
+ if (!$count)
+ {
+     $ret .= "<p><b>$ML{'.error.nofaq'}</b></p>";
+ }
+ 
+ return $ret;
+
+_code?>
+
+<?hr?>
+<?_ml .backfaq _ml?>
+<br /><?_ml .backsupport _ml?>
+
+<=body
+page?><?_c <LJDEP>
+link: htdocs/support/index.bml, htdocs/support/faq.bml
+</LJDEP> _c?>

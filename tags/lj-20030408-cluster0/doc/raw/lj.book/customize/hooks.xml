@@ -1,0 +1,35 @@
+<chapter id="lj.customize.hooks">
+  <title>Setting Site-Specific Hooks</title>
+  <para>
+    The LiveJournal code provides a number of hooks, which you can use to
+    alter or extend the functionality of the code, tailored for your own site.
+    You're free to implement as few or as many as you want.
+    <note><para>
+      If there's a hook you want but don't see, let us know and we'll be more
+      than happy to add it in.
+    </para></note>
+  </para>
+  <section id="lj.customize.hooks.intro">
+    <title>Introduction</title>
+    <para>
+      One of the reasons for implementing hooks on LiveJournal came from a 
+      need to make distinctions between account status types, without leaving
+      a lot of kludge in the code base, and without having to write extensive
+      code libraries in the ljcom <abbrev>CVS</abbrev> repository.
+    </para>
+  </section>
+  <section id="lj.customize.hooks.setup">
+    <title>Writing Hooks</title>
+    <para>
+      Hooks are written in <filename>cgi-bin/ljconfig.pl</filename>, by using the 
+      sub <function>LJ::register_hook()</function>.
+    </para>
+    <example>
+      <title>Writing a hook for <literal></literal></title><para></para>
+    </example>
+  </section>
+  <section id="lj.customize.hooks.ref">
+    <title>Hooks Reference</title>
+    &lj.customize.hooks.ref;
+  </section>
+</chapter>

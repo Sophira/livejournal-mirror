@@ -1,0 +1,213 @@
+<?_code
+
+ $title = "";
+ $body = "";
+
+my $uri = BML::get_uri();
+my $r = Apache->request;
+if ($uri =~ m!/(\d\d\d\d)/(\d\d)/?$!) {
+    $FORM{'user'} = $r->notes('_journal');
+    $FORM{'type'} = "month";
+    $FORM{'y'} =  $1;
+    $FORM{'m'} = $2 + 0;
+}
+$r->notes("codepath" => "bml.view.index");
+
+ my $view = $FORM{'type'};
+ my $user = $FORM{'user'};
+
+ if ($view ne "month") {
+     $title = "Error";
+     $body .= "Unknown view.";
+     return;
+ }
+ unless ($user) {
+     $title = "Error";
+     $body .= "No user given.";
+     return;
+ }
+ 
+ my $dbs = LJ::get_dbs();
+ my $dbh = $dbs->{'dbh'};
+ my $dbr = $dbs->{'reader'};
+
+ my $u = LJ::load_user($dbs, $user);
+ unless ($u) {
+     $title = "Error";
+     $body .= "User doesn't exist.";
+     return;
+ }
+
+my $base = LJ::journal_base($u);
+ 
+if (LJ::did_post()) {
+    my $newuri = sprintf("$base/%04d/%02d/", $POST{'y'}, $POST{'m'});
+    return BML::redirect($newuri);
+}
+
+
+ my $remote = LJ::get_remote($dbs);
+ my $is_owner = 0;
+
+ my $secwhere = "AND l.security='public'";
+ if ($remote) {
+     if ($remote->{'userid'} == $u->{'userid'}) {
+         $secwhere = "";   # see everything
+         $is_owner = 1;
+     } elsif ($remote->{'journaltype'} eq 'P') {
+         my $gmask = $dbr->selectrow_array("SELECT groupmask FROM friends WHERE userid=$u->{'userid'} AND friendid=$remote->{'userid'}");
+         $secwhere = "AND (l.security='public' OR (l.security='usemask' AND l.allowmask & $gmask))"
+             if $gmask;
+     }
+ }
+ 
+ my $year = $FORM{'y'}+0;
+ my $month = $FORM{'m'}+0;
+ unless ($year =~ /^\d\d\d\d$/ && ($month >= 1 && $month <= 12)) {
+     my @now = localtime();
+     $year = $now[5] + 1900;
+     $month = $now[4] + 1;
+ }
+
+ my $monlang = LJ::Lang::month_long("EN", $month);
+ $title = $monlang;
+ $title .= ", $year - $u->{'user'}";
+
+ my $is_person = $u->{'journaltype'} eq "P";
+ if ($is_person) {
+     $body .= "<?h1 Month View h1?><?p Here are the subjects of all posts by user <?ljuser $u->{'user'} ljuser?> in $monlang, $year. p?>";
+ } else {
+     $body .= "<?h1 Month View h1?><?p Here are the subjects of all posts in the <?ljuser $u->{'user'} ljuser?> journal in $monlang, $year. p?>";
+ }
+
+ ### make standout box
+ {
+     my @next = ($year, $month+1);
+     if ($next[1] > 12) { @next = ($year+1, 1); }
+     my @prev = ($year, $month-1);
+     if ($prev[1] < 1) { @prev = ($year-1, 12); }
+     
+     my $next = "<a href=\"" . $base . "/$next[0]/" . sprintf("%02d", $next[1]) . "/\"><img src=\"$LJ::IMGPREFIX/btn_next.gif\" width='22' height='20' border='0'></a>";
+     my $prev = "<a href=\"" . $base . "/$prev[0]/" . sprintf("%02d", $prev[1]) . "/\"><img src=\"$LJ::IMGPREFIX/btn_prev.gif\" width='22' height='20' border='0'></a>";
+
+     $body .= "<?standout ";
+     $body .= "<form method='post' style='display:inline'><input type='hidden' name='type' value='month'><input type='hidden' name='user' value='$u->{'user'}'>";
+     $body .= "<table><tr valign='middle'>";
+     $body .= "<td><b>$prev</b></td>";
+     $body .= "<td><select name='m'>";
+     for ($i=1;$i<=12;$i++) {
+         my $sel = ($i == $month) ? " selected='selected'" : "";
+         $body .= "<option value='$i'$sel'>" . LJ::Lang::month_long("EN", $i) . "</option>";
+     }
+     $body .= "</select> <input type=text name=y maxlength=4 size=4 value=$year> <input type=submit value=\"View\"></td>";
+     $body .= "<td><b>$next</b></td>";
+     $body .= "</tr></table>";
+     $body .= " standout?></form>\n";
+ }
+
+ $body .= "<dl>\n";
+ my $lday = 0;
+
+ # yay for repeating nearly-identical code 4 times!
+ if ($u->{'clusterid'}) 
+ {
+     my $db = LJ::get_cluster_reader($u);
+     if ($is_person) {
+         $sth = $db->prepare("SELECT l.jitemid*256+l.anum, l.day, ls.subject, l.eventtime, NULL, ".
+                             "l.replycount, l.security, l.allowmask ".
+                             "FROM log2 l, logtext2 ls ".
+                             "WHERE l.journalid=$u->{'userid'} AND ls.journalid=$u->{'userid'} ".
+                             "AND l.year=$year AND l.month=$month AND l.jitemid=ls.jitemid ".
+                             "$secwhere ORDER BY l.eventtime");
+     } else {
+         $sth = $db->prepare("SELECT l.jitemid*256+l.anum, l.day, ls.subject, l.eventtime, u.user, ".
+                             "l.replycount, l.security, l.allowmask ".
+                             "FROM log2 l, logtext2 ls, useridmap u ".
+                             "WHERE l.journalid=$u->{'userid'} AND ls.journalid=$u->{'userid'} ".
+                             "AND l.year=$year AND l.month=$month AND l.jitemid=ls.jitemid ".
+                             "AND l.posterid=u.userid $secwhere ORDER BY l.eventtime");
+     }
+ } else {
+     if ($is_person) {
+         $sth = $dbr->prepare("SELECT l.itemid, l.day, ls.subject, l.eventtime, NULL, ".
+                              "l.replycount, l.security, l.allowmask ".
+                              "FROM log l, logtext ls ".
+                              "WHERE l.ownerid=$u->{'userid'} AND l.year=$year AND ".
+                              "l.month=$month AND l.itemid=ls.itemid ".
+                              "$secwhere ORDER BY l.eventtime");
+     } else {
+         $sth = $dbr->prepare("SELECT l.itemid, l.day, ls.subject, l.eventtime, u.user, ".
+                              "l.replycount, l.security, l.allowmask ".
+                              "FROM log l, logtext ls, useridmap u ".
+                              "WHERE l.ownerid=$u->{'userid'} AND l.year=$year AND ".
+                              "l.month=$month AND l.itemid=ls.itemid AND l.posterid=u.userid ".
+                              "$secwhere ORDER BY l.eventtime");
+     }
+ }
+
+ $sth->execute;
+ while (my ($itemid, $day, $subject, $eventtime, $poster, $replycount, $security, $allowmask) = $sth->fetchrow_array)
+ {
+     if ($day != $lday) {
+         if ($lday) { $body .= "</table></dd>"; }
+         $lday = $day;
+         my $ord = LJ::Lang::day_ord("EN", $day);
+         my $dayview_url = sprintf("$LJ::SITEROOT/users/$u->{'user'}/%04d/%02d/%02d/",
+                                   $year, $month, $day);
+         $body .= "<dt><b><a href=\"$dayview_url\">$day$ord</a></b></dt>";
+         $body .= "<dd><table cellpadding=2>";
+     }
+
+     # we need to convert the subject to UTF-8 if it's a pre-Unicode entry
+     # loading all the props for all the posts and checking 'unknown8bit' 
+     # is too long. The heuristic "if it's not UTF-8, convert it" works
+     # well here.
+     if ($LJ::UNICODE && !LJ::is_utf8($subject)) {
+         my $error;
+         my $subj = LJ::text_convert($dbs, $subject, $u, \$error);
+         $subject = $subj unless $error;
+         LJ::text_out(\$subject);
+     }
+
+     unless ($subject ne "") { $subject = "(no subject)"; }
+     my $h = substr($eventtime, 11, 2);
+     my $m = substr($eventtime, 14, 2);
+     my ($rep, $sec);
+     if ($security eq "private") {
+         $sec = " <?securityprivate?>";
+     } elsif ($security eq "usemask") {
+         $sec = " <?securityprotected?>";
+     }
+     if ($replycount) {
+         if ($replycount == 1) { $rep .= " - $replycount reply"; }
+         else { $rep .= " - $replycount replies"; }
+     }
+     $body .= "<tr><td align=right><i>" . LJ::Lang::time_format(12, $h, $m, "short") . "</i></td>";
+     if (! $is_person) {
+         $body .= "<td><?ljuser $poster ljuser?></td>";
+     }
+
+     BML::ebml(\$subject);
+     LJ::CleanHTML::clean_subject_all(\$subject);
+
+     my $itemurl;
+     if ($u->{'clusterid'}) {
+         $itemurl = "$LJ::SITEROOT/users/$u->{'user'}/$itemid.html";
+     } else {
+         $itemurl = "$LJ::SITEROOT/talkread.bml?itemid=$itemid";
+     }
+     $body .= "<td><a href=\"$itemurl\">$subject</a>$sec$rep</td></tr>\n";
+ }
+ if ($lday) { $body .= "</table></dd>\n"; }
+ $body .= "</dl>";
+
+ return;
+
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+page?><?_c <LJDEP>
+img: htdocs/img/btn_next.gif, htdocs/img/btn_prev.gif
+form: htdocs/view/index.bml
+link: htdocs/users, htdocs/talkread.bml
+</LJDEP> _c?>

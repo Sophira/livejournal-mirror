@@ -1,0 +1,29 @@
+<?page
+title=><?_ml .title _ml?>
+body<=
+
+<?h1 <?_ml .modify.head _ml?> h1?>
+<?p
+<?_ml .modify.text _ml?>
+p?>
+
+<?standout
+<form action="modify_do.bml" method="post"><table>
+<?_code
+ return LJ::auth_fields(\%FORM);
+ _code?>
+<tr><td colspan='2' align='center'><input type="submit" value="<?_ml .btn.proceed _ml?>" /></td></tr>
+</table></form>
+standout?>
+
+<?h1 <?_ml lostinfo.head _ml?> h1?>
+<?p
+<?_ml lostinfo.text _ml?>
+p?>
+
+<=body
+page?><?_c <LJDEP>
+post: htdocs/modify_do.bml
+link: htdocs/update.bml, htdocs/lostinfo.bml
+</LJDEP> _c?>
+

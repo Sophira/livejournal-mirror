@@ -1,0 +1,111 @@
+<?_code
+
+ $title = "";
+ $body = "";
+ @errors = ();
+ 
+ my $dbs = LJ::get_dbs();
+ my $dbh = $dbs->{'dbh'};
+ my $dbr = $dbs->{'reader'};
+
+ my $user = LJ::canonical_username($FORM{'user'});
+ my $remote = LJ::get_remote();
+ my $u = $user ne "" ? LJ::load_user($dbs, $user) : $remote;
+ 
+ $title = $ML{'.title'};
+
+ unless ($u) {
+     $body = "<?h1 $ML{'Error'} h1?><?p $ML{'.error.noparam'} p?>";
+     return;
+ }
+
+$user = $u->{'user'};
+
+ if ($u->{'statusvis'} eq "S") {
+     $title = $ML{'error.suspended.title'};
+     $body = "<?h1 $ML{'error.suspended.name'} h1?><?p " .
+             BML::ml('error.suspended.text', {'user'=>"<?ljuser $user ljuser?>"}) . 
+            " p?>";
+     return;
+ }
+ if ($u->{'statusvis'} eq "D") {
+     $title = $ML{'error.deleted.title'};
+     $body = "<?h1 $ML{'error.deleted.name'} h1?><?p " .
+             BML::ml('error.deleted.text', {'user'=>"<?ljuser $user ljuser?>"}) . 
+            " p?>";
+     return;
+ }
+ if ($u->{'statusvis'} eq "X") {
+     $title = $ML{'error.purged.title'};
+     $body = "<?h1 $ML{'error.purged.name'} h1?><?p " .
+             BML::ml('error.purged.text', {'user'=>"<?ljuser $user ljuser?>"}) . 
+            " p?>";
+     return;
+ }
+
+ #### edit mode
+
+ my %keywords = ();
+ $sth = $dbr->prepare("SELECT m.picid, k.keyword FROM userpicmap m, keywords k WHERE m.userid=$u->{'userid'} AND m.kwid=k.kwid");
+ $sth->execute;
+ while (my ($pic, $keyword) = $sth->fetchrow_array) {
+     LJ::text_out(\$keyword);
+     push @{$keywords{$pic}}, $keyword;
+ }
+ 
+ $sth = $dbr->prepare("SELECT picid, width, height FROM userpic WHERE userid=$u->{'userid'}");
+ $sth->execute;
+ my $piccount = 0;
+
+ while (my $pic = $sth->fetchrow_hashref)
+ {
+     if ($piccount++ == 0) {
+         my $edit;
+         if ($remote && $remote->{'user'} eq $u->{'user'}) {
+             $edit = $ML{'.edit'};
+         }
+         $body .= "<?h1 $ML{'.current'} h1?><?p ";
+         $body .= BML::ml('.pics', {'user'=>"<?ljuser $user ljuser?>"});
+         $body .= "$edit p?>";
+         $body .= "<div style='margin-left: 50px;'><table cellpadding='5' border='0' cellspacing='1'>";
+             
+     }
+
+     ### Keywords
+     my $eh_keywords = join(", ", sort { lc($a) cmp lc($b) } @{$keywords{$pic->{'picid'}}});
+     $eh_keywords = LJ::eall($eh_keywords);
+
+     $body .= "<tr valign='middle'>";
+     $body .= "<td align='center'><img src='$LJ::USERPIC_ROOT/$pic->{'picid'}/$u->{'userid'}' width='$pic->{'width'}' height='$pic->{'height'}' alt='$eh_keywords' /></td>";
+     $body .= "<td>";
+     if ($u->{'defaultpicid'} == $pic->{'picid'}) {
+         $body .= "$ML{'.default'}<br />";
+     }
+
+     if ($eh_keywords) {
+         $body .= "<b>$ML{'.keywords'}</b> $eh_keywords\n";
+     }
+
+     $body .= "</td>";
+     $body .= "</tr>\n";     
+
+ }
+
+ if ($piccount) {
+     $body .= "</table></div>";
+ } else {
+     if ($remote && $remote->{'user'} eq $u->{'user'}) {
+         $body = "<?h1 $ML{'.nopics.title'} h1?><?p $ML{'.nopics.text'} p?>";
+     } else {
+         $body = "<?h1 $ML{'.nopics.title'} h1?><?p $ML{'.nopics.text.other'} p?>";
+     }
+ }
+ 
+ return;
+
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+page?><?_c <LJDEP>
+link: htdocs/editpics.bml, htdocs/uploadpic.bml
+</LJDEP> _c?>
