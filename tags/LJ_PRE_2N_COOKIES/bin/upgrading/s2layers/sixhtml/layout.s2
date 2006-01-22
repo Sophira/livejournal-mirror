@@ -1,0 +1,703 @@
+layerinfo type = "layout";
+layerinfo name = "Bloggish";
+layerinfo redist_uniq = "sixhtml/layout";
+layerinfo des = "SixApart's standard HTML structure for blogs, to be styled with CSS.";
+
+propgroup appearance {
+    property bool use_6a_base {
+        des = "Use 'Base Weblog' styles";
+    }
+    set use_6a_base = true;
+
+    property string base_theme {
+        des = "Base Theme";
+        values = "__none|(None)|april|April|baby|Baby|beckett|Beckett|bluecrush|Blue Crush|bonjour|Bonjour Chatette|bryant|Bryant|classy|Classy|earth|Earth|green|Green|folio|Folio|forestgreen|Forest Green|knitting|Knitting|powell-street|Powell Street|masala|Masala|minimalist|Minimalist|porpoise|Porpoise|purplecrush|Purple Crush|stevenson|Stevenson|sunburned|Sunburned|stitch|Stitch|travel|Travel|wedding|Wedding";
+    }
+    set base_theme = "powell-street";
+
+    property string layout_type {
+        des = "Layout Type";
+        values = "1C|One column|2CL|Two column (Sidebar on Left)|2CR|Two column (Sidebar on Right)|3C|Three column";
+    }
+    set layout_type = "2CR";
+
+    property string{} theme_stylesheet {
+        noui = 1;
+    }
+    set theme_stylesheet = {
+        "april" => "http://www.typepad.com/.shared/themes/classic/theme-april.css",
+        "baby" => "http://www.typepad.com/.shared/themes/lilia/theme-baby.css",
+        "beckett" => "http://www.typepad.com/.shared/themes/lilia/theme-beckett.css",
+        "bluecrush" => "http://www.typepad.com/.shared/themes/lilia/theme-bluecrush.css",
+        "bonjour" => "http://www.typepad.com/.shared/themes/classic/theme-bonjour.css",
+        "bryant" => "http://www.typepad.com/.shared/themes/lilia/theme-bryant.css",
+        "cityblend" => "http://www.typepad.com/.shared/themes/shea/theme-cityblend.css",
+        "classy" => "http://www.typepad.com/.shared/themes/classic/theme-classy.css",
+        "earth" => "http://www.typepad.com/.shared/themes/classic/theme-earth.css",
+        "green" => "http://www.typepad.com/.shared/themes/classic/theme-green.css",
+        "folio" => "http://www.typepad.com/.shared/themes/shea/theme-folio.css",
+        "forestgreen" => "http://www.typepad.com/.shared/themes/shea/theme-forestgreen.css",
+        "knitting" => "http://www.typepad.com/.shared/themes/lilia/theme-knitting.css",
+        "powell-street" => "http://www.typepad.com/.shared/themes/lilia/theme-powell-street.css",
+        "masala" => "http://www.typepad.com/.shared/themes/lilia/theme-masala.css",
+        "minimalist" => "http://www.typepad.com/.shared/themes/classic/theme-minimalist.css",
+        "porpoise" => "http://www.typepad.com/.shared/themes/shea/theme-porpoise.css",
+        "purplecrush" => "http://www.typepad.com/.shared/themes/lilia/theme-purplecrush.css",
+        "stevenson" => "http://www.typepad.com/.shared/themes/lilia/theme-stevenson.css",
+        "subtle" => "http://www.typepad.com/.shared/themes/lilia/theme-subtle.css",
+        "sunburned" => "http://www.typepad.com/.shared/themes/shea/theme-sunburned.css",
+        "stitch" => "http://www.typepad.com/.shared/themes/lilia/theme-stitch.css",
+        "tickle" => "http://www.typepad.com/.shared/themes/shea/theme-tickle.css",
+        "travel" => "http://www.typepad.com/.shared/themes/lilia/theme-travel.css",
+        "wedding" => "http://www.typepad.com/.shared/themes/lilia/theme-wedding.css",
+    };
+}
+propgroup appearance = "Appearance";
+
+propgroup options {
+
+    property bool opt_dayhead {
+        des = "Show Day Headings";
+    }
+    set opt_dayhead = false;
+
+    property use page_recent_items;
+    property use page_friends_items;
+    property use page_day_sortorder;
+    property use page_year_sortorder;
+    property use view_entry_disabled;
+    property use use_shared_pic;
+
+    property bool opt_datehead {
+        des = "Show Heading for New Day";
+    }
+    set opt_datehead = true;
+
+    property bool opt_showtime {
+        des = "Show Posting Time on Entries";
+        note = "This is recommended if you regularly post more than one entry per day.";
+    }
+    set opt_showtime = true;
+
+    property bool opt_userpic_main {
+        des = "Show User Pictures on Entries";
+    }
+    property bool opt_userpic_friends {
+        des = "Show User Pictures on Entries on your Friends Page";
+    }
+    property bool opt_userpic_entrypage {
+        des = "Show User Picture on the Entry page";
+    }
+    property bool opt_userpic_comments {
+        des = "Show User Pictures on Comments";
+    }
+    set opt_userpic_main = false;
+    set opt_userpic_friends = true;
+    set opt_userpic_entrypage = true;
+    set opt_userpic_comments = true;
+
+    property string[][] sidebar_primary {
+        des = "Primary sidebar members";
+        noui = 1;
+    }
+    property string[][] sidebar_secondary {
+        des = "Secondary sidebar members";
+        noui = 1;
+    }
+
+    set sidebar_primary = [
+        [ "userprofile", "", "0", "1" ],
+        [ "viewlinks", "" ],
+        [ "calendar" ],
+        [ "syndicate", "Syndicate" ],
+        [ "links", "Links" ],
+        [ "poweredby" ],
+    ];
+
+    set sidebar_secondary = [
+        [ "tags", "Tags" ],
+        [ "pagesummary", "Page Summary" ],
+    ];
+
+
+    set external_stylesheet = true;
+}
+propgroup options = "Options";
+
+propgroup text {
+    property use text_post_comment;
+    property use text_read_comments;
+    property use text_post_comment_friends;
+    property use text_read_comments_friends;
+    property use text_view_recent;
+    property use text_view_archive;
+    property use text_view_friends;
+    property use text_view_userinfo;
+    property use lang_fmt_date_med;
+    property use lang_fmt_time_short;
+
+    # i18n props. Not in the interface.
+    property string text_comments {
+        des = "Text for the heading above the comments on the entry page";
+        noui = 1;
+    }
+    set text_comments = "Comments";
+}
+propgroup text = "Text";
+
+function print_custom_stylesheet() {}
+
+function print_stylesheet () {
+
+if ($*use_6a_base) {
+"""
+/* base css */
+@import url(http://www.typepad.com/.shared/themes/common/base-weblog.css);
+@import url($*STATDIR/sixhtml/ljextras.css);
+""";
+}
+
+if ($*base_theme != "__none") {
+"""/* theme css */
+@import url($*theme_stylesheet{$*base_theme});
+
+""";
+}
+
+"""
+
+/* user css */
+""";
+    print_custom_stylesheet();
+}
+
+function container_open (string name) {
+    print safe "<div id='$name'><div id='$name-inner' class='pkg'>\n";
+}
+
+function container_close () {
+    "</div></div>\n";
+}
+
+function print_banner(Page p) {
+    container_open("banner");
+      "<h1 id='banner-header'>$p.global_title</h1>";
+      "<h2 id='banner-description'>$p.global_subtitle</h2>";
+    container_close();
+}
+
+
+function open_module(string intname, string title, string headlink_url, bool nocontent) {
+    print safe """<div class="module-$intname module">""";
+    if ($title != "") {
+        """<h2 class="module-header">""";
+        if ($headlink_url != "") { print safe """<a href="$headlink_url">"""; }
+        print safe $title;
+        if ($headlink_url != "") { """</a>"""; }
+        "</h2>\n";
+    }
+    if (not $nocontent) {
+        println """<div class="module-content">""";
+    }
+}
+
+function close_module(bool nocontent) {
+    println "</div>";
+    if (not $nocontent) { println "</div>"; }
+}
+
+function open_module(string intname, string title, string headlink_url) {
+    open_module($intname, $title, $headlink_url, false);
+}
+function close_module() {
+    close_module(false);
+}
+
+function print_module_list(string[] list) {
+    println """<ul class="module-list">""";
+    foreach var string s ($list) {
+        print safe """<li class="module-list-item">$s</li>""";
+    }
+    println """</ul>""";
+}
+
+function print_module_userprofile(string title, bool show_profile, bool show_userpic) {
+    var Page p = get_page();
+    if ($show_userpic and not $show_profile) {
+        if (defined $p.journal.default_pic) {
+            open_module("photo", $title, $p.journal.userpic_listing_url);
+            println ""+$p.journal.default_pic;
+            close_module();
+        }
+        return;
+    }
+
+    if (not $show_profile and not $show_userpic) {
+        open_module("about", $title, $p.view_url{"userinfo"}, true);
+        close_module(true);
+        return;
+    }
+
+    open_module("about", $title, $p.view_url{"userinfo"});
+    println "<div>"+$p.journal.default_pic+"</div>";
+    println "<p>"+$p.journal.name+"</p>"; # TODO: Display more stuff such as website link
+    close_module();
+
+}
+
+function print_module_viewlinks(string title) {
+    var Page p = get_page();
+    open_module("viewlinks", $title, "");
+    var string[] links = [];
+    foreach var string k ($p.views_order) {
+        $links[size $links] = """<a href="$p.view_url{$k}">"""+lang_viewname($k)+"""</a>""";
+    }
+    print_module_list($links);
+    close_module();
+}
+
+function print_module_poweredby(string title) {
+    var Page p = get_page();
+    open_module("powered", $title, "");
+    println """Powered by <a href="$*SITEROOT/">$*SITENAME</a>""";
+    close_module();
+}
+function print_module_pagesummary(string title) {
+    var Page p = get_page();
+
+    var string[] links = [];
+    if ($p isa RecentPage) {
+        var RecentPage cp = $p as RecentPage;
+        foreach var Entry e ($cp.entries) {
+            $links[size $links] = """<a href="$e.permalink_url">"""+striphtml($e.subject)+"</a>";
+        }
+    }
+
+    if (size($links) < 1) { return; }
+    open_module("pagesummary", $title, "");
+    print_module_list($links);
+    close_module();
+}
+function print_module_tags(string title) {
+    var Page p = get_page();
+    var TagDetail[] tags = $p->visible_tag_list();
+    if (size($tags) < 1) { return; }
+    open_module("categories", $title, ""); # TODO: Link to the TagsPage?
+
+    var string[] links = [];
+    foreach var TagDetail tag ($tags) {
+        $links[size $links] = """<a href="$tag.url">$tag.name</a>""";
+    }
+    print_module_list($links);
+    close_module();
+}
+function print_module_calendar() {
+    var Page p = get_page();
+    var YearMonth mon = $p->get_latest_month();
+    open_module("calendar", $mon->month_format(), "");
+
+    println """<table summary="Monthly calendar with links to each day's posts">""";
+
+    println "<tr>";
+    foreach var int d (weekdays()) {
+        "<th>"+$*lang_dayname_short[$d]+"</th>\n";
+    }
+    println "</tr>";
+
+    foreach var YearWeek week ($mon.weeks) {
+        println "<tr>";
+        foreach var int i (1 .. $week.pre_empty) {
+            print "<td>&nbsp;</td>";
+        }
+
+        foreach var YearDay day ($week.days) {
+            print "<td>";
+            if ($day.num_entries > 0) { print """<a href="$day.url">"""; }
+            print $day.day;
+            if ($day.num_entries > 0) { print """</a>"""; }
+            print "</td>";
+        }
+
+        foreach var int i (1 .. $week.post_empty) {
+            print "<td>&nbsp;</td>";
+        }
+        println "</tr>";
+    }
+
+    println """</table>""";
+
+    close_module();
+}
+function print_module_syndicate(string title) {
+    var Page p = get_page();
+    if ((size $p.data_links_order) < 1) { return; }
+    open_module("syndicate", $title, "");
+
+    foreach var string k ($p.data_links_order) {
+        print " $p.data_link{$k} ";
+    }
+
+    close_module();
+}
+function print_module_customtext(string title, string text, string titlelink_url) {
+    var Page p = get_page();
+    open_module("customtext", $title, $titlelink_url);
+    print safe $text;
+    close_module();
+}
+function print_module_links(string title) {
+    var Page p = get_page();
+    var UserLink[] links = $p.linklist;
+    if (size($links) < 1) { return; }
+
+    var bool box_open = false;
+    if (not $links[0].is_heading) {
+        open_module("typelist", $title, "");
+        $box_open = true;
+    }
+
+    var string[] items = [];
+    foreach var UserLink link ($links) {
+        if ($link.is_heading) {
+            if ($box_open) {
+                print_module_list($items);
+                close_module();
+                $items = [];
+            }
+            open_module("typelist", $link.title, "");
+            $box_open = true;
+        }
+        if (not $link.is_heading and $link.title != "") {
+            $items[size $items] = """<a href="$link.url">$link.title</a>""";
+        }
+    }
+    if ($box_open) {
+        print_module_list($items);
+        close_module();
+    }
+}
+
+
+function handle_sidebar_array(string[][] list) {
+    foreach var string[] item ($list) {
+        var string module = $item[0];
+        var string title = $item[1];
+
+        if ($module == "userprofile") {
+            var bool show_profile = (int($item[2]) != 0 ? true : false);
+            var bool show_userpic = (int($item[3]) != 0 ? true : false);
+            print_module_userprofile($title, $show_profile, $show_userpic);
+        }
+        elseif ($module == "viewlinks") {
+            print_module_viewlinks($title);
+        }
+        elseif ($module == "poweredby") {
+            print_module_poweredby($title);
+        }
+        elseif ($module == "pagesummary") {
+            print_module_pagesummary($title);
+        }
+        elseif ($module == "tags") {
+            print_module_tags($title);
+        }
+        elseif ($module == "calendar") {
+            print_module_calendar();
+        }
+        elseif ($module == "syndicate") {
+            print_module_syndicate($title);
+        }
+        elseif ($module == "customtext") {
+            var string text = $item[2];
+            var string titlelink_url = $item[3];
+            print_module_customtext($title, $text, $titlelink_url);
+        }
+        elseif ($module == "links") {
+            print_module_links($title);
+        }
+    }
+}
+
+function Page::lay_sidebar_primary() {
+    handle_sidebar_array($*sidebar_primary);
+}
+function Page::lay_sidebar_secondary() {
+    handle_sidebar_array($*sidebar_secondary);
+}
+
+function render_layout (Page p, string lay) {
+   if ($lay == "1C") {
+      container_open("alpha");
+      $p->print_body();
+      container_close();
+      return;
+   }
+
+   if ($lay == "2CL") {
+      container_open("alpha");
+      $p->lay_sidebar_primary();
+      container_close();
+      container_open("beta");
+      $p->print_body();
+      container_close();
+      return;
+   }
+
+   if ($lay == "2CR") {
+      container_open("alpha");
+      $p->print_body();
+      container_close();
+      container_open("beta");
+      $p->lay_sidebar_primary();
+      container_close();
+      return;
+   }
+
+   if ($lay == "3C") {
+      container_open("alpha");
+      $p->lay_sidebar_primary();
+      container_close();
+      container_open("beta");
+      $p->print_body();
+      container_close();
+      container_open("gamma");
+      $p->lay_sidebar_secondary();
+      container_close();
+      return;
+   }
+
+
+}
+
+function get_layout () : string {
+   var Page p = get_page();
+   var string lay = $*layout_type;
+   if ($lay == "1C" or $lay == "2CR" or $lay == "2CL" or $lay == "3C") {
+      return $lay;
+   }
+   return "2CR";
+}
+
+function body_class (string lay) : string {
+   var string{} map = {
+      "1C" => "layout-one-column",
+      "2CL" => "layout-two-column-left",
+      "2CR" => "layout-two-column-right",
+      "3C" => "layout-three-column",
+   };
+   return $map{$lay};
+}
+
+function Page::print () {
+
+ var string lay = get_layout();
+ var string body_layout_class = body_class($lay);
+
+   """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" id="sixapart-standard">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>""" + $this->title() + """</title>""";
+  $this->print_head();
+
+    if ($*external_stylesheet) {
+        println """<link rel="stylesheet" href="$.stylesheet_url" type="text/css" />""";
+    }
+    else {
+        println """<style type="text/css">""";
+        print_stylesheet();
+        println """</style>""";
+    }
+
+"""
+</head>
+<body class='$body_layout_class lj-view-$.view'>""";
+
+container_open("container");
+print_banner($this);
+container_open("pagebody");
+
+ render_layout($this, $lay);
+
+container_close();
+container_close();
+"</body></html>";
+}
+
+
+
+function RecentPage::print_body() {
+
+    if ($.nav.backward_url != "" or $.nav.forward_url != "") {
+        println """<p class="content-nav">""";
+        if ($.nav.backward_url != "") {
+            println """<a href="$.nav.backward_url">"""+get_plural_phrase($.nav.backward_count, "text_skiplinks_back")+"</a>";
+        }
+        if ($.nav.backward_url != "" and $.nav.forward_url != "") {
+            print " | ";
+        }
+        if ($.nav.forward_url != "") {
+            println """<a href="$.nav.forward_url">"""+get_plural_phrase($.nav.forward_count, "text_skiplinks_forward")+"</a>";
+        }
+        println """</p>""";
+    }
+
+    foreach var Entry e ($.entries) {
+        if ($*opt_datehead and $e.new_day) {
+            print """<h2 class="date-header">"""+$e.time->date_format("med")+"""</h2>""";
+        }
+
+        # Print the entry
+        $this->print_entry($e);
+    }
+}
+
+function EntryPage::print_body() {
+
+    $this->print_entry($.entry);
+
+"""
+	<a id="comments"></a>
+	<div class="comments">
+		<h3 class="comments-header">$*text_comments</h3>
+		<div class="comments-content">
+			<!-- comment list -->
+""";
+
+    foreach var Comment c ($.comments) {
+        $this->print_comment($c);
+    }
+
+"""
+		</div>
+	</div>
+""";
+
+}
+
+function lang_posted_by_date_and_time(UserLite poster, DateTime dt, bool showposter, bool showdate, bool showtime) : string {
+    var string posted = "";
+    if ($showposter) {
+        var string posterstr = (defined $poster ? ""+$poster : "<i>"+$*text_poster_anonymous+"</i>");
+        $posted = "Posted by "+$posterstr;
+        if (not $showtime and not $showdate) {
+            return $posted;
+        }
+        $posted = $posted + ($showdate ? " on " : " at ");
+    }
+    if ($showdate and $showtime) {
+        return $posted + $dt->date_format("med") + " at " + $dt->time_format();
+    }
+    if ($showdate and not $showtime) {
+        return $posted + $dt->date_format("med");
+    }
+    if (not $showdate and $showtime) {
+        return $posted + $dt->time_format();
+    }
+    return "";
+}
+
+function EntryPage::print_comment(Comment e) {
+    if (not $e.full) {
+        # Collapsed mode
+
+        "<div class='comment collapsed-comment'"+($e.dom_id ? " id='$e.dom_id'" : "")+">\n";
+        "<div class='comment-footer'>";
+        var string subject = $e.subject;
+        if ($subject == "") { $subject = $*text_nosubject; }
+        "<a href='$e.permalink_url' class='collapsed-comment-link'>$subject</a> <span class='separator'>-</span> ";
+        print lang_posted_by_date_and_time($e.poster, $e.time, true, true, true);
+        "</div>";
+        "</div>";
+
+        return;
+    }
+
+    "<div class='comment'"+($e.dom_id ? " id='$e.dom_id'" : "")+">\n";
+    if ($e.subject != "") {
+        "<h3 class='comment-header'>$e.subject</h3>\n";
+    }
+
+    if ($*opt_userpic_comments and defined $e.userpic) {
+        "<div class='comment-userpic'>$e.userpic</div>";
+    }
+
+    "<div class='comment-content'>";
+    $e->print_text();
+    "</div>";
+    "<div class='comment-footer'>";
+
+    var string sep = "<span class='separator'>|</span>";
+
+    print lang_posted_by_date_and_time($e.poster, $e.time, true, true, true)+" $sep ";
+
+    "<a class='permalink' href='$e.permalink_url'>$*text_permalink</a>";
+
+    if ($e.parent_url) { print " $sep <a href='$e.parent_url'>$*text_comment_parent</a>"; }
+    if ($e.thread_url) { print " $sep <a href='$e.thread_url'>$*text_comment_thread</a>"; }
+    if ($e.reply_url)  { print " $sep <a href='$e.reply_url'>$*text_comment_reply</a>"; }
+
+    "</div>";
+
+    if (size($e.replies) > 0) {
+        println "<div class='comment-replies'>";
+
+        foreach var Comment c ($e.replies) {
+            $this->print_comment($c);
+        }
+
+        println "</div>";
+    }
+
+    "</div>";
+}
+
+function Page::print_entry(Entry e) {
+    "<div class='entry'" + ($e.dom_id ? " id='$e.dom_id'" : "") + ">\n";
+      "<h3 class='entry-header'>$e.subject</h3>\n";
+      "<div class='entry-content'>\n";
+
+         var bool showuserpic = $*opt_userpic_main;
+         if ($.view == "friends") { $showuserpic = $*opt_userpic_friends; }
+         if ($.view == "entry") { $showuserpic = $*opt_userpic_entrypage; }
+         if ($showuserpic and defined $e.userpic) {
+             "<div class='entry-userpic'>$e.userpic</div>";
+         }
+
+         "<div class='entry-body'>\n";
+         $e->print_metadata();
+         $e->print_text();
+         "</div>\n";
+
+         var string sep = "<span class='separator'>|</span>";
+
+         var bool showtime = $*opt_showtime;
+         var bool showdate = not $*opt_datehead;
+         var bool showposter = false;
+         if ($.view == "friends") { $showtime = true; $showposter = true; }
+         if ($.view == "day") { $showdate = false; }
+         if ($.view == "entry" or $.view == "reply") { $showdate = true; }
+         if (not $e.poster->equals($e.journal)) { $showposter = true; }
+
+         "<p class='entry-footer'>";
+         if (defined $e.security_icon) {
+             print "<span class='lj-entry-securityicon'>$e.security_icon</span> ";
+         }
+
+         if ($showdate or $showtime or $showposter) {
+             print lang_posted_by_date_and_time($e.poster, $e.time, $showposter, $showdate, $showtime)+" $sep ";
+         }
+         "<a class='permalink' href='$e.permalink_url'>$*text_permalink</a>";
+
+
+         if ($.view != "reply") {
+             if ($e.comments.enabled) { " $sep "; $e.comments->print_postlink(); }
+         }
+         if ($.view != "entry") {
+             if ($e.comments.count)   { " $sep "; $e.comments->print_readlink(); }
+         }
+         "</p>";
+
+       "</div>\n";
+     "</div>\n";
+}

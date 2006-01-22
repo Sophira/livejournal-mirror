@@ -1,0 +1,233 @@
+<?page
+head<=
+<?searchcss?>
+
+<script language='JavaScript'>
+<!--
+    function showAnswer() {
+        if (!document.getElementById) {
+            return true;
+        }
+        var a = document.getElementById('answer');
+        var r = document.getElementById('rm');
+        if (!a || !r) {
+            return true;
+        }
+        r.style.display = 'none';
+        a.style.display = 'block';
+        return false;
+    }
+//-->
+</script>
+<=head
+body<=
+<?_code
+{
+    use strict;
+    use vars qw(%GET);
+
+    # make title and body references to BML scratch area
+    my $title = \$_[1]->{'title'};
+    my $body = \$_[1]->{'body'};
+    $$body = '';
+    $$title = '';
+
+    # get faqid and redirect to faq.bml if none
+    my $faqidarg = $GET{'faqid'} + 0;
+    my $faqcatarg = $GET{'faqcat'};
+
+    my $mode = $GET{'view'} eq 'full' ? 'answer' : 'summary';
+
+    my $where;
+
+    my $dbr = LJ::get_db_reader();
+    # loading single faqid
+    if ($faqidarg) {
+        $$title = BML::ml('.title_num', { 'num' => $faqidarg });
+        $where = "faqid=$faqidarg";
+
+    # loading entire faqcat
+    } elsif ($faqcatarg) {
+        my $catname = $dbr->selectrow_array("SELECT faqcatname FROM faqcat WHERE faqcat=?",
+                                            undef, $faqcatarg);
+        $$title = BML::ml('.title_cat', { 'catname' => LJ::ehtml($catname) });
+
+        $where = "faqcat=" . $dbr->quote($faqcatarg);
+
+    # no faqid or faqcat specified, redirect
+    } else {
+        return BML::redirect("faq.bml");
+    }
+
+    my $remote = LJ::get_remote();
+
+    # get language settings
+    my $curlang = $GET{'lang'} || BML::get_language();
+    my $deflang = BML::get_language_default();
+    my $altlang = $curlang ne $deflang;
+    my $mld;
+    my $mll;
+    if ($altlang) {
+        $mll = LJ::Lang::get_lang($curlang);
+        $mld = LJ::Lang::get_dom("faq");
+        $altlang = 0 unless $mll && $mld;
+    }
+
+    # query db and get data
+    my $sth = $dbr->prepare("SELECT faqid, question, summary, answer, faqcat, lastmoduserid, ".
+                            "DATE_FORMAT(lastmodtime, '%M %D, %Y'), ".
+                            "UNIX_TIMESTAMP(lastmodtime) FROM faq ".
+                            "WHERE $where ORDER BY sortorder");
+    $sth->execute;
+    if ($dbr->err) {
+        $$title = $ML{'Error'};
+        $$body = "$ML{'error.dberror'} <ul><li>" . $dbr->errstr . "</li></ul>\n";
+        return;
+    }
+
+    my $count = 0;
+    my $dbh;
+    my $backfaqcat;
+    while (my ($faqid, $question, $summary, $answer, $faqcat,
+               $lastmoduserid, $lastmodtime, $unixmodtime) = $sth->fetchrow_array)
+    {
+        $dbh ||= LJ::get_db_writer();
+
+        # log this faq view
+        if ($remote && ! $LJ::DISABLED{faquses}) {
+            $dbh->do("REPLACE INTO faquses (faqid, userid, dateview) ".
+                     "VALUES ($faqid, ?, NOW())", undef, $remote->{'userid'});
+        }
+
+        BML::note_mod_time($unixmodtime);
+
+        # it'd be better to load them in a batch, but this works for now:
+        if ($altlang) {
+            $question = LJ::Lang::get_text($curlang, "$faqid.1question", $mld->{'dmid'});
+            # Load answer anyway since we may need it for old FAQs
+            $answer   = LJ::Lang::get_text($curlang, "$faqid.2answer",   $mld->{'dmid'});
+            $summary  = LJ::Lang::get_text($curlang, "$faqid.3summary",  $mld->{'dmid'});
+        }
+
+        # Old FAQs don't have summaries, so show the answer instead
+        my $hassum = 1;
+        unless ($summary) {
+            $hassum = 0;
+            $summary = $answer;
+        }
+
+        # escape question and answers
+        $question = LJ::ehtml($question);
+        $question =~ s/^\s+//; $question =~ s/\s+$//;
+        $question =~ s/\n/<br \/>/g;
+
+        # Clean this as if it were an entry, but don't allow lj-cuts
+        LJ::CleanHTML::clean_event(\$summary, {'ljcut_disable' => 1});
+        LJ::CleanHTML::clean_event(\$answer,  {'ljcut_disable' => 1}) if $hassum;
+
+        # Highlight search terms
+	my $term = sub {
+	    my $term = shift;
+            return $term if $term =~ m!^http://!;
+ 	    return "<span class='searchhighlight'>" . LJ::ehtml($term) . "</span>";
+	};
+        my $qterm = $GET{'q'};
+	if ($qterm) {
+	    $question =~ s/\Q$qterm\E/$term->($&)/ige;
+
+            # don't highlight things in the FURTHER READING section
+            # (a livejournal.com convention)
+            $answer =~ s/(FURTHER READING.+)//s;
+            my $fr = $1;
+
+            # don't highlight terms in URLs
+            $summary =~ s/(http:\/\/\S+)?\Q$qterm\E/$term->($&)/ige;
+            $answer =~ s/(http:\/\/\S+)?\Q$qterm\E/$term->($&)/ige;
+
+            $answer .= $fr;
+	}
+
+        # display output
+        $$body .= "<?h1";
+        if ($faqcatarg) {
+            $$body .= " <a style='text-decoration: none;' " .
+                      "href='faqbrowse.bml?faqid=$faqid'>&#x00bb;</a>";
+        }
+        $$body .= " $question h1?>";
+        $$body .= "<div style='margin-left: 20px;'>";
+
+        $$body .= "<div name='summary' id='summary'>$summary</div>";
+        $$body .= "<br />";
+
+        if ($mode eq 'summary' && $hassum) {
+            my $q = "&amp;q=$qterm" if $qterm;
+
+            $$body .= "<div id='rm' name='rm'>";
+            my $oc = $faqcatarg ? '' : "onclick='return showAnswer();'";
+            $$body .= "(<b><a $oc href='faqbrowse.bml?faqid=$faqid$q&view=full'>" .
+                "$ML{'.more'}</a></b>)";
+            $$body .= "</div>";
+        }
+
+        if (!$faqcatarg && $hassum) { # If we're just viewing one faq and it has a summary
+            if ($mode eq 'answer') {
+                $$body .= "<div id='answer' name='answer'>$answer</div>";
+            } else {
+                $$body .= "<div id='answer' name='answer' style='display: none'>$answer</div>";
+            }
+        }
+
+        $$body .= "</div>";
+
+        if ($altlang) {
+            my $itid = LJ::Lang::get_itemid($mld->{'dmid'}, "$faqid.2answer");
+            if ($itid) {
+                my $sql = "SELECT DATE_FORMAT(l.chgtime, '%Y-%m-%d'), t.userid " .
+                    "FROM ml_latest AS l, ml_text AS t WHERE l.dmid = t.dmid AND l.lnid = t.lnid AND l.itid = t.itid" .
+                    "AND l.lnid=? AND l.dmid=? AND l.itid=? ORDER BY t.txtid DESC LIMIT 1";
+                my $sth = $dbr->prepare($sql);
+                $sth->execute($mll->{'lnid'}, $mld->{'dmid'}, $itid);
+                ($lastmodtime, $lastmoduserid) = $sth->fetchrow_array;
+            }
+        }
+
+        my $lastmodwho = LJ::get_username($lastmoduserid);
+        if ($lastmodwho) {
+            $$body .= "<p align=\"right\"><b>$ML{'.lastupdated'}</b><br />$lastmodtime ($lastmodwho)</p>";
+        }
+
+        if (LJ::check_priv($remote, "faqedit", "*") ||
+            LJ::check_priv($remote, "faqedit", $faqcat))
+        {
+            $$body .= "<p align=\"right\"><a href=\"/admin/faq/faqedit.bml?id=$faqid\">$ML{'.edit.faq'}</a></p>";
+        }
+
+        $count++;
+        $backfaqcat = $faqcat;
+     }
+
+     # nothing found?
+     unless ($count) {
+         $$title = $ML{'Error'};
+         $$body .= "<p><b>$ML{'.error.nofaq'}</b></p>\n";
+     }
+
+     $$body .= "<?hr?>";
+     $$body .= BML::ml('.backfaqcat2', { 'aopts' => "href='/support/faqbrowse.bml?faqcat=$backfaqcat'" }) . "<br />"
+         if $backfaqcat && $faqidarg;
+
+     $$body .= BML::ml('.backfaq2', { 'aopts' => 'href="faq.bml"' }) . "<br />";
+     $$body .= BML::ml('.backsearch', { 'aopts' => 'href="/support/faqsearch.bml"' }) . "<br />";
+     $$body .= BML::ml('.backsupport2', { 'aopts' => 'href="/support/"' });
+
+     # we're dynamic, set title as crumb title
+     LJ::set_dynamic_crumb($_[1]->{'title'}, 'faq');
+
+     return $_[1]->{'body'};
+}
+_code?>
+<=body
+title=><?_code return $_[1]->{'title'}; _code?>
+page?><?_c <LJDEP>
+link: htdocs/support/index.bml, htdocs/support/faq.bml
+</LJDEP> _c?>
