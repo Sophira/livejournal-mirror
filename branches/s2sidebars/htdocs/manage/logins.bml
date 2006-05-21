@@ -1,0 +1,85 @@
+<?page
+title=><?_ml .title _ml?>
+body<=
+<?_code
+{
+    use strict;
+    use vars qw(%GET);
+    
+    my $body;
+
+    LJ::set_active_crumb('managelogins');
+
+    my $u = LJ::get_remote();
+    unless ($u) {
+        $body .= "<?needlogin?>";
+        return $body;
+    }
+
+    $body .= "<?p " . BML::ml('.intro', {'sitename' => $LJ::SITENAMESHORT}) . " p?>";
+
+    my $sessions = $u->sessions;
+    my $session = $u->session;
+
+    if (LJ::did_post()) {
+        return "<?h1 $ML{'Error'} h1?><?p $ML{'error.invalidform'} p?>"
+            unless LJ::check_form_auth();
+
+        foreach my $sid (keys %$sessions) {
+            next unless $POST{$sid};
+
+            $sessions->{$sid}->destroy;
+            delete $sessions->{$sid};
+            last;
+        }
+    }
+
+    my $sth = $u->prepare("SELECT logintime, sessid, ip, ua FROM loginlog WHERE userid=?")
+        or die('Unable to prepare loginlog');
+    $sth->execute($u->{userid})
+        or die('Unable to execute loginlog query');
+    my $logins = $sth->fetchall_arrayref
+        or die('Unable to fetch loginlog');
+
+    my @prior;
+    $body .= "<?h1 $ML{'.loggedin.header'} h1?>";
+    $body .= "<form method='POST' action='$LJ::SITEROOT/manage/logins.bml'>";
+    $body .= LJ::form_auth();
+    $body .= "<table width='100%'><tr><th>$ML{'.loggedin.table.time'}</th><th>$ML{'.loggedin.table.ip'}</th><th width='45%'>$ML{'.loggedin.table.useragent'}</th><th>$ML{'.loggedin.table.logout'}</th></tr>";
+    foreach my $login (sort { $a->[1] <=> $b->[1] } @$logins) {
+        unless (defined $sessions->{$login->[1]}) {
+            push @prior, $login;
+            next;
+        }
+
+        $body .= "<tr>";
+        $body .= "<td>" . LJ::ehtml(LJ::time_to_http($login->[0])) . "</td>";
+        $body .= "<td>" . LJ::ehtml($login->[2]) . "</td>";
+        $body .= "<td>" . LJ::ehtml($login->[3]) . "</td>";
+
+        # Is this their current session?
+        if ($session->id == $login->[1]) {
+            $body .= "<td style='whitespace: nowrap; text-align: center'><font size='1'>$ML{'.loggedin.table.current'}</font></td>";
+        } else {
+            $body .= "<td style='text-align: center'>" . LJ::html_submit($login->[1], 'X') . "</td>";
+        }
+        $body .= "</tr>";
+    }
+    $body .= "</table></form><br />";
+
+    $body .= "<?h1 $ML{'.prior.header'} h1?>";
+    $body .= "<table width='100%'><tr><th>$ML{'.prior.table.time'}</th><th>$ML{'.prior.table.ip'}</th><th width='57%'>$ML{'.prior.table.useragent'}</th></tr>";
+    foreach my $login (sort { $b->[1] <=> $a->[1] } @prior) {
+        $body .= "<tr>";
+        $body .= "<td>" . LJ::ehtml(LJ::time_to_http($login->[0])) . "</td>";
+        $body .= "<td>" . LJ::ehtml($login->[2]) . "</td>";
+        $body .= "<td>" . LJ::ehtml($login->[3]) . "</td>";
+        $body .= "</tr>";
+    }
+    $body .= "</table>";
+
+    return $body;
+}
+_code?>
+<=body
+page?>

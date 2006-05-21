@@ -1,0 +1,32 @@
+<?_info
+nocache=>1
+_info?>
+<?_code
+{
+    use strict;
+    use vars qw($GET);
+
+    BML::set_content_type("text/html");
+
+    my $r = Apache->request;
+    $r->notes("codepath" => "bml.misc.adserver");
+
+    my $ad_engine = LJ::run_hook('ad_engine', {
+        pagetype => $GET{channel},
+    });
+    return '<html></html>' unless $ad_engine;
+
+    my $adhtml = "<html><head><title>$LJ::SITENAMESHORT Ad Server</title></head>";
+    $adhtml .= "<body style='margin: 0; padding: 0'>";
+
+    $adhtml .= $ad_engine->process(map { $_ => $GET{$_} } qw(
+                                                             url
+                                                             width height type channel age
+                                                             gender country language categories
+                                                             interests search_term accttype
+                                                             contents
+                                                             ));
+    $adhtml .= "</body></html>";
+    return $adhtml;
+}
+_code?>
