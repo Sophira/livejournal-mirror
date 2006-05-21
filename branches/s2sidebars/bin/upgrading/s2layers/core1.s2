@@ -502,6 +502,9 @@ class Page
 
     function builtin print_reply_container(string{} opts) "Prints the area in which the quickreply box will go. Options you may specify are 'target' which will be the target id, and 'class' which will be the CSS class used by the container. If no container is available, quickreply will not work.";
 
+    function builtin get_sidebar_items(string key) : SideBox[]
+    "Fetch the contents of a sidebar. Layouts can document the sidebars they support in the sidebar properties, and then retrieve the configured sidebars using this method.";
+
 }
 
 class TagsPage extends Page
@@ -717,6 +720,95 @@ class PalItem
     var int index "Integer palette index.";
     var Color color "Color to put at specified index.";
 }
+
+## Sidebar Boxes
+
+
+class SideBox
+"The abstract base class of all sidebar boxes."
+{
+    var string bar "The key of the sidebar that this box is part of. This can be used to provide different presentation for different sidebars within a style.";
+    var string type "The type of sidebox this is. This can be used to provide a slightly different presentation for certain boxes if desired.";
+    function print() "Print out the sidebar box in its entirety.";
+    function has_title() : bool "Returns true if this box has a title, or false otherwise. Subclasses should override this to return true if [method[SideBox.print_body()]] will print something. Default implementation returns false.";
+    function print_title() "Print the title of the sidebar box. Subclasses should override this.";
+    function print_body() "Print the body area of the sidebar box. Subclasses should override this.";
+}
+
+class SideBoxSimple extends SideBox
+"A very simple sidebar box that has fixed, uncustomizable content."
+{
+    function builtin print_content() "Print the content for this box.";
+}
+
+class SideBoxList extends SideBox
+"An abstract class for lists of things."
+{
+    var readonly int max_item_index "The highest array index in the list. Iterate from zero up to and including this number and call [method[SideListBox.print_item(int)]] for each index in turn.";
+    function print_list() "Print out the list";
+    function print_item(int i) "Print all of the markup for one item in the list; call [method[SideListBox.print_item_content(int)]] to print the item content itself.";
+    function print_item_content(int i) "Print the actual content of a given list item.";
+}
+
+class SideBoxSimpleList extends SideBoxList
+"A sidebar box containing a list of HTML strings."
+{
+    function builtin print_item_string(int i) "Prints the raw content for a given item in the list.";
+}
+
+class SideBoxEntryList extends SideBoxList
+"A sidebar box containing a list of entries or comments."
+{
+    var EntryLite[] entries "The list of entries to display.";
+}
+
+class SideBoxLinkList extends SideBoxList
+"A sidebar box containing a list of links."
+{
+    var Link[] links "The list of links to display.";
+}
+
+class SideBoxUserLinkList extends SideBoxList
+"A sidebar box containing a list of userlinks."
+{
+    var UserLink[] links "The list of user links to display.";
+}
+
+class SideBoxTagList extends SideBoxList
+"A sidebar box containing a list of links."
+{
+    var TagDetail[] tags "The list of tags to display.";
+}
+
+
+class SideBoxCalendar extends SideBox
+"A sidebar box containing a mini-calendar."
+{
+    var YearMonth month "The month to display.";
+}
+
+class SideBoxCustom extends SideBox
+"If a layout provides its own custom sidebar boxes, this class will be used to display them."
+{
+    var string custom_type "The custom type key as specified in the property defining this type.";
+
+}
+
+class SideBoxJournalInfo extends SideBox
+"A sidebar box containing user profile and/or journal navigation information."
+{
+    var User user;
+    var string[] views_order;
+    var string{} view_url;
+    
+    var bool show_userpic;
+    var bool show_linkbar;
+    var bool show_viewlinks;
+    var bool show_info;
+}
+
+
+
 
 ##[ Built-in Functions ]
 
@@ -1396,6 +1488,26 @@ property bool external_stylesheet {
     noui = 1;
 }
 set external_stylesheet = false;
+
+# Sidebar Configuration Props
+
+property string{}{} sidebars {
+    des = "Sidebar Configuration";
+    noui = 1;
+}
+set sidebars = {};
+
+property string{}[]{} sidebar_default_config {
+    des = "Default Sidebar Setup";
+    noui = 1;
+}
+set sidebar_default_config = {};
+
+property string{} sidebar_custom_types {
+    des = "Custom Sidebar Type Declarations";
+    noui = 1;
+}
+set sidebar_custom_types = {};
 
 ###[ global function implementations ]
 
