@@ -5,14 +5,13 @@ use strict;
 use lib "$ENV{LJHOME}/cgi-bin";
 use DBI::Role;
 use DBI;
-use Carp qw(croak);
 
 require "$ENV{LJHOME}/cgi-bin/ljconfig.pl";
 
 $LJ::DBIRole = new DBI::Role {
     'timeout' => sub {
         my ($dsn, $user, $pass, $role) = @_;
-        return 0 if $role eq "master";
+        return 0 if $role && $role eq "master";
         return $LJ::DB_TIMEOUT;
     },
     'sources' => \%LJ::DBINFO,
@@ -23,17 +22,19 @@ $LJ::DBIRole = new DBI::Role {
 
 package LJ::DB;
 
+use Carp qw(croak);
+
 # <LJFUNC>
 # name: LJ::DB::time_range_to_ids
 # des:  Performs a binary search on a table's primary id key looking
 #       for time boundaries as specified.  Returns the boundary ids
 #       that were found, effectively simulating a key on 'time' for
 #       the specified table.
-# info: This function shouldn't normally be used, but there are 
+# info: This function shouldn't normally be used, but there are
 #       rare instances where it's useful.
 # args: hash of keys defined as follows,
 #        table     = table name to query
-#        roles     = arrayref of db roles to use, in order; 
+#        roles     = arrayref of db roles to use, in order;
 #                    defaults to ['slow']
 #        idcol     = name of 'id' primary key column
 #        timecol   = name of unixtime column to use for constraint
@@ -84,7 +85,7 @@ sub time_range_to_ids {
 
             my $curr_id = $min_id + int(($max_id - $min_id) / 2)+0;
 
-            my $sql = 
+            my $sql =
                 "SELECT $idcol, $timecol FROM $table " .
                 "WHERE $idcol>=$curr_id ORDER BY 1 LIMIT 1";
 
@@ -205,6 +206,8 @@ sub user_cluster_details {
 }
 
 package LJ;
+
+use Carp qw(croak);
 
 # when calling a supported function (currently: LJ::load_user() or LJ::load_userid*),
 # ignores in-process request cache, memcache, and selects directly
@@ -465,18 +468,11 @@ sub release_lock
 
 # <LJFUNC>
 # name: LJ::disconnect_dbs
-# des: Clear cached DB handles and trackers/keepers to partitioned DBs.
+# des: Clear cached DB handles
 # </LJFUNC>
 sub disconnect_dbs {
     # clear cached handles
     $LJ::DBIRole->disconnect_all( { except => [qw(logs)] });
-
-    # and cached trackers/keepers to partitioned dbs
-    while (my ($role, $tk) = each %LJ::REQ_DBIX_TRACKER) {
-        $tk->disconnect if $tk;
-    }
-    %LJ::REQ_DBIX_TRACKER = ();
-    %LJ::REQ_DBIX_KEEPER = ();
 }
 
 # given two db roles, returns true only if the two roles are for sure
@@ -501,7 +497,7 @@ sub use_diff_db {
 sub nodb {
     shift @_ if
         ref $_[0] eq "LJ::DBSet" || ref $_[0] eq "DBI::db" ||
-        ref $_[0] eq "DBIx::StateKeeper" || ref $_[0] eq "Apache::DBI::db";
+        ref $_[0] eq "Apache::DBI::db";
 }
 
 sub dbtime_callback {
@@ -516,7 +512,6 @@ sub dbtime_callback {
 
 
 sub isdb { return ref $_[0] && (ref $_[0] eq "DBI::db" ||
-                                ref $_[0] eq "DBIx::StateKeeper" ||
                                 ref $_[0] eq "Apache::DBI::db"); }
 
 
@@ -535,6 +530,8 @@ sub as_string {
 
 package LJ::Error::Database::Failure;
 sub fields { qw(db) }
+
+sub user_caused { 0 }
 
 sub as_string {
     my $self = shift;

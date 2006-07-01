@@ -19,8 +19,6 @@ sub new {
         unless LJ::isu($u);
 
     my $journalid = shift;
-    croak "no journalid"
-        unless int($journalid);
 
     my $self = {
         u => $u,
@@ -76,6 +74,8 @@ sub notify {
 
         $q->enqueue(event => $ev);
     }
+
+    return 1;
 }
 
 sub configured { 1 }

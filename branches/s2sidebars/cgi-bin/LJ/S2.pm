@@ -10,7 +10,7 @@ use S2::Compiler;
 use Storable;
 use Apache::Constants ();
 use HTMLCleaner;
-use CSS::Cleaner;
+use LJ::CSS::Cleaner;
 use POSIX ();
 
 use LJ::S2::RecentPage;
@@ -21,6 +21,8 @@ use LJ::S2::MonthPage;
 use LJ::S2::EntryPage;
 use LJ::S2::ReplyPage;
 use LJ::S2::TagsPage;
+
+use Class::Autouse qw ( LJ::CommPromo );
 
 package LJ::S2;
 
@@ -307,8 +309,9 @@ sub load_layers {
     my @need_memc; # lid, lid, lid, ...
 
     # initial sweep, anything loaded for less than 60 seconds is golden
+    # if dev server, only cache layers for 1 second
     foreach my $lid (@lids) {
-        if (my $loaded = S2::layer_loaded($lid, 60)) {
+        if (my $loaded = S2::layer_loaded($lid, $LJ::IS_DEV_SERVER ? 1 : 60)) {
             # it's loaded and not more than 60 seconds load, so we just go
             # with it and assume it's good... if it's been recompiled, we'll
             # figure it out within the next 60 seconds
@@ -705,16 +708,7 @@ sub s2_context
         S2::set_output(sub {});  # printing suppressed
         S2::set_output_safe(sub {});
         eval { S2::run_code($ctx, "prop_init()"); };
-
-        foreach my $lid (@layers) {
-            foreach my $pname (S2::get_property_names($lid)) {
-                next unless $ctx->[S2::PROPS]{$pname};
-
-                my $prop = S2::get_property($lid, $pname);
-                my $mode = $prop->{string_mode} || "plain";
-                escape_prop_value($ctx->[S2::PROPS]{$pname}, $mode);
-            }
-        }
+        escape_all_props($ctx, \@layers);
 
         return $ctx unless $@;
     }
@@ -730,8 +724,22 @@ sub s2_context
 
 }
 
+sub escape_all_props {
+    my ($ctx, $lids) = @_;
+
+    foreach my $lid (@$lids) {
+        foreach my $pname (S2::get_property_names($lid)) {
+            next unless $ctx->[S2::PROPS]{$pname};
+
+            my $prop = S2::get_property($lid, $pname);
+            my $mode = $prop->{string_mode} || "plain";
+            escape_prop_value($ctx->[S2::PROPS]{$pname}, $mode);
+        }
+    }
+}
+
 {
-    my $css_cleaner = CSS::Cleaner->new();
+    my $css_cleaner = LJ::CSS::Cleaner->new();
 
     sub escape_prop_value {
         my $mode = $_[1];
@@ -752,6 +760,10 @@ sub s2_context
             if ($mode eq 'simple-html' || $mode eq 'simple-html-oneline') {
                 LJ::CleanHTML::clean_subject(\$_[0]);
                 $_[0] =~ s!\n!<br />!g if $mode eq 'simple-html';
+            }
+            elsif ($mode eq 'html' || $mode eq 'html-oneline') {
+                LJ::CleanHTML::clean_event(\$_[0]);
+                $_[0] =~ s!\n!<br />!g if $mode eq 'html';
             }
             elsif ($mode eq 'css') {
                 my $clean = $css_cleaner->clean($_[0]);
@@ -1162,6 +1174,7 @@ sub layer_compile_user
     return 1 unless ref $overrides;
     my $id = $layer->{'s2lid'};
     my $s2 = "layerinfo \"type\" = \"user\";\n";
+    $s2 .= "layerinfo \"name\" = \"Auto-generated Customizations\";\n";
 
     foreach my $name (keys %$overrides) {
         next if $name =~ /\W/;
@@ -1644,7 +1657,9 @@ sub Entry
     my $link_keyseq = $e->{'link_keyseq'};
     push @$link_keyseq, 'mem_add' unless $LJ::DISABLED{'memories'};
     push @$link_keyseq, 'tell_friend' unless $LJ::DISABLED{'tellafriend'};
-    push @$link_keyseq, 'watch_comments' unless $LJ::DISABLED{'esn'};
+
+    my $remote = LJ::get_remote();
+    push @$link_keyseq, 'watch_comments' if $remote && $remote->can_use_esn;
 
     # Note: nav_prev and nav_next are not included in the keyseq anticipating
     #      that their placement relative to the others will vary depending on
@@ -1775,6 +1790,9 @@ sub Page
     $p->{'head_content'} .= qq{<link rel="service.feed" type="application/atom+xml" title="AtomAPI-enabled feed" href="$LJ::SITEROOT/interface/atomapi/$u->{'user'}/feed" />\n};
     $p->{'head_content'} .= qq{<link rel="service.post" type="application/atom+xml" title="Create a new post" href="$LJ::SITEROOT/interface/atomapi/$u->{'user'}/post" />\n};
 
+    # CSS for community promos
+    $p->{'head_content'} .= qq{<link rel='stylesheet' href='$LJ::STATPREFIX/comm_promo.css' type='text/css' />\n};
+
     # Ads and control strip
     my $show_ad = LJ::run_hook('should_show_ad', {
         ctx  => "journal",
@@ -1786,10 +1804,9 @@ sub Page
         user => $u->{user},
     });
     if ($show_control_strip) {
-        my $control_strip_stylesheet_link = LJ::run_hook('control_strip_stylesheet_link', {
+        LJ::run_hook('control_strip_stylesheet_link', {
             user => $u->{user},
         });
-        $p->{'head_content'} .= $control_strip_stylesheet_link;
         $p->{'head_content'} .= LJ::control_strip_js_inject( user => $u->{user} );
     }
 
@@ -1994,7 +2011,7 @@ sub end_css {
 
     # our CSS to clean:
     my $css = $sc->{_start_css_buffer};
-    my $cleaner = CSS::Cleaner->new;
+    my $cleaner = LJ::CSS::Cleaner->new;
 
     my $clean = $cleaner->clean($css);
     LJ::run_hook('css_cleaner_transform', \$clean);
@@ -2173,7 +2190,6 @@ sub viewer_is_member
 
 sub viewer_sees_control_strip
 {
-    my ($ctx) = @_;
     return 0 unless $LJ::USE_CONTROL_STRIP;
 
     my $r = Apache->request;
@@ -2182,9 +2198,24 @@ sub viewer_sees_control_strip
     });
 }
 
+sub viewer_sees_vbox
+{
+    my $r = Apache->request;
+    my $u = LJ::load_userid($r->notes("journalid"));
+    return 0 unless $u;
+
+    return $u->should_display_comm_promo ? 1 : viewer_sees_ads();
+}
+
+sub viewer_sees_hbox_top { 0 }
+
+sub viewer_sees_hbox_bottom
+{
+    return viewer_sees_ads();
+}
+
 sub viewer_sees_ads
 {
-    my ($ctx) = @_;
     return 0 unless $LJ::USE_ADS;
 
     my $r = Apache->request;
@@ -2513,8 +2544,8 @@ sub _Comment__get_link
                             LJ::S2::Image("$LJ::IMGPREFIX/btn_unscr.gif", 22, 20));
     }
     if ($key eq "watch_thread") {
-        return $null_link if $LJ::DISABLED{esn};
         return $null_link unless $remote;
+        return $null_link unless $remote->can_use_esn;
 
         my $comment = LJ::Comment->new($u, dtalkid => $this->{talkid});
         my $comment_watched = $remote->has_subscription(
@@ -2543,7 +2574,7 @@ sub _Comment__get_link
                                                                 );
                 }
 
-                $track_img = 'btn_tracked_thread.gif' if ($thread_watched);
+                $track_img = 'btn_tracking_thread.gif' if ($thread_watched);
 
                 # cache in this comment object if it's being watched by this user
                 $comment->{_watchedby}->{$u->{userid}} = $thread_watched;
@@ -2921,7 +2952,9 @@ sub _Entry__get_link
                             LJ::S2::Image("$LJ::IMGPREFIX/btn_next.gif", 22, 20));
     }
     if ($key eq "watch_comments") {
-        return $null_link if $LJ::DISABLED{'esn'};
+        return $null_link unless $remote;
+        return $null_link unless $remote->can_use_esn;
+
         return LJ::S2::Link("$LJ::SITEROOT/manage/subscriptions/comments.bml?journal=$journal&amp;ditemid=$this->{'itemid'}",
                             "Track New Comments",
                             LJ::S2::Image("$LJ::IMGPREFIX/btn_track.gif", 22, 20));
@@ -2981,6 +3014,56 @@ sub Page__print_control_strip
     $S2::pout->($control_strip);
 }
 
+sub Page__print_hbox_top
+{
+    # reserved for ads in top of journal
+    1;
+}
+
+sub Page__print_hbox_bottom
+{
+    my ($ctx, $this) = @_;
+
+    my $user = $this->{journal}->{username};
+    my $journalu = LJ::load_user($this->{journal}->{username})
+        or die "unable to load journal user: $user";
+
+    # get ad with site-specific hook
+    {
+        my $ad_html = LJ::run_hook('hbox_ad_content', {
+            journalu => $journalu,
+            pubtext  => $LJ::REQ_GLOBAL{first_public_text},
+        });
+        $S2::pout->($ad_html) if $ad_html;
+    }
+}
+
+sub Page__print_vbox
+{
+    my ($ctx, $this) = @_;
+
+    my $user = $this->{journal}->{username};
+    my $journalu = LJ::load_user($this->{journal}->{username})
+        or die "unable to load journal user: $user";
+
+    # community promo box goes on top of skyscraper on community pages
+    # that have ads
+    if ($journalu->should_display_comm_promo) {
+        my $promo_html = $journalu->render_comm_promo;
+        $S2::pout->($promo_html) if $promo_html;
+    }
+
+    # next standard ad calls specified by site-specific hook
+    {
+        my $ad_html = LJ::run_hook('vbox_ad_content', {
+            journalu => $journalu,
+            pubtext  => $LJ::REQ_GLOBAL{first_public_text},
+        });
+        $S2::pout->($ad_html) if $ad_html;
+    }
+}
+
+# deprecated, should use print_(v|h)box
 sub Page__print_ad
 {
     my ($ctx, $this, $type) = @_;
@@ -2995,15 +3078,14 @@ sub Page__print_ad
 
     $S2::pout->($ad);
 }
-*RecentPage__print_ad = \&Page__print_ad;
-*FriendsPage__print_ad = \&Page__print_ad;
-*Page__print_ad = \&Page__print_ad;
-*YearPage__print_ad = \&Page__print_ad;
-*MonthPage__print_ad = \&Page__print_ad;
-*DayPage__print_ad = \&Page__print_ad;
-*EntryPage__print_ad = \&Page__print_ad;
-*ReplyPage__print_ad = \&Page__print_ad;
-*TagsPage__print_ad = \&Page__print_ad;
+
+# map vbox/hbox methods into *Page classes
+foreach my $class (qw(RecentPage FriendsPage YearPage MonthPage DayPage EntryPage ReplyPage TagsPage)) {
+    foreach my $func (qw(print_ad print_vbox print_hbox_top print_hbox_bottom)) {
+        eval "*${class}__$func = \&Page__$func";
+    }
+}
+
 
 sub Page__visible_tag_list
 {

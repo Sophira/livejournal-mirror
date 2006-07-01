@@ -1,10 +1,10 @@
 package LJ::Subscription;
 use strict;
-use warnings;
 use Carp qw(croak);
 use Class::Autouse qw(
                       LJ::NotificationMethod
                       LJ::Typemap
+                      LJ::Subscription::Pending
                       );
 
 my @subs_fields = qw(userid subid is_dirty journalid etypeid arg1 arg2
@@ -25,6 +25,35 @@ sub new_by_id {
 
     return $class->new_from_row($row);
 }
+
+sub freeze {
+    my $self = shift;
+    return "subid-" . $self->owner->{userid} . '-' . $self->id;
+}
+
+# can return either a LJ::Subscription or LJ::Subscription::Pending object
+sub thaw {
+    my ($class, $data, $u, $POST) = @_;
+
+    # valid format?
+    return undef unless ($data =~ /^(pending|subid) - $u->{userid} .+ ?(-old)?$/x);
+
+    my ($type, $userid, $subid) = split("-", $data);
+
+    return LJ::Subscription::Pending->thaw($data, $u, $POST) if $type eq 'pending';
+    die "Invalid subscription data type: $type" unless $type eq 'subid';
+
+    unless ($u) {
+        my $subuser = LJ::load_userid($userid);
+        die "no user" unless $subuser;
+        $u = LJ::get_authas_user($subuser);
+        die "Invalid user $subuser->{user}" unless $u;
+    }
+
+    return $class->new_by_id($u, $subid);
+}
+
+sub pending { 0 }
 
 sub subscriptions_of_user {
     my ($class, $u) = @_;
@@ -80,14 +109,18 @@ sub find {
 
     croak "Invalid parameters passed to ${class}->find" if keys %params;
 
+    return () if defined $arg1 && $arg1 =~ /\D/;
+    return () if defined $arg2 && $arg2 =~ /\D/;
+
     my @subs = $u->subscriptions;
 
     # filter subs on each parameter
     @subs = grep { $_->ntypeid == $ntypeid }             @subs if $ntypeid;
     @subs = grep { $_->etypeid == $etypeid }             @subs if $etypeid;
     @subs = grep { LJ::u_equals($_->journal, $journal) } @subs if $journal;
-    @subs = grep { $_->arg1 == $arg1 }                   @subs if $arg1;
-    @subs = grep { $_->arg2 == $arg2 }                   @subs if $arg2;
+
+    @subs = grep { $_->arg1 == $arg1 }                   @subs if defined $arg1;
+    @subs = grep { $_->arg2 == $arg2 }                   @subs if defined $arg2;
 
     return @subs;
 }
@@ -112,6 +145,7 @@ sub delete {
 sub new_from_row {
     my ($class, $row) = @_;
 
+    return undef unless $row;
     my $self = bless {%$row}, $class;
     # TODO validate keys of row.
     return $self;
@@ -132,7 +166,7 @@ sub create {
 
     # easier way to specify journal
     if (my $ju = delete $args{'journal'}) {
-        $args{journalid} = $ju->{userid};
+        $args{journalid} = $ju->{userid} if $ju;
     }
 
     $args{arg1} ||= 0;
@@ -179,11 +213,25 @@ sub create {
     return $self;
 }
 
+# returns a hash of arguments representing this subscription (useful for passing to
+# other functions, such as find)
+sub sub_info {
+    my $self = shift;
+    return (
+            journal => $self->journal,
+            etypeid => $self->etypeid,
+            ntypeid => $self->ntypeid,
+            arg1    => $self->arg1,
+            arg2    => $self->arg2,
+            );
+}
+
 # returns a nice HTML description of this current subscription
 sub as_html {
     my $self = shift;
 
     my $evtclass = LJ::Event->class($self->etypeid);
+    return undef unless $evtclass;
     return $evtclass->subscription_as_html($self);
 }
 
@@ -228,9 +276,24 @@ sub ntypeid {
     return $self->{ntypeid};
 }
 
+sub method {
+    my $self = shift;
+    return LJ::NotificationMethod->class($self->ntypeid);
+}
+
+sub notify_class {
+    my $self = shift;
+    return LJ::NotificationMethod->class($self->{ntypeid});
+}
+
 sub etypeid {
     my $self = shift;
     return $self->{etypeid};
+}
+
+sub event_class {
+    my $self = shift;
+    return LJ::Event->class($self->{etypeid});
 }
 
 # returns the owner (userid) of the subscription
@@ -266,5 +329,32 @@ sub unique {
     my $note = $self->notification or return undef;
     return $note->unique . ':' . $self->owner->{user};
 }
+
+# returns true if two subscriptions are equivilant
+sub equals {
+    my ($self, $other) = @_;
+
+    return 1 if $self->id == $other->id;
+
+    my $match = $self->ntypeid == $other->ntypeid &&
+        $self->etypeid == $other->etypeid;
+
+    $match &&= $other->arg1 && ($self->arg1 == $other->arg1) if $self->arg1;
+    $match &&= $other->arg2 && ($self->arg2 == $other->arg2) if $self->arg2;
+
+    return $match;
+}
+
+package LJ::Error::Subscription::TooMany;
+sub fields { qw(subscr u); }
+
+sub as_html { $_[0]->as_string }
+sub as_string {
+    my $self = shift;
+    my $max = $self->field('u')->get_cap('subscriptions');
+    return 'The subscription "' . $self->field('subscr')->as_html . '" was not saved because you have' .
+        " reached your limit of $max subscriptions";
+}
+
 
 1;

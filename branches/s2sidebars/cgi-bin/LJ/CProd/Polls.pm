@@ -11,10 +11,14 @@ sub applicable {
     return $used_polls ? 0 : 1;
 }
 
+sub link { "$LJ::SITEROOT/poll/create.bml" }
+sub button_text { "Poll wizard" }
+sub ml { 'cprod.polls.text' }
+
 sub render {
-    my ($class, $u) = @_;
+    my ($class, $u, $version) = @_;
     my $user = LJ::ljuser($u);
-    my $link = $class->clickthru_link("$LJ::SITEROOT/poll/create.bml",BML::ml('polls.link'));
+    my $link = $class->clickthru_link('cprod.polls.link', $version);
     my $poll = "
 <div style='margin: 1em'><div>That's crazy!</div><div style='white-space: nowrap'>
 <img src='$LJ::IMGPREFIX/poll/leftbar.gif' style='vertical-align:middle' 
@@ -37,7 +41,7 @@ height='14' width='45' alt='' /><img src='$LJ::IMGPREFIX/poll/rightbar.gif'
 style='vertical-align:middle' height='14' width='7' alt='' /> <b>73</b> (15.0%)</div>
 </div>";
 
-    return "<p>" . BML::ml('polls.text', { "user" => $user, "link" => $link, "poll" => $poll }) . "</p>";
+    return "<p>" . BML::ml($class->get_ml($version), { "user" => $user, "link" => $link, "poll" => $poll }) . "</p>";
 }
 
 1;

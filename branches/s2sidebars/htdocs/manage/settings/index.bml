@@ -44,6 +44,18 @@ _code?>
     # clean userprops
     foreach (values %$u) { LJ::text_out(\$_); }
 
+    # thumb schemes have thumbnails
+    # text schemes are in a drop-down
+    my @thumb_schemes;
+    my @text_schemes;
+    foreach (@LJ::SCHEMES) {
+        if (ref $_->{'thumb'} eq 'ARRAY') {
+            push @thumb_schemes, $_;
+        } else {
+            push @text_schemes, $_;
+        }
+    }
+
     ###
     ### no post, show edit form
     ###
@@ -55,11 +67,11 @@ _code?>
 
         $ret .= "<div>";
         # user switcher
-        $ret .= "<?p <form method='get' action='index.bml'>\n";
+        $ret .= "<form method='get' action='index.bml'>\n";
         $ret .= LJ::make_authas_select($remote, { 'authas' => $GET{'authas'} });
-        $ret .= "</form> p?>\n\n";
+        $ret .= "</form>\n\n";
 
-        $ret .= "<?p Customize your viewing, notification and additional privacy options. p?>";
+        $ret .= "<?p $ML{'.intro'}  p?>";
         $ret .= "</div>\n";
 
         $ret.= "<div class='clear'></div>\n";
@@ -72,15 +84,102 @@ _code?>
         $ret .= "<div class='section_head'> $ML{'.section.viewing'}</div>\n";
         $ret .= "<table class='field_block'>\n";
 
+        unless ($u->is_community()) {
+            # scheme selector
+            if (@LJ::SCHEMES) {
+                $ret .= "<tr><td class='field_name'>Scheme</td><td>\n";
+
+                my $scheme = $BML::COOKIE{'BMLschemepref'};
+                $scheme = $LJ::SCHEMES[0]->{'scheme'} unless $scheme;
+
+                if (@thumb_schemes) {
+                    my $cols = 3;
+                    my $width = int(100 / $cols +.5) . "%";
+
+                    foreach my $sh (@thumb_schemes) {
+                        my $th = $sh->{'thumb'};
+                        $ret .= "\n<div style='float: left; margin: 0px 10px 10px 5px;'><h3>";
+                        $ret .= LJ::html_check({ 'type' => 'radio', 'name' => 'scheme',
+                                             'value' => $sh->{'scheme'},
+                                             'id' => "scheme-$sh->{'scheme'}",
+                                             'selected' => $scheme eq $sh->{'scheme'} });
+                        $ret .= "$sh->{'title'}</h3>";
+                        $ret .= "<label for='scheme-$sh->{'scheme'}'><img ";
+                        $ret .= "src='$LJ::IMGPREFIX/$th->[0]'";
+                        $ret .= " width='$th->[1]'" if $th->[1];
+                        $ret .= " height='$th->[2]'" if $th->[2];
+
+                        $ret .= "style='border: solid 1px black; margin: 1px;' ";
+                        my $alt = BML::ml('.scheme.preview', {'title' => $sh->{'title'},});
+                        $ret .= " alt='$alt' title='$sh->{'title'}' /></label></div>\n";
+                    }
+                }
+
+                if (@text_schemes) {
+
+                    my $ct = 0;
+                    my $cols = 3;
+                    my $width = int(100 / $cols +.5) . "%";
+                    my $switch = @text_schemes / $cols;
+
+                    $ret .= "<table border='0' width='100%' cellpadding='2'>";
+                    $ret .= "<tr valign='top' align='left'>";
+
+                    foreach my $sh (@text_schemes) {
+
+                        if ($ct == 0) {
+                            $ret .= "<td width='$width' align='left'>";
+                        }
+
+                        $ret .= "<p>" .
+                            LJ::html_check({ 'type' => 'radio', 'name' => 'text_scheme',
+                                             'value' => $sh->{'scheme'},
+                                             'id' => "scheme-$sh->{'scheme'}",
+                                             'selected' => $scheme eq $sh->{'scheme'} });
+
+                        $ret .= "<label for='scheme-$sh->{'scheme'}'>$sh->{'title'}</label></p>";
+
+                        if (++$ct >= $switch) {
+                            $ret .= "</td>";
+                            $ct = 0;
+                        }
+                    }
+
+                    $ret .= "</tr><tr><td colspan='$cols' align='left'>";
+                    $ret .= "</td></tr></table>";
+                }
+                $ret .= "</td></tr>\n";
+            }
+
+            # Language
+            $ret .= "<tr><td class='field_name'>Language</td>\n<td>";
+            $ret .= "<b style='white-space: nowrap'>Select your language: </b>\n";
+
+            my $curr = BML::get_language();
+            my @inc;
+            my @list;
+            push @inc, $GET{'addlang'} if $GET{'addlang'};
+            foreach my $code (@LJ::LANGS, @inc) {
+                my $l = LJ::Lang::get_lang($code);
+                next unless $l;
+
+                my $item = "langname.$code";
+                my $namethislang = BML::ml($item);
+                my $namenative = LJ::Lang::get_text($l->{'lncode'}, $item);
+
+                push @list, $code, $namenative;
+            }
+            $ret .= LJ::html_select({ 'name' => 'lang',
+                                      selected => $curr}, @list);
+            $ret .= "</td></tr>\n";
+        }
+
         ### Control Strip
         if ($LJ::USE_CONTROL_STRIP) {
-            $ret .= "<tr><td class='field_name'>$ML{'.fn.navstrip'}:</td>\n";
-            $ret .= "<td><span class='helper'>$ML{'.navstrip'}</span><br />\n";
-            $ret .= "<ul class='helper'><li>$ML{'.navstrip.list1'}</li>\n";
-            $ret .= "<li>$ML{'.navstrip.list2'}</li>\n";
-            $ret .= "<li>$ML{'.navstrip.list3'}</li></ul>\n";
+            $ret .= "<tr><td class='field_name'>$ML{'.fn.navstrip'}</td>\n";
 
-            $ret .= "<table style='margin-left: 30px; margin-bottom: 20px'>\n";
+            # choose the color
+            $ret .= "<td><table style='margin-bottom: 20px'>\n";
             $ret .= "<tr><td colspan='2'><b style='white-space: nowrap'>$ML{'.navstrip.choose'}</b></td></tr>";
             my $color_selected = $u->prop('view_control_strip') ? $u->prop('view_control_strip') : "dark";
             $ret .= "<tr><td width='50%'>" . LJ::html_check({ 'type' => "radio", 'name' => "control_strip_color", 'id' => "control_strip_color_dark", 'value' => "dark", 'selected' => $color_selected eq "dark" ? 1 : 0, });
@@ -91,7 +190,8 @@ _code?>
             $ret .= "<td><label for='control_strip_color_light' style='background-repeat: repeat-x; width: 3em; height: 3em; display: block; background-image: url($LJ::IMGPREFIX/controlstrip/bg-light.gif)'>&nbsp;</label></td></tr>";
             $ret .= "</table>\n";
 
-            $ret .= "<table style='margin-left: 30px; margin-bottom: 20px'>\n";
+            # choose where to display/see it
+            $ret .= "<table style='margin-bottom: 20px'>\n";
             $ret .= "<tr><td><b>$ML{'.navstrip.options'}</b></td></tr>\n";
             my $view_checked = $u->prop('view_control_strip') ? 1 : 0;
             $ret .= "<tr><td>". LJ::html_check({ 'name' => "view_control_strip", 'selected' => $view_checked, 'id' => "view_control_strip" });
@@ -101,6 +201,11 @@ _code?>
             $ret .= " <label for='show_control_strip'>$ML{'.navstrip.options.show'}</label></td></tr>";
             $ret .= "</table>";
 
+            $ret .= "<span class='helper'>$ML{'.navstrip'}</span><br />\n";
+            $ret .= "<ul class='helper'><li>$ML{'.navstrip.list1'}</li>\n";
+            $ret .= "<li>$ML{'.navstrip.list2'}</li>\n";
+            $ret .= "<li>$ML{'.navstrip.list3'}</li></ul>\n";
+
             $ret .= "</td></tr>\n";
         }
 
@@ -109,11 +214,10 @@ _code?>
         ($maxwidth, $maxheight) = ($1, $2) if ($u->{'opt_imagelinks'} =~ m/^(\d+)\|(\d+)$/);
         my $is_stock = {'320|240' => 1, '640|480' => 1, '0|0' => 1, '' => 1}->{$u->{'opt_imagelinks'}};
         my $extra = $is_stock ? '' : BML::ml('.imagelinks.size.custom', {'width' => $maxwidth, 'height' => $maxheight});
-        $ret .= "<tr><td class='field_name'>$ML{'.fn.imageplace'}:</td>\n<td>";
-        $ret .= LJ::html_check({ 'type' => 'check', 'name' => 'opt_imagelinks_on', 'id' => 'opt_imagelinks_on',
-                                 'selected' => $u->{'opt_imagelinks'} });
-        $ret .= " $ML{'.imageplace'} ";
+        $ret .= "<tr><td class='field_name'>$ML{'.fn.imageplace'}</td>\n<td>";
+        $ret .= "$ML{'.imageplace'} ";
         $ret .= LJ::html_select({'name' => 'opt_imagelinks', 'selected' => $u->{'opt_imagelinks'}},
+                                 '0', BML::ml('.imageplace.none'),
                                  '0|0', BML::ml('.imageplace.all'),
                                  '320|240', BML::ml('.imageplace.medium'),
                                  '640|480', BML::ml('.imageplace.large'),
@@ -122,7 +226,7 @@ _code?>
         $ret .= "</td></tr>\n";
 
         # Comment pages
-        $ret .= "<tr><td class='field_name'>$ML{'.fn.commentpage'}:</td>\n<td>";
+        $ret .= "<tr><td class='field_name'>$ML{'.fn.commentpage'}</td>\n<td>";
         $ret .= LJ::html_check({ 'type' => 'check', 'name' => 'opt_stylemine', 'id' => 'opt_stylemine',
                                  'value' => 1, 'selected' => $u->{'opt_stylemine'} });
         $ret .= " $ML{'.commentpage'}<br />\n";
@@ -135,19 +239,21 @@ _code?>
         $ret .= "<table class='field_block'>\n";
 
         # LJ News
-        $ret .= "<tr><td class='field_name'>$ML{'.fn.ljnews'}:</td>\n<td>";
+        $ret .= "<tr><td class='field_name'>$ML{'.fn.ljnews'}</td>\n<td>";
         $ret .= LJ::html_check({ 'type' => 'check', 'name' => 'allow_getljnews', 'id' => 'allow_getljnews',
                                  'selected' => $u->{'allow_getljnews'} eq 'Y' });
         $ret .= " $ML{'.ljnews'}";
         $ret .= "</td></tr>\n";
 
         # Birthday reminders
-        $ret .= "<tr><td class='field_name'>$ML{'.fn.bdayreminder'}:</td>\n<td>";
-        $ret .= LJ::html_check({ 'type' => 'check', 'name' => 'opt_bdaymail', 'id' => 'opt_bdaymail',
-                                 'selected' => $u->{'opt_bdaymail'} });
-        $ret .= " $ML{'.bdayreminder'}<br />";
-        $ret .= "<span class='helper'>$ML{'.bdayreminder.note'}</span>";
-        $ret .= "</td></tr>\n";
+        unless ($LJ::DISABLED{'birthday_reminders'}) {
+            $ret .= "<tr><td class='field_name'>$ML{'.fn.bdayreminder'}</td>\n<td>";
+            $ret .= LJ::html_check({ 'type' => 'check', 'name' => 'opt_bdaymail', 'id' => 'opt_bdaymail',
+                                     'selected' => $u->{'opt_bdaymail'} });
+            $ret .= " $ML{'.bdayreminder'}<br />";
+            $ret .= "<span class='helper'>$ML{'.bdayreminder.note'}</span>";
+            $ret .= "</td></tr>\n";
+        }
 
         $ret .= "</table>\n";
 
@@ -156,7 +262,7 @@ _code?>
         $ret .= "<table class='field_block'>\n";
 
         # Search Inclusion
-        $ret .= "<tr><td class='field_name'>$ML{'.fn.searchincl'}:</td>\n<td>";
+        $ret .= "<tr><td class='field_name'>$ML{'.fn.searchincl'}</td>\n<td>";
         $ret .= LJ::html_check({ 'type' => 'check', 'name' => 'opt_blockrobots', 'id' => 'opt_blockrobots',
                                  'selected' => $u->{'opt_blockrobots'} });
         $ret .= " $ML{'.searchincl'}<br />";
@@ -205,20 +311,19 @@ _code?>
         ### change any of the userprops ?
         {
             # opts
-            $POST{'opt_imagelinks'} = 0 unless $POST{'opt_imagelinks_on'} &&
-                                               $POST{'opt_imagelinks'} =~ m/^(\d+)\|(\d+)$/;
+            $POST{'opt_imagelinks'} = 0 unless $POST{'opt_imagelinks'} =~ m/^(\d+)\|(\d+)$/;
             $POST{'opt_stylemine'} = $POST{'opt_stylemine'} ? 1 : 0;
-            $POST{'opt_bdaymail'} = $POST{'opt_bdaymail'} ? 1 : 0;
+            $POST{'opt_bdaymail'} = $POST{'opt_bdaymail'} ? 1 : 0 unless ($LJ::DISABLED{'birthday_reminders'});
             $POST{'opt_blockrobots'} = $POST{'opt_blockrobots'} ? 1 : 0;
             $POST{'opt_weblogscom'} = $POST{'opt_weblogscom'} ? 1 : 0 unless ($LJ::DISABLED{'weblogs_com'});
 
             if ($LJ::USE_CONTROL_STRIP) {
                 my $color = $POST{'control_strip_color'} || "dark";
-                $POST{'show_control_strip'} = $POST{'show_control_strip'} ? $color : undef;
-                $POST{'view_control_strip'} = $POST{'view_control_strip'} ? $color : undef;
+                $POST{'show_control_strip'} = $POST{'show_control_strip'} ? $color : 'off_explicit';
+                $POST{'view_control_strip'} = $POST{'view_control_strip'} ? $color : 'off_explicit';
             } else {
-                $POST{'show_control_strip'} = undef;
-                $POST{'view_control_strip'} = undef;
+                $POST{'show_control_strip'} = 'off_explicit';
+                $POST{'view_control_strip'} = 'off_explicit';
             }
 
 
@@ -239,6 +344,70 @@ _code?>
                 my $mem_only = $eff_val eq $u->{$uprop};
                 LJ::set_userprop($u, $uprop, $eff_val, $mem_only);
             }
+        }
+
+        # was a scheme change posted?
+        my $scheme;
+        if (exists $POST{'text_scheme'}) {
+            foreach (@text_schemes) {
+                $scheme = $_->{'scheme'} if $POST{'text_scheme'} eq $_->{'scheme'};
+            }
+        } else {
+            foreach (@thumb_schemes) {
+                $scheme = $_->{'scheme'} if $POST{'scheme'} eq $_->{'scheme'};
+            }
+        }
+
+        # set scheme
+        if ($scheme) {
+            my $cval = $scheme;
+
+            # don't set cookie for default scheme
+            if ($scheme eq $LJ::SCHEMES[0]->{'scheme'}) {
+                $cval = '';
+                delete $COOKIE{'BMLschemepref'};
+            }
+
+            # logged in?
+            if ($remote) {
+                # set a userprop to remember their schemepref
+                LJ::set_userprop($remote, 'schemepref', $cval);
+
+                # cookie expires when session expires
+                if ($remote->{'_session'}->{'exptype'} eq 'long') {
+                    $cval = [ $scheme, $remote->{'_session'}->{'timeexpire'} ];
+                }
+            }
+
+            # set cookie
+            $COOKIE{'BMLschemepref'} = $cval if $cval;
+            BML::set_scheme($scheme);
+
+        }
+
+        # set language
+        if (exists $POST{'lang'}) {
+            my $l = LJ::Lang::get_lang($POST{'lang'});
+
+            # default cookie value to set
+            my $cval = $l->{'lncode'} . "/" . time();
+
+            # if logged in, change userprop and make cookie expiration
+            # the same as their login expiration
+            my $remote = LJ::get_remote();
+            if ($remote) {
+                LJ::set_userprop($remote, "browselang", $l->{'lncode'});
+
+                if ($remote->{'_session'}->{'exptype'} eq 'long') {
+                    $cval = [ $cval, $remote->{'_session'}->{'timeexpire'} ];
+                }
+            }
+
+            # set cookie
+            $COOKIE{'langpref'} = $cval;
+
+            # set language through BML so it will apply immediately
+            BML::set_language($l->{'lncode'});
         }
 
 

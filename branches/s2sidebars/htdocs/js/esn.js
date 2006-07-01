@@ -1,27 +1,62 @@
-var esnM = new ESNManager();
-
-function initEsn (etypeids) {
-  if (!etypeids) return;
-  if (!esnM) return;
-
-  esnM.init(etypeids);
-}
-
-function showETypeid (etypeid) {
-  esnM.show(etypeid);
-}
+var ESN = {};
 
 DOM.addEventListener(window, "load", function (evt) {
-  var eventMenu = $("etypeid");
-  if (!eventMenu) return;
-
-  DOM.addEventListener(eventMenu, "change", menuChanged.bindEventListener());
+  ESN.initCheckAllBtns();
+  ESN.initEventCheckBtns();
 });
 
-function menuChanged (evt) {
-  var eventMenu = $("etypeid");
-  if (!eventMenu) return;
+// When page loads, set up "check all" checkboxes
+ESN.initCheckAllBtns = function () {
+  var ntids  = $("ntypeids");
+  var catids = $("catids");
 
-  var etypeid = eventMenu.value;
-  showETypeid(etypeid);
+  if (!ntids || !catids)
+    return;
+
+  ntidList  = ntids.value;
+  catidList = catids.value;
+
+  if (!ntidList || !catidList)
+    return;
+
+  ntids  = ntidList.split(",");
+  catids = catidList.split(",");
+
+  catids.forEach( function (catid) {
+    ntids.forEach( function (ntypeid) {
+      var className = "SubscribeCheckbox-" + catid + "-" + ntypeid;
+
+      var cab = new CheckallButton();
+      cab.init({
+        "class": className,
+          "button": $("CheckAll-" + catid + "-" + ntypeid),
+          "parent": $("CategoryRow-" + catid)
+          });
+    });
+  });
+}
+
+// set up auto show/hiding of notification methods
+ESN.initEventCheckBtns = function () {
+  var viewObjects = document.getElementsByTagName("*");
+  var boxes = DOM.filterElementsByClassName(viewObjects, "SubscriptionInboxCheck") || [];
+
+  boxes.forEach( function (box) {
+    DOM.addEventListener(box, "click", ESN.eventChecked.bindEventListener());
+  });
+}
+
+ESN.eventChecked = function (evt) {
+  var target = evt.target;
+  if (!target)
+    return;
+
+  var parentRow = DOM.getFirstAncestorByTagName(target, "tr", false);
+
+  var viewObjects = parentRow.getElementsByTagName("*");
+  var boxes = DOM.filterElementsByClassName(viewObjects, "NotificationOptions") || [];
+
+  boxes.forEach( function (box) {
+    box.style.visibility = target.checked ? "visible" : "hidden";
+  });
 }

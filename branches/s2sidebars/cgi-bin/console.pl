@@ -726,7 +726,7 @@ $cmd{'change_journal_type'} = {
     'args' => [
                'journal' => "The username of the journal that type is changing.",
                'type' => "Either 'person', 'shared', or 'community'.",
-               'owner' => "If converting from a person to a community, specify the person to be made maintainer in owner.  If going the other way from community/shared to a person, specify the account to adopt the email address and password of.",
+               'owner' => "This is required when converting a personal journal to a community or shared journal, or the reverse. If converting to a community/shared journal, 'owner' will become the maintainer. Otherwise, the account will adopt the email address and password of the 'owner'. Only users with the 'changejournaltype' priv can specify an owner for an account.",
                ],
     };
 
@@ -883,6 +883,17 @@ $cmd{'allow_open_proxy'} = {
                'forever' => "Set to 'forever' if this proxy should be allowed forever.",
                ],
     };
+
+$cmd{'disable_comm_promo'} = {
+    'handler' => \&disable_comm_promo,
+    'privs' => [qw(siteadmin:comm-promo)],
+    'des' => "Sets the disabled status of community promos for a given community",
+    'argsummary' => '<user> <status>',
+    'args' => [
+               'user' => "Username of community for which status should be modified",
+               'status' => "'on' to disable community promos, 'off' enable community promos",
+               ],
+};
 
 $cmd{'find_user_cluster'} = {
     'handler' => \&find_user_cluster,
@@ -1139,7 +1150,7 @@ sub change_journal_type
     if ($ou) {
         # specified an owner, verify priv
         $byadmin = LJ::check_priv($remote, 'changejournaltype', '');
-        return $err->("You cannot specify a new owner for $u->{user} unless you have the changejournaltype privilege.")
+        return $err->("You cannot change $u->{user} to that journal type.")
             unless $byadmin;
     } else {
         # make sure they're a manager
@@ -1820,6 +1831,36 @@ sub allow_open_proxy
 
     my $period = $forever ? "forever" : "for the next 24 hours";
     push @$out, [ '', "$ip cleared $period." ];
+    return 1;
+}
+
+sub disable_comm_promo
+{
+    my ($dbh, $remote, $args, $out) = @_;
+    my $err = sub { push @$out, ["error", $_[0] ]; 0; };
+
+    return $err->("This command requires 2 arguments.") 
+        unless @$args == 3;
+
+    return $err->("You are not autorized to use this command.")
+        unless $remote && LJ::check_priv($remote, 'siteadmin' => 'comm-promo');
+
+    my ($user, $val) = @$args[1,2];
+    
+    my $commu = LJ::load_user($user)
+        or return $err->("Invalid user: '$user'");
+
+    return $err->("User is not a community: '$user'")
+        unless $commu->is_comm;
+
+    return $err->("Invalid value: '$val'")
+        unless $val eq 'on' || $val eq 'off';
+
+    my $to_set = $val eq 'on' ? 1 : undef;
+    $commu->set_prop('disable_comm_promo', $to_set);
+
+    my $verb = $to_set ? "is" : "is no longer";
+    push @$out, [ '', "comm_promo $verb disabled for user: '$user'" ];
     return 1;
 }
 

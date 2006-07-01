@@ -4,15 +4,12 @@ layerinfo redist_uniq = "sixhtml/layout";
 layerinfo des = "SixApart's standard HTML structure for blogs, to be styled with CSS.";
 
 propgroup presentation {
-    property bool use_6a_base {
-        des = "Use 'Base Weblog' styles";
-    }
-    set use_6a_base = true;
-
+    # This property is now set in a theme layer, but default is still Powell Street
     property string base_theme {
         des = "Base Theme";
         note = "You can also list your own stylesheet on the \"Custom CSS\" tab.";
         values = "__none|(None)|april|April|baby|Baby|beckett|Beckett|bluecrush|Blue Crush|bonjour|Bonjour Chatette|bryant|Bryant|classy|Classy|earth|Earth|green|Green|folio|Folio|forestgreen|Forest Green|knitting|Knitting|powell-street|Powell Street|masala|Masala|minimalist|Minimalist|porpoise|Porpoise|purplecrush|Purple Crush|stevenson|Stevenson|sunburned|Sunburned|stitch|Stitch|travel|Travel|wedding|Wedding";
+        noui = 1;
     }
     set base_theme = "powell-street";
 
@@ -53,11 +50,6 @@ propgroup presentation {
         "wedding" => "http://www.typepad.com/.shared/themes/lilia/theme-wedding.css",
     };
 
-    property bool opt_dayhead {
-        des = "Show Day Headings";
-    }
-    set opt_dayhead = false;
-
     property use page_recent_items;
     property use page_friends_items;
     property use page_day_sortorder;
@@ -77,18 +69,18 @@ propgroup presentation {
     set opt_showtime = true;
 
     property bool opt_userpic_main {
-        des = "Show User Pictures on Entries";
+        des = "Show Userpics on Entries";
     }
     property bool opt_userpic_friends {
-        des = "Show User Pictures on Entries on your Friends Page";
+        des = "Show Userpics on Entries on your Friends Page";
     }
     property bool opt_userpic_entrypage {
-        des = "Show User Picture on the Entry page";
+        des = "Show Userpic on the Entry page";
     }
     property bool opt_userpic_comments {
-        des = "Show User Pictures on Comments";
+        des = "Show Userpics on Comments";
     }
-    set opt_userpic_main = false;
+    set opt_userpic_main = true;
     set opt_userpic_friends = true;
     set opt_userpic_entrypage = true;
     set opt_userpic_comments = true;
@@ -106,8 +98,10 @@ propgroup presentation {
         [ "userprofile", "", "0", "1" ],
         [ "viewlinks", "" ],
         [ "calendar" ],
-        [ "syndicate", "Syndicate" ],
         [ "links", "Links" ],
+        [ "tags", "Tags" ],
+        [ "pagesummary", "Page Summary" ],
+        [ "syndicate", "Syndicate" ],
         [ "poweredby" ],
     ];
 
@@ -141,31 +135,64 @@ propgroup text {
 }
 
 propgroup customcss {
+    property bool use_6a_base {
+        des = "Use layout's \"Base Weblog\" stylesheet";
+        note = "Disable this only if you want to re-style this layout completely from scratch using a custom stylesheet and if you selected \"(None)\" as your theme.";
+    }
+    set use_6a_base = true;
+
     property string linked_stylesheet {
-        des = "If you would like to use a stylesheet that is not in the list on the \"Presentation\" tab, enter the URL here";
+        des = "Custom external stylesheet URL";
+        note = "If you selected \"(None)\" as your theme and have a custom external stylesheet that you'd like to use instead, or if you'd just like to use a custom external stylesheet in addition to your theme's stylesheet, enter its URL here.";
     }
     set linked_stylesheet = "";
 
     property string custom_css {
-    	des = "Custom Stylesheet";
-    	note = "If you'd like to customize this style from scratch and are familiar with CSS, enter it here";
-    	cols = 80;
-    	rows = 20;
+        des = "Custom stylesheet";
+        note = "If you selected \"(None)\" as your theme and have custom CSS that you'd like to use instead, or if you'd just like to add custom CSS in addition to your theme's stylesheet, enter it here.";
+        cols = 80;
+        rows = 20;
         string_mode = "css";
     }
     set custom_css = "";
 }
 
 function prop_init() {
-  if (viewer_sees_ads()) {
-    $*layout_type = "3C";
+    if (viewer_sees_vbox()) {
+        # Users who see ads cannot use the 1 column layout
+        if ($*layout_type == "1C") {
+            $*layout_type = "2CR";
+        }
 
-    $*sidebar_secondary = [
-                           [ "ads", "" ],
-                           [ "tags", "Tags" ],
-                           [ "pagesummary", "Page Summary" ],
-                           ];    
-  }
+        if ($*layout_type == "3C") {
+            $*sidebar_secondary = [
+                [ "ads", "" ],
+            ];
+        } else {
+            $*sidebar_primary = [
+                [ "userprofile", "", "0", "1" ],
+                [ "viewlinks", "" ],
+                [ "calendar" ],
+                [ "ads", "" ],
+                [ "links", "Links" ],
+                [ "tags", "Tags" ],
+                [ "pagesummary", "Page Summary" ],
+                [ "syndicate", "Syndicate" ],
+                [ "poweredby" ],
+            ];
+        }
+    } else {
+        if ($*layout_type == "3C") {
+            $*sidebar_primary = [
+                [ "userprofile", "", "0", "1" ],
+                [ "viewlinks", "" ],
+                [ "calendar" ],
+                [ "links", "Links" ],
+                [ "syndicate", "Syndicate" ],
+                [ "poweredby" ],
+            ];
+        }
+    }
 }
 
 function print_custom_stylesheet() {}
@@ -275,8 +302,10 @@ function print_module_pagesummary(string title) {
     var string[] links = [];
     if ($p isa RecentPage) {
         var RecentPage cp = $p as RecentPage;
+        var string subject;
         foreach var Entry e ($cp.entries) {
-            $links[size $links] = """<a href="$e.permalink_url">"""+striphtml($e.subject)+"</a>";
+            $subject = ($e.subject != "" ? striphtml($e.subject) : "<em>$*text_nosubject</em>");
+            $links[size $links] = """<a href="$e.permalink_url">$subject</a>""";
         }
     }
 
@@ -386,7 +415,7 @@ function print_module_links(string title) {
 function print_module_ads(string title) {
     var Page p = get_page();
     open_module("ads", $title, "");
-    $p->print_ad("Journal-Skyscraper");
+    $p->print_vbox();
     close_module();
 }
 
@@ -502,21 +531,7 @@ function body_class (string lay) : string {
    return $map{$lay};
 }
 
-function Page::print () {
-
- var string lay = get_layout();
- var string body_layout_class = body_class($lay);
-
-   """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" id="sixapart-standard">
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-   """;
-
-    $this->print_head();
-    """<title>""" + $this->title() + """</title>\n""";
-
+function Page::print_stylesheets() {
     if ($*use_6a_base) {
         println safe """<link rel="stylesheet" href="http://www.typepad.com/.shared/themes/common/base-weblog.css" type="text/css" />\n""";
         println safe """<link rel="stylesheet" href="$*STATDIR/sixhtml/ljextras.css" type="text/css" />\n""";
@@ -546,14 +561,57 @@ function Page::print () {
         end_css();
         println """</style>""";
     }
+}
+
+function Page::print () {
+
+ var string lay = get_layout();
+ var string body_layout_class = body_class($lay);
+
+ var string[] wide_themes = ["bonjour", "green", "porpoise"]; # These are the wide themes, which look better when the hbox_top is below the banner
+ var bool print_below_banner = false;
+ foreach var string theme ($wide_themes) {
+    if ($theme == $*base_theme) {
+        $print_below_banner = true;
+    }
+ }
+
+   """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" id="sixapart-standard">
+<head>
+   """;
+
+    $this->print_head();
+    $this->print_stylesheets();
+    """<title>""" + $this->title() + """</title>\n""";
 
 """
 </head>
 <body class='$body_layout_class lj-view-$.view'>""";
 
 $this->print_control_strip();
+
 container_open("container");
-print_banner($this);
+
+if (viewer_sees_hbox_top()) {
+    if ($print_below_banner) {
+        print_banner($this);
+
+        container_open("ad-leaderboard");
+        $this->print_hbox_top();
+        container_close();
+    } else {
+        container_open("ad-leaderboard");
+        $this->print_hbox_top();
+        container_close();
+
+        print_banner($this);
+    }
+} else {
+    print_banner($this);
+}
+
 container_open("pagebody");
 
  render_layout($this, $lay);
@@ -561,9 +619,11 @@ container_open("pagebody");
 container_close();
 container_close();
 
-container_open("ad-5linkunit");
-$this->print_ad("Journal-5LinkUnit");
-container_close();
+if (viewer_sees_hbox_bottom() and ($.view == "recent" or $.view == "friends")) {
+    container_open("ad-5linkunit");
+    $this->print_hbox_bottom();
+    container_close();
+}
 
 "</body></html>";
 }
@@ -593,6 +653,20 @@ function RecentPage::print_body() {
 
         # Print the entry
         $this->print_entry($e);
+    }
+
+    if ($.nav.backward_url != "" or $.nav.forward_url != "") {
+        println """<p class="content-nav">""";
+        if ($.nav.backward_url != "") {
+            println """<a href="$.nav.backward_url">"""+get_plural_phrase($.nav.backward_count, "text_skiplinks_back")+"</a>";
+        }
+        if ($.nav.backward_url != "" and $.nav.forward_url != "") {
+            print " | ";
+        }
+        if ($.nav.forward_url != "") {
+            println """<a href="$.nav.forward_url">"""+get_plural_phrase($.nav.forward_count, "text_skiplinks_forward")+"</a>";
+        }
+        println """</p>""";
     }
 }
 
@@ -625,19 +699,18 @@ function EntryPage::print_body() {
 
 }
 
-function lang_posted_by_date_and_time(EntryLite e, UserLite poster, UserLite journal, DateTime dt, bool showposter, bool showdate, bool showtime) : string {
-    var string posted = "";
-    if ($showposter) {
-        var string posterstr = (defined $poster ? ""+$poster : "<i>"+$*text_poster_anonymous+"</i>");
-        $posted = "Posted by "+$posterstr;
-        if (not $poster->equals($journal)) {
-            $posted = $posted + " in " + $journal;
-        }
-        if (not $showtime and not $showdate) {
-            return $posted;
-        }
-        $posted = $posted + ($showdate ? " on " : " at ");
+function lang_posted_by(UserLite poster, UserLite journal) : string {
+    var string posted = (defined $poster ? ""+$poster : "<i>$*text_poster_anonymous</i>");
+    if (not $poster->equals($journal)) {
+        $posted = $posted + " in " + $journal;
     }
+    return "$posted";
+}
+
+function lang_posted_date_and_time(EntryLite e, DateTime dt, bool showdate, bool showtime) : string {
+    var string posted = "Posted";
+    $posted = $posted + ($showdate ? " on " : " at ");
+
     if ($showdate and $showtime) {
         if ($e.depth > 0) { # If $e is a comment
             return $posted + $e->time_display("med", "");
@@ -655,7 +728,11 @@ function lang_posted_by_date_and_time(EntryLite e, UserLite poster, UserLite jou
 }
 
 function lang_posted_by_date_and_time(UserLite poster, DateTime dt, bool showposter, bool showdate, bool showtime) : string {
-    return lang_posted_by_date_and_time(new EntryLite, $poster, $poster, $dt, $showposter, $showdate, $showtime);
+    return lang_posted_date_and_time(new EntryLite, $dt, $showdate, $showtime);
+}
+
+function lang_posted_by_date_and_time(EntryLite e, UserLite poster, UserLite journal, DateTime dt, bool showposter, bool showdate, bool showtime) : string {
+    return lang_posted_date_and_time($e, $dt, $showdate, $showtime);
 }
 
 function Comment::print_linkbar() {
@@ -682,7 +759,8 @@ function EntryPage::print_comment(Comment e) {
         var string subject = $e.subject;
         if ($subject == "") { $subject = $*text_nosubject; }
         "<a href='$e.permalink_url' class='collapsed-comment-link'>$subject</a> <span class='separator'>-</span> ";
-        print lang_posted_by_date_and_time($e, $e.poster, $e.poster, $e.time, true, true, true);
+        print lang_posted_by($e.poster, $e.poster); " <span class='separator'>-</span> ";
+        print lang_posted_date_and_time($e, $e.time, true, true);
         "</div>";
         "</div>";
 
@@ -690,22 +768,33 @@ function EntryPage::print_comment(Comment e) {
     }
 
     "<div class='comment'"+($e.dom_id ? " id='$e.dom_id'" : "")+">\n";
-    if ($e.subject != "") {
-        "<h3 class='comment-header'>$e.subject</h3>\n";
-    }
 
-    if ($*opt_userpic_comments and defined $e.userpic) {
-        "<div class='comment-userpic'>$e.userpic</div>";
+    "<div class='comment-userpic'>";
+    if ($*opt_userpic_comments and defined $e.userpic) { "$e.userpic<br />"; }
+    "<p class='poster'>"+lang_posted_by($e.poster, $e.poster)+"</p>";
+    "</div>";
+
+    if ($e.subject != "") {
+        "<h3 class='comment-header'><strong>$e.subject</strong></h3>\n";
     }
 
     "<div class='comment-content'>";
+
+    var string ip = $e.metadata{"poster_ip"};
+    if ($ip != "") {
+        var string text = $*text_comment_ipaddr;
+        "<div class='metadata'>";
+        "<strong>$text</strong> $ip";
+        "</div>";
+    }
+
     $e->print_text();
     "</div>";
     "<div class='comment-footer'>";
 
     var string sep = "<span class='separator'>|</span>";
 
-    print lang_posted_by_date_and_time($e, $e.poster, $e.poster, $e.time, true, true, true)+" $sep ";
+    print lang_posted_date_and_time($e, $e.time, true, true)+" $sep ";
 
     "<a class='permalink' href='$e.permalink_url'>$*text_permalink</a>";
 
@@ -746,15 +835,31 @@ function Entry::print_linkbar() {
 
 function Page::print_entry(Entry e) {
     "<div class='entry'" + ($e.dom_id ? " id='$e.dom_id'" : "") + ">\n";
-      "<h3 class='entry-header'>$e.subject</h3>\n";
-      "<div class='entry-content'>\n";
 
-         var bool showuserpic = $*opt_userpic_main;
-         if ($.view == "friends") { $showuserpic = $*opt_userpic_friends; }
-         if ($.view == "entry") { $showuserpic = $*opt_userpic_entrypage; }
-         if ($showuserpic and defined $e.userpic) {
-             "<div class='entry-userpic'>$e.userpic</div>";
-         }
+      var bool showtime = $*opt_showtime;
+      var bool showdate = not $*opt_datehead;
+      var bool showposter = false;
+      var bool showuserpic = $*opt_userpic_main;
+      if ($.view == "friends") { $showtime = true; $showposter = true; $showuserpic = $*opt_userpic_friends; }
+      if ($.view == "day") { $showdate = false; }
+      if ($.view == "entry" or $.view == "reply") { $showdate = true; }
+      if ($.view == "entry") { $showuserpic = $*opt_userpic_entrypage; }
+      if (not $e.poster->equals($e.journal)) { $showposter = true; }
+
+      if (($showuserpic and defined $e.userpic) or $showposter) {
+          "<div class='entry-userpic'>";
+          if ($showuserpic and defined $e.userpic) { "$e.userpic"; }
+          if (($showuserpic and defined $e.userpic) and $showposter) { "<br />"; }
+          if ($showposter) { "<p class='poster'>"+lang_posted_by($e.poster, $e.journal)+"</p>"; }
+          "</div>";
+      }
+
+      "<h3 class='entry-header'>";
+      if (defined $e.security_icon) {
+          print "<span class='lj-entry-securityicon'>$e.security_icon</span> ";
+      }
+      "$e.subject</h3>\n";
+      "<div class='entry-content'>\n";
 
          "<div class='entry-body'>\n";
          $e->print_metadata();
@@ -763,21 +868,9 @@ function Page::print_entry(Entry e) {
 
          var string sep = "<span class='separator'>|</span>";
 
-         var bool showtime = $*opt_showtime;
-         var bool showdate = not $*opt_datehead;
-         var bool showposter = false;
-         if ($.view == "friends") { $showtime = true; $showposter = true; }
-         if ($.view == "day") { $showdate = false; }
-         if ($.view == "entry" or $.view == "reply") { $showdate = true; }
-         if (not $e.poster->equals($e.journal)) { $showposter = true; }
-
          "<p class='entry-footer'>";
-         if (defined $e.security_icon) {
-             print "<span class='lj-entry-securityicon'>$e.security_icon</span> ";
-         }
-
-         if ($showdate or $showtime or $showposter) {
-             print lang_posted_by_date_and_time($e, $e.poster, $e.journal, $e.time, $showposter, $showdate, $showtime)+" $sep ";
+         if ($showdate or $showtime) {
+             print lang_posted_date_and_time($e, $e.time, $showdate, $showtime)+" $sep ";
          }
          "<a class='permalink' href='$e.permalink_url'>$*text_permalink</a>";
 

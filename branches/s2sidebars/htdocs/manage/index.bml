@@ -100,7 +100,10 @@ _code?>
 header=><?_ml .settings_pref _ml?>
 about=><?_ml .information _ml?>
 list<=
-<li><a href="/editinfo.bml<?authas?>" title="<?_ml .information.editinfo.about _ml?>"><?_ml /editinfo.bml.title _ml?></a></li>
+<li><a href="/manage/profile/<?authas?>" title="<?_ml .information.editinfo.about _ml?>"><?_ml /manage/profile/index.bml.title _ml?></a></li>
+<li><a href="/manage/comments/<?authas?>" title="<?_ml .information.comments.about _ml?>"><?_ml /manage/comments/index.bml.title _ml?></a></li>
+<li><a href="/manage/settings/<?authas?>" title="<?_ml .information.settings.about _ml?>"><?_ml /manage/settings/index.bml.title _ml?></a></li>
+
 <?_code
     my $u = $BMLCodeBlock::u;
     return '' if $u->{'journaltype'} eq 'I';
@@ -135,19 +138,17 @@ list<=
     my $u = $BMLCodeBlock::u;
     my $authas = ref $u ? "?authas=$u->{user}" : "";
     my $customization;
-    if ($u->{'stylesys'} == 1) {
-        $customization .= "<li><a href='/modify.bml$authas'>$ML{'/modify.bml.title'}</a></li>";
-    } else {
-        $customization .= "<li><a href='/customize/index.bml$authas' title='$ML{'.customization.customize.about'}'><?_ml .customization.customize _ml?></a></li>";
+    $customization .= "<li><a href='/customize/index.bml$authas' title='$ML{'.customization.customize.about'}'><?_ml .customization.customize _ml?></a></li>";
+    if ($u->{'stylesys'} == 2) {
         $customization .= "<li><a href='/customize/advanced/index.bml$authas' title='$ML{'.customization.advanced.about'}'><?_ml .customization.advanced _ml?></a></li>";
         $customization .= "<li><a href='./links.bml$authas' title='$ML{'.customization.links.about'}'><?_ml .customization.links _ml?></a></li>";
     }
     return $customization;
 }
 _code?>
-<li><a href="/modify.bml<?authas?>" title="<?_ml .customization.moodtheme.set _ml?>"><?_ml .customization.moodtheme.set.header _ml?></a></li>
+<li><a href="/customize/style.bml<?authas?>" title="<?_ml .customization.moodtheme.set _ml?>"><?_ml .customization.moodtheme.set.header _ml?></a></li>
 <li><a href="./moodthemes.bml<?authas?>" title="<?_ml .customization.moodtheme.editor _ml?>"><?_ml .customization.moodtheme.editor.header _ml?></a></li>
-<li><a href="/editinfo.bml<?authas?>#navstrip" title="<?_ml .customization.navstrip _ml?>"><?_ml .customization.navstrip _ml?></a></li>
+<li><a href="/manage/settings/<?authas?>" title="<?_ml .customization.navstrip _ml?>"><?_ml .customization.navstrip _ml?></a></li>
 <=list
 block?>
 

@@ -169,11 +169,30 @@ sub html_check
     }
     if ($opts->{'selected'}) { $ret .= " checked='checked'"; }
     if ($opts->{'raw'}) { $ret .= " $opts->{'raw'}"; }
-    foreach (grep { ! /^(disabled|type|selected|raw|noescape)$/ } keys %$opts) {
+    foreach (grep { ! /^(disabled|type|selected|raw|noescape|label)$/ } keys %$opts) {
         $ret .= " $_=\"" . ($ehtml ? ehtml($opts->{$_}) : $opts->{$_}) . "\"";
     }
     $ret .= "$disabled />";
+    my $e_label = ($ehtml ? ehtml($opts->{'label'}) : $opts->{'label'});
+    $e_label = LJ::labelfy($opts->{id}, $e_label);
+    $ret .= $e_label if $opts->{'label'};
     return $ret;
+}
+
+# given a string and an id, return the string
+# in a label, respecting HTML
+sub labelfy {
+    my ($id, $text) = @_;
+
+    $text =~ s!
+        ^([^<]+)
+        !
+        <label for="$id">
+            $1
+        </label>
+        !x;
+
+    return $text;
 }
 
 # <WCMFUNC>

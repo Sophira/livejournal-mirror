@@ -194,7 +194,7 @@ body<=
 
         $email = $u->{'email'};
         LJ::load_user_props($u, "s1_lastn_style", "s1_calendar_style", "s1_day_style",
-                            "s1_friends_style", "stylesys", "s2_style", )
+                            "s1_friends_style", "stylesys", "s2_style", "browselang", "schemepref" )
             unless $clusterdown;
     }
 
@@ -218,6 +218,7 @@ body<=
     # helper variables for commonly called methods
     my $owner_mode = LJ::Support::can_close($sp, $remote, $auth) ? 1 : 0;
     my $helper_mode = LJ::Support::can_help($sp, $remote) ? 1 : 0;
+    my $stock_mode = LJ::Support::can_see_stocks($sp, $remote) ? 1 : 0;
     my $is_poster = LJ::Support::is_poster($sp, $remote, $auth) ? 1 : 0;
 
     # fix up the subject if needed
@@ -362,8 +363,10 @@ body<=
         if ($u->{'status'} eq "A") { $ret .= "<b>yes</b>"; }
         if ($u->{'status'} eq "N") { $ret .= "<b>no</b>" . $extraval->(); }
         if ($u->{'status'} eq "T") { $ret .= "<b>transitioning</b> (used to be validated, but changed email addresses and hasn't reconfirmed)" . $extraval->(); }
-        if ($u->{clusterid}) { $ret .= "<br />cluster: " . LJ::get_cluster_description($u->{clusterid}, 1); }
-        $ret .= "<br />data version: <b>$u->{dversion}</b>";
+        if ($u->{clusterid}) { $ret .= "<br />cluster: <b>" . LJ::get_cluster_description($u->{clusterid}, 1) . "</b>; "; }
+        $ret .= "data version: <b>$u->{dversion}</b>";
+        $ret .= "<br />scheme: <b>" . ($u->{schemepref} ? $u->{schemepref} : "default") . "</b>; ";
+        $ret .= "language: <b>" . ($u->{browselang} ? $u->{browselang} : "default") . "</b>";
         $ret .= "<br />underage? ";
         if ($clusterdown) {
             $ret .= "<strong>cluster unavailable</strong>";
@@ -738,13 +741,13 @@ body<=
     my $validationnag;
     if (!(LJ::isu($u) && ($u->underage && $u->{'status'} eq 'T')) &&
         ($u->{'status'} eq "N" || $u->{'status'} eq "T") &&
-        ! $is_poster) {
+        $u->{'journaltype'} ne 'I' && ! $is_poster) {
         my $reminder = LJ::load_include('validationreminder');
         $validationnag .= "\n\n$reminder" if $reminder;
     }
 
     # add in canned answers if there are any for this category and the user can use them
-    if ($helper_mode && ! $is_poster) {
+    if ($stock_mode && ! $is_poster) {
         my $rows = $dbr->selectall_arrayref('SELECT subject, body FROM support_answers WHERE spcatid = ? ORDER BY subject',
                                             undef, $sp->{_cat}->{spcatid});
         if ($rows && @$rows) {

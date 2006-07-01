@@ -280,6 +280,13 @@ propgroup text {
     property use text_read_comments_friends;
 }
 
+propgroup customcss {
+    property use include_default_stylesheet;
+    property use linked_stylesheet;
+    property use custom_css;
+}
+
+
 function makefontspec() : string
 "Forms a CSS 'font-family' value based on the font-related properties."
 {
@@ -337,26 +344,22 @@ function Page::print() {
 <head>
 """;
     $this->print_head();
+    $this->print_stylesheets();
     """<title>"""+$this->title()+"""</title>""";
-    if ($*external_stylesheet) {
-        println safe """<link rel="stylesheet" href="$.stylesheet_url" type="text/css" />""";
-    }
-    else {
-        println """<style type="text/css">""";
-        start_css();
-        print_stylesheet();
-        end_css();
-        println """</style>""";
-    }
 """
 </head>
 
 <body class="$.view">
 """;
 $this->print_control_strip();
-if (viewer_sees_ads()) {
+if (viewer_sees_hbox_top()) {
+    """<div style="text-align: center; margin-left: $*margin_left; margin-right: $*margin_right;">""";
+    $this->print_hbox_top();
+    "</div>";
+}
+if (viewer_sees_vbox()) {
     "<div style='float: right; margin-right: 10px; position: relative; z-index: 15;'>"; 
-    $this->print_ad("Journal-Skyscraper");
+    $this->print_vbox();
     "</div>";
 }
 """
@@ -373,9 +376,9 @@ if (viewer_sees_ads()) {
 
 </div>
 """;
-if (viewer_sees_ads() and ($.view == "recent" or $.view == "friends")) {
-    """<div style="text-align: center;">""";
-    $this->print_ad("Journal-5LinkUnit");
+if (viewer_sees_hbox_bottom() and ($.view == "recent" or $.view == "friends")) {
+    """<div style="text-align: center; margin-left: $*margin_left; margin-right: $*margin_right;">""";
+    $this->print_hbox_bottom();
     "</div>";
 }
 """
@@ -1107,7 +1110,6 @@ if ($*adv_enable_projection_styles) {
 }
 
     custom_stylesheet();
-
 }
 
 function print_theme_preview() {

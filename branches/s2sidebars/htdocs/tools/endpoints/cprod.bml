@@ -24,15 +24,19 @@
     my %ret;
 
     # generate content
+    my $style = $GET{style} || '';
     if (!$GET{content} || lc $GET{content} eq 'framed') {
-        $ret{content} = LJ::CProd->full_box_for($remote);
+        $ret{content} = LJ::CProd->full_box_for($remote, style => $style);
     } elsif(lc $GET{content} eq 'raw') {
-        $ret{content} = LJ::CProd->box_for($remote);
+        $ret{content} = LJ::CProd->box_for($remote, style => $style);
     } else {
         return $err->("Invalid content request");
     }
 
     select undef, undef, undef, 0.25 if $LJ::IS_DEV_SERVER;
+
+    BML::set_content_type('text/javascript; charset=utf-8');
+    BML::finish();
 
     return LJ::js_dumper(\%ret);
 }

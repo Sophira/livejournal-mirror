@@ -34,6 +34,7 @@ use LJ::Captcha;
 use LJ::OpenID;
 use LJ::Location;
 use LJ::CProd;
+use LJ::Faq;
 use MogileFS;
 use DDLockClient ();
 
@@ -108,6 +109,12 @@ sub setup_restart {
 
     Apache->httpd_conf(qq{
 
+
+# User-friendly error messages
+ErrorDocument 404 /404-error.html
+ErrorDocument 500 /500-error.html
+
+
 # This interferes with LJ's /~user URI, depending on the module order
 <IfModule mod_userdir.c>
   UserDir disabled
@@ -117,7 +124,6 @@ PerlInitHandler Apache::LiveJournal
 PerlInitHandler Apache::SendStats
 PerlFixupHandler Apache::CompressClientFixup
 PerlCleanupHandler Apache::SendStats
-PerlCleanupHandler Apache::DebateSuicide
 PerlChildInitHandler Apache::SendStats
 DirectoryIndex index.html index.bml
 });
@@ -135,12 +141,10 @@ DirectoryIndex index.html index.bml
   PerlHandler Apache::BML
 </Files>
 
-# User-friendly error messages
-ErrorDocument 404 /404-error.html
-ErrorDocument 500 /500-error.html
-
 });
     }
+
+    eval { setup_restart_local(); };
 
 }
 

@@ -39,12 +39,22 @@ propgroup presentation {
       values = "0|None|5px|Tiny|25px|Small|50px|Medium|75px|Large|100px|Extra Large";
       note = "This only has an effect on the left and right borders if your content width is 100";
   }
+  property string opt_top_margin {
+      des = "Margin size on the top of the content area";
+      note = "You can use this to shift your journal contents down in order to display a background image at the top of your journal.  If set to anything except \"0\", this will override the top border size specified by the previous option.  Don't forget to include units; e.g. px, %";
+  }
   property use view_entry_disabled;
   property use use_shared_pic;
   property bool show_entrynav_icons {
-    des = "Toggle to show the next, memory, edit, etc icons on the entry view page";
+      des = "Toggle to show the next, memory, edit, etc icons on the entry view page";
   }
   property use linklist_support;
+  property string counter_code {
+      des = "If you have an external web counter, you can enter the HTML for it here";
+      note = "Your counter will appear at the bottom of all of the sidebar content.";
+      maxlength = 2000;
+      string_mode = "html-oneline";
+  }
   property use external_stylesheet;
 }
 set opt_navbar_pos = "left";
@@ -54,9 +64,11 @@ set opt_daylines_style = "dashed";
 set opt_entryborder_size = "";
 set opt_entryborder_style = "hidden";
 set opt_margin_size = "50px";
+set opt_top_margin = "0";
 set view_entry_disabled = false;
 set show_entrynav_icons = true;
 set linklist_support = false;
+set counter_code = "";
 
 propgroup colors {
   property Color body_bgcolor {
@@ -78,7 +90,7 @@ propgroup colors {
   }
   property Color border_color {
       des = "Color of lines around entries";
-      note = "If you don't set a line size and style, this won't show up.";
+      note = "If you don't set a line size and style in the \"Presentation\" section, this won't have any effect.";
   }
   property Color link_color {
       des = "Link color";
@@ -193,6 +205,7 @@ propgroup images {
 
   property string opt_img_btwn_comments {
     des = "URL to an image to be used between your comment links";
+    note = "If you specify an image to use, it will replace any text between the comment links.";
   }
 }
 set page_background_image = "";
@@ -206,6 +219,38 @@ propgroup text {
   property use text_read_comments;
   property use text_post_comment_friends;
   property use text_read_comments_friends;
+
+  property string opt_text_left_comments {
+    des = "Text to be used in front of your comment links";
+  }
+  property string opt_text_btwn_comments {
+    des = "Text to be used between your comment links";
+    note = "If you specified an image to be used between your comments links in the \"Images\" section, then this option will not have any effect.";
+  }
+  property string opt_text_right_comments {
+    des = "Text to be used at the end of your comment links";
+  }
+  property string date_format {
+    des = "Date format for entries";
+  }
+  property string time_format {
+    des = "Time format for entries";
+  }
+  property string datetime_format {
+    des = "Date and time format for comments";
+  }
+}
+set opt_text_left_comments = "";
+set opt_text_btwn_comments = " | ";
+set opt_text_right_comments = "";
+set date_format = "%%month%% %%dayord%%, %%yyyy%%";
+set time_format = "%%hh%%:%%min%% %%a%%m";
+set datetime_format = "%%month%% %%dayord%%, %%yyyy%% %%hh%%:%%min%% %%a%%m";
+
+propgroup customcss {
+  property use include_default_stylesheet;
+  property use linked_stylesheet;
+  property use custom_css;
 }
 
 set tags_aware = true;
@@ -345,7 +390,7 @@ font-size: 1.25em;
 background: $*navbar_bgcolor none;
 color: $*navbar_fgcolor;
 """;
-if (viewer_sees_ads()) { "width: 20%;"; } else { "width: 25%;"; }
+if (viewer_sees_vbox()) { "width: 20%;"; } else { "width: 25%;"; }
 css_fontspec($*font_sidebar_base,$*font_sidebar_fallback);
 """
 }
@@ -373,7 +418,7 @@ margin-bottom: 0;
 }
 #mainstuff {
 """;
-if (viewer_sees_ads()) { "width: 70%;"; } else { "width: 75%;"; }
+if (viewer_sees_vbox()) { "width: 70%;"; } else { "width: 75%;"; }
 """
 background: $*entry_bgcolor none;
 color: $*entry_fgcolor;
@@ -571,26 +616,36 @@ $website
 
 $this->print_linklist();
 
+if ($*counter_code != "") {
+    """<ul><li>$*counter_code</li></ul>""";
+}
+
 "</td>";
 }
 
 function Page::print ()
 {
     var string title = $this->title();
+    var string top_margin = "";
+    if ($*opt_top_margin != "0") {
+        $top_margin = " style=\"margin-top: $*opt_top_margin;\"";
+    }
 
 """<html>\n<head>\n""";
-    if ($*external_stylesheet) {
-        println """<link rel="stylesheet" href="$.stylesheet_url" type="text/css" />""";
-    } else {
-        println """<style type="text/css">"""; print_stylesheet(); "</style>";
-    }
     $this->print_head();
+    $this->print_stylesheets();
+
 """<title>$title</title>
 </head>
 <body>""";
 $this->print_control_strip();
-"<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\""; if (viewer_sees_control_strip()) { " id=\"main\""; } """>
-<tr><td colspan="""; if (viewer_sees_ads()) { "\"3\" "; } else { "\"2\" "; } """id="topbar" valign="top">""";
+if (viewer_sees_hbox_top()) {
+    """<div style="text-align: center; margin-bottom: -15px;">""";
+    $this->print_hbox_top();
+    "</div>";
+}
+"<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\"$top_margin"; if (viewer_sees_control_strip()) { " id=\"main\""; } """>
+<tr><td colspan="""; if (viewer_sees_vbox()) { "\"3\" "; } else { "\"2\" "; } """id="topbar" valign="top">""";
 
 "<h1>$.journal.name</h1>";
 "<h2>" + $this->lay_viewspec_heading() + "</h2>";
@@ -604,9 +659,9 @@ $this->print_control_strip();
 if ($*opt_navbar_pos == "left") {
     $this->lay_print_navbar();
 } else {
-    if (viewer_sees_ads()) {
+    if (viewer_sees_vbox()) {
         """<td valign="top" style="background: #eeeeff; width: 10%; padding: 10px;">""";
-        $this->print_ad("Journal-Skyscraper");
+        $this->print_vbox();
         "</td>";
     }
 }
@@ -628,9 +683,9 @@ if ($*opt_navbar_pos == "left") {
 if ($*opt_navbar_pos == "right") {
     $this->lay_print_navbar();
 } else {
-    if (viewer_sees_ads()) {
+    if (viewer_sees_vbox()) {
         """<td valign="top" style="background: #eeeeff; width: 10%; padding: 10px;">""";
-        $this->print_ad("Journal-Skyscraper");
+        $this->print_vbox();
         "</td>";
     }
 }
@@ -640,9 +695,9 @@ if ($*opt_navbar_pos == "right") {
 </table>
 
 """;
-if (viewer_sees_ads() and ($.view == "recent" or $.view == "friends")) {
+if (viewer_sees_hbox_bottom() and ($.view == "recent" or $.view == "friends")) {
     """<div style="text-align: center; margin-top: -15px;">""";
-    $this->print_ad("Journal-5LinkUnit");
+    $this->print_hbox_bottom();
     "</div>";
 }
 """
@@ -653,9 +708,9 @@ if (viewer_sees_ads() and ($.view == "recent" or $.view == "friends")) {
 
 function print_entry (Page p, Entry e, Color bgcolor, Color fgcolor, bool hide_text)
 {
-    var string time = $e.time->time_format();
+    var string time = $e.time->time_format($*time_format);
     if ($e.new_day) {
-        """<div class="day"><h3>"""+$e.time->date_format("long")+"</h3>";
+        """<div class="day"><h3>"""+$e.time->date_format($*date_format)+"</h3>";
     }
     """<div class="entry" id="entry$e.itemid"><div class="entrytext">""";
 
@@ -690,7 +745,7 @@ function print_entry (Page p, Entry e, Color bgcolor, Color fgcolor, bool hide_t
             "\">$e.poster.username</a></span> @ ";
         }
     }
-    "<span class=\"timestamp\">"+$e.time->time_format()+"</span>: ";
+    "<span class=\"timestamp\">"+$e.time->time_format($*time_format)+"</span>: ";
 
     if ($e.security) {
         $e.security_icon->print();
@@ -743,7 +798,7 @@ function print_entry (Page p, Entry e, Color bgcolor, Color fgcolor, bool hide_t
 
     $e.comments->print(); "\n";
 
-    "</div>";
+    "</div></div>";
 
     if ($e.end_day) {
         "</div>";
@@ -762,7 +817,7 @@ function FriendsPage::print_entry (Entry e) {
 
 function CommentInfo::print() {
     if ($.show_readlink or $.show_postlink) {
-        """<div class="talklinks" clear="all">""";
+        """<div class="talklinks" clear="all">$*opt_text_left_comments""";
         if ($.show_readlink) {
             $this->print_readlink();
         }
@@ -770,13 +825,13 @@ function CommentInfo::print() {
             if (clean_url($*opt_img_btwn_comments) != "") {
                 """ <img src="$*opt_img_btwn_comments" alt="" /> """;
             } else {
-                " | ";
+                "$*opt_text_btwn_comments";
             }
         }
         if ($.show_postlink) {
             $this->print_postlink();
         }
-        "</div>";
+        "$*opt_text_right_comments</div>";
     }
 }
 
@@ -951,7 +1006,7 @@ function EntryPage::print_comment (Comment c) {
       print "<table>";
       print "<tr><th align='right'>From:</th><td>$poster</td></tr>\n";
       print "<tr><th align='right'>Date:</th><td style='white-space: nowrap'>";
-        print $c->time_display("long", "") + "</td></tr>";
+        print $c->time_display($*datetime_format, "none") + "</td></tr>";
       if ($c.metadata{"poster_ip"}) { print "<tr><th align='right'>IP Address:</th><td>(" + $c.metadata{"poster_ip"} + ")</td></tr>"; }
     "</table></td>";
 
@@ -986,7 +1041,7 @@ function EntryPage::print_comment (Comment c) {
 }
 
 function ReplyPage::print_body () {
-    var string time = $.replyto.time->time_format();
+    var string time = $.replyto.time->time_format($*time_format);
     """
 <div class="entry">
 <div class="entrytext">

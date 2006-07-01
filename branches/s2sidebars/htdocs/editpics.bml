@@ -81,6 +81,8 @@
     # get maximum number of userpics for this user
     my $max      = LJ::get_cap($u, "userpics");
 
+    my @info;
+
     ### save mode
     if (LJ::did_post()) {
 
@@ -109,7 +111,9 @@
                     next;
                 }
 
-                # we're going to modify keywords on active pictures
+                # we're only going to modify keywords/comments on active pictures
+                next if $up->inactive;
+
                 # only modify if changing the data, make sure not collidiing with other edits, etc
                 if ($POST{"kw_$picid"} ne $POST{"kw_orig_$picid"}) {
                     my $kws = $POST{"kw_$picid"};
@@ -163,7 +167,7 @@
                 if ($up && !$up->inactive) {
                     $up->make_default;
                 }
-            } elsif ($POST{'defaultpic'} eq '0' && $u->{'defaultpicid'}) {
+            } elsif ($new_default eq '0' && $u->{'defaultpicid'}) {
                 # selected the "no default picture" option
                 LJ::update_user($u, { defaultpicid => 0 });
                   $u->{'defaultpicid'} = 0;
@@ -226,9 +230,9 @@
                           if ($factory_disabled) {
                               # less than 40k, greater than 100x100 and factory is disabled
                               return $err->(BML::ml('.error.imagetoolarge', {imagesize => "${imagew}x$imageh"}));
-                          } elsif ($filetype ne 'JPG') {
-                              # factory only works on jpegs because Image::Magick has issues
-                              return $err->("Sorry, you may only upload an image that is greater than 100x100 pixels if it is in JPEG format.")
+                          } elsif ($filetype ne 'JPG' && $filetype ne 'PNG') {
+                              # factory only works on jpegs and pngs because Image::Magick has issues
+                              return $err->("Sorry, you cannot upload a userpic larger than 100x100 pixels if it is in GIF format.")
                           } else {
                               # large image size, to the factory!
                               $gotofactory = 1;
@@ -365,7 +369,7 @@
                       }); };
 
                       # sorry, factory only works for jpegs
-                      return $err->("Sorry, you may only upload an image that is greater than 100x100 pixels or has a file size larger than 40k if it is in JPEG format.")
+                      return $err->("Sorry, you may only upload an image that is greater than 100x100 pixels if it is in JPEG format.")
                           if $upload{mime} ne 'image/jpeg';
                   }
 
@@ -386,11 +390,37 @@
 
                 return $err->("The dimensions of this image are too large.") if ($imagew > 5000 || $imageh > 5000);
 
+                # if image is >40k but under 100x100 try to compress it down
+                my $bytes = $POST{userpic} ? length($POST{userpic}) : $upload{bytes};
+                return $err->("Could not determine size of uploaded file") unless $bytes;
+
+                my $nofactory = 0;
+
+                if (($imagew <= 100 && $imageh <= 100) && $bytes > $MAX_UPLOAD) {
+                    # attempt to resize down
+                    eval {
+                        my $picinfo = LJ::get_upf_scaled(
+                                                         size => 100,
+                                                         u    => $u,
+                                                         );
+
+                        # success! don't go to the factory, and pretend the user just uploaded the file
+                        # and continue on normally
+                        $POST{userpic} = ${$picinfo->[0]};
+                        $nofactory = 1;
+                    };
+
+                    if ($@ || length($POST{userpic}) > $MAX_UPLOAD) {
+                        return $err->(BML::ml('.error.filetoolarge',
+                                              {maxsize => int($MAX_UPLOAD / 1024) . $ML{'.kilobytes'}}));
+                    }
+                }
+
                 return BML::redirect("$LJ::SITEROOT/tools/userpicfactory.bml?keywords=" .
                                      BML::eurl($POST{'keywords'}) . "&comments=" .
                                      BML::eurl($POST{'comments'}) . "&imageWidth=${imagew}&imageHeight=${imageh}".
                                      "&make_default=" . BML::eurl($POST{'make_default'}) . '&authas=' .
-                                     BML::eurl($GET{'authas'}) . '&sfx=' . BML::eurl($suffix));
+                                     BML::eurl($GET{'authas'}) . '&sfx=' . BML::eurl($suffix)) unless $nofactory;
             }
 
             # was there an error parsing the multipart form?
@@ -413,10 +443,8 @@
             }
 
             if ($POST{'src'} eq "file")  {
-
                 # already loaded from multipart parse earlier
                 return $err->("You must choose a file to upload or enter the URL of an image") unless $POST{'userpic'};
-
             } elsif ($POST{'src'} eq "factory") {
                 my $scaledsizemax = $POST{'scaledSizeMax'};
                 my $x1 = $POST{'x1'}+0;
@@ -452,15 +480,13 @@
             }
 
             ## see if they have too many pictures uploaded
+            my $inline;
             if (scalar @userpics >= $max) {
-                my $toomany;
-                if (my $custom .= LJ::run_hook("editpics_maxlimit", $u)) {
-                    $toomany .= $custom;
+                if ($inline .= LJ::run_hook("cprod_inline", $u, 'EditPicsMax')) {
+                    return $err->($inline . LJ::help_icon('userpics', " ", ""));
                 } else {
-                    $toomany .= BML::ml('.error.toomanypics4', {'num' => $max, 'aopts' => "href='$LJ::SITEROOT/editpics$suffix.bml?authas=$authas'"});
+                    return $err->(BML::ml('.error.toomanypics4', { "num" => $max }). LJ::help_icon('userpics', " ", ""));
                 }
-
-                return $err->($toomany . LJ::help_icon('userpics', " ", ""));
             }
 
             my $userpic = eval { LJ::Userpic->create($u, data => \$POST{'userpic'}); };
@@ -469,6 +495,8 @@
             }
 
             my $picid = $userpic->id;
+
+            push @info, "Your userpic has been successfully uploaded";
 
             # make it their default pic?
             if ($POST{'make_default'}) {
@@ -510,6 +538,12 @@
 
     if (@errors) {
         $body .= LJ::error_list(@errors);
+    }
+
+    if (@info) {
+        $body .= '<div class="warningbar">';
+        $body .= "<div>$_</div>" foreach @info;
+        $body .= '</div>';
     }
 
     # print out upload pic box
@@ -604,10 +638,11 @@
 
         } else {
             $body .= "<br /><?standout \n";
-            if (my $custom .= LJ::run_hook("editpics_maxlimit", $u)) {
-                $body .= $custom;
+            my $inline;
+            if ($inline .= LJ::run_hook("cprod_inline", $u, 'EditPicsMax')) {
+                $body .= $inline;
             } else {
-                $body .= BML::ml('.error.toomanypics_standout', {'num' => $max});
+                $body .= BML::ml('.error.toomanypics_standout', { num => $max });
             }
         }
         $body .= " standout?>\n\n";
@@ -627,7 +662,14 @@
             };
 
         $body .= BML::ml('.piclimitstatus', {current => scalar @userpics, max => $max});
-        $body .= LJ::run_hook('editpics_upsell_text', $u);
+        if (scalar @userpics >= $max) {
+            my $inline;
+            if ($inline .= LJ::run_hook("cprod_inline", $u, 'EditPics')) {
+                $body .= $inline;
+            } else {
+                $body .= "<p>".BML::ml('cprod.editpics.text7.v1',{ "num" => $max })."</p>";
+            }
+        }
         $body .= "</div>";
 
         $body .= "<table>";

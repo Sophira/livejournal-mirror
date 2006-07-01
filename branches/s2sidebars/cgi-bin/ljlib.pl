@@ -46,7 +46,7 @@ sub END { LJ::end_request(); }
                     "recentactions", "usertags", "pendcomments",
                     "user_schools", "portal_config", "portal_box_prop",
                     "loginlog", "active_user", "userblobcache",
-                    "notifyqueue", "cprod",
+                    "notifyqueue", "cprod", "urimap"
                     );
 
 # keep track of what db locks we have out
@@ -1670,8 +1670,6 @@ sub start_request
     %LJ::REQ_CACHE_REL = ();          # relations from LJ::check_rel()
     %LJ::REQ_CACHE_DIRTY = ();        # caches calls to LJ::mark_dirty()
     %LJ::S1::REQ_CACHE_STYLEMAP = (); # styleid -> uid mappings
-    %LJ::REQ_DBIX_TRACKER = ();       # canonical dbrole -> DBIx::StateTracker
-    %LJ::REQ_DBIX_KEEPER = ();        # dbrole -> DBIx::StateKeeper
     %LJ::REQ_HEAD_HAS = ();           # avoid code duplication for js
     %LJ::NEEDED_RES = ();             # needed resources (css/js/etc):
     @LJ::NEEDED_RES = ();             # needed resources, in order requested (implicit dependencies)
@@ -1744,13 +1742,44 @@ sub start_request
         $LJ::CACHE_CONFIG_MODTIME_LASTCHECK = $now;
     }
 
+    # include standard files if this is web-context
+    unless ($LJ::DISABLED{sitewide_includes}) {
+        if (eval { Apache->request }) {
+            LJ::need_res(qw(
+                            js/core.js
+                            js/dom.js
+                            js/httpreq.js
+                            js/ippu.js
+                            js/lj_ippu.js
+                            js/hourglass.js
+                            js/contextualpopup.js
+                            stc/contextualpopup.css
+                            stc/lj_base.css
+                            )) if $LJ::CTX_POPUP;
+
+              LJ::need_res(qw(
+                              js/core.js
+                              js/dom.js
+                              js/devel.js
+                              )) if $LJ::IS_DEV_SERVER;
+
+              if (@LJ::USE_LOCAL_RES) {
+                  foreach my $file (@LJ::USE_LOCAL_RES) {
+                      my $inc = $file;
+                      $inc =~ s/(\w+)\.(\w+)$/$1-local.$2/;
+                      LJ::need_res($inc);
+                  }
+              }
+          }
+    }
+
     return 1;
 }
 
 
 # <LJFUNC>
 # name: LJ::end_request
-# des: Clears cached DB handles/trackers/keepers (if $LJ::DISCONNECT_DBS is
+# des: Clears cached DB handles (if $LJ::DISCONNECT_DBS is
 #      true) and disconnects MemCache handles (if $LJ::DISCONNECT_MEMCACHE is
 #      true).
 # </LJFUNC>
@@ -2735,6 +2764,19 @@ sub get_useragent {
     return $ua;
 }
 
+sub assert_is {
+    my ($va, $ve) = @_;
+    return 1 if $va eq $ve;
+    LJ::errobj("AssertIs",
+               expected => $ve,
+               actual => $va,
+               caller => [caller()])->throw;
+}
+
+sub no_utf8_flag {
+    return pack('C*', unpack('C*', $_[0]));
+}
+
 use vars qw($AUTOLOAD);
 sub AUTOLOAD {
     if ($AUTOLOAD eq "LJ::send_mail") {
@@ -2769,6 +2811,18 @@ sub AUTOLOAD {
 
 package LJ::Error::InvalidParameters;
 sub opt_fields { qw(params) }
-sub user_caused { 0; }
+sub user_caused { 0 }
+
+package LJ::Error::AssertIs;
+sub fields { qw(expected actual caller) }
+sub user_caused { 0 }
+
+sub as_string {
+    my $self = shift;
+    my $caller = $self->field('caller');
+    my $ve = $self->field('expected');
+    my $va = $self->field('actual');
+    return "Assertion failure at " . join(', ', (@$caller)[0..2]) . ": expected=$ve, actual=$va";
+}
 
 1;

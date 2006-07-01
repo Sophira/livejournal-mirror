@@ -6,16 +6,14 @@ use strict;
 
 our $_box_class = "CProd";
 our $_box_description = 'Frank the Goat thinks you might enjoy these features';
-our $_box_name = "What else has LJ been hiding from me?";
+our $_box_name = "What else has LJ been hiding?";
 
 sub generate_content {
     my $self = shift;
-    my $content = '';
 
     my $u = $self->{u};
-    $content = LJ::CProd->full_box_for($u) || "You know everything!";
-
-    return $content;
+    my $box = LJ::CProd->full_box_for($u, style => 'plain');
+    return $box;
 }
 
 # mark this cprod as having been viewed

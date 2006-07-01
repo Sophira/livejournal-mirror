@@ -341,17 +341,17 @@
 
 
  } else {
-     $body .= $h1->($ML{'.userinfo.name'}) . $p->(BML::ml('.userinfo.body2', {'username' => $u->{'name'}, 'aopts' => "href='$LJ::SITEROOT/editinfo.bml'"}));
+     $body .= $h1->($ML{'.userinfo.name'}) . $p->(BML::ml('.userinfo.body2', {'username' => $u->{'name'}, 'aopts' => "href='$LJ::SITEROOT/manage/profile/'"}));
  }
 
  ## standout bar
  {
      my @linkele;
 
-     my $label = $com ? $ML{'.monitor.comm'} : $ML{'.monitor.user'};
+     my $label = $com ? $ML{'.monitor.comm2'} : $ML{'.monitor.user'};
      push @linkele, "<a href='$LJ::SITEROOT/friends/add.bml?user=$user'><img src='$LJ::IMGPREFIX/btn_addfriend.gif' width='22' height='20' alt='$label' title='$label' align='middle' border='0' /></a>";
 
-     if ($has_journal && LJ::can_use_journal($remote->{'userid'}, $user)) {
+     if ($has_journal && $remote && LJ::can_use_journal($remote->{'userid'}, $user)) {
          if($remote_isowner) {
              $label = $ML{'.label.postalt'};
          } else {
@@ -381,8 +381,9 @@
          push @linkele, "<a href='$LJ::SITEROOT/friends/nudge.bml?user=$u->{'user'}'><img align='middle' hspace='2' vspace='2' src='$LJ::IMGPREFIX/btn_nudge.gif' width='22' height='20' alt='Nudge a friend' title='Nudge a friend' border='0' /></a>";
      }
 
-     unless ($LJ::DISABLED{'esn'} || ! $has_journal) {
-         push @linkele, "<a href='$LJ::SITEROOT/manage/subscriptions/user.bml?journal=$u->{'user'}'><img align='middle' hspace='2' vspace='2' src='$LJ::IMGPREFIX/btn_search.gif' width='22' height='20' alt='Track user' title='Track user' border='0' /></a>";
+     if ($remote && $has_journal && $remote->can_use_esn) {
+         push @linkele, "<a href='$LJ::SITEROOT/manage/subscriptions/user.bml?journal=$u->{'user'}'>" .
+             LJ::img("track", "", { 'align' => 'middle' }) . "</a>";
      }
 
 
@@ -551,17 +552,24 @@ if ($u->{'journaltitle'}) {
           my $bdate = $u->{'bdate'};
           $bdate =~ s/^0000-//;
           my $span = ($narrow_left-- >= 0) ? 1 : 2;
+          my ($year,$mon,$day) = split(/-/, $bdate);
+          if ($u->opt_showbday eq 'D') {
+              $bdate = "$mon-$day";
+          } elsif ($u->opt_showbday eq 'Y') {
+              $bdate = $year;
+          }
           $body .= "<tr><td align='right'><b>$ML{'.label.birthdate'}</b></td><td colspan='$span'>$bdate</td></tr>\n";
       }
   }
 
   if ($u->share_contactinfo($remote) || $viewall) {
       my $mangleaddress = sub {
-          my $email = shift;
-          my $mret = "<table cellpadding='0' cellspacing='0'><tr><td>";
+          my ($email, $first) = @_;
+          $first ||= "";
+          my $mret = "<table cellpadding='0' cellspacing='0'><tr><td>$first";
           for (my $i = 0; $i < length($email); $i++) {
               my $letter = substr($email, $i, 1);
-              if ($letter eq "\@") { $letter = "</td><td align='center'><i>\@</i></td><td>"; }
+              if ($letter eq "\@") { $letter = "</td><td align='center'><i>&#64;</i></td><td>"; }
               $mret .= $letter;
           }
           $mret .= "</td></tr></table>";
@@ -580,6 +588,7 @@ if ($u->{'journaltitle'}) {
           $body .= "</td></tr>";
       }
 
+      # FIXME: don't modify the $u object!  gross/dangerous.
       foreach my $k (qw(aolim icq yahoo msn jabber google_talk skype gizmo)) {
           $u->{$k} = LJ::ehtml($u->{$k});
       }
@@ -619,7 +628,11 @@ if ($u->{'journaltitle'}) {
       }
       if ($u->{'skype'}) {
           my $span = ($narrow_left-- >= 0) ? 1 : 2;
-          my $skype = $mangleaddress->($u->{'skype'});
+          my $skimg = "";
+          if ($u->{skype} =~ /^[\w\.]+$/) {
+              $skimg = "<img alt='Gizmo Status' width='16' height='16' src='http://mystatus.skype.com/smallicon/$u->{skype}' /> ";
+          }
+          my $skype = $mangleaddress->($u->{'skype'}, $skimg);
           $body .= "<tr><td align='right'><b>$ML{'.label.skype'}</b></td><td colspan='$span'>$skype</td></tr>\n";
       }
       if (my $gizmo = $u->gizmo_account) {
@@ -1023,6 +1036,8 @@ if ($u->{'journaltitle'}) {
  unless ($synd || $GET{'mode'} eq "full") {  # Synd accts are always full, but their full ends early (see below)
      $body .= "</table>\n";
      $body .= "<p align='center'><i><a href='" . $u->profile_url() . "?mode=full'>$ML{'.label.moredetails'}</a></i></p>";
+     $body .= "<br />\n";
+     $body .= LJ::ads( type => 'journal', orient => 'Journal-Leaderboard', force => '1' );
      $bml_okay = 0;
      return;
  }
@@ -1187,6 +1202,9 @@ if ($u->{'journaltitle'}) {
 
 $body .= "</table>\n";
 
+$body .= "<br />\n";
+$body .= LJ::ads( type => 'journal', orient => 'Journal-Leaderboard', force => '1' );
+
 # removed until we run graphviz locally
 # $body .= "<p><a href=\"$LJ::SITEROOT/friends/graph.bml?user=$user\"><b>Graph of friends</b></a></p>";
 
@@ -1200,7 +1218,7 @@ body=><?_code return $bml_okay ? $body : BML::noparse($body); _code?>
 head=><?_code return $head; _code?>
 page?><?_c <LJDEP>
 lib: cgi-bin/ljlib.pl, cgi-bin/cleanhtml.pl
-link: htdocs/editinfo.bml, htdocs/userinfo.bml, htdocs/users
+link: htdocs/manage/profile/index.bml, htdocs/userinfo.bml, htdocs/users
 link: htdocs/community/join.bml, htdocs/community/leave.bml, htdocs/friends/add.bml, htdocs/todo/index.bml
 link: htdocs/tools/memories.bml, htdocs/tools/tellafriend.bml, htdocs/allpics.bml
 link: htdocs/tools/textmessage.bml, htdocs/interests.bml, htdocs/support/faqbrowse.bml, htdocs/download/index.bml

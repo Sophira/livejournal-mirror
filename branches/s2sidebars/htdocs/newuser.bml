@@ -1,14 +1,23 @@
 <?page
+title=><?_code BML::ml(".title", {'sitename' => $LJ::SITENAMESHORT}) _code?>
 body<=
 <?_code
 {
     use strict;
 
-    # When this page gets redone, it will have its own scope
-    BML::set_language_scope('/create.bml');
+    my $remote = LJ::get_remote();
+    return "<?needlogin?>" unless $remote;
 
-    my $u = LJ::get_remote();
-    return "<?needlogin?>" unless $u;
+    my $authas = $GET{'authas'} || $remote->{'user'};
+    my $u = LJ::get_authas_user($authas);
+    return LJ::bad_input($ML{'error.invalidauth'}) unless $u;
+
+    # The copy is slighly different for communities
+    if ($GET{authas}) {
+        BML::set_language_scope('/community/create.bml');
+    } else {
+        BML::set_language_scope('/create.bml');
+    }
 
     my $ret;
     $ret = "<?h1 $ML{'.success.head'} h1?><?p ".BML::ml(".success.text1", {'email' => $u->{email}, 'username' => $u->{user}}) ." p?>";
@@ -18,7 +27,8 @@ body<=
     $ret .= "<?standout <font size='+1' face='arial'><b><a href='$uri'>$uri</a></b></font> standout?>\n";
     $ret .= "<?p $ML{'.success.text3'} p?>\n";
 
-    $ret .= "<form method='get' action='$LJ::SITEROOT/editinfo.bml'>";
+    $ret .= "<form method='get' action='$LJ::SITEROOT/manage/profile/'>";
+    $ret .= LJ::html_hidden('authas', $authas) if $GET{'authas'};
     $ret .= "<p align='center'>" . LJ::html_submit(undef, "$ML{'.success.btn.enterinfo'} &rarr;") . "</p>";
     $ret .= "</form>\n";
 

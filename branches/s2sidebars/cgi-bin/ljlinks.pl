@@ -196,7 +196,15 @@ sub make_modify_form
             $ret .= LJ::html_submit('action:morelinks', "More &rarr;",
                                     { 'disabled' => $ct >= $caplinks,
                                       'noescape' => 1 });
-        }        
+        }
+        my $inline;
+        if ($ct >= $caplinks) {
+            if ($inline .= LJ::run_hook("cprod_inline", $u, 'Links')) {
+                $ret .= $inline;
+            } else {
+                $ret .= "</td></tr><tr><td colspan='2'>&nbsp;</td><td>".BML::ml('cprod.links.text3.v1');
+            }
+        }
         $ret .= "</td></tr>";
 
         # blank line unless this is the last line

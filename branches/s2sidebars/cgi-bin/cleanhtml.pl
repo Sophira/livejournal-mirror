@@ -8,7 +8,8 @@
 use strict;
 use HTML::TokeParser ();
 use URI ();
-use CSS::Cleaner;
+use LJ::CSS::Cleaner;
+use HTMLCleaner;
 
 require "$ENV{'LJHOME'}/cgi-bin/ljconfig.pl";
 
@@ -158,15 +159,23 @@ sub clean
 
     my $cutcount = 0;
 
+    # bytes known good.  set this BEFORE we start parsing any new
+    # start tag, where most evil is (because where attributes can be)
+    # then, if we have to totally fail, we can cut stuff off after this.
+    my $good_until = 0;
+
     my $total_fail = sub {
         my $tag = LJ::ehtml(@_);
-        $$data = LJ::ehtml($$data);
-        $$data =~ s/\r?\n/<br \/>/g if $addbreaks;
-        $$data = "[<b>Error:</b> Irreparable invalid markup ('&lt;$tag&gt;') in entry.  ".
+
+        my $edata = LJ::ehtml($$data);
+        $edata =~ s/\r?\n/<br \/>/g if $addbreaks;
+
+        $$data = substr($newdata, 0, $good_until) .
+            "<div class='ljparseerror'>[<b>Error:</b> Irreparable invalid markup ('&lt;$tag&gt;') in entry.  ".
             "Owner must fix manually.  Raw contents below.]<br /><br />" .
             '<div style="width: 95%; overflow: auto">' .
-            $$data .
-            '</div>';
+            $edata .
+            '</div></div>';
         return undef;
     };
 
@@ -174,7 +183,6 @@ sub clean
 
     my $eating_ljuser_span = 0;  # bool, if we're eating an ljuser span
     my $ljuser_text_node   = ""; # the last text node we saw while eating ljuser tags
-
     my @eatuntil = ();  # if non-empty, we're eating everything.  thing at end is thing
                         # we're looking to open again or close again.
 
@@ -216,6 +224,8 @@ sub clean
             my $tag  = $token->[1];
             my $attr = $token->[2];  # hashref
 
+            $good_until = length $newdata;
+
             if (@eatuntil) {
                 push @capture, $token if $capturing_during_eat;
                 if ($tag eq $eatuntil[-1]) {
@@ -240,6 +250,16 @@ sub clean
             }
 
             if ($eating_ljuser_span) {
+                next TOKEN;
+            }
+
+            if ($tag eq "span" && lc $attr->{class} eq "ljvideo") {
+                my $name = "video";
+                $name =~ s/-/_/g;
+                $start_capture->("span", $token, sub {
+                    my $expanded = ($name =~ /^\w+$/) ? LJ::run_hook("expand_template_$name", \@capture) : "";
+                    $newdata .= $expanded || "<b>[Error: unknown template '" . LJ::ehtml($name) . "']</b>";
+                });
                 next TOKEN;
             }
 
@@ -346,7 +366,7 @@ sub clean
                 my $style = $p->get_text("/style");
                 $p->get_tag("/style");
                 unless ($LJ::DISABLED{'css_cleaner'}) {
-                    my $cleaner = CSS::Cleaner->new;
+                    my $cleaner = LJ::CSS::Cleaner->new;
                     $style = $cleaner->clean($style);
                     if ($LJ::IS_DEV_SERVER) {
                         $style = "/* cleaned */\n" . $style;
@@ -467,7 +487,7 @@ sub clean
 
                         if ($opts->{'clean_js_css'} && ! $LJ::DISABLED{'css_cleaner'}) {
                             # and then run it through a harder CSS cleaner that does a full parse
-                            my $css = CSS::Cleaner->new;
+                            my $css = LJ::CSS::Cleaner->new;
                             $hash->{style} = $css->clean_property($hash->{style});
                         }
                     }

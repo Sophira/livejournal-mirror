@@ -7,18 +7,23 @@ CProd.hourglass = null;
 // show the next tip
 CProd.next = function (evt) {
   var prodClassElement = $("CProd_class");
-  var prodClass;
+  var prodStyleElement = $("CProd_style");
+  var prodClass, prodStyle;
 
   if (prodClassElement)
     prodClass = prodClassElement.innerHTML;
 
+  if (prodStyleElement)
+    prodStyle = prodStyleElement.innerHTML;
+
   var data = HTTPReq.formEncoded({
-    "class": prodClass,
-      "content": "framed"
-      });
+      "class": prodClass,
+          "content": "framed",
+          "style": prodStyle
+          });
 
   var req = HTTPReq.getJSON({
-      "url": "/tools/endpoints/cprod.bml?" + data,
+      "url": "/tools/endpoints/cprod.bml",
       "method": "GET",
         "data": data,
       "onData": CProd.gotData

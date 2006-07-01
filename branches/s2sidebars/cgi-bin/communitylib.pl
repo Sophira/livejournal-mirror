@@ -3,6 +3,10 @@
 package LJ;
 
 use strict;
+use Class::Autouse qw(
+                      LJ::Event::CommunityInvite
+                      LJ::Event::CommunityJoinRequest
+                      );
 
 # <LJFUNC>
 # name: LJ::get_sent_invites
@@ -111,6 +115,9 @@ sub send_comm_invite {
          $cu->do("REPLACE INTO invitesent VALUES (?, ?, ?, UNIX_TIMESTAMP(), 'outstanding', ?)",
                  undef, $cu->{userid}, $u->{userid}, $mu->{userid}, $newargstr);
     }
+
+    # Fire community invite event
+    LJ::Event::CommunityInvite->new($u, $mu, $cu)->fire unless $LJ::DISABLED{esn};
 
     # step 7: error check database work
     return LJ::error('db') if $u->err || $cu->err;
@@ -530,6 +537,8 @@ sub comm_join_request {
             body => $body,
             wrap => 76,
         });
+
+        LJ::Event::CommunityJoinRequest->new($au, $u, $cuser)->fire;
     }
 
     return $aa;

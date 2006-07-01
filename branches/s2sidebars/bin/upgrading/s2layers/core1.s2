@@ -320,7 +320,6 @@ class EntryLite
     function print_linkbar() "Print the link bar for this entry or comment.";
     function time_display () : string "Show the time of this post, with most useful information for user, and with tooltip for more.";
     function time_display (string datefmt, string timefmt) : string "time_post, with customized date/time formats.";
-    function time_display (string datefmt, string timefmt, string btwn_datetime) : string "time_post, with customized date/time formats and text between the date and time.";
 }
 
 class Entry extends EntryLite
@@ -472,8 +471,17 @@ class Page
     "Print server side supplied head content. This is a fixed function, so you can't override it. See
     [method[Page.print_custom_head()]] if you want to supply custom head content.";
 
+    function builtin print_hbox_top [fixed]
+    "Prints an horizontal bar of site-specific content at the top of a journal.";
+
+    function builtin print_hbox_bottom [fixed]
+    "Prints an horizontal bar of site-specific content at the bottom of a journal.";
+
+    function builtin print_vbox [fixed]
+    "Prints an vertical bar of site-specific content on a journal.";
+
     function builtin print_ad(string type) [fixed]
-    "Prints an ad if the user should see one";
+    "Deprecated function.  Use print_hbox_(top|bottom) or print_vbox from now on.";
 
     function builtin print_control_strip [fixed]
     "Prints a control strip for the user's convenience";
@@ -505,6 +513,8 @@ class Page
     function builtin get_sidebar_items(string key) : SideBox[]
     "Fetch the contents of a sidebar. Layouts can document the sidebars they support in the sidebar properties, and then retrieve the configured sidebars using this method.";
 
+    function print_stylesheets
+    "Prints all defined stylesheets, including default and user-defined ones.";
 }
 
 class TagsPage extends Page
@@ -858,7 +868,16 @@ function builtin viewer_is_member() : bool
 "Returns true if the user viewing the page is both logged in, and is a member of the community being viewed. Always returns false for personal journals, since they cannot have members.";
 
 function builtin viewer_sees_ads() [fixed] : bool
-"Returns true if reader will be shown an ad.";
+"Deprecated function.  Use viewer_sees_hbox_(top|bottom) or viewer_sees_vbox from now on.";
+
+function builtin viewer_sees_vbox() [fixed] : bool
+"True if opaque vertical site-specific content box should be displayed to the user.";
+
+function builtin viewer_sees_hbox_top() [fixed] : bool
+"True if opaque horizontal site-specific content box should be displayed to the user at the top of the page.";
+
+function builtin viewer_sees_hbox_bottom() [fixed] : bool
+"True if opaque horizontal site-specific content box should be displayed to the user at the bottom of the page.";
 
 function builtin viewer_sees_control_strip [fixed] : bool
 "Returns true if reader will see the built in control strip.";
@@ -1380,7 +1399,7 @@ set text_comment_date = "Date:";
 set text_comment_ipaddr = "IP Address:";
 
 property string text_comment_reply {
-    des = "Text to link to reply for for comment";
+    des = "Text to link to reply for comment";
     example = "Reply to this";
     maxlength = "50";
 }
@@ -1508,6 +1527,27 @@ property string{} sidebar_custom_types {
     noui = 1;
 }
 set sidebar_custom_types = {};
+
+property bool include_default_stylesheet {
+    des = "Use layout's stylesheet(s)";
+    note = "Disable this only if you want to re-style this layout completely from scratch using a custom stylesheet.";
+}
+set include_default_stylesheet = true;
+
+property string linked_stylesheet {
+    des = "Custom external stylesheet URL";
+    note = "If you have a custom external stylesheet that you'd like to use, enter its URL here.";
+}
+set linked_stylesheet = "";
+
+property string custom_css {
+    des = "Custom stylesheet";
+    note = "If you'd like to add custom CSS to this style, enter it here.";
+    cols = 80;
+    rows = 20;
+    string_mode = "css";
+}
+set custom_css = "";
 
 ###[ global function implementations ]
 
@@ -1693,6 +1733,33 @@ function Friend::print() {
 
 ### Generic Page Functions
 
+function Page::print_stylesheets() {
+    if ($*include_default_stylesheet) {
+        if ($*external_stylesheet) {
+            println safe """<link rel="stylesheet" href="$.stylesheet_url" type="text/css" />""";
+        }
+        else {
+            println """<style type="text/css">""";
+            start_css();
+            print_stylesheet();
+            end_css();
+            println """</style>""";
+        }
+    }
+
+    if ($*linked_stylesheet != "") {
+        println safe """<link rel="stylesheet" href="$*linked_stylesheet" type="text/css" />""";
+    }
+
+    if ($*custom_css != "") {
+        println """<style type="text/css">""";
+        start_css();
+        println safe $*custom_css;
+        end_css();
+        println """</style>""";
+    }
+}
+
 function Page::view_title() [notags] : string {
     return lang_viewname($.view);
 }
@@ -1768,6 +1835,7 @@ function server_sig() {
 function Page::print() {
     "<html>\n<head>\n";
     $this->print_head();
+    $this->print_stylesheets();
     "<title>"+$this->title()+"</title>\n";
 
     if ($*font_base != "" or $*font_fallback != "none") {
@@ -1786,11 +1854,13 @@ body, td, th, table, p, div {
         if ($*font_fallback != "none") {
             print $*font_fallback;
         }
-        ";\n}\n--></style>\n";
-        end_css();
+        ";\n}\n-->";
+        end_css(); 
+        "</style>\n";
     }
 
     "</head>\n<body>\n";
+    $this->print_control_strip();
     if (defined $.journal.default_pic and
         $.view != "entry" and
         $.view != "reply") {
@@ -1967,7 +2037,7 @@ function secs_to_string (int sec) : string {
    return string($sec / 86400) + " days";
  }
 
-function EntryLite::time_display(string datefmt, string timefmt, string btwn_datetime) : string {    
+function EntryLite::time_display(string datefmt, string timefmt) : string {    
     if ($datefmt == "") {
         $datefmt = "med";
     }
@@ -1977,13 +2047,13 @@ function EntryLite::time_display(string datefmt, string timefmt, string btwn_dat
 
     var string ret;
     if ($datefmt != "none") { $ret = $ret + $this.time->date_format($datefmt); }
-    if ($datefmt != "none" and $timefmt != "none") { $ret = $ret + $btwn_datetime; }
+    if ($datefmt != "none" and $timefmt != "none") { $ret = $ret + " "; }
     if ($timefmt != "none") { $ret = $ret + $this.time->time_format($timefmt); }
 
     return ehtml($ret);
 }
 
-function Comment::time_display (string datefmt, string timefmt, string btwn_datetime) : string {
+function Comment::time_display (string datefmt, string timefmt) : string {
     if ($datefmt == "") {
         $datefmt = "iso";
     }
@@ -2002,9 +2072,11 @@ function Comment::time_display (string datefmt, string timefmt, string btwn_date
 
     if ($this.time_remote) {
         $display_date = $this.time_remote->date_format($datefmt);
+        if ($timefmt == "none") { $display_date = $display_date + " (local)"; }
         $display_time = $this.time_remote->time_format($timefmt) + " (local)";
     } else {
         $display_date = $this.time->date_format($datefmt);
+        if ($timefmt == "none") { $display_date = $display_date + " (UTC)"; }
         $display_time = $this.time->time_format($timefmt) + " (UTC)";
     }
 
@@ -2013,14 +2085,18 @@ function Comment::time_display (string datefmt, string timefmt, string btwn_date
         var string poster_date = $this.time_poster->date_format($datefmt);
         $tooltip = $tooltip + ", ";
 
-        if ($poster_date == $display_date) { $poster_date = ""; }
+        if ($poster_date == $display_date and $timefmt != "none") { $poster_date = ""; }
         else { $poster_date = $poster_date + " "; }
 
-        $tooltip = $tooltip + $poster_date + $this.time_poster->time_format($timefmt) + " (" + $this.poster.username + "'s time)";
+        if ($timefmt != "none") {
+            $tooltip = $tooltip + $poster_date + $this.time_poster->time_format($timefmt) + " (" + $this.poster.username + "'s time)";
+        } else {
+            $tooltip = $tooltip + $poster_date + "(" + $this.poster.username + "'s time)";
+        }
     }
 
     if ($datefmt != "none") { $main = $main + $display_date; }
-    if ($datefmt != "none" and $timefmt != "none") { $main = $main + $btwn_datetime; }
+    if ($datefmt != "none" and $timefmt != "none") { $main = $main + " "; }
     if ($timefmt != "none") { $main = $main + $display_time; }
 
     return "<span title=\"" + ehtml($tooltip) + "\">" + ehtml($main) + "</span>";
@@ -2028,14 +2104,8 @@ function Comment::time_display (string datefmt, string timefmt, string btwn_date
 
 function EntryLite::time_display() : string {
     # Let the real function decide on some nice defaults
-    return $this->time_display("", "", " ");
+    return $this->time_display("", "");
 }
-
-function EntryLite::time_display(string datefmt, string timefmt) : string {
-    # Let the real function do the work
-    return $this->time_display($datefmt, $timefmt, " ");
-}
-
 
 ### Year view
 
@@ -2320,7 +2390,7 @@ function EntryPage::print_comment_partial (Comment c) {
 
 function ItemRange::print() {
     if ($.all_subitems_displayed) { return; }
-    print "<a name='comments'></a><table align='center' border='0' cellpadding='3'>";
+    print "<table align='center' border='0' cellpadding='3'>";
     print "<tr><td align='center' colspan='3'><b>" +
         lang_page_of_pages($.current, $.total) + "</b>";
     print "</td></tr>";
@@ -2376,7 +2446,7 @@ function EntryPage::print_body
     }
 
     if ($.entry.comments.enabled) {
-        "<hr />";
+        "<hr /><a name='comments'></a>";
         "("; $this->print_reply_link({ "linktext" => $*text_post_comment, "target" => "topcomment" }); ")";
         $this->print_reply_container({ "target" => "topcomment" });
         if ($.comment_pages.total_subitems > 0) {
