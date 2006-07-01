@@ -1,0 +1,210 @@
+/*---------- Manage Settings ----------*/
+/*-------------------------------------*/
+
+#manageSettings {
+    margin: 2em 0 0 0;
+    }
+
+.Subscribe {
+    width: 100%;
+    padding: 0;
+    margin: .5em 0 0 0;
+    clear: both;
+    }
+    
+    .Subscribe td {
+        padding: .3em;
+        }
+
+.CategoryRow {
+    width: 100%;
+    }
+
+    .CategoryRow td {
+        vertical-align: middle;
+        background-color: #d9d9d9;
+        border-bottom: 1px solid #aaa;
+        }
+        
+    .CategoryRow label {
+        font-size: 90%;
+        font-weight: bold;
+        }
+    
+    .CategoryHeading {
+        font-weight: bold;
+        font-size: 1.2em;
+        }
+
+    .CategoryHeadingNote {
+        xdisplay: block;
+        font-size: .95em;
+        }
+
+#Subscriptions {
+    width: 100%;
+}
+#Subscriptions th {
+    text-align: left;
+}
+#Subscriptions td, #Subscriptions th {
+    padding-left: .5em;
+    padding-right: .5em;
+}
+#Subscriptions tr.lighter {
+    background-color: #cff;
+}
+#Subscriptions tr.darker {
+    background-color: #9cc;
+}
+div.argOptsContainer {
+  display: none;
+}
+
+#SubscribeSaveButtons {
+    text-align: center;
+    border: 1px solid #333;
+    width: 150px;
+    margin-left: auto;
+    margin-right: auto;
+    }
+    
+    #SubscribeSaveButtons input {
+        margin: 5px;
+        }
+
+#SubscriptionInfo {
+    width: 95%;
+    text-align: center;
+    margin: 1em auto;
+    }
+    
+    #SubscriptionInfo p, #SubscriptionInfo div {
+        font-size: 1em;
+        margin: 0;
+        padding: .2em;
+        }
+
+/*----------- Message Center ----------*/
+/*-------------------------------------*/
+
+
+#NotificationTable {
+    margin: 2em 0 0 0;
+    margin-left: 21em;
+    }
+
+#NotificationSidebar {
+    float: left;
+    width: 20em;
+    margin-top: 1em;
+    line-height: 130%;
+    }
+
+    #NotificationSidebar .BlurbTitle {
+        font-weight: bold;
+        font-size: 1.0em;
+        }
+        
+.esnlinks {
+    float: right;
+    display: block;
+    margin: 0 0 0 0;
+    }
+
+#inbox {
+    width: 100%;
+    padding: 0;
+    margin: .5em 0 2em 0;
+    }
+    
+    
+    #inbox thead {
+        display: table-cell;
+        margin: 0;
+        padding: .2em 0 0 0;
+        background: #d9d9d9;
+        border-top: 1px solid #ddd;
+        border-bottom: 1px solid #aaa;
+        width: 100%;
+        }
+        
+        #inbox thead td {
+            vertical-align: middle;
+            }
+            
+        #inbox thead input {
+            }
+            
+        .actions {
+            }
+        
+    #inbox tr {
+        display: block;
+        }
+    
+.inbox_newitems {
+    font-weight: bold;
+    }
+    
+.InboxItem_Unread {
+    font-weight: bold;
+    }
+    
+.InboxItem_Meta {
+
+    }
+    
+    .InboxItem_Meta td {
+        padding: 0 0 0 0;
+        border-bottom: 1px solid #e9e9e9;
+        }
+    
+    .alt {
+        background: #f6f6f6;
+        }
+        
+        .alt td {
+            border-top: 1px solid #fff;
+            border-bottom: 1px solid #e9e9e9;
+            }
+    
+.checkbox {
+    width: 1%;
+    padding: .1em;
+    }
+    
+.item { 
+    padding: .2em 0 0 .5em !important;
+    }
+
+.InboxItem_Content {
+    color: #333;
+    font-size: .95em;
+    padding: .3em 0 .2em 1em;
+    width: 95%;
+    }
+        
+.time {
+    width: 8em;
+    font-size: 90%;
+    color: #555;
+    }
+    
+.JournalNewComment {
+    
+    }
+    
+    .Subject {
+        font-weight: bold;
+        margin-left: 85px;
+        }
+        
+    .ManageButtons {
+        float: left;
+        }
+        
+    .Body {
+        font-size: .9em;
+        margin-left: 85px;
+        }

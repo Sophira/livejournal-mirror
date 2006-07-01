@@ -13,24 +13,68 @@ sub new {
 
 sub is_common { 1 }
 
-sub title {
-    return 'New Comment on Journal';
+sub content {
+    my $self = shift;
+    my $comment = $self->comment or return "(Invalid comment)";
+
+    return "(Deleted comment)" if $comment->is_deleted;
+
+    LJ::need_res('js/commentmanage.js');
+
+    my $comment_body = $comment->body_html;
+    my $buttons = $comment->manage_buttons;
+    my $dtalkid = $comment->dtalkid;
+
+    my $ret = qq {
+        <div id="ljcmt$dtalkid" class="JournalNewComment">
+            <div class="ManageButtons">$buttons</div>
+            <div class="Body">$comment_body</div>
+        </div>
+    };
+
+    my $cmt_info = $comment->info;
+    my $cmt_info_js = LJ::js_dumper($cmt_info) || '{}';
+
+    my $posterusername = $self->comment->poster ? $self->comment->poster->{user} : "";
+
+    $ret .= qq {
+        <script language="JavaScript">
+        };
+
+    while (my ($k, $v) = each %$cmt_info) {
+        $k = LJ::ejs($k);
+        $v = LJ::ejs($v);
+        $ret .= "LJ_cmtinfo['$k'] = '$v';\n";
+    }
+
+    my $dtid_cmt_info = {u => $posterusername, rc => []};
+
+    $ret .= "LJ_cmtinfo['$dtalkid'] = " . LJ::js_dumper($dtid_cmt_info) . "\n";
+
+    $ret .= qq {
+        </script>
+        };
+
+    return $ret;
 }
 
 sub as_html {
     my $self = shift;
 
-    my $journal = $self->u;    # what journal did this comment happen in?
-    my $arg1    = $self->arg1; # jtalkid
-
-    my $comment = LJ::Comment->new($journal, jtalkid => $arg1);
-    return "(Invalid comment)" unless $comment && $comment->valid;
+    my $comment = $self->comment;
+    my $journal = $self->u;
 
     my $ju = LJ::ljuser($journal);
     my $pu = LJ::ljuser($comment->poster);
     my $url = $comment->url;
 
-    return "New <a href=\"$url\">comment</a> in $ju by $pu.";
+    my $entry = $comment->entry or return "(Invalid entry)";
+
+    my $in_text = '<a href="' . $entry->url . '">an entry</a>';
+
+    my $subject = $comment->subject_text ? ' "' . $comment->subject_text . '"' : '';
+
+    return "New <a href=\"$url\">comment</a>$subject in $in_text on $ju by $pu.";
 }
 
 sub subscription_as_html {
@@ -44,7 +88,7 @@ sub subscription_as_html {
         return "All comments in any journals on my friends page";
     }
 
-    my $user = LJ::ljuser($journal);
+    my $user = LJ::u_equals($journal, $subscr->owner) ? 'my journal' : LJ::ljuser($journal);
 
     if ($arg1 == 0 && $arg2 == 0) {
         return "All comments in $user, on any post.";
@@ -58,6 +102,8 @@ sub subscription_as_html {
         $arg1 = $comment->entry->ditemid unless $arg1;
     }
 
+    my $journal_is_owner = LJ::u_equals($journal, $subscr->owner);
+
     my $entry = LJ::Entry->new($journal, ditemid => $arg1)
         or return "Comments on a deleted post in $user";
 
@@ -65,14 +111,19 @@ sub subscription_as_html {
     $entrydesc = $entrydesc ? "\"$entrydesc\"" : "a post";
 
     my $entryurl  = $entry->url;
-    return "All comments on <a href='$entryurl'>$entrydesc</a> in $user" if $arg2 == 0;
+    my $in_journal = $journal_is_owner ? " on my journal" : "in $user";
+    return "All comments on <a href='$entryurl'>$entrydesc</a> $in_journal" if $arg2 == 0;
 
     my $threadurl = $comment->url;
 
     my $posteru = $comment->poster;
     my $posteruser = $posteru ? LJ::ljuser($posteru) : "(Anonymous)";
 
-    return "New comments under <a href='$threadurl'>the thread</a> by $posteruser in <a href='$entryurl'>$entrydesc</a> in $user";
+    $posteruser = $journal_is_owner ? 'me' : $posteruser;
+
+    my $thread_desc = $comment->subject_text ? '"' . $comment->subject_text . '"' : "the thread";
+
+    return "New comments under <a href='$threadurl'>$thread_desc</a> by $posteruser in <a href='$entryurl'>$entrydesc</a> $in_journal";
 }
 
 sub matches_filter {
@@ -131,8 +182,5 @@ sub comment {
     my $self = shift;
     return LJ::Comment->new($self->event_journal, jtalkid => $self->jtalkid);
 }
-
-sub journal_sub_title { 'Journal' }
-sub journal_sub_type  { 'owner' }
 
 1;

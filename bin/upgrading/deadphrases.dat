@@ -1,6 +1,9 @@
 # these get removed if found by texttool.pl
 #
 
+general crumb.createjournal
+general crumb.modify
+
 general /allpics.bml.edit
 general /allpics.bml.nopics.text
 
@@ -23,14 +26,23 @@ general /community/settings.bml.manage
 
 general /create.bml.aolnotice.head
 general /create.bml.aolnotice.text
+general /create.bml.birthday.question
+general /create.bml.birthday.question_1
+general /create.bml.birthday.question_2
+general /create.bml.create.text
+general /create.bml.email.text3
 general /create.bml.error.seebelow
 general /create.bml.password.secure
+general /create.bml.password.secure2
 general /create.bml.proceed.head
 general /create.bml.proceed.text
 
+general /create.bml.title
 general /create.bml.tos.error
 general /create.bml.tos.haveread
 general /create.bml.tos.p1.2
+general /create.bml.username.charsallowed
+general /create.bml.username.text
 
 general /editinfo.bml.allowshocontact.email.if_domainaddy
 general /editinfo.bml.allowshowcontact.email.reason
@@ -103,6 +115,7 @@ general /logout.bml.loggedout.success
 
 general /manage/comments/index.bml.disablecomment2
 
+general /manage/index.bml.information.editinfo.about
 general /manage/index.bml.information.setlang.about
 general /manage/index.bml.information.setscheme.about
 general /manage/index.bml.userpictures
@@ -110,8 +123,12 @@ general /manage/index.bml.userpictures.edit.about
 general /manage/index.bml.userpictures.header
 general /manage/index.bml.information.emailpost
 general /manage/index.bml.information.emailpost.about
-
+general /manage/profile/index.bml.birthday
 general /manage/profile/index.bml.intro
+general /manage/profile/index.bml.im
+general /manage/profile/index.bml.email
+
+general /manage/settings/index.bml.bdayreminder.note
 
 general /modify.bml.btn.proceed
 general /modify.bml.journalstatus.about
@@ -130,6 +147,7 @@ general /modify_do.bml.title
 general /multisearch.bml.region.text
 
 general /register.bml.new.body
+general /register.bml.new.modify2
 
 general /setlang.bml.select
 general /setlang.bml.switch
@@ -406,3 +424,49 @@ general /poll/create.bml.error.accttype
 general /editpics.bml.noneupload
 
 general /allpics.bml.edit3
+
+general birthday.link
+general birthday.text
+general controlstrip.link
+general controlstrip.text
+general feeds.link
+general feeds.text
+general ljfeedback.text
+general ljspotlight.text
+general polls.link
+general polls.text
+general cprod.friendsfriends.text.v1
+general cprod.friendsfriends.text.v2
+general cprod.friendsfriends.text.v3
+general cprod.friendsfriends.text.v4
+general cprod.friendsfriends.text.v5
+general cprod.friendsfriends.link.v1
+general cprod.friendsfriends.link.v2
+general cprod.friendsfriends.link.v3
+general cprod.friendsfriends.link.v4
+general cprod.friendsfriends.link.v5
+general /tools/textmessage.bml.enter.user.text
+general cprod.friendsfriendsinline.link2.v1
+general cprod.friendsfriendsinline.link2.v2
+general cprod.friendsfriendsinline.link2.v3
+general cprod.friendsfriendsinline.link2.v4
+general cprod.friendsfriendsinline.link2.v5
+general cprod.friendsfriendsinline.text2.v1
+general cprod.friendsfriendsinline.text2.v2
+general cprod.friendsfriendsinline.text2.v3
+general cprod.friendsfriendsinline.text2.v4
+general cprod.friendsfriendsinline.text2.v5
+general cprod.links.text2.v1
+general cprod.textmessaging.text2.v1
+
+general web.controlstrip.links.changecommsettings
+
+general /community/join.bml.label.addtofriends
+general /community/join.bml.label.allowposting
+general /community/join.bml.label.auth
+general /community/join.bml.label.expls
+general /community/join.bml.label.membernow2
+general /community/join.bml.label.sure
+
+general /userinfo.bml.monitor.comm
+

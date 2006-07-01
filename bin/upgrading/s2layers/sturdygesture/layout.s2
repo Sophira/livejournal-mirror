@@ -91,6 +91,12 @@ propgroup fonts {
     property use font_fallback;
 }
 
+propgroup customcss {
+    property use include_default_stylesheet;
+    property use linked_stylesheet;
+    property use custom_css;
+}
+
 set tags_aware = true;
 
 function navheading(RecentNav nav, int entries) : string
@@ -397,9 +403,9 @@ $userpic
         println "</div>";
     }
 
-    if (viewer_sees_ads()) {
+    if (viewer_sees_vbox()) {
         """<div class="box" align="center" style="padding: 0.5em 0;">""";
-        $this->print_ad("Journal-Skyscraper");
+        $this->print_vbox();
         "</div>";
     }
 
@@ -439,15 +445,7 @@ function Page::print() {
 """<html>\n<head>\n""";
 
     $this->print_head();
-    if ($*external_stylesheet) {
-        println safe """<link rel="stylesheet" href="$.stylesheet_url" type="text/css" />""";
-    } else {
-        println """<style type="text/css">""";
-        start_css();
-        print_stylesheet();
-        end_css(); 
-        "</style>";
-    }
+    $this->print_stylesheets();
 
     "<title>"+$this->title()+"</title>";
 """
@@ -465,10 +463,15 @@ $this->print_control_strip();
     }
 
     "<td rowspan=\"2\" id=\"body\">\n";
+    if (viewer_sees_hbox_top()) {
+        """<div class="box" style="text-align: center; margin-left: auto; margin-right: auto; padding-bottom: 2px; width: 750px;">""";
+        $this->print_hbox_top();
+        "</div>";
+    }
     $this->print_body();
-    if (viewer_sees_ads() and ($.view == "recent" or $.view == "friends")) {
+    if (viewer_sees_hbox_bottom() and ($.view == "recent" or $.view == "friends")) {
         """<div class="box" style="text-align: center; margin: 5px auto; width: 750px;">""";
-        $this->print_ad("Journal-5LinkUnit");
+        $this->print_hbox_bottom();
         "</div>";
     }
     "</td>\n";

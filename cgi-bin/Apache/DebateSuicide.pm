@@ -30,8 +30,28 @@ sub handler
     my $memfree = $meminfo{'MemFree'} + $meminfo{'Cached'};
     return OK unless $memfree;
 
-    my $goodfree = $LJ::SUICIDE_UNDER{$LJ::SERVER_NAME} || $LJ::SUICIDE_UNDER || 150_000;
-    return OK if $memfree > $goodfree;
+    my $goodfree = $LJ::SUICIDE_UNDER{$LJ::SERVER_NAME} || $LJ::SUICIDE_UNDER ||   150_000;
+    my $is_under = $memfree < $goodfree;
+
+    my $maxproc  = $LJ::SUICIDE_OVER{$LJ::SERVER_NAME}  || $LJ::SUICIDE_OVER  || 1_000_000;
+    my $is_over  = 0;
+
+    $gtop ||= GTop->new;
+
+    # if $is_under, we know we'll be exiting anyway, so no need
+    # to continue to check $maxproc
+    unless ($is_under) {
+
+        # find out how much memory we are using
+        my $pm = $gtop->proc_mem($$);
+        my $proc_size_k = ($pm->rss - $pm->share) >> 10; # config is in KB
+
+        $is_over = $proc_size_k > $maxproc;
+    }
+    return OK unless $is_over || $is_under;
+
+    # we'll proceed to die if we're one of the largest processes
+    # on this machine
 
     unless ($ppid) {
         my $self = pid_info($$);
@@ -40,8 +60,6 @@ sub handler
 
     my $pids = child_info($ppid);
     my @pids = keys %$pids;
-
-    $gtop ||= GTop->new;
 
     my %stats;
     my $sum_uniq = 0;
@@ -53,12 +71,31 @@ sub handler
 
     @pids = (sort { $stats{$b}->[0] <=> $stats{$a}->[0] } @pids, 0, 0);
 
-    my $my_pid = $$;
-    if (grep { $my_pid == $_ } @pids[0,1]) {
+    if (grep { $$ == $_ } @pids[0,1]) {
         my $my_use_k = $stats{$$}[0] >> 10;
-        $r->log_error("Suicide [$$]: system memory free = ${memfree}k; i'm big, using ${my_use_k}k") if $LJ::DEBUG{'suicide'};
+        if ($LJ::DEBUG{'suicide'}) {
+            $r->log_error("Suicide [$$]: system memory free = ${memfree}k; " . 
+                          "i'm big, using ${my_use_k}k");
+        }
+
+        # we should have logged by here, but be paranoid in any case
         Apache::LiveJournal::db_logger($r) unless $r->pnotes('did_lj_logging');
+
+        # This is supposed to set MaxChildRequests to 1, then clear the 
+        # KeepAlive flag so that Apache will terminate after this request,
+        # but it doesn't work.  We'll call it here just in case.
         $r->child_terminate;
+
+        # We should call Apache::exit(Apache::Constants::DONE) here because
+        # it makes sure that the child shuts down cleanly after fulfilling
+        # its request and running logging handlers, etc.
+        #
+        # In practice Apache won't exit until the current request's KeepAlive
+        # timeout is reached, so the Apache hangs around for the configured
+        # amount of time before exiting.  Sinced we know that the request
+        # is done and we've verified that logging as happend (above), we'll
+        # just call CORE::exit(0) which works immediately.
+        CORE::exit(0);
     }
 
     return OK;

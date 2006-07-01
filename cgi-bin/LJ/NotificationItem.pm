@@ -15,24 +15,25 @@ use Carp qw(croak);
 
 *new = \&instance;
 
-my %singletons = ();
-
 # parameters: user, notification inbox id
 sub instance {
     my ($class, $u, $qid) = @_;
 
     my $singletonkey = $u->{userid} . ':' . $qid;
-    return $singletons{$singletonkey} if $singletons{$singletonkey};
+
+    $u->{_inbox_items} ||= {};
+    return $u->{_inbox_items}->{$singletonkey} if $u->{_inbox_items}->{$singletonkey};
 
     my $self = {
         u       => $u,
         qid     => $qid,
         state   => undef,
         event   => undef,
+        when    => undef,
         _loaded => 0,
     };
 
-    $singletons{$singletonkey} = $self;
+    $u->{_inbox_items}->{$singletonkey} = $self;
 
     return bless $self, $class;
 }
@@ -43,6 +44,28 @@ sub owner { $_[0]->{u} }
 
 # returns this item's id in the notification queue
 sub qid { $_[0]->{qid} }
+
+# returns true if this item really exists
+sub valid {
+    my $self = shift;
+
+    return undef unless $self->u && $self->qid;
+    $self->_load unless $self->{_loaded};
+
+    return $self->event;
+}
+
+# returns title of this item
+sub title {
+    my $self = shift;
+    return eval { $self->event->as_html } || $@;
+}
+
+# returns contents of this item
+sub as_html {
+    my $self = shift;
+    return eval { $self->event->content } || $@;
+}
 
 # returns the event that this item refers to
 sub event {
@@ -79,13 +102,22 @@ sub absorb_row {
     my ($self, $row) = @_;
 
     $self->{state} = $row->{state};
-    $self->{createtime} = $row->{createtime};
+    $self->{when} = $row->{createtime};
 
     my $evt = LJ::Event->new_from_raw_params($row->{etypeid},
                                              $row->{journalid},
                                              $row->{arg1},
                                              $row->{arg2});
     $self->{event} = $evt;
+}
+
+# returns when this event happened (or got put in the inbox)
+sub when_unixtime {
+    my $self = shift;
+
+    $self->_load unless $self->{_loaded};
+
+    return $self->{when};
 }
 
 # returns the state of this item
@@ -109,7 +141,9 @@ sub delete {
     my $inbox = $self->owner->NotificationInbox;
 
     # delete from the inbox so the inbox stays in sync
-    return $inbox->delete_from_queue($self);
+    my $ret = $inbox->delete_from_queue($self);
+    %$self = ();
+    return $ret;
 }
 
 # mark this item as read

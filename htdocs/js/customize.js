@@ -19,11 +19,12 @@ function tabclick_save(e) {
     $("action:redir").value = this.id;
     var confirmed = false;
     if (form_changed == false) {
-        confirmed = true;
+        return true;
     } else {
         confirmed = confirm("Save your settings?");
     }
     if (confirmed) {
+        Event.stop(e);
         $("display_form").submit();
     }
 }

@@ -323,15 +323,9 @@ propgroup text {
     property use text_website_default_name;
 }
 propgroup customcss {
-
-    property string custom_css {
-        des = "Custom Style Rules";
-        note = "If you'd like to customize this style further and are familiar with CSS, you can enter custom style rules here.";
-        string_mode = "css";
-        cols = 80;
-        rows = 20;
-    }
-
+    property use include_default_stylesheet;
+    property use linked_stylesheet;
+    property use custom_css;
 }
 
 set tags_aware = true;
@@ -877,7 +871,6 @@ function print_stylesheet() {
     necessary_styles();
     pretty_styles();
     custom_styles();
-    print "\n$*custom_css\n";
 }
 
 function paraphernalia_box_open(string id, string title) "Open a paraphenalia box" {
@@ -951,10 +944,10 @@ function Page::lay_print_paraphernalia() "User layers can override this to chang
     $this->lay_print_viewspec();
     $this->lay_print_custom_paraphernalia();
     $this->lay_print_userlinks();
-    if (viewer_sees_ads()) {
+    if (viewer_sees_vbox()) {
         paraphernalia_box_open("", "");
         """<div style="margin-top: 16px;">""";
-        $this->print_ad("Journal-Skyscraper");
+        $this->print_vbox();
         "</div>";
         paraphernalia_box_close("", "");
     }
@@ -1133,18 +1126,9 @@ function Page::print() {
 <head>
    """;
     $this->print_head();
-    println """<title>"""+$this->title()+"""</title>""";
-    if ($*external_stylesheet) {
-        println safe """<link rel="stylesheet" href="$.stylesheet_url" type="text/css" />""";
-    }
-    else {
-        println """<style type="text/css">""";
-        start_css();
-        print_stylesheet();
-        end_css();
-        println """</style>""";
-    }
+    $this->print_stylesheets();
     $this->lay_print_viewspec_head();
+    println """<title>"""+$this->title()+"""</title>""";
 """
 </head>
 
@@ -1162,7 +1146,15 @@ $this->print_control_strip();
 <div id="title">
 """; $this->lay_print_heading(); """
 </div>
+""";
 
+if (viewer_sees_hbox_top()) {
+    """<div style="text-align: center; margin-top: 2px;">""";
+    $this->print_hbox_top();
+    "</div>";
+}
+
+"""
 <div id="paraphernalia">
 """; $this->lay_print_paraphernalia(); """
 </div>
@@ -1175,9 +1167,9 @@ $this->print_control_strip();
 
 <div id="server_sig">"""; server_sig(); """</div>""";
 
-if (viewer_sees_ads() and ($.view == "recent" or $.view == "friends")) {
+if (viewer_sees_hbox_bottom() and ($.view == "recent" or $.view == "friends")) {
     """<div style="text-align: center;">""";
-    $this->print_ad("Journal-5LinkUnit");
+    $this->print_hbox_bottom();
     "</div>";
 }
 

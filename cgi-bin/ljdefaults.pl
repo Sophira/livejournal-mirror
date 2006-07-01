@@ -55,6 +55,9 @@
     # qmtp, smtp, dmtp, and sendmail are the currently supported protocols.
     @MAIL_TRANSPORTS = ( [ 'sendmail', $SENDMAIL, 1 ] ) unless @MAIL_TRANSPORTS;
 
+    # roles that slow support queries should use in order of precedence
+    @SUPPORT_SLOW_ROLES = ('slow') unless @SUPPORT_SLOW_ROLES;
+
     # where we set the cookies (note the period before the domain)
     $COOKIE_DOMAIN ||= ".$DOMAIN";
     $COOKIE_PATH   ||= "/";
@@ -197,7 +200,7 @@
     }
 
     # setup default minimal style information
-    $MINIMAL_USERAGENT{$_} ||= 1 foreach qw(Links Lynx w BlackBerry); # w is for w3m
+    $MINIMAL_USERAGENT{$_} ||= 1 foreach qw(Links Lynx w BlackBerry WebTV); # w is for w3m
     $MINIMAL_BML_SCHEME ||= 'lynx';
     $MINIMAL_STYLE{'core'} ||= 'core1';
 
@@ -209,6 +212,7 @@
     $SCHOOLSMAX ||= {
                      'P' => 25,
                      'I' => 25,
+                     'S' => 25,
                      'C' => 50,
                      };
 
@@ -320,6 +324,9 @@
                             'JournalNewEntry',
                             'UserNewComment',
                             'UserNewEntry',
+                            'CommunityInvite',
+                            'CommunityJoinRequest',
+                            'OfficialPost',
                             );
         foreach my $evt (@LJ::EVENT_TYPES) {
             $evt = "LJ::Event::$evt";

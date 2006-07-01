@@ -69,11 +69,13 @@ sub notify {
             fromname => $LJ::SITENAMESHORT,
             wrap => 1,
             charset => 'utf-8',
-            subject => $ev->title,
-            html    => 'hallo', # FIXME: make this work!
-            body    => $ev->as_string
+            subject => $ev->as_string,
+            html    => $ev->as_email_html, # FIXME: make this work!
+            body    => $ev->as_email_string,
         }) or die "unable to send notification email";
     }
+
+    return 1;
 }
 
 sub configured {

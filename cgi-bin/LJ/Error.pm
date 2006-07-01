@@ -52,7 +52,10 @@ sub errobj {
     }
 
     # if no parameters, act like errobj($@)
-    $_[0] = $@ unless @_;
+    unless (@_) {
+        $_[0] = $@
+            or return undef;
+    }
 
     my $ref = ref $_[0];
 
@@ -129,6 +132,115 @@ sub cond_throw {
     return defined $ret_value ? $ret_value : undef;
 }
 
+# log error to database; don't override
+sub log {
+    my $err = shift;
+    return unless $LJ::LOG_ERRORS;
+    return if $err->{_logged}++;
+
+    my $dbl = LJ::get_dbh("logs") or return;
+
+    my $now = time;
+    my @now = localtime($now);
+
+    my $table_name = sprintf("errors%04d%02d%02d%02d", $now[5]+1900,
+                             $now[4]+1, $now[3], $now[2]);
+
+    my $create_sql = qq {
+        (
+         whn INT (10) UNSIGNED NOT NULL,
+         description VARCHAR(255),
+         errclass VARCHAR(255),
+         usercaused TINYINT,
+         server VARCHAR(30),
+         addr VARCHAR(15) NOT NULL,
+
+         remote VARCHAR(15),
+         remoteid INT UNSIGNED, # remote user's userid
+         remotecaps INT UNSIGNED,
+
+         journalid INT UNSIGNED, # userid of what's being looked at
+         journaltype CHAR(1),   # journalid's journaltype
+
+         codepath VARCHAR(80),  # protocol.getevents / s[12].friends / bml.update / bml.friends.index
+         langpref VARCHAR(5),
+         method VARCHAR(10) NOT NULL,
+         uri VARCHAR(255) NOT NULL,
+         args VARCHAR(255),
+         ref VARCHAR(255),
+         browser VARCHAR(100),
+         clientver VARCHAR(100)
+         )
+    };
+    $create_sql =~ s/\#.+//g;
+
+    $dbl->do("CREATE TABLE IF NOT EXISTS $table_name $create_sql") or return;
+
+    my $whn = time();
+
+    my %insert = (
+                  'whn'         => $whn,
+                  'description' => $err->as_string || $err->as_html,
+                  'errclass'    => ref $err,
+                  'server'      => $LJ::SERVER_NAME,
+                  'usercaused'  => $err->user_caused, # 0, 1 or NULL
+                  );
+
+    if (my $r = eval {Apache->request}) {
+        my $rl = $r->last;
+
+        my $remote = eval { LJ::load_user($rl->notes('ljuser')) };
+        my $remotecaps = $remote ? $remote->{caps} : undef;
+        my $remoteid   = $remote ? $remote->{userid} : 0;
+        my $ju = eval { LJ::load_userid($rl->notes('journalid')) };
+        my $uri = $r->uri;
+
+        my %insert_r = (
+                        'addr'        => $r->connection->remote_ip,
+                        'remote'      => $rl->notes('ljuser'),
+                        'remotecaps'  => $remotecaps,
+                        'remoteid'    => $remoteid,
+                        'journalid'   => $rl->notes('journalid'),
+                        'journaltype' => $ju ? $ju->{journaltype} : "",
+                        'codepath'    => $rl->notes('codepath'),
+                        'langpref'    => $rl->notes('langpref'),
+                        'clientver'   => $rl->notes('clientver'),
+                        'method'      => $r->method,
+                        'uri'         => $uri,
+                        'args'        => scalar $r->args,
+                        'browser'     => $r->header_in("User-Agent"),
+                        'ref'         => $r->header_in("Referer"),
+                        );
+
+        while ( my ($k,$v) = each %insert_r ) {
+            $insert{$k} = $v;
+        }
+    };
+
+    my $delayed = $LJ::IMMEDIATE_LOGGING ? "" : "DELAYED";
+
+    my $ins = sub {
+        my $insert_sql = "INSERT $delayed INTO $table_name (" . join(", ", keys %insert) . ") VALUES (" .
+            join(",", map { "?" } values %insert) . ")";
+
+        $dbl->do($insert_sql, undef, values %insert);
+    };
+
+    # insert time!
+
+    # support for widening the schema at runtime.  if we detect a bogus column,
+    # we just don't log that column until the next (wider) table is made at next
+    # hour boundary.
+    $ins->();
+    while ($dbl->err && $dbl->errstr =~ /Unknown column \'(\w+)/) {
+        my $col = $1;
+        delete $insert{$col};
+        $ins->();
+    }
+
+    $dbl->disconnect if $LJ::DISCONNECT_DB_LOG && LJ::use_diff_db("master", "logs");
+}
+
 # override this: whether it was user-defined.  should return 0 or 1.
 sub user_caused { undef }
 
@@ -152,7 +264,6 @@ sub as_bullets {
 # override this
 sub as_string {
     my $self = shift;
-
     # FIXME: show line/file/function, show some fields?  maybe?  that are simple values?
 }
 
@@ -160,6 +271,12 @@ sub as_string {
 package LJ::Error::DieString;
 sub fields { qw(message) }
 sub die_string { return $_[0]->field('message'); }
+sub as_string { return $_[0]->field('message'); }
+
+sub as_html {
+    my $self = shift;
+    return LJ::ehtml($self->die_string);
+}
 
 # automatic type returned when something dies with a reference, but not
 # an LJ::Error
@@ -173,6 +290,14 @@ sub fields { qw(errors); }  # arrayref of errors
 sub as_bullets {
     my $self = shift;
     return join('', map { $_->as_bullets } @{ $self->{errors} });
+}
+
+sub log {
+    my $self = shift;
+    return if $self->{_logged}++;
+    foreach my $suberr (@{ $self->{errors} }) {
+        $suberr->log;
+    }
 }
 
 package LJ::Error::WithSubError;

@@ -10,6 +10,7 @@
 use strict;
 package LJ::Talk;
 
+use LJ::Constants;
 use Class::Autouse qw(
                       LJ::Event::JournalNewComment
                       LJ::Event::UserNewComment
@@ -140,6 +141,12 @@ sub link_bar
         push @linkele, $mlink->("$LJ::SITEROOT/tools/tellafriend.bml?${jargent}itemid=$itemid", "tellfriend");
     }
 
+    if ($remote && $remote->can_use_esn) {
+        my $img_key = $remote->has_subscription(journal => $u, event => "JournalNewComment", arg1 => $itemid) ?
+            "track_active" : "track";
+        push @linkele, $mlink->("$LJ::SITEROOT/manage/subscriptions/entry.bml?${jargent}ditemid=$itemid", $img_key);
+    }
+
     ## >>> Next
     push @linkele, $mlink->("$LJ::SITEROOT/go.bml?${jargent}itemid=$itemid&amp;dir=next", "next_entry");
     $$headref .= "<link href='$LJ::SITEROOT/go.bml?${jargent}itemid=$itemid&amp;dir=next' rel='Next' />\n";
@@ -178,6 +185,9 @@ sub init
         $ju = LJ::load_user($journal);
         return { 'error' => BML::ml('talk.error.nosuchjournal')} unless $ju;
         return { 'error' => BML::ml('talk.error.bogusargs')} unless $ju->{'clusterid'};
+        LJ::assert_is($ju->{user}, lc $journal);
+        $ju->selfassert;
+
         $init->{'clustered'} = 1;
         foreach (qw(itemid replyto)) {
             next unless $init->{$_};
@@ -1802,7 +1812,7 @@ sub format_text_mail {
 
     my $footer = "";
     $footer .= "-- $LJ::SITENAME\n\n";
-    $footer .= "(If you'd prefer to not get these updates, go to $LJ::SITEROOT/editinfo.bml and turn off the relevant options.)";
+    $footer .= "(If you'd prefer to not get these updates, go to $LJ::SITEROOT/manage/comments/ and turn off the relevant options.)";
     return Text::Wrap::wrap("", "", $text) . "\n" . $opts . "\n" . Text::Wrap::wrap("", "", $footer);
 }
 
@@ -1943,7 +1953,7 @@ sub format_html_mail {
         $html .= "<br /><input type='submit' value=\"Post Reply\" />";
         $html .= "</form></blockquote>\n";
     }
-    $html .= "<p><font size='-1'>(If you'd prefer to not get these updates, go to <a href=\"$LJ::SITEROOT/editinfo.bml\">your user profile page</a> and turn off the relevant options.)</font></p>\n";
+    $html .= "<p><font size='-1'>(If you'd prefer to not get these updates, go to the <a href=\"$LJ::SITEROOT/manage/comments/\">Comment Settings</a> page and turn off the relevant options.)</font></p>\n";
     $html .= "</body>\n";
 
     return $html;
@@ -2517,7 +2527,7 @@ sub init {
 
     # test accounts may only comment on other test accounts.
     if ((grep { $form->{'userpost'} eq $_ } @LJ::TESTACCTS) &&
-        !(grep { $journalu->{'user'} eq $_ } @LJ::TESTACCTS))
+        !(grep { $journalu->{'user'} eq $_ } @LJ::TESTACCTS) && !$LJ::IS_DEV_SERVER)
     {
         $bmlerr->("$SC.error.testacct");
     }

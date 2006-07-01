@@ -78,6 +78,7 @@ sub handler
         $r->push_handlers(PerlCleanupHandler => sub { %RQ = () });
         $r->push_handlers(PerlCleanupHandler => "Apache::LiveJournal::db_logger");
         $r->push_handlers(PerlCleanupHandler => "LJ::end_request");
+        $r->push_handlers(PerlCleanupHandler => "Apache::DebateSuicide");
 
         if ($LJ::TRUST_X_HEADERS) {
             # if we're behind a lite mod_proxy front-end, we need to trick future handlers
@@ -110,7 +111,7 @@ sub handler
         }
 
         # reload libraries that might've changed
-        if ($LJ::IS_DEV_SERVER) {
+        if ($LJ::IS_DEV_SERVER && !$LJ::DISABLED{'module_reload'}) {
             my %to_reload;
             while (my ($file, $mod) = each %LJ::LIB_MOD_TIME) {
                 my $cur_mod = (stat($file))[9];
@@ -229,6 +230,9 @@ sub trans
     LJ::procnotify_check();
     S2::set_domain('LJ');
 
+    my $lang = $LJ::DEFAULT_LANG || $LJ::LANGS[0];
+    BML::set_language($lang, \&LJ::Lang::get_text);
+
     my $is_ssl = $LJ::IS_SSL = LJ::run_hook("ssl_check", {
         r => $r,
     });
@@ -237,9 +241,9 @@ sub trans
     if ($LJ::UNIQ_COOKIES && $r->is_initial_req) {
 
         # if cookie exists, check for sysban
-        my ($uniq, $uniq_time);
-        if (Apache->header_in("Cookie") =~ /\bljuniq\s*=\s*([a-zA-Z0-9]{15}):(\d+)/) {
-            ($uniq, $uniq_time) = ($1, $2);
+        my ($uniq, $uniq_time, $uniq_extra);
+        if (Apache->header_in("Cookie") =~ /\bljuniq\s*=\s*([a-zA-Z0-9]{15}):(\d+)(.*)/) {
+            ($uniq, $uniq_time, $uniq_extra) = ($1, $2, $3);
             $r->notes("uniq" => $uniq);
             if (LJ::sysban_check('uniq', $uniq) && index($uri, $LJ::BLOCKED_BOT_URI) != 0) {
                 $r->handler("perl-script");
@@ -255,7 +259,10 @@ sub trans
             $uniq ||= LJ::rand_chars(15);
 
             my $uniq_value = "$uniq:$now";
-            $uniq_value    = LJ::run_hook('transform_ljuniq_value', { value => $uniq_value }) || $uniq_value;
+            $uniq_value    = LJ::run_hook('transform_ljuniq_value',
+                                          { value => $uniq_value,
+                                            extra => $uniq_extra }) || $uniq_value;
+
             # set uniq cookies for all cookie_domains
             my @domains = ref $LJ::COOKIE_DOMAIN ? @$LJ::COOKIE_DOMAIN : ($LJ::COOKIE_DOMAIN);
             foreach my $dom (@domains) {
@@ -387,6 +394,17 @@ sub trans
             return remote_domsess_bounce() if LJ::remote_bounce_url();
 
             $r->notes("_journal" => $opts->{'user'});
+
+            # this is the notes field that all other s1/s2 pages use.
+            # so be consistent for people wanting to read it.
+            # _journal above is kinda deprecated, but we'll carry on
+            # its behavior of meaning "whatever the user typed" to be
+            # passed to the userinfo BML page, whereas this one only
+            # works if journalid exists.
+            if (my $u = LJ::load_user($opts->{user})) {
+                $r->notes("journalid" => $u->{userid});
+            }
+
             my $file = $LJ::PROFILE_BML_FILE || "userinfo.bml";
             if ($args =~ /\bver=(\w+)\b/) {
                 $file = $LJ::ALT_PROFILE_BML_FILE{$1} if $LJ::ALT_PROFILE_BML_FILE{$1};
@@ -447,6 +465,7 @@ sub trans
         my ($user, $vhost, $uuri) = @_;
         my $mode = undef;
         my $pe;
+        my $ljentry;
 
         # if favicon, let filesystem handle it, for now, until
         # we have per-user favicons.
@@ -462,6 +481,14 @@ sub trans
 
         if ($uuri =~ /^.*\b__rpc_talkscreen$/) {
             return $bml_handler->("$LJ::HOME/htdocs/talkscreen.bml");
+        }
+
+        if ($uuri =~ /^.*\b__rpc_ctxpopup$/) {
+            return $bml_handler->("$LJ::HOME/htdocs/tools/endpoints/ctxpopup.bml");
+        }
+
+        if ($uuri =~ /^.*\b__rpc_changerelation$/) {
+            return $bml_handler->("$LJ::HOME/htdocs/tools/endpoints/changerelation.bml");
         }
 
         if ($uuri =~ /^.*\b__rpc_controlstrip$/) {
@@ -535,6 +562,25 @@ sub trans
         } elsif (($vhost eq "users" || $vhost =~ /^other:/) &&
                  $uuri eq "/robots.txt") {
             $mode = "robots_txt";
+        } else {
+            my $key = $uuri;
+            $key =~ s!^/!!;
+            my $u = LJ::load_user($user)
+                or return 404;
+
+            my ($type, $nodeid) =
+                $LJ::DISABLED{'named_permalinks'} ? () :
+                $u->selectrow_array("SELECT nodetype, nodeid FROM urimap WHERE journalid=? AND uri=?",
+                                    undef, $u->{userid}, $key);
+            if ($type eq "L") {
+                $ljentry = LJ::Entry->new($u, ditemid => $nodeid);
+                if ($GET{'mode'} eq "reply" || $GET{'replyto'}) {
+                    $mode = "reply";
+                } else {
+                    $mode = "entry";
+                }
+            }
+
         }
 
         return undef unless defined $mode;
@@ -549,11 +595,14 @@ sub trans
                 if $u->{'renamedto'} ne '';
         }
 
-        return $journal_view->({'vhost' => $vhost,
-                                'mode' => $mode,
-                                'args' => $args,
-                                'pathextra' => $pe,
-                                'user' => $user });
+        return $journal_view->({
+            'vhost' => $vhost,
+            'mode' => $mode,
+            'args' => $args,
+            'pathextra' => $pe,
+            'user' => $user,
+            'ljentry' => $ljentry,
+        });
     };
 
     # flag if we hit a domain that was configured as a "normal" domain
@@ -746,6 +795,14 @@ sub trans
 
     if ($uri =~ /^.*\b__rpc_talkscreen$/) {
         return $bml_handler->("$LJ::HOME/htdocs/talkscreen.bml");
+    }
+
+    if ($uri =~ /^.*\b__rpc_ctxpopup$/) {
+        return $bml_handler->("$LJ::HOME/htdocs/tools/endpoints/ctxpopup.bml");
+    }
+
+    if ($uri =~ /^.*\b__rpc_changerelation$/) {
+        return $bml_handler->("$LJ::HOME/htdocs/tools/endpoints/changerelation.bml");
     }
 
     # customview (get an S1 journal by number)
@@ -1104,6 +1161,7 @@ sub journal_content
             'If-Modified-Since' => $r->header_in("If-Modified-Since"),
         },
         'handle_with_bml_ref' => \$handle_with_bml,
+        'ljentry' => $RQ{'ljentry'},
     };
 
     $r->notes("view" => $RQ{'mode'});
@@ -1527,54 +1585,63 @@ sub db_logger
     my $table = sprintf("access%04d%02d%02d%02d", $now[5]+1900,
                         $now[4]+1, $now[3], $now[2]);
 
-    unless ($LJ::CACHED_LOG_CREATE{"$table"}++) {
-        my $sql = "(".
-                 "whn TIMESTAMP(14) NOT NULL,".
-                 "INDEX(whn),".
-                 "server VARCHAR(30),".
-                 "addr VARCHAR(15) NOT NULL,".
-                 "ljuser VARCHAR(15),".
-                 "remotecaps INT UNSIGNED,".
-                 "journalid INT UNSIGNED,". # userid of what's being looked at
-                 "codepath VARCHAR(80),".  # protocol.getevents / s[12].friends / bml.update / bml.friends.index
-                 "anonsess INT UNSIGNED,".
-                 "langpref VARCHAR(5),".
-                 "uniq VARCHAR(15),".
-                 "method VARCHAR(10) NOT NULL,".
-                 "uri VARCHAR(255) NOT NULL,".
-                 "args VARCHAR(255),".
-                 "status SMALLINT UNSIGNED NOT NULL,".
-                 "ctype VARCHAR(30),".
-                 "bytes MEDIUMINT UNSIGNED NOT NULL,".
-                 "browser VARCHAR(100),".
-                 "clientver VARCHAR(100),".
-                 "secs TINYINT UNSIGNED,".
-                 "ref VARCHAR(200),".
-                 "pid SMALLINT UNSIGNED,".
-                 "cpu_user FLOAT UNSIGNED,".
-                 "cpu_sys FLOAT UNSIGNED,".
-                 "cpu_total FLOAT UNSIGNED,".
-                 "mem_vsize INT,".
-                 "mem_share INT,".
-                 "mem_rss INT,".
-                 "mem_unshared INT) DELAY_KEY_WRITE = 1";
+    if ($dbl && ! $LJ::CACHED_LOG_CREATE{"$table"}++) {
+        my $index = "INDEX(whn),";
+        my $delaykeywrite = "DELAY_KEY_WRITE = 1";
+        my $sql;
+        my $gen_sql = sub {
+            $sql = "(".
+                "whn TIMESTAMP(14) NOT NULL, $index".
+                "server VARCHAR(30),".
+                "addr VARCHAR(15) NOT NULL,".
+                "ljuser VARCHAR(15),".
+                "remotecaps INT UNSIGNED,".
+                "journalid INT UNSIGNED,". # userid of what's being looked at
+                "journaltype CHAR(1),".   # journalid's journaltype
+                "remoteid INT UNSIGNED,". # remote user's userid
+                "codepath VARCHAR(80),".  # protocol.getevents / s[12].friends / bml.update / bml.friends.index
+                "anonsess INT UNSIGNED,".
+                "langpref VARCHAR(5),".
+                "uniq VARCHAR(15),".
+                "method VARCHAR(10) NOT NULL,".
+                "uri VARCHAR(255) NOT NULL,".
+                "args VARCHAR(255),".
+                "status SMALLINT UNSIGNED NOT NULL,".
+                "ctype VARCHAR(30),".
+                "bytes MEDIUMINT UNSIGNED NOT NULL,".
+                "browser VARCHAR(100),".
+                "clientver VARCHAR(100),".
+                "secs TINYINT UNSIGNED,".
+                "ref VARCHAR(200),".
+                "pid SMALLINT UNSIGNED,".
+                "cpu_user FLOAT UNSIGNED,".
+                "cpu_sys FLOAT UNSIGNED,".
+                "cpu_total FLOAT UNSIGNED,".
+                "mem_vsize INT,".
+                "mem_share INT,".
+                "mem_rss INT,".
+                "mem_unshared INT) $delaykeywrite";
+        };
 
-        if ($dbl) {
+        $gen_sql->();
+        $dbl->do("CREATE TABLE IF NOT EXISTS $table $sql");
+
+        # too many keys specified.  (archive table engine)
+        if ($dbl->err == 1069) {
+            $index = "";
+            $gen_sql->();
             $dbl->do("CREATE TABLE IF NOT EXISTS $table $sql");
-            $r->log_error("error creating log table ($table), perhaps due to old MySQL not supporting delayed key writes?  Error is: " .
-                          $dbl->errstr) if $dbl->err;
         }
 
-        foreach my $rec (@dinsertd_socks) {
-            my $sock = $rec->[1];
-            my $url = LJ::eurl("CREATE TABLE IF NOT EXISTS [tablename] $sql");
-            print $sock "SET_NOTE lj_create_table $url\r\n";
-            my $res = <$sock>;
-        }
+        $r->log_error("error creating log table ($table): Error is: " .
+                      $dbl->err . ": ". $dbl->errstr) if $dbl->err;
     }
 
     my $remote = eval { LJ::load_user($rl->notes('ljuser')) };
     my $remotecaps = $remote ? $remote->{caps} : undef;
+    my $remoteid   = $remote ? $remote->{userid} : 0;
+
+    my $ju = eval { LJ::load_userid($rl->notes('journalid')) };
 
     my $var = {
         'whn' => sprintf("%04d%02d%02d%02d%02d%02d", $now[5]+1900, $now[4]+1, @now[3, 2, 1, 0]),
@@ -1582,7 +1649,9 @@ sub db_logger
         'addr' => $r->connection->remote_ip,
         'ljuser' => $rl->notes('ljuser'),
         'remotecaps' => $remotecaps,
+        'remoteid'   => $remoteid,
         'journalid' => $rl->notes('journalid'),
+        'journaltype' => $ju ? $ju->{journaltype} : "",
         'codepath' => $rl->notes('codepath'),
         'anonsess' => $rl->notes('anonsess'),
         'langpref' => $rl->notes('langpref'),
@@ -1643,13 +1712,10 @@ sub db_logger
         # we just don't log that column until the next (wider) table is made at next
         # hour boundary.
         $ins->();
-        if ($dbl->err) {
-            my $errstr = $dbl->errstr;
-            if ($errstr =~ /Unknown column \'(\w+)/) {
-                my $col = $1;
-                delete $var->{$col};
-                $ins->();
-            }
+        while ($dbl->err && $dbl->errstr =~ /Unknown column \'(\w+)/) {
+            my $col = $1;
+            delete $var->{$col};
+            $ins->();
         }
 
         $dbl->disconnect if $LJ::DISCONNECT_DB_LOG;

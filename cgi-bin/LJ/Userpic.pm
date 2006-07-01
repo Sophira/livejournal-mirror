@@ -2,6 +2,7 @@ package LJ::Userpic;
 use strict;
 use Carp qw(croak);
 use Digest::MD5;
+use Class::Autouse qw (LJ::Event::NewUserpic);
 
 my %MimeTypeMap = (
                    'image/gif'  => 'gif',
@@ -62,6 +63,11 @@ sub new_from_md5 {
     my $row = $sth->fetchrow_hashref
         or return undef;
     return LJ::Userpic->new_from_row($row);
+}
+
+sub valid {
+    my $self = shift;
+    return defined $self->state;
 }
 
 sub new_from_row {
@@ -127,7 +133,7 @@ sub height {
     my $self = shift;
     my @dims = $self->dimensions;
     return undef unless @dims;
-    return $dims[0];
+    return $dims[1];
 }
 
 sub extension {
@@ -180,6 +186,13 @@ sub fullurl {
     return $self->{url} if $self->{url};
     $self->load_row;
     return $self->{url};
+}
+
+# returns an image tag of this image
+sub imgtag {
+    my $self = shift;
+    return '<img src="' . $self->url . '" width=' . $self->width . ' height=' . $self->height .
+        ' alt="' . LJ::ehtml(scalar $self->keywords) . '" />';
 }
 
 # in scalar context returns comma-seperated list of keywords or "pic#12345" if no keywords defined
@@ -331,6 +344,7 @@ sub create {
     local $LJ::THROW_ERRORS = 1;
 
     my $dataref = delete $opts{'data'};
+    my $maxbytesize = delete $opts{'maxbytesize'};
     croak("dataref not a scalarref") unless ref $dataref eq 'SCALAR';
 
     croak("Unknown options: " . join(", ", scalar keys %opts)) if %opts;
@@ -341,7 +355,7 @@ sub create {
 
     eval "use Image::Size;";
     my ($w, $h, $filetype) = Image::Size::imgsize($dataref);
-    my $MAX_UPLOAD = LJ::Userpic->max_allowed_bytes($u);
+    my $MAX_UPLOAD = $maxbytesize || LJ::Userpic->max_allowed_bytes($u);
 
     my $size = length $$dataref;
 
@@ -445,6 +459,13 @@ sub create {
             # fatal error, we couldn't get a filehandle to use
             push @errors, $clean_err->("Unable to contact storage server.  Your picture has not been saved.");
         }
+
+        # even in the non-LJ::Blob case we use the userblob table as a means
+        # to track the number and size of user blob assets
+        my $dmid = LJ::get_blob_domainid('userpic');
+        $u->do("INSERT INTO userblob (journalid, domain, blobid, length) ".
+               "VALUES (?, ?, ?, ?)", undef, $u->{userid}, $dmid, $picid, $size);
+
     } elsif ($target eq 'blob' && !$dberr) {
         my $et;
         my $fmt = lc($filetype);
@@ -457,6 +478,7 @@ sub create {
                "VALUES (?, ?, ?)",
                undef, $u->{'userid'}, $picid, $$dataref);
         push @errors, $clean_err->($u->errstr) if $u->err;
+
     } else { # We should never get here!
         push @errors, "User picture uploading failed for unknown reason";
     }
@@ -466,7 +488,10 @@ sub create {
     # now that we've created a new pic, invalidate the user's memcached userpic info
     LJ::Userpic->delete_cache($u);
 
-    return LJ::Userpic->new($u, $picid);
+    my $upic = LJ::Userpic->new($u, $picid) or die "Error insantiating userpic";
+    LJ::Event::NewUserpic->new($upic)->fire unless $LJ::DISABLED{esn};
+
+    return $upic;
 }
 
 # make this picture the default

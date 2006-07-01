@@ -7,6 +7,29 @@ layerinfo previews = "classic/classic.jpg";
 layerinfo des = "The original LiveJournal style: simple and effective.";
 
 propgroup presentation {
+  property string content_width {
+      des = "Content area width";
+      note = "Don't forget to include units; e.g. px, %";
+  }
+  property string content_alignment {
+      des = "Alignment of the content area";
+      values = "left|Left|center|Center|right|Right";
+  }
+  property string content_top_margin {
+      des = "Margin size on the top of the content area";
+      note = "You can use this to shift your journal contents down in order to display a background image at the top of your journal.  Don't forget to include units; e.g. px, %";
+  }
+  property string entryborder_size {
+      des = "Size of borders around entries";
+      note = "Don't forget to include the units, e.g. px";
+  }
+  property string entryborder_style {
+      des = "Style of borders around entries";
+      values = "solid|Solid|dashed|Dashed|dotted|Dotted|double|Double|hidden|Invisible";
+  }
+  property bool transparent {
+      des = "Make journal content transparent instead of using given background colors";
+  }
   property bool show_entry_userpic {
       des = "Display your userpic with your entries";
   }
@@ -15,15 +38,29 @@ propgroup presentation {
   property use view_entry_disabled;
   property use use_shared_pic;
   property bool show_entrynav_icons {
-    des = "Toggle to show the next, memory, edit, etc icons on the entry view page";
+      des = "Toggle to show the next, memory, edit, etc icons on the entry view page";
   }
   property use external_stylesheet;
+  property use linklist_support;
+  property string counter_code {
+      des = "If you have an external web counter, you can enter the HTML for it here";
+      note = "Your counter will appear in a tab at the bottom of your journal.";
+      maxlength = 2000;
+      string_mode = "html-oneline";
+  }
 }
+set content_width = "100%";
+set content_alignment = "left";
+set content_top_margin = "0";
+set entryborder_size = "";
+set entryborder_style = "hidden";
+set transparent = false;
 set show_entry_userpic = false;
 set page_recent_items = 20;
 set page_friends_items = 25;
 set view_entry_disabled = false;
 set show_entrynav_icons = true;
+set counter_code = "";
 
 propgroup colors {
   property Color body_bgcolor {
@@ -37,6 +74,10 @@ propgroup colors {
   property Color main_fgcolor {
       des = "Color of text on main text areas";
       s1color = "page_text";
+  }
+  property Color border_color {
+      des = "Color of borders around entries";
+      note = "If you don't set a border size and style in the \"Presentation\" section, this won't have any effect.";
   }
   property Color headerbar_bgcolor {
       des = "Background color of header bars";
@@ -96,6 +137,7 @@ propgroup colors {
 set body_bgcolor = "#6666cc";
 set main_bgcolor = "#ffffff";
 set main_fgcolor = "#000000";
+set border_color = "#000000";
 set headerbar_bgcolor = "#c0c0ff";
 set headerbar_fgcolor = "#000000";
 set metabar_bgcolor = "#eeeeff";
@@ -141,11 +183,16 @@ propgroup images {
 	note = "Not supported in all browsers, but allows for the background image to be in a fixed position when scrolling.";
 	values = "scroll|Scroll|fixed|Fixed";
   }
+  property string img_btwn_comments {
+    des = "URL to an image to be used between your comment links";
+    note = "If you specify an image to use, it will replace any text between the comment links.";
+  }
 }
 set page_background_image = "";
 set page_background_repeat = "repeat";
 set page_background_position = "center";
 set page_background_scrolling = "scroll";
+set img_btwn_comments = "";
 
 propgroup text {
   property use text_post_comment;
@@ -153,12 +200,61 @@ propgroup text {
   property use text_post_comment_friends;
   property use text_read_comments_friends;
   property use text_website_default_name;
+
+  property string text_left_comments {
+        des = "Text to be used in front of your comment links";
+  }
+  property string text_btwn_comments {
+        des = "Text to be used between your comment links";
+        note = "If you specified an image to be used between your comments links in the \"Images\" section, then this option will not have any effect.";
+  }
+  property string text_right_comments {
+        des = "Text to be used at the end of your comment links";
+  }
+  property string date_format {
+        des = "Date format for entries";
+  }
+  property string time_format {
+        des = "Time format for entries";
+  }
+  property string datetime_comments_format {
+        des = "Date and time format for comments";
+  }
+  property string date_daypage_format {
+        des = "Date format for the day page";
+  }
+  property string date_daypage_skip_format {
+        des = "Date format for the skip links on the day page";
+  }
+}
+set text_left_comments = "(";
+set text_btwn_comments = " | ";
+set text_right_comments = ")";
+set date_format = "%%month%% %%dayord%%, %%yyyy%%";
+set time_format = "%%hh%%:%%min%% %%a%%m";
+set datetime_comments_format = "%%month%% %%dayord%%, %%yyyy%% %%hh%%:%%min%% %%a%%m";
+set date_daypage_format = "%%month%% %%dayord%%, %%yyyy%%";
+set date_daypage_skip_format = "%%yyyy%%/%%mm%%/%%dd%%";
+
+propgroup customcss {
+  property use include_default_stylesheet;
+  property use linked_stylesheet;
+  property use custom_css;
 }
 
 set tags_aware = true;
 
 function print_stylesheet ()
 {
+    var string align = "";
+    if ($*content_alignment == "center") {
+        $align = "margin-left: auto; margin-right: auto;";
+    } elseif ($*content_alignment == "right") {
+        $align = "float: right;";    
+    } else {
+        $align = "float: left;";
+    }
+
     if(clean_url($*page_background_image) != "") {
       """body {
     background-image: url("$*page_background_image");
@@ -205,6 +301,10 @@ table.main {
     background-color:    $*main_bgcolor;
     color:               $*main_fgcolor;
 }
+#whole {
+    width:               $*content_width;
+    $align
+}
 .page_title {
     color:               $*page_title_color;
     font-size:           18pt;
@@ -229,6 +329,9 @@ td.metabar {
     white-space:         nowrap;
     background-color:    $*metabar_bgcolor;
     color:               $*metabar_fgcolor;
+}
+.entry {
+    border: $*entryborder_size $*entryborder_style $*border_color;
 }
 .subject {
     color:               $*page_subtitle_color;
@@ -265,7 +368,14 @@ td.weekday_empty {
     font-size:           14pt;
     font-weight:         bold;
 }
-    """;
+""";
+if ($*transparent) {
+"""
+table.main, th.headerbar, td.metabar, th.monthheader, th.daysheader, td.weekday_empty {
+    background: transparent !important;
+}
+""";
+}
 }
 
 function Page::lay_nav_blurb() { }
@@ -325,21 +435,17 @@ function Page::print ()
                            "["+lang_viewname($v)+"]" :
                            "[<a href='$.view_url{$v}'>"+lang_viewname($v)+"</a>]");
     }
+    var string margin = "";
+    if ($*content_top_margin != "0") {
+        $margin = " style=\"margin-top: $*content_top_margin;\"";
+    }
 """
 <html>
   <head>
 """;
 
     $this->print_head();
-    if ($*external_stylesheet) {
-        println safe """<link rel="stylesheet" href="$.stylesheet_url" type="text/css" />""";
-    } else {
-        println """<style type="text/css">"""; 
-        start_css();
-        print_stylesheet();
-        end_css(); 
-        print "</style>";
-    }
+    $this->print_stylesheets();
 
 """
   <title>$title</title>
@@ -347,11 +453,19 @@ function Page::print ()
 <body>
 """;
  $this->print_control_strip();
- if (viewer_sees_ads()) {
-    """<table width="100%" height="100%">""";
+ if (viewer_sees_vbox()) {
+    """<table width="100%" height="100%"$margin>""";
     """<tr><td valign="top">""";
  }
+ if (viewer_sees_hbox_top()) {
+    """<div style="text-align: center; margin-bottom: 10px;">""";
+    $this->print_hbox_top();
+    "</div>";
+ }
 """
+  <table id=\"whole\" cellpadding=\"0\" cellspacing=\"0\"""";
+  if (not viewer_sees_vbox()) { "$margin"; }
+"""><tr><td>
   <table class="main" width="100%"><tr><td>
     $userpic
     <span class="page_title">$title</span>
@@ -363,24 +477,27 @@ $this->print_linklist();
 
     $this->lay_nav_blurb();
     $this->print_body();
-    "</td></tr></table>\n";
+    "</td></tr></table></td></tr>\n";
 
     ### Affliations
 
-    "<table class='main' align='right'><tr>";
+    "<tr><td><table class='main' align='right'><tr>";
 
+    if ($*counter_code != "") {
+        """<td>$*counter_code</td><td class="body">&nbsp;</td>""";
+    }
     print $website; "<td>"; server_sig(); "</td></tr>";
 
-    "</table>";
-    if (viewer_sees_ads()) {
-        if ($.view == "recent" or $.view == "friends") {
-            """<div style="text-align: center; margin-top: 50px;">""";
-            $this->print_ad("Journal-5LinkUnit");
-            "</div>";
-        }
+    "</table></td></tr></table>";
+    if (viewer_sees_hbox_bottom() and ($.view == "recent" or $.view == "friends")) {
+        """<div style="text-align: center; margin-top: 50px;">""";
+        $this->print_hbox_bottom();
+        "</div>";
+    }
+    if (viewer_sees_vbox()) {
         "</td>";
         """<td valign="top" align="right" width="20%"><div style="margin-right: 10px;">""";
-        $this->print_ad("Journal-Skyscraper");
+        $this->print_vbox();
         "</div></td></tr></table>";
     } 
     "\n</body>\n</html>";
@@ -388,7 +505,7 @@ $this->print_linklist();
 
 function print_entry (Page p, Entry e, Color bgcolor, Color fgcolor, bool hide_text)
 {
-    var string time = $e.time->time_format();
+    var string time = $e.time->time_format($*time_format);
     var string userpic = "";
     if (defined $e.userpic)
     {
@@ -397,7 +514,7 @@ function print_entry (Page p, Entry e, Color bgcolor, Color fgcolor, bool hide_t
     if ($e.new_day or $p.view == "entry")
     {
         "<tr><th colspan='2' align='left' class='headerbar'>";
-        print $e.time->date_format("%%month%% %%dayord%%, %%yyyy%%");
+        print $e.time->date_format($*date_format);
         "</th></tr>\n";
     } elseif ($p.view == "day") {
         "<tr><th class='headerbar'>Time</td><td class='headerbar' style='width: 100%'>Event</th></tr>";
@@ -432,7 +549,7 @@ function print_entry (Page p, Entry e, Color bgcolor, Color fgcolor, bool hide_t
       "</td>";
 
     # Entry
-      "<td style='text-align:left'>";
+      "<td class='entry' style='text-align:left'>";
 
       if ($p.view == "entry" and $*show_entrynav_icons)
       {
@@ -544,17 +661,21 @@ function FriendsPage::lay_nav_blurb ()
 function CommentInfo::print ()
 {
     if ($.show_readlink or $.show_postlink) {
-        "<p class='comments'>(";
+        "<p class='comments'>$*text_left_comments";
         if ($.show_readlink) {
             $this->print_readlink();
         }
         if ($.show_postlink and $.show_readlink) {
-            "&nbsp;|&nbsp;";
+            if (clean_url($*img_btwn_comments) != "") {
+                """ <img src="$*img_btwn_comments" alt="" /> """;
+            } else {
+                "$*text_btwn_comments";
+            }
         }
         if ($.show_postlink) {
             $this->print_postlink();
         }
-        ")</p>";
+        "$*text_right_comments</p>";
     }
 }
 
@@ -633,7 +754,7 @@ function YearWeek::print ()
 
 function DayPage::print_body ()
 {
-    "<h2 class='daypage_header'>"; print $.date->date_format("%%month%% %%dayord%%, %%yyyy%%"); "</h2>";
+    "<h2 class='daypage_header'>"; print $.date->date_format($*date_daypage_format); "</h2>";
     if (not $.has_entries)
     {
         "<blockquote><em>"; print ehtml($*text_noentries_day); "</em></blockquote>";
@@ -650,7 +771,7 @@ function DayPage::print_body ()
 
     "<td width='33%' align='left'><a href='$.prev_url'>$tprev</a></td>\n";
     "<td align='center' width='33%'>";
-      "<strong>"; print $.date->date_format("%%yyyy%%/%%mm%%/%%dd%%"); "</strong><br />";
+      "<strong>"; print $.date->date_format($*date_daypage_skip_format); "</strong><br />";
       "[<a href='"; print $this.journal->base_url(); "/calendar'>$*text_view_archive</a>]</td>\n";
     "<td width='33%' align='right'><a href='$.next_url'>$tnext</a></td>\n";
 
@@ -673,9 +794,14 @@ function EntryPage::print_body () {
 
     if ($.entry.comments.enabled and $.comment_pages.total_subitems > 0)
     {
+        var string background = $*metabar_bgcolor;
+        if ($*transparent) {
+            $background = "transparent";
+        }
+            
         $this->print_multiform_start();
         "<tr valign='top'><th class='headerbar' colspan='2'>Comments</th></tr>";
-        "<tr valign='top'><td style='background-color: $*metabar_bgcolor'>&nbsp;</td><td style='width: 100%'>";
+        "<tr valign='top'><td style='background-color: $background'>&nbsp;</td><td style='width: 100%'>";
         if ($.comment_pages.total_subitems > 0) {
             $.comment_pages->print();
             $this->print_comments($.comments);
@@ -683,7 +809,7 @@ function EntryPage::print_body () {
         "</td></tr>";
         if ($this.multiform_on) {
             "<tr valign='top'><th class='headerbar' colspan='2'>Mass Action</th></tr>";
-            "<tr valign='top'><td style='background-color: $*metabar_bgcolor'>&nbsp;</td><td style='width: 100%'>";
+            "<tr valign='top'><td style='background-color: $background'>&nbsp;</td><td style='width: 100%'>";
             $this->print_multiform_actionline();
             $this->print_multiform_end();
             "</td></tr>";
@@ -703,6 +829,9 @@ function EntryPage::print_comment (Comment c) {
     } else {
         $background = $*comment_bar_two_bgcolor;
         $color = $*comment_bar_two_fgcolor;
+    }
+    if ($*transparent) {
+        $background = "transparent";
     }
     var string poster = defined $c.poster ? $c.poster->as_string() : "<i>(Anonymous)</i>";
     var string sub_icon;
@@ -731,7 +860,7 @@ function EntryPage::print_comment (Comment c) {
       print "<table>";
       print "<tr><th align='right'>From:</th><td>$poster</td></tr>\n";
       print "<tr><th align='right'>Date:</th><td style='white-space: nowrap'>";
-        print $c->time_display("long", "") + "</td></tr>";
+        print $c->time_display($*datetime_comments_format, "none") + "</td></tr>";
       if ($c.metadata{"poster_ip"}) { print "<tr><th align='right'>IP Address:</th><td>(" + $c.metadata{"poster_ip"} + ")</td></tr>"; }
     "</table></td>";
 
@@ -772,8 +901,13 @@ function ReplyPage::print_body()
         print "<tr><th class='headerbar'>$*text_reply_nocomments_header</th></tr><tr><td>$*text_reply_nocomments</td></tr></table>";
         return;
     }
-    var string time = $.replyto.time->time_format();
+    var string time = $.replyto.time->time_format($*time_format);
     var string userpic = "";
+    var string background = $*metabar_bgcolor;
+    if ($*transparent) {
+        $background = "transparent";
+    }
+
     if (defined $.replyto.userpic)
     {
         $userpic = "<img src='$.replyto.userpic.url' />";
@@ -802,7 +936,7 @@ function ReplyPage::print_body()
     "</td></tr>\n";
     "<div align='center'><a href='$.entry.comments.read_url'>( Read Comments )</a></div>";
     "<tr valign='top'><th class='headerbar' colspan='2'>Reply:</th></tr>";
-    "<tr valing='top'><td style='background-color: $*metabar_bgcolor'>&nbsp;</td><td>";
+    "<tr valing='top'><td style='background-color: $background'>&nbsp;</td><td>";
     $.form->print();
     "</td></tr></table>";
 }

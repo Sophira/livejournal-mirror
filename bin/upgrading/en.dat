@@ -252,6 +252,8 @@ p?>
 
 /community/index.bml.title=Community Center
 
+/community/join.bml.btn.cancel=Cancel
+
 /community/join.bml.button.join=Join Community
 
 /community/join.bml.error.already.member=You are already a member of this community.
@@ -262,11 +264,15 @@ p?>
 
 /community/join.bml.error.statusvis.title=Unable to Join Communities
 
-/community/join.bml.label.addtofriends=Add "[[maintainer]]" to friends list.<br>
+/community/join.bml.label.addtofriends2=Subscribe to [[comm]] in addition to joining it.
 
-/community/join.bml.label.allowposting=This community allows posting by all members, so you now have access to post in it.  If you already have a LiveJournal client open on your computer, you'll have to log out and log back in for this journal to show up in your list of journals you can post to.
+/community/join.bml.label.addtofriends2.modify=Modify subscription to [[comm]] in addition to joining it.
 
-/community/join.bml.label.auth=Although you are now listed as a member, this community only allows posting by authorized users.  Contact one of the maintainers if you desire posting access. Below is the list of maintainers for this community: [[admins]]
+/community/join.bml.label.addtofriends.note=Subscribing to this community will allow you to read entries posted in it on your Friends page.
+
+/community/join.bml.label.allowposting2=Additionally, because this community allows posting by all members, joining it will allow you to post in it. If you already have a [[sitename]] client open on your computer, you'll have to log out and log back in for this community to show up in your list of journals you can post to.
+
+/community/join.bml.label.auth2=Please note that this community only allows posting by authorized users, so joining it will not allow you to post in it. Contact one of the maintainers if you desire posting access. Below is the list of maintainers for this community: [[admins]]
 
 /community/join.bml.label.banned=The maintainer(s) of this community have banned you from joining.
 
@@ -276,13 +282,13 @@ p?>
 
 /community/join.bml.label.errorcomminfo=The specified community information is not valid.
 
-/community/join.bml.label.expls=Press the button below to join the "[[maintainer]]" community. Uncheck the box below if you want to join the community without seeing community entries on your friends page.
+/community/join.bml.label.expls2=Press the button below to join the "[[commname]]" community. Joining this community will allow you to read any members-only entries posted in it. It will not allow community members or maintainers to read protected entries in your own journal.
 
 /community/join.bml.label.loginfirst2=To join a community you must first <a [[aopts]]>log in</a>.
 
-/community/join.bml.label.membernow2=You are now a member of the <a [[aopts]]>[[commname]] Community</a>.
+/community/join.bml.label.membernow3=You are now a member of <a [[aopts]]>[[commname]] Community</a>.
 
-/community/join.bml.label.sure=You sure?
+/community/join.bml.label.sure2=Join [[comm]]?
 
 /community/join.bml.reqsubmitted.body=Your request to join has been submitted to the maintainers:
 
@@ -302,7 +308,11 @@ p?>
 
 /community/leave.bml.button.leave=Leave Community
 
+/community/leave.bml.button.stopwatch=Stop Watching Community
+
 /community/leave.bml.label.buttontoleave=Press the button below to leave the "[[commname]]" community.
+
+/community/leave.bml.label.buttontostopwatch=Press the button below to stop watching the "[[commname]]" community.
 
 /community/leave.bml.label.infoerror=The specified community information is not valid.
 
@@ -312,6 +322,8 @@ p?>
 
 /community/leave.bml.label.removed2=You are now removed from the <a [[aopts]]>[[commname]] Community</a>.
 
+/community/leave.bml.label.removed.stopwatch=You are no longer watching the <a [[aopts]]>[[commname]] Community</a>.
+
 /community/leave.bml.label.removefromfriends=Also remove "[[user]]" from friends list.
 
 /community/leave.bml.success=Success
@@ -319,6 +331,8 @@ p?>
 /community/leave.bml.sure=You sure?
 
 /community/leave.bml.title=Leave Community
+
+/community/leave.bml.title.stopwatch=Stop Watching Community
 
 /community/manage.bml.commlist.actinfo=Info
 
@@ -755,7 +769,7 @@ p?>
 
 /create.bml.birthday.head=Age Verification
 
-/create.bml.birthday.question=Please select the month, day, and year you were born.  We require this information to create an account in order to comply with the Children's Online Privacy Protection Act (COPPA).  This information is not stored in our database and is only used during account creation.  Read our <a [[aopts]]>privacy policy</a> for more information on our information practices.
+/create.bml.birthday.question_3=Please select the month, day and year you were born.  We require this information to create an account in order to comply with the Children's Online Privacy Protection Act (COPPA).  If you are under the age of thirteen you are not allowed to use our service.  Read our <a [[aopts]]>privacy policy</a> for more information regarding our information practices.
 
 /create.bml.birthday.required=(required)
 
@@ -793,7 +807,7 @@ p?>
 
 /create.bml.create.head=Creating a New Journal
 
-/create.bml.create.text=Creating a new LiveJournal is easy, just follow the instructions below!
+/create.bml.create.text_1=Here's the information we need to create your account. All fields are required.
 
 /create.bml.email.head=Your email address
 
@@ -813,7 +827,7 @@ Thanks for supporting [[sitename]]!
 
 /create.bml.email.invite.subject=[[sitename]] Friend Invitation Accepted
 
-/create.bml.email.text3=For verification and security purposes, we need your email address.  Read our <a [[aopts]]>privacy policy</a> for more information on our information practices.
+/create.bml.email.text_1=We never share or sell your email address. Read our <a [[aopts]]>privacy policy</a> for more information.
 
 /create.bml.error.birthday.invalid=You must enter a valid birthday.
 
@@ -863,7 +877,15 @@ Thanks for supporting [[sitename]]!
 
 /create.bml.password.input.head2=Re-type password:
 
-/create.bml.password.secure2=For your security, your password must <strong>not</strong> contain a dictionary word or be based upon your username or email address.  It must also contain at least one numeral or punctuation mark in it.
+/create.bml.password.secure.pt1=is at least six characters long.
+
+/create.bml.password.secure.pt2=contains at least four different characters.
+
+/create.bml.password.secure.pt3=contains at least one number or symbol.
+
+/create.bml.password.secure.pt4=cannot be based upon your username, display name or email address.
+
+/create.bml.password.secure_1=<b>You must choose a <a [[aopts]]>secure password</a></b>, which:
 
 /create.bml.password.text=Select a password.
 
@@ -877,7 +899,7 @@ Thanks for supporting [[sitename]]!
 
 /create.bml.success.text3=Now, please take the time to fill in some information about yourself.  It's mostly optional, but it lets us get an idea of who's using LiveJournal.
 
-/create.bml.title=Create New Journal
+/create.bml.title_1=Create Your [[siteabbr]] Account
 
 /create.bml.tos.heading=Terms of Service
 
@@ -889,7 +911,7 @@ Thanks for supporting [[sitename]]!
 
 /create.bml.username.box.head=Username:
 
-/create.bml.username.charsallowed=Your username may contain only lower-case letters (a-z), digits (0-9) and the underscore character (_). Additionally, it must not be longer than 15 characters.
+/create.bml.username.charsallowed_1=Your username can contain only lower-case letters (a-z), digits (0-9) and the underscore character (_).
 
 /create.bml.username.forpaidaccts=Or, for paid accounts:
 
@@ -897,9 +919,67 @@ Thanks for supporting [[sitename]]!
 
 /create.bml.username.ljaddress=Your journal will be at these addresses:
 
-/create.bml.username.text=Each [[sitename]] user must have their own unique username.  Your username is what appears in the address to your journal and what you use to log into the [[sitename]] server.  It also shows up when you post comments in other people's journals.
+/create.bml.username.text_1=Your username is what you use to log in to [[sitename]]. It will appear in your journal address (username.[[lc_sitename]]) as well as next to your posts and comments.
 
 /create.bml.username.username=username
+
+/create.bml.username.maxchars=15 characters max
+
+/customize/advanced.bml.advancedoptions.header=Advanced Options
+
+/customize/advanced.bml.disclaimer.header=Disclaimer
+
+/customize/advanced.bml.disclaimer<<
+Unless you're a programmer or web designer, most users should stay
+away from this area and use the <a [[aopts]]>main customization area</a>, which is designed for anybody to use.
+.
+
+/customize/advanced.bml.noauth=You could not be authenticated as the specified user.
+
+/customize/advanced.bml.upsell=Your account type does not permit you to create custom styles.
+
+/customize/advanced.bml.s1.browse=Style Browser
+
+/customize/advanced.bml.s1.browse.about=The style browser lets you browse through public styles created by other users.
+
+/customize/advanced.bml.s1.create=Create a new style
+
+/customize/advanced.bml.s1.create.about=Create a new style from scratch, or base your style on an existing public style.
+
+/customize/advanced.bml.s1.documentation.text=Advanced users can read more about the style system on <a [[aopts]]>the style documentation page</a>.
+
+/customize/advanced.bml.s1.edit=Edit or Delete an existing style
+
+/customize/advanced.bml.s1.edit.about<<
+You may only edit styles &ldquo;owned&rdquo; by your account. In order to customize
+a system style, you must first create a new style based on that system style.
+.
+
+/customize/advanced.bml.s1.embedding=Embed your journal in your website
+
+/customize/advanced.bml.s1.embedding.about=There are many different ways to embed your journal into your own website.
+
+/customize/advanced.bml.s2.doc.desc=under construction, but some good content
+
+/customize/advanced.bml.s2.doc.link=S2 Documentation
+
+/customize/advanced.bml.s2.documentation.header=Documentation
+
+/customize/advanced.bml.s2.documentation.text=Before you jump into tweaking/programming S2, you should understand how it works.
+
+/customize/advanced.bml.s2.publiclayers.desc=system layers (good reference &amp; place to learn)
+
+/customize/advanced.bml.s2.publiclayers.link=Public Layers
+
+/customize/advanced.bml.s2.yourlayers.desc=create/manage your layers
+
+/customize/advanced.bml.s2.yourlayers.link=Your Layers
+
+/customize/advanced.bml.s2.yourstyles.desc=create/manage your styles
+
+/customize/advanced.bml.s2.yourstyles.link=Your Styles
+
+/customize/advanced.bml.title=Journal Display
 
 /customize/advanced/index.bml.advancedoptions.header=Advanced Options
 
@@ -1376,6 +1456,8 @@ directory, or you aren't currently <a [[aopts]]>logged in</a>.  If your account 
 directory usage, be sure that you are logged in and then try again.
 .
 
+/directory.bml.error.notloggedin=You must <a [[aopts]]>login</a> to use the directory.
+
 /directory.bml.navcrap.matches=[[count]] matches
 
 /directory.bml.navcrap.xofy=Page [[curpage]] of [[totpages]] shown (records [[reca]]-[[recb]])
@@ -1395,6 +1477,8 @@ directory usage, be sure that you are logged in and then try again.
 /directory.bml.update=Update:
 
 /directory.bml.user=User
+
+/directorysearch.bml.error.notloggedin=You must <a [[aopts]]>login</a> to use the directory.
 
 /editinfo.bml.advanced.about=Don't worry about this stuff if you don't know what it is.
 
@@ -2139,6 +2223,8 @@ bottom of the page. Alternately, you can press the delete button to delete the e
 /friends/add.bml.btn.add.friend=Add
 
 /friends/add.bml.btn.cancel=Cancel
+
+/friends/add.bml.disclaimer=This will not allow maintainers or members of the community to view your friends-only posts.
 
 /friends/add.bml.btn.modify=Modify
 
@@ -2915,6 +3001,8 @@ Regards,
 
 /manage/comments/index.bml.disablecomment1=If you disable commenting, all past comments on your journal will be hidden. They will re-appear if you enable commenting again.
 
+/manage/comments/index.bml.disablecomment1.comm=If you disable commenting, all past comments on your community will be hidden. They will re-appear if you enable commenting again.
+
 /manage/comments/index.bml.disablecomment2.1=If you wish to disable commenting for only some for your entries, adjust the "Comments Settings" setting on each entry.
 
 /manage/comments/index.bml.emailnotify=Receive email notifications when others comment
@@ -2947,11 +3035,15 @@ Regards,
 
 /manage/comments/index.bml.logip.text=You can set this option to log the IP addresses of commenters to your journal.
 
+/manage/comments/index.bml.logip.text.comm=You can set this option to log the IP addresses of commenters to your community.
+
 /manage/comments/index.bml.screen=Screen comments from
 
 /manage/comments/index.bml.screen.text=Screening allows you to read comments before publishing them for others to see.
 
 /manage/comments/index.bml.section.banned=Banned users
+
+/manage/comments/index.bml.section.commcomments=Comments on your community
 
 /manage/comments/index.bml.section.journalcomments=Comments on your journal
 
@@ -2964,6 +3056,8 @@ Regards,
 /manage/comments/index.bml.security.visibility.everyone=Everyone
 
 /manage/comments/index.bml.security.visibility.friends=Friends only
+
+/manage/comments/index.bml.security.visibility.members=Members only
 
 /manage/comments/index.bml.security.visibility.nobody=Nobody
 
@@ -2982,6 +3076,8 @@ Regards,
 /manage/comments/index.bml.title=Comment Settings
 
 /manage/comments/index.bml.unban=You have the following users banned from posting in your journal. Check the checkbox by their username to remove the ban.
+
+/manage/comments/index.bml.unban.comm=You have the following users banned from posting in your community. Check the checkbox by their username to remove the ban.
 
 /manage/emailpost.bml.addresses.header=Allowed sender addresses
 
@@ -3312,7 +3408,7 @@ Regards,
 
 /manage/index.bml.information.changepass.about=Change your account's password
 
-/manage/index.bml.information.editinfo.about=Edit your account information and various options
+/manage/index.bml.information.comments.about=Change your comment settings
 
 /manage/index.bml.information.header=Account Information
 
@@ -3320,9 +3416,13 @@ Regards,
 
 /manage/index.bml.information.mobilepost.about=Manage your email addresses and PIN for mobile posting support
 
+/manage/index.bml.information.profile.about=Edit your profile information
+
 /manage/index.bml.information.pubkey=PGP/GPG public key
 
 /manage/index.bml.information.pubkey.about=Upload your public key
+
+/manage/index.bml.information.settings.about=Change your viewing options and other account settings
 
 /manage/index.bml.information.siteopts.about=Select your preferred site layout &amp; language
 
@@ -3444,6 +3544,20 @@ Regards,
 
 /manage/logins.bml.title=Manage Your Login Sessions
 
+/manage/logins.bml.user=Username:
+
+/manage/logins.bml.loggedin.header.user=Currently Logged In Sessions for [[user]]
+
+/manage/logins.bml.prior.header.user=Prior Login Sessions for [[user]]
+
+/manage/logins.bml.loggedin.table.exptype=Expiration Type
+
+/manage/logins.bml.loggedin.table.bound=Bound to IP
+
+/manage/logins.bml.loggedin.table.create=Creation Time
+
+/manage/logins.bml.loggedin.table.expire=Expiration Time
+
 /manage/moodthemes.bml.back2=Return To Editor
 
 /manage/moodthemes.bml.btn.create=Create
@@ -3508,7 +3622,15 @@ Regards,
 
 /manage/moodthemes.bml.yourthemes.nothemes=You have not yet made any custom mood themes.
 
-/manage/profile/index.bml.birthday=Show your birthday to other users
+/manage/profile/index.bml.show.birthday=Birthday display options:
+
+/manage/profile/index.bml.show.birthday.day=Display only the month and day
+
+/manage/profile/index.bml.show.birthday.full=Display month, day, and year
+
+/manage/profile/index.bml.show.birthday.nothing=Do not display
+
+/manage/profile/index.bml.show.birthday.year=Display only the year
 
 /manage/profile/index.bml.birthday.year.opt=year is optional
 
@@ -3529,8 +3651,6 @@ Regards,
 /manage/profile/index.bml.chat.yahooid=Yahoo! ID
 
 /manage/profile/index.bml.country.choose=Pick a country
-
-/manage/profile/index.bml.email=Email
 
 /manage/profile/index.bml.email.change=Change email
 
@@ -3555,6 +3675,8 @@ Regards,
 /manage/profile/index.bml.error.email.none=You must provide your email address
 
 /manage/profile/index.bml.error.email.no_space=No spaces are allowed in an email address. If you're on AOL, remember that your Internet Email address is your screen name with all spaces removed, followed by <b>@aol.com</b>
+
+/manage/profile/index.bml.error.excessive_int=Sorry, you listed too many interests. The limit is 150, but you've listed [[intcount]]. Any changes you made to your interests were not saved. Go back and remove some of your interests, then save again.
 
 /manage/profile/index.bml.error.invalidbio=Your stored bio contains invalid characters. You must visit the <a [[aopts]]><b>conversion page</b></a> to convert it to Unicode.
 
@@ -3636,8 +3758,6 @@ Regards,
 
 /manage/profile/index.bml.gender.unspecified=(Unspecified)
 
-/manage/profile/index.bml.im=IM/Chat
-
 /manage/profile/index.bml.interest.line1=Short single-word phrases are best.
 
 /manage/profile/index.bml.interest.line2=Rule of thumb: You should be able to put the interest in the sentence "I like ________".
@@ -3694,6 +3814,14 @@ Regards,
 
 /manage/profile/index.bml.success.text=Your profile has been updated.
 
+/manage/profile/index.bml.success.gonext=What would you like to do next?
+
+/manage/profile/index.bml.success.viewprofile=View your profile
+
+/manage/profile/index.bml.success.editprofile=Edit your profile
+
+/manage/profile/index.bml.success.editpics=Manage your userpics
+
 /manage/profile/index.bml.timezone.select=(Select your timezone)
 
 /manage/profile/index.bml.title=Edit Profile
@@ -3730,8 +3858,6 @@ Regards,
 
 /manage/settings/index.bml.bdayreminder=Receive email reminders for your friends' birthdays
 
-/manage/settings/index.bml.bdayreminder.note=Note: This feature is currently disabled, but may be re-enabled in the future.
-
 /manage/settings/index.bml.commentpage=View comment pages in your own journal style
 
 /manage/settings/index.bml.commentpage.text=When you follow a comment link from your Friends page, you can view that comment page in your own journal style.
@@ -3761,6 +3887,8 @@ Regards,
 /manage/settings/index.bml.imageplace.large=large images (over 640x480)
 
 /manage/settings/index.bml.imageplace.medium=medium images (over 320x240)
+
+/manage/settings/index.bml.imageplace.none=nothing (display all images)
 
 /manage/settings/index.bml.imageplace.text=Placeholders replace inline images with links, and are useful if you are browsing at work or over a slow connection.
 
@@ -3988,6 +4116,10 @@ used in the *_HEAD overrides are those elements that are valid in the head of a 
 
 /multisearch.bml.noaddress.title=No Address
 
+/multisearch.bml.nofaqsearch.title=No FAQ Search Term
+
+/multisearch.bml.nofaqsearch.text=You did not enter a term to search for in the FAQ.
+
 /multisearch.bml.nointerest.text=You did not enter an interest.
 
 /multisearch.bml.nointerest.title=No Interest
@@ -4014,6 +4146,8 @@ If you want to do a different type of search, check out the <a [[aopts]]>directo
 .
 
 /multisearch.bml.region.head=Search by Region
+
+/newuser.bml.title=Welcome to [[sitename]]
 
 /poll/create.bml.button.editpoll=Edit Poll
 
@@ -4070,6 +4204,8 @@ If you want to do a different type of search, check out the <a [[aopts]]>directo
 /poll/create.bml.questionnum=Question #[[num]]
 
 /poll/create.bml.questions=Poll Questions
+
+/poll/create.bml.seecode.desc=Below is the code for your poll. Use the  buttons below to go back and make changes or post this poll to your journal.
 
 /poll/create.bml.title=Poll Creator
 
@@ -4172,13 +4308,13 @@ Sincerely,
 
 /register.bml.new.bodyuser=Thanks!  The email address for [[user]] has now been verified.  From here, you may be interested in doing the following things:
 
+/register.bml.new.customize=<a [[aopts]]>Customize Journal</a> -- Customize the look of your journal
+
 /register.bml.new.editinfo2=<a [[aopts]]>Edit Information</a> -- Fill out your user profile and set various settings.
 
 /register.bml.new.header=Success
 
 /register.bml.new.login2=<a [[aopts]]>Log In</a> -- So you don't have to enter your username and password everywhere.
-
-/register.bml.new.modify2=<a [[aopts]]>Modify Journal</a> -- Modify the look of your journal.
 
 /register.bml.new.update2=<a [[aopts]]>Update Journal</a> -- Write in your journal.
 
@@ -4455,6 +4591,120 @@ The [[sitename]] Team
 /styles/create_do.bml.success.text=Your style has been created and has been temporarily named <b>[[des]]</b>. You can begin editing it by pressing the button below.
 
 /styles/create_do.bml.title=Create Style
+
+/styles/edit.bml.title=Edit Style
+
+/styles/edit.bml.edit.action=Action:
+
+/styles/edit.bml.edit.delete=Delete this style!
+
+/styles/edit.bml.edit.easy=Edit in Easy Mode
+
+/styles/edit.bml.edit.head=You own the following styles.  Choose which one you want to modify.
+
+/styles/edit.bml.edit.nostyle=no styles
+
+/styles/edit.bml.edit.raw=Edit in Raw Mode (Old)
+
+/styles/edit.bml.edit.submit=Proceed
+
+/styles/edit.bml.edit.text2=Pick a style:
+
+/styles/edit.bml.editstyle.head=Edit which style?
+
+/styles/edit.bml.editstyle.text2=After you <a [[aopts]]><b>create a style</b></a>, you can edit it here.  To read more about the style system, go <a [[aopts2]]>here</a>.
+
+/styles/edit_do.bml.delete.head=Are you sure?
+
+/styles/edit_do.bml.delete.submit=Yes, delete it!
+
+/styles/edit_do.bml.delete.text=Are you sure you want to delete <b>[[style]]</b>?  If so, press the button below.  This will temporarily break your journal if you're using this style, until you select a different style to use.
+
+/styles/edit_do.bml.edit.col.code=Code
+
+/styles/edit_do.bml.edit.col.description=Description:
+
+/styles/edit_do.bml.edit.col.transform=Transform
+
+/styles/edit_do.bml.edit.colorcodes.head=Color Codes
+
+/styles/edit_do.bml.edit.colorcodes.text=When designing a style, it's always best to avoid hard-coding colors in if possible.  That way, if you get bored of your colors you can change them at one place (the modify journal page) and it'll affect all your styles where you use that color code.  Obviously, if you need to use special images in your style, you may have to hard-code certain colors, but try to use them when you can.  It's your call.  <b>The following color codes can be used in any variable below that contains HTML:</b> 
+
+/styles/edit_do.bml.delete.confirmed.head=Deleted
+
+/styles/edit_do.bml.delete.confirmed.text=The style has been deleted. You can view your current list of styles <a [[aopts]]>here</a>.
+
+/styles/edit_do.bml.edit.customize.head=Customizable Variables
+
+/styles/edit_do.bml.edit.description=Style Description:
+
+/styles/edit_do.bml.edit.head=Edit Style
+
+/styles/edit_do.bml.edit.links.head=Convenience Links
+
+/styles/edit_do.bml.edit.links.text=You can use these links to scroll the page up to where the variable is declared...
+
+/styles/edit_do.bml.edit.options=Style Options:
+
+/styles/edit_do.bml.edit.override.head=Override only.
+
+/styles/edit_do.bml.edit.override.text=Only end-users may override this.  You cannot define it in a style.
+
+/styles/edit_do.bml.edit.preview=<a [[aopts]]>[Preview Current Style]</a> (must save below to see your changes, keep this window open and reload it whenever you save)
+
+/styles/edit_do.bml.edit.styleid=Style ID Number:
+
+/styles/edit_do.bml.edit.submit=Save Style
+
+/styles/edit_do.bml.edit.success.head=Success
+
+/styles/edit_do.bml.edit.success.text=Style has been updated.  You can view it <a [[aopts]]>here</a>.
+
+/styles/edit_do.bml.edit.text=Make any desired changes and press "Save" when done.
+
+/styles/edit_do.bml.edit.transforms.head=Transforms
+
+/styles/edit_do.bml.edit.transforms.text=What if you want to use a property but don't like its formatting?  Any property can be transformed 0 or more times by transform rules.  Say you want to use <tt>%%monlong%%</tt> (March, April, May, etc...) but you don't like that the default has those upper case initial letters.  You can apply the <b><tt>lc</tt></b> (lowercase) transform to it:  <b><tt>%%lc:monlong%%</tt></b>.  Transform are applied in order from the right to the left, so if you went <tt>%%a:b:c:d:property%%</tt>, <i>d</i> would be applied first.  Here are a list of the supported transforms: 
+
+/styles/edit_do.bml.edit.type=Style View Type:
+
+/styles/edit_do.bml.edit.variables.head=Style Variables:
+
+/styles/edit_do.bml.edit.variables.text=(<a [[aopts]]>reference information</a>)
+
+/styles/edit_do.bml.error.nostyle=The requested style does not exist.
+
+/styles/edit_do.bml.error.mode=Unknown mode:
+
+/styles/edit_do.bml.opts.colorfree.des=A style is color-free if it does not contain any hard-coded color tags, but only uses the generic color codes listed in the table below.
+
+/styles/edit_do.bml.opts.colorfree.title=Color Free?
+
+/styles/edit_do.bml.opts.embedded.des=Is this style designed to be embedded in somebody's homepage?  Check if so, otherwise it's a full page style
+
+/styles/edit_do.bml.opts.embedded.title=Embedded?
+
+/styles/edit_do.bml.opts.public.des=Mark this style public if you want other people to be able to use it or copy it.
+
+/styles/edit_do.bml.opts.public.title=Public?
+
+/styles/edit_do.bml.transforms.color.des=A weird transform that handles color codes.  See the color code table.
+
+/styles/edit_do.bml.transforms.cons.des=Access site constants.  Currently supported are 'siteroot', 'sitename', and 'img' (the image root).  Example use: %%cons:img%%/icon_protected.gif
+
+/styles/edit_do.bml.transforms.lc.des=Lower case.
+
+/styles/edit_do.bml.transforms.ljcomm.des=Transform the variable as if it were surrounded by &lt;lj comm=%%variable%%&gt;.  ex: %%ljcomm:username%%"
+
+/styles/edit_do.bml.transforms.ljuser.des=Transform the variable as if it were surrounded by &lt;lj user=%%variable%%&gt;.  ex: %%ljuser:username%%
+
+/styles/edit_do.bml.transforms.uc.des=Upper case.
+
+/styles/edit_do.bml.transforms.ue.des=URL-Encode.  Turn spaces to +, and all weird characters to <tt>%hh</tt>, the hex representation.  This is useful for building data files to be used in Flash-4 movies.
+
+/styles/edit_do.bml.transforms.userurl.des='Takes in a username and transforms it into a link to their journal.
+
+/styles/edit_do.bml.transforms.xe.des=XML-Encode.  Makes value acceptable for use in an XML attribute or element.  Escapes ampersands, angle brackets, and both types of quotes.  Does <i>not</i> however, escape ]]&gt;, so don't use CDATA elements.
 
 /styles/index.bml.about.header=Creating and Using Custom Styles
 
@@ -5251,7 +5501,66 @@ This could be because: <ol>
 
 /tools/memories.bml.uncategorized=Uncategorized
 
+/tools/recent_comments.bml.managesettings=Manage Comment Settings
+
 /tools/recent_comments.bml.maxnotshown=Your account is only permitted to see the latest [[current]] entries, not the full limit of [[max]].
+
+/tools/textmessage.bml.enter.user.head=Enter user
+
+/tools/textmessage.bml.enter.user.input=Username:
+
+/tools/textmessage.bml.enter.user.submit=Proceed...
+
+/tools/textmessage.bml.enter.user.text2=Enter the LiveJournal username of the person you'd like to send a text message to:
+
+/tools/textmessage.bml.error.notloggedin.head=Not logged in
+
+/tools/textmessage.bml.error.notloggedin.notfriend=and be listed as their friend
+
+/tools/textmessage.bml.error.notloggedin.text=To send a text message to this user, you must be <a [[aopts]]>logged in</a>[[andbefriend]].
+
+/tools/textmessage.bml.error.unauthorized.head=Unauthorized
+
+/tools/textmessage.bml.error.unauthorized.text=User <B>[[user]]</B> has selected "friends only" as the security level required to send text messages to them.
+
+/tools/textmessage.bml.error.unavailable.head=Unavailable
+
+/tools/textmessage.bml.error.unavailable.notfound=Could not find [[user]].
+
+/tools/textmessage.bml.error.unavailable.notpermitted=This user's account type does not permit text messaging.
+
+/tools/textmessage.bml.error.unavailable.notsetup=This user has not setup their text messaging information at [[sitenameshort]], or they've turned it off.
+
+/tools/textmessage.bml.footer.disclaimer.text=<B>Disclaimer:</B> The reliability of text messaging should not be trusted in dealing with emergencies.
+/tools/textmessage.bml.footer.howwork.text=How does this feature work?  <a [[aopts]]>Read this</a>.
+
+/tools/textmessage.bml.form.message.from=From:
+
+/tools/textmessage.bml.form.head=Send a message
+
+/tools/textmessage.bml.form.message.input=Message:
+
+/tools/textmessage.bml.form.message.note=(max <TT>[[maxlen]]</TT> characters ... type until it stops you)
+
+/tools/textmessage.bml.form.message.submit=Send Message!
+
+/tools/textmessage.bml.form.text=Fill out this form to send a text message to <B>[[user]]</B>.
+
+/tools/textmessage.bml.providers.head=Service Providers
+
+/tools/textmessage.bml.providers.from=from:
+
+/tools/textmessage.bml.providers.msg=msg:
+
+/tools/textmessage.bml.providers.text=The following text messaging service providers are supported.
+
+/tools/textmessage.bml.providers.total=total:
+
+/tools/textmessage.bml.setup.text=<a [[aopts]]>Set up or modify your text message settings.</a>
+
+/tools/textmessage.bml.success.head=Success
+
+/tools/textmessage.bml.success.text=Your text message was sent.
 
 /translate/index.bml.table.code=Code
 
@@ -5555,7 +5864,7 @@ This could be because: <ol>
 
 /userinfo.bml.memories.entry=[[count]] entry
 
-/userinfo.bml.monitor.comm=Monitor Community
+/userinfo.bml.monitor.comm2=Watch Community
 
 /userinfo.bml.monitor.user=Add this user to your friends list
 
@@ -5611,13 +5920,11 @@ This could be because: <ol>
 
 /userinfo.bml.userinfo.name=User Information
 
+/userinfo.bml.userpic.none=no default userpic
+
 Actionlink=[[[link]]]
 
 Backlink=[<a href="[[link]]">&lt;&lt;</a> [[text]]]
-
-birthday.link=birthdays
-
-birthday.text=[[user]], did you know you can surprise your friends by actually remembering their birthdays?  LJ keeps a list of your friends' [[link]] for you.
 
 bml.badcontent.body=One or more errors occurred processing your request. Please go back, correct the necessary information, and submit your data again.
 
@@ -5639,9 +5946,405 @@ bml.requirepost=As a security precaution, the page you're viewing requires a POS
 
 btn.search=Search
 
-controlstrip.link=Navigation Strip
+cprod.birthday.link.v1=birthdays
 
-controlstrip.text=9 out of 10 LJ users prefer the [[link]].  (OK we made that up, but you should check it out anyway.)
+cprod.birthday.link.v2=
+
+cprod.birthday.link.v3=
+
+cprod.birthday.link.v4=
+
+cprod.birthday.link.v5=
+
+cprod.birthday.text.v1=Hey, [[user]], see which of your friends' [[link]] are coming up! LiveJournal keeps a list of their birthdays for you.
+
+cprod.birthday.text.v2=
+
+cprod.birthday.text.v3=
+
+cprod.birthday.text.v4=
+
+cprod.birthday.text.v5=
+
+cprod.createstyles.link.v1=
+
+cprod.createstyles.link.v2=
+
+cprod.createstyles.link.v3=
+
+cprod.createstyles.link.v4=
+
+cprod.createstyles.link.v5=
+
+cprod.createstyles.text.v1=Your account type does not support creating styles.
+
+cprod.createstyles.text.v2=
+
+cprod.createstyles.text.v3=
+
+cprod.createstyles.text.v4=
+
+cprod.createstyles.text.v5=
+
+cprod.controlstrip.link.v1=Navigation Strip
+
+cprod.controlstrip.link.v2=
+
+cprod.controlstrip.link.v3=
+
+cprod.controlstrip.link.v4=
+
+cprod.controlstrip.link.v5=
+
+cprod.controlstrip.text.v1=9 out of 10 LJ users prefer the [[link]].  (OK we made that up, but you should check it out anyway.)
+
+cprod.controlstrip.text.v2=
+
+cprod.controlstrip.text.v3=
+
+cprod.controlstrip.text.v4=
+
+cprod.controlstrip.text.v5=
+
+cprod.directory.link.v1=
+
+cprod.directory.link.v2=
+
+cprod.directory.link.v3=
+
+cprod.directory.link.v4=
+
+cprod.directory.link.v5=
+
+cprod.directory.text.v1=Your account type doesn't permit usage of the directory.
+
+cprod.directory.text.v2=
+
+cprod.directory.text.v3=
+
+cprod.directory.text.v4=
+
+cprod.directory.text.v5=
+
+cprod.editpics.link.v1=
+
+cprod.editpics.link.v2=
+
+cprod.editpics.link.v3=
+
+cprod.editpics.link.v4=
+
+cprod.editpics.link.v5=
+
+cprod.editpics.link2-2.v1=
+
+cprod.editpics.link2-2.v2=
+
+cprod.editpics.link2-2.v3=
+
+cprod.editpics.link2-2.v4=
+
+cprod.editpics.link2-2.v5=
+
+cprod.editpics.link3-2.v1=
+
+cprod.editpics.link3-2.v1=
+
+cprod.editpics.link3-3.v3=
+
+cprod.editpics.link3-2.v4=
+
+cprod.editpics.link3-2.v5=
+
+cprod.editpics.text7.v1=You've reached your limit of [[num]] userpics.
+
+cprod.editpics.text6.v2=
+
+cprod.editpics.text6.v3=
+
+cprod.editpics.text5.v4=
+
+cprod.editpics.text5.v5=
+
+cprod.editpicsmax.link.v1=
+
+cprod.editpicsmax.link.v2=
+
+cprod.editpicsmax.link.v3=
+
+cprod.editpicsmax.link.v4=
+
+cprod.editpicsmax.link.v5=
+
+cprod.editpicsmax.link2-3.v1=
+
+cprod.editpicsmax.link2.v2=
+
+cprod.editpicsmax.link2.v3=
+
+cprod.editpicsmax.link2.v4=
+
+cprod.editpicsmax.link2.v5=
+
+cprod.editpicsmax.link3.v1=
+
+cprod.editpicsmax.link3.v1=
+
+cprod.editpicsmax.link3.v3=
+
+cprod.editpicsmax.link3.v4=
+
+cprod.editpicsmax.link3.v5=
+
+cprod.editpicsmax.text5.v1=You've reached your limit of [[num]] userpics.
+
+cprod.editpicsmax.text5.v2=
+
+cprod.editpicsmax.text5.v3=
+
+cprod.editpicsmax.text5.v4=
+
+cprod.editpicsmax.text5.v5=
+
+cprod.editstyles.link.v1=
+
+cprod.editstyles.link.v2=
+
+cprod.editstyles.link.v3=
+
+cprod.editstyles.link.v4=
+
+cprod.editstyles.link.v5=
+
+cprod.editstyles.text.v1=Your account type does not permit you to edit styles.
+
+cprod.editstyles.text.v2=
+
+cprod.editstyles.text.v3=
+
+cprod.editstyles.text.v4=
+
+cprod.editstyles.text.v5=
+
+cprod.feeds.link.v1=syndicated feeds
+
+cprod.feeds.link.v2=
+
+cprod.feeds.link.v3=
+
+cprod.feeds.link.v4=
+
+cprod.feeds.link.v5=
+
+cprod.feeds.text.v1=Apparently there's good content outside of LJ?  We'll let you add [[link]] to your Friends page so you never have to leave.
+
+cprod.feeds.text.v2=
+
+cprod.feeds.text.v3=
+
+cprod.feeds.text.v4=
+
+cprod.feeds.text.v5=
+
+cprod.friendsfriends.link2.v1=Friends of Friends
+
+cprod.friendsfriends.link2.v2=
+
+cprod.friendsfriends.link2.v3=
+
+cprod.friendsfriends.link2.v4=
+
+cprod.friendsfriends.link2.v5=
+
+cprod.friendsfriends.text2.v1=Hey friend, the [[link]] page shows all your friends' Friends pages in one Friends page.  Say that three times fast.
+
+cprod.friendsfriends.text2.v2=
+
+cprod.friendsfriends.text2.v3=
+
+cprod.friendsfriends.text2.v4=
+
+cprod.friendsfriends.text2.v5=
+
+cprod.friendsfriendsinline.link3.v1=
+
+cprod.friendsfriendsinline.link3.v2=
+
+cprod.friendsfriendsinline.link3.v3=
+
+cprod.friendsfriendsinline.link3.v4=
+
+cprod.friendsfriendsinline.link3.v5=
+
+cprod.friendsfriendsinline.text3.v1=Sorry, this account type does not permit showing friends of friends.
+
+cprod.friendsfriendsinline.text3.v2=
+
+cprod.friendsfriendsinline.text3.v3=
+
+cprod.friendsfriendsinline.text3.v4=
+
+cprod.friendsfriendsinline.text3.v5=
+
+cprod.links.link.v1=
+
+cprod.links.link.v2=
+
+cprod.links.link.v3=
+
+cprod.links.link.v4=
+
+cprod.links.link.v5=
+
+cprod.links.link2-2.v1=
+
+cprod.links.link2.v2=
+
+cprod.links.link2.v3=
+
+cprod.links.link2.v4=
+
+cprod.links.link2.v5=
+
+cprod.links.text3.v1=Your account type does not permit you to use any more links.
+
+cprod.links.text3.v2=
+
+cprod.links.text3.v3=
+
+cprod.links.text3.v4=
+
+cprod.links.text3.v5=
+
+cprod.polls.link.v1=poll creation wizard
+
+cprod.polls.link.v2=
+
+cprod.polls.link.v3=
+
+cprod.polls.link.v4=
+
+cprod.polls.link.v5=
+
+cprod.polls.text.v1=[[user]], did you know you can post a poll in your journal using our [[link]]?  Find out what your friends <em>really</em> think about that shirt you bought last week. [[poll]]
+
+cprod.polls.text.v2=
+
+cprod.polls.text.v3=
+
+cprod.polls.text.v4=
+
+cprod.polls.text.v5=
+
+cprod.syn.link.v1=
+
+cprod.syn.link.v2=
+
+cprod.syn.link.v3=
+
+cprod.syn.link.v4=
+
+cprod.syn.link.v5=
+
+cprod.syn.text.v1=Note: This feature is not available to your account type.
+
+cprod.syn.text.v2=
+
+cprod.syn.text.v3=
+
+cprod.syn.text.v4=
+
+cprod.syn.text.v5=
+
+cprod.textmessaging.link.v1=
+
+cprod.textmessaging.link.v2=
+
+cprod.textmessaging.link.v3=
+
+cprod.textmessaging.link.v4=
+
+cprod.textmessaging.link.v5=
+
+cprod.textmessaging.link2-2.v1=
+
+cprod.textmessaging.link2.v2=
+
+cprod.textmessaging.link2.v3=
+
+cprod.textmessaging.link2.v4=
+
+cprod.textmessaging.link2.v5=
+
+cprod.textmessaging.text3.v1=Your account type does not permit usage of this feature.
+
+cprod.textmessaging.text.v2=
+
+cprod.textmessaging.text.v3=
+
+cprod.textmessaging.text.v4=
+
+cprod.textmessaging.text.v5=
+
+cprod.todomaxitems.link.v1=
+
+cprod.todomaxitems.link.v2=
+
+cprod.todomaxitems.link.v3=
+
+cprod.todomaxitems.link.v4=
+
+cprod.todomaxitems.link.v5=
+
+cprod.todomaxitems.text2.v1=You have reached the limit of todo items available to your account type.
+
+cprod.todomaxitems.text2.v2=
+
+cprod.todomaxitems.text2.v3=
+
+cprod.todomaxitems.text2.v4=
+
+cprod.todomaxitems.text2.v5=
+
+cprod.todononpublic.link.v1=
+
+cprod.todononpublic.link.v2=
+
+cprod.todononpublic.link.v3=
+
+cprod.todononpublic.link.v4=
+
+cprod.todononpublic.link.v5=
+
+cprod.todononpublic.text.v1=Your account type is not permitted to use non-public todo items.
+
+cprod.todononpublic.text.v2=
+
+cprod.todononpublic.text.v3=
+
+cprod.todononpublic.text.v4=
+
+cprod.todononpublic.text.v5=
+
+cprod.userpic.link.v1=default userpic
+
+cprod.userpic.link.v2=
+
+cprod.userpic.link.v3=
+
+cprod.userpic.link.v4=
+
+cprod.userpic.link.v5=
+
+cprod.userpic.text.v1=[[user]], did you know you could pick a [[link]] to go along with your posts and comments?
+
+cprod.userpic.text.v2=
+
+cprod.userpic.text.v3=
+
+cprod.userpic.text.v4=
+
+cprod.userpic.text.v5=
 
 crumb.acctstatus=Account Status
 
@@ -6055,6 +6758,8 @@ entryform.opt.defpic=(default)
 
 entryform.options=Options:
 
+entryform.plainswitch=(Use the 'Source' button to edit HTML.  You also can <a [[aopts]]>switch</a> back to the plain text mode.)
+
 entryform.postto=Post to:
 
 entryform.preview=Preview
@@ -6146,9 +6851,23 @@ error.usernamelong=Username is too long, 15 character max.
 
 error.username_notfound=Username not found.
 
-feeds.link=syndicated feeds
+fcklang.cutcontents=Type your cut contents here.
 
-feeds.text=Apparently there's good content outside of LJ?  We'll let you add [[link]] to your Friends page so you never have to leave.
+fcklang.cutprompt=Cut link text?
+
+fcklang.invalidchars=Invalid characters in username
+
+fcklang.ljcut=LiveJournal Cut
+
+fcklang.ljuser=LiveJournal User
+
+fcklang.ljvideo=LiveJournal Video
+
+fcklang.readmore=Read more...
+
+fcklang.userprompt=Enter their username
+
+fcklang.videoprompt=Please enter the YouTube or PhotoBucket URL:
 
 Help=Help
 
@@ -6188,11 +6907,7 @@ label.warning=Warning:
 
 langname.en=English
 
-ljfeedback.text=Like to vote?  Join [[journal]] where we post polls and surveys that help influence and improve LJ.
-
 ljlib.pageofpages=Page [[page]] of [[total]]
-
-ljspotlight.text=We're keeping an eye out for interesting communities.  Check out [[journal]] to see some great ways people use LJ.
 
 lostinfo.head=Forget something?
 
@@ -6295,10 +7010,6 @@ poll.security.none=None
 poll.submit=Submit Poll
 
 poll.viewanswers=View Answers
-
-polls.link=poll creation wizard
-
-polls.text=[[user]], did you know you can post a poll in your journal using our [[link]]?  Find out what your friends <em>really</em> think about that shirt you bought last week. [[poll]]
 
 portal.bdays.count.des=By default, the 5 friends with the soonest birthdays are shown.
 
@@ -6419,6 +7130,51 @@ protocol.readonly=Your account is temporarily in read-only mode.  Some operation
 Sorry|notes=typically used to announce that the requested action can't be done.
 Sorry=Sorry
 
+settings.city=City
+
+settings.country=Country
+
+settings.country.choose=Pick a country
+
+settings.error.locale.country_ne_state=You specified United States as your country, but you typed in a non-US state in the "other state" field.
+
+settings.error.locale.invalid_country=Somehow you selected an invalid country.
+
+settings.error.locale.state_ne_country=You specified a non-US country but selected a US state.
+
+settings.error.locale.zip_ne_state<<
+Your zip code does not match the state you specified.__
+Either correct the information, or erase one or both of the state and zip code fields.
+.
+
+settings.error.locale.zip_requires_us<<
+You entered a zip code but you did not select United States as your country.
+We only collect zip code information about people in the US.
+Please go back and remove the zip code or select United States as your country.
+.
+
+settings.error.year.notenoughdigits=Invalid birthday year. Enter a 4-digit year.
+
+settings.error.year.outofrange=Invalid birthday year.
+
+settings.gender=Gender
+
+settings.gender.female=Female
+
+settings.gender.male=Male
+
+settings.gender.uns=(Unspecified)
+
+settings.province=or non-US State/province/territory
+
+settings.state=State
+
+settings.state.us=US States
+
+settings.yearofbirth=Year of Birth
+
+settings.zipcode=ZIP Code
+
 talk.anonwrote=Someone wrote,
 
 talk.anonwrote_comm=Someone wrote in [[commlink]],
@@ -6499,10 +7255,6 @@ Username=Username
 
 userpic.inactive=Inactive
 
-userpic.link=userpic
-
-userpic.text=[[user]], this is what you currently look like to your friends: [[empty]]<br />Boooring. Be classy and upload a [[link]].
-
 web.authas.btn=Switch
 
 web.authas.label=Work as user:
@@ -6516,8 +7268,6 @@ web.controlstrip.btn.view=View
 web.controlstrip.links.addfeed=Add it to your Friends Page
 
 web.controlstrip.links.addfriend=Add them as a friend
-
-web.controlstrip.links.changecommsettings=Change Settings
 
 web.controlstrip.links.create=Create a [[sitename]] Account
 

@@ -39,7 +39,7 @@ body<=
         $ret .= "<form action='edit.bml' method='get'>\n";
         $ret .= LJ::make_authas_select($remote,
                                        { 'authas' => $GET{'authas'},
-                                         'type' => ['P', 'S'] });
+                                         'type' => 'P' });
         $ret .= "</form>\n\n";
 
         $ret .= '<?p ' . BML::ml('/friends/edit.bml.invite', { aopts => "href='$LJ::SITEROOT/friends/invite.bml'" }) . ' p?>';
@@ -206,7 +206,18 @@ body<=
             # tell the user all is well
             return "<?h1 $ML{'.success.head'} h1?><?p <table width='100%'><tr valign='top'><td>" . 
                 BML::ml('.success.text2', {'aopts' => "href='" . $u->journal_base . "/friends'"}) . "</td>" .
-                "<td style=\"padding-left: 2em\">" . LJ::CProd->full_box_for($u, width => 300) . "</td></tr></table> p?>";
+                "<td style=\"padding-left: 2em\">" . LJ::CProd->full_box_for($u, width => 300) . "</td></tr></table> p?>" . qq{
+                    <div id="fromhere">From here you can:
+                    <ul>
+                        <li>
+                        <a href="$LJ::SITEROOT/friends/edit.bml">Manage your friends</a>
+                        </li>
+                        <li>
+                        <a href="$LJ::SITEROOT/friends/editgroups.bml">Edit custom friends groups</a>
+                        </li>
+                    </ul>
+                    </div>
+                };
         } else {
             return "<?h1 $ML{'Error'} h1?><?p $ML{'.error.updating'} <ul><li><b>$response{'errmsg'}</b></ul> p?>\n";
         }

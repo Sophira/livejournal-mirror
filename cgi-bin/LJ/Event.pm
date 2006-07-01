@@ -10,6 +10,10 @@ use Class::Autouse qw(
                       LJ::Event::JournalNewComment
                       LJ::Event::UserNewComment
                       LJ::Event::Befriended
+                      LJ::Event::CommunityInvite
+                      LJ::Event::CommunityJoinRequest
+                      LJ::Event::OfficialPost
+                      LJ::Event::NewUserpic
                       );
 
 # Guide to subclasses:
@@ -23,12 +27,8 @@ use Class::Autouse qw(
 #                                  ($u,$journalid,$jtalkid)
 #    LJ::Event::Befriended        -- user $fromuserid added $u as a friend
 #                                  ($u,$fromuserid)
-
-# make sure all the config'd classes are mapped
-if (@LJ::EVENT_TYPES) {
-    my $tm = __PACKAGE__->typemap or die "Could not make typemap.";
-    $tm->map_classes(@LJ::EVENT_TYPES);
-}
+#    LJ::Event::CommunityInvite   -- user $fromuserid invited $u to join $commid community)
+#                                  ($u,$fromuserid, $commid)
 
 sub new {
     my ($class, $u, @args) = @_;
@@ -76,10 +76,8 @@ sub is_common {
     0;
 }
 
-# Override this with a very short description of the type of event
-sub title {
-    return 'New Event';
-}
+# Override this with HTML containing the actual event
+sub content { '' }
 
 sub as_string {
     my $self = shift;
@@ -91,6 +89,18 @@ sub as_string {
 # default is just return the string, override if subclass
 # actually can generate pretty content
 sub as_html {
+    my $self = shift;
+    return $self->as_string;
+}
+
+# contents for HTML email
+sub as_email_html {
+    my $self = shift;
+    return $self->as_html;
+}
+
+# contents for plaintext email
+sub as_email_string {
     my $self = shift;
     return $self->as_string;
 }
@@ -117,13 +127,12 @@ sub as_sms {
     return substr($str, 0, 157) . "...";
 }
 
-sub journal_sub_title { undef }
-sub journal_sub_type  { undef }
-sub arg1_sub_title    { undef }
-sub arg1_sub_type     { undef }
-sub arg2_sub_title    { undef }
-sub arg2_sub_type     { undef }
+# override in subclasses
+sub subscription_applicable {
+    my ($class, $subscr) = @_;
 
+    return 1;
+}
 
 ############################################################################
 #            Don't override
@@ -177,12 +186,15 @@ sub subscriptions {
     # allsubs
     my @subs;
 
+    my $allmatch = 0;
     my $zeromeans = $self->zero_journalid_subs_means;
 
     my @wildcards_from;
-    if ($zeromeans eq "friends") {
+    if ($zeromeans eq 'friends') {
         # find friendofs, add to @wildcards_from
         @wildcards_from = LJ::get_friendofs($self->u);
+    } elsif ($zeromeans eq 'all') {
+        $allmatch = 1;
     }
 
     # TODO: gearman parallelize:
@@ -190,10 +202,15 @@ sub subscriptions {
         my $udbh = LJ::get_cluster_master($cid)
             or die;
 
-        # first we find exact matches
+        # first we find exact matches (or all matches)
+        my $journal_match = $allmatch ? "" : "AND journalid=?";
         my $sth = $udbh->prepare
-            ("SELECT userid, subid FROM subs WHERE etypeid=? AND journalid=?");
-        $sth->execute($self->etypeid, $self->u->{userid});
+            ("SELECT userid, subid FROM subs WHERE etypeid=? $journal_match");
+
+        my @args = $self->etypeid;
+        push @args, $self->{u}->{userid} unless $allmatch;
+        $sth->execute(@args);
+
         while (my ($uid, $subid) = $sth->fetchrow_array) {
             # TODO: convert to using new_from_row, more efficient
             push @subs, LJ::Subscription->new_by_id(LJ::load_userid($uid), $subid);

@@ -7,6 +7,8 @@ use strict;
 # load the bread crumb hash
 require "$ENV{'LJHOME'}/cgi-bin/crumbs.pl";
 
+use Class::Autouse qw(LJ::Event LJ::Subscription::Pending);
+
 # <LJFUNC>
 # name: LJ::img
 # des: Returns an HTML &lt;img&gt; or &lt;input&gt; tag to an named image
@@ -158,7 +160,7 @@ sub make_authas_select {
     my @list = LJ::get_authas_list($u, $opts);
 
     # only do most of form if there are options to select from
-    if (@list > 1) {
+    if (@list > 1 || $list[0] ne $u->{'user'}) {
         return ($opts->{'label'} || $BML::ML{'web.authas.label'}) . " " .
                LJ::html_select({ 'name' => 'authas',
                                  'selected' => $opts->{'authas'} || $u->{'user'}},
@@ -244,15 +246,10 @@ sub bad_input
     my @errors = @_;
     my $ret = "";
     $ret .= "<?badcontent?>\n<ul>\n";
-    # separate out system errors and user errors...
-    # make strings into LJ::Error::StringError
-    foreach my $err (@errors) {
-        my $ref = ref $err;
-        if ($ref && $ref =~ /^LJ::Error/) {
-            $ret .= $err->as_bullets;
-        } else {
-            $ret .= "<li>$err</li>\n";
-        }
+    foreach my $ei (@errors) {
+        my $err  = LJ::errobj($ei) or next;
+        $err->log;
+        $ret .= $err->as_bullets;
     }
     $ret .= "</ul>\n";
     return $ret;
@@ -276,13 +273,10 @@ sub error_list
     $ret .= BML::ml('error.procrequest');
     $ret .= "</strong><ul>";
 
-    foreach my $err (@errors) {
-        my $ref = ref $err;
-        if ($ref && $ref =~ /^LJ::Error/) {
-            $ret .= $err->as_bullets;
-        } else {
-            $ret .= "<li>$err</li>\n";
-        }
+    foreach my $ei (@errors) {
+        my $err  = LJ::errobj($ei) or next;
+        $err->log;
+        $ret .= $err->as_bullets;
     }
     $ret .= " </ul> errorbar?>";
     return $ret;
@@ -332,7 +326,7 @@ sub tosagree_widget {
         BML::ml('tos.mustread',
                 { aopts => "target='_new' href='$LJ::SITEROOT/legal/tos.bml'" }) .
         "</div>" .
-        "<iframe width='600' height='300' src='/legal/tos-mini.bml' " .
+        "<iframe width='684' height='300' src='/legal/tos-mini.bml' " .
         "style='border: 1px solid gray;'></iframe>" .
         "<div>" . LJ::html_check({ name => 'agree_tos', id => 'agree_tos',
                                    value => '1', selected =>  $checked }) .
@@ -1187,12 +1181,30 @@ sub entry_form {
         if (t) {
 RTE
 
+    $out .= "var FCKLang;\n";
+    $out .= "if (!FCKLang) FCKLang = {};\n";
+    $out .= "FCKLang.UserPrompt = \"".BML::ml('fcklang.userprompt')."\";\n";
+    $out .= "FCKLang.InvalidChars = \"".BML::ml('fcklang.invalidchars')."\";\n";
+    $out .= "FCKLang.LJUser = \"".BML::ml('fcklang.ljuser')."\";\n";
+    $out .= "FCKLang.VideoPrompt = \"".BML::ml('fcklang.videoprompt')."\";\n";
+    $out .= "FCKLang.LJVideo = \"".BML::ml('fcklang.ljvideo')."\";\n";
+    $out .= "FCKLang.CutPrompt = \"".BML::ml('fcklang.cutprompt')."\";\n";
+    $out .= "FCKLang.ReadMore = \"".BML::ml('fcklang.readmore')."\";\n";
+    $out .= "FCKLang.CutContents = \"".BML::ml('fcklang.cutcontents')."\";\n";
+    $out .= "FCKLang.LJCut = \"".BML::ml('fcklang.ljcut')."\";\n";
+
         if ($opts->{'richtext_default'}) {
             $$onload .= 'useRichText("draft", "' . LJ::ejs($LJ::WSTATPREFIX) . '");';
-        } else {
+        }
+
+        {
             my $jrich = LJ::ejs(LJ::deemp(
-                                          BML::ml("entryform.htmlokay.rich2", { 'opts' => 'href="#" onClick="return useRichText(\'draft\', \'' . LJ::ejs($LJ::WSTATPREFIX) . '\');"' })));
+                                          BML::ml("entryform.htmlokay.rich2", { 'opts' => 'href="javascript:void(0);" onClick="return useRichText(\'draft\', \'' . LJ::ejs($LJ::WSTATPREFIX) . '\');"' })));
             $out .= "\t\tdocument.write(\"<div id='jrich'>$jrich</div>\");\n";
+
+            my $jplain = LJ::ejs(LJ::deemp(
+                                           BML::ml("entryform.plainswitch", { 'aopts' => 'href="javascript:void(0);" onClick="return usePlainText(\'draft\');"' })));
+            $out .= "\t\tdocument.write(\"<div id='jplain' class='display_none'>$jplain</div>\");\n";
         }
 
         $out .= <<RTE;
@@ -1265,16 +1277,15 @@ RTE
             }
 
             # Text Formatting
-            unless ($opts->{'richtext_default'}) {
-                my $format_selected = $opts->{'prop_opt_preformatted'} ? "preformatted" : "";
-                $format_selected ||= $opts->{'event_format'};
+            my $format_selected = $opts->{'prop_opt_preformatted'} ? "preformatted" : "";
+            $format_selected ||= $opts->{'event_format'};
 
-                $out .= "<tr valign='top' id='event_format_tr'><th><label for='event_format'>" . BML::ml('entryform.format') . "</label></th><td>";
-                $out .= LJ::html_select({ 'name' => "event_format", 'id' => "event_format",
-                                          'selected' => $format_selected, 'tabindex' => $tabindex->() },
-                                        "auto", BML::ml('entryform.format.auto'), "preformatted", BML::ml('entryform.format.preformatted'));
-                $out .= "</td></tr>";
-            }
+            $out .= "<tr valign='top' id='event_format_tr'><th><label for='event_format'>" . BML::ml('entryform.format') . "</label></th><td>";
+
+            $out .= LJ::html_select({ 'name' => "event_format", 'id' => "event_format",
+            'selected' => $format_selected, 'tabindex' => $tabindex->() },
+            "auto", BML::ml('entryform.format.auto'), "preformatted", BML::ml('entryform.format.preformatted'));
+            $out .= "</td></tr>";
 
             # Current Location
             unless ($LJ::DISABLED{'web_current_location'}) {
@@ -1694,7 +1705,7 @@ sub entry_form_decode
             # Make sure they actually typed something, and not just hit
             # enter a lot
             $attempt =~ s!(?:<p>(?:&nbsp;|\s)+</p>|&nbsp;)\s*?!!gm;
-            $event = '' unless $attempt =~ /\w+/;
+            $event = '' unless $attempt =~ /\S/;
 
             $req->{'prop_opt_preformatted'} = 0;
         } else {
@@ -1703,7 +1714,10 @@ sub entry_form_decode
 
             $event =~ s!<lj-raw class="ljraw">!<lj-raw>!gi;
         }
+    } else {
+        $req->{"prop_used_rte"} = 0;
     }
+
     $req->{'event'} = $event;
 
     ## see if an "other" mood they typed in has an equivalent moodid
@@ -1789,37 +1803,91 @@ sub res_includes {
     # TODO: automatic dependencies from external map and/or content of files,
     # currently it's limited to dependencies on the order you call LJ::need_res();
     my $ret = "";
-    my $now = time();
-    foreach my $key (@LJ::NEEDED_RES) {
-        my $path = $key;
-        my $mtime = _file_modtime($key, $now);
-        # some files need to be served from same host as the app (must be on "www.")
-        # and those are WSTATPREFIX (the "W" meaning "Web")
-        my $changepath = sub {
-            if ($key =~ m!^stc/fck/! || $LJ::FORCE_WSTAT{$key}) {
-                $path = $key;
-                $path =~ s!^stc/!$LJ::WSTATPREFIX/!;
-            }
-            $path .= "?v=$mtime";
-        };
-        if ($path =~ s!^js/!$LJ::JSPREFIX/!) {
-            $changepath->();
-            $ret .= "<script type=\"text/javascript\" src=\"$path\"></script>\n";
-        } elsif ($path =~ /\.css$/ && $path =~ s!^stc/!$LJ::STATPREFIX/!) {
-            $changepath->();
-            $ret .= "<link rel=\"stylesheet\" type=\"text/css\" href=\"$path\" />\n";
-        } elsif ($path =~ /\.js$/ && $path =~ s!^stc/!$LJ::STATPREFIX/!) {
-            $changepath->();
-            $ret .= "<script type=\"text/javascript\" src=\"$path\"></script>\n";
+
+    # find current journal
+    my $r = eval { Apache->request };
+    my $journal_base = '';
+    my $journal = '';
+    if ($r) {
+        my $journalid = $r->notes('journalid');
+
+        my $ju;
+        $ju = LJ::load_userid($journalid) if $journalid;
+
+        if ($ju) {
+            $journal_base = $ju->journal_base;
+            $journal = $ju->{user};
         }
     }
+
+    # include standard JS info
+    $ret .= qq {
+        <script language="JavaScript">
+        var LJVAR;
+        if (!LJVAR) LJVAR = {};
+        LJVAR.imgprefix = "$LJ::IMGPREFIX";
+        LJVAR.siteroot = "$LJ::SITEROOT";
+        LJVAR.statprefix = "$LJ::STATPREFIX";
+        LJVAR.currentJournalBase = "$journal_base";
+        LJVAR.currentJournal = "$journal";
+        </script>
+        };
+
+    my $now = time();
+    my %list; # type -> [];
+    my $add = sub {
+        my ($type, $what) = @_;
+        push @{$list{$type} ||= []}, $what;
+    };
+
+    foreach my $key (@LJ::NEEDED_RES) {
+        my $path;
+        my $mtime = _file_modtime($key, $now);
+        if ($key =~ m!^stc/fck/! || $LJ::FORCE_WSTAT{$key}) {
+            $path = "w$key";  # wstc/ instead of stc/
+        } else {
+            $path = $key;
+        }
+
+        if ($path =~ m!^js/(.+)!) {
+            $add->('js', $1);
+        } elsif ($path =~ /\.css$/ && $path =~ m!^(w?)stc/(.+)!) {
+            $add->("${1}stccss", $2);
+        } elsif ($path =~ /\.js$/ && $path =~ m!^(w?)stc/(.+)!) {
+            $add->("${1}stcjs", $2);
+        }
+    }
+
+    my $tags = sub {
+        my ($type, $template) = @_;
+        my $list;
+        return unless $list = $list{$type};
+
+        if ($LJ::CONCAT_RES) {
+            my $csep = join(',', @$list);
+            $template =~ s/__+/??$csep/;
+            $ret .= $template;
+        } else {
+            foreach my $item (@$list) {
+                my $inc = $template;
+                $inc =~ s/__+/$item/;
+                $ret .= $inc;
+            }
+        }
+    };
+
+    $tags->("js",      "<script type=\"text/javascript\" src=\"$LJ::JSPREFIX/___\"></script>\n");
+    $tags->("stccss",  "<link rel=\"stylesheet\" type=\"text/css\" href=\"$LJ::STATPREFIX/___\" />\n");
+    $tags->("wstccss", "<link rel=\"stylesheet\" type=\"text/css\" href=\"$LJ::WSTATPREFIX/___\" />\n");
+    $tags->("stcjs",   "<script type=\"text/javascript\" src=\"$LJ::STATPREFIX/___\"></script>\n");
+    $tags->("wstcjs",  "<script type=\"text/javascript\" src=\"$LJ::WSTATPREFIX/___\"></script>\n");
     return $ret;
 }
 
 # Returns HTML of a dynamic tag could given passed in data
 # Requires hash-ref of tag => { url => url, value => value }
 sub tag_cloud {
-    my $tags = shift;
+    my ($tags, $opts) = @_;
 
     # find sizes of tags, sorted
     my @sizes = sort { $a <=> $b } map { $tags->{$_}->{'value'} } keys %$tags;
@@ -1845,8 +1913,9 @@ sub tag_cloud {
         my $tagurl = $tags->{$tag}->{'url'};
         my $ct     = $tags->{$tag}->{'value'};
         my $pt     = int(8 + $percentile->($ct) * 25);
-        $ret .= "<a id='taglink_$tag' href='";
-        $ret .= LJ::ehtml($tagurl) . "' style='color: <?altcolor2?>; font-size: ${pt}pt;'>";
+        $ret .= "<a ";
+        $ret .= "id='taglink_$tag' " unless $opts->{ignore_ids};
+        $ret .= "href='" . LJ::ehtml($tagurl) . "' style='color: <?altcolor2?>; font-size: ${pt}pt;'>";
         $ret .= LJ::ehtml($tag) . "</a>\n";
 
         # build hash of tagname => final point size for refresh
@@ -1859,6 +1928,8 @@ sub tag_cloud {
 
 sub ads {
     my %opts = @_;
+
+    # WARNING: $ctx is terribly named and not an S2 context
     my $ctx      = delete $opts{'type'};
     my $pagetype = delete $opts{'orient'};
     my $user     = delete $opts{'user'};
@@ -1866,9 +1937,9 @@ sub ads {
 
     # first 500 words
     $pubtext =~ s/<.+?>//g;
-    my @words = split(/\s+/, $pubtext);
+    my @words = grep { $_ } split(/\s+/, $pubtext);
     my $max_words = 500;
-    @words = $words[0..$max_words-1] if @words > $max_words;
+    @words = @words[0..$max_words-1] if @words > $max_words;
     $pubtext = join(' ', @words);
 
     my $debug = $LJ::DEBUG{'ads'};
@@ -1950,12 +2021,17 @@ sub ads {
     if ($remote) {
         # Pass age to targetting engine if user shares this information
         if ($remote->can_show_bday && defined $remote->{bdate}) {
-            # This calculation can die if they haven't set differing parts of their
-            # birthdate.
-            my $secs = eval { time() - LJ::mysqldate_to_time($remote->{bdate}); };
+            my $bdate = $remote->{bdate};
 
-            $adcall{age} = int($secs / 31556926)
-                if $secs > 0;  # Real rough calculation, but that is fine
+            # Check to see if the bdate contains 4 leading digits (year) and it is true (not '0000')
+            if (($bdate =~ m/^(\d{4})-/)[0] + 0) {
+                # This calculation can die if they haven't set differing parts of their
+                # birthdate.
+                my $secs = eval { time() - LJ::mysqldate_to_time($bdate); };
+
+                $adcall{age} = int($secs / 31556926)
+                    if $secs > 0;  # Real rough calculation, but that is fine
+            }
         }
 
         # Pass country to targetting engine if user shares this information
@@ -1973,7 +2049,7 @@ sub ads {
         $adcall{categories} = $remote->prop('ad_categories');
 
         # User's notable interests
-        $adcall{interests} = join(',', grep { !defined $LJ::AD_BLOCKED_INTERESTS{$_} } $remote->notable_interests(10));
+        $adcall{interests} = join(',', grep { !defined $LJ::AD_BLOCKED_INTERESTS{$_} } $remote->notable_interests(150));
     }
 
     # If we have neither categories or interests, load the content author's
@@ -1983,7 +2059,7 @@ sub ads {
 
         if ($u) {
             $adcall{categories} = $u->prop('ad_categories');
-            $adcall{interests} = join(',', grep { !defined $LJ::AD_BLOCKED_INTERESTS{$_} } $u->notable_interests(10));
+            $adcall{interests} = join(',', grep { !defined $LJ::AD_BLOCKED_INTERESTS{$_} } $u->notable_interests(150));
         }
     }
 
@@ -2003,7 +2079,23 @@ sub ads {
     $adhtml .= "<div class=\"ljad ljad$adcall{adunit}\" id=\"\">";
 
     my $label = $pagetype eq 'Journal-5LinkUnit' ? 'Sponsored Search Links' : 'Advertisement';
-    $adhtml .= "<h4 style='margin-bottom: 2px'>$label</h4>";
+    $adhtml .= "<h4 style='float: left; margin-bottom: 2px; margin-top: 2px; clear: both;'>$label</h4>";
+
+    # Customize and feedback links
+    my $eadcall = LJ::eurl($adparams);
+    my $echannel = LJ::eurl($adcall{channel});
+    my $euri = LJ::eurl($r->uri);
+    # For leaderboards show links on the top right
+    if ($adcall{adunit} eq 'leaderboard') {
+        $adhtml .= "<div style='float: right; margin-bottom: 3px; padding-top: 0px; line-height: 1em; white-space: nowrap;'>";
+        if ($LJ::IS_DEV_SERVER) {
+            # This is so while working on ad related problems I can easily open the iframe in a new window
+            $adhtml .= "<a href=\"${LJ::ADSERVER}?$adparams\">#</a> | ";
+        }
+        $adhtml .= "<a href='$LJ::SITEROOT/manage/payments/adsettings.bml'>Customize</a> | ";
+        $adhtml .= "<a href=\"$LJ::SITEROOT/feedback/ads.bml?adcall=$eadcall&channel=$echannel&uri=$euri\">Feedback</a>";
+        $adhtml .= "</div>";
+    }
 
     if ($debug) {
         my $ehpub = LJ::ehtml($pubtext) || "[no text targetting]";
@@ -2016,15 +2108,18 @@ sub ads {
         $adhtml .= "></iframe>";
     }
 
-    # Customize and feedback links
-    my $eadcall = LJ::eurl($adparams);
-    my $echannel = LJ::eurl($adcall{channel});
-    my $euri = LJ::eurl($r->uri);
-    $adhtml .= "<div style='text-align: right; margin-top: 2px;'>";
-    $adhtml .= "<a href='$LJ::SITEROOT/manage/payments/adsettings.bml'>Customize</a> | ";
-    $adhtml .= "<a href=\"$LJ::SITEROOT/feedback/ads.bml?adcall=$eadcall&channel=$echannel&uri=$euri\">Feedback</a>";
-    $adhtml .= "</div>";
-    $adhtml .= "</div>";
+    # For non-leaderboards show links on the bottom right
+    unless ($adcall{adunit} eq 'leaderboard') {
+        $adhtml .= "<div style='text-align: right; margin-top: 2px; white-space: nowrap;'>";
+        if ($LJ::IS_DEV_SERVER) {
+            # This is so while working on ad related problems I can easily open the iframe in a new window
+            $adhtml .= "<a href=\"${LJ::ADSERVER}?$adparams\">#</a> | ";
+        }
+        $adhtml .= "<a href='$LJ::SITEROOT/manage/payments/adsettings.bml'>Customize</a> | ";
+        $adhtml .= "<a href=\"$LJ::SITEROOT/feedback/ads.bml?adcall=$eadcall&channel=$echannel&uri=$euri\">Feedback</a>";
+        $adhtml .= "</div>";
+    }
+    $adhtml .= "</div>\n";
 
     return $adhtml;
 }
@@ -2065,10 +2160,9 @@ sub control_strip
             $links{'join_community'}   = "<a href='$LJ::SITEROOT/community/join.bml?comm=$journal->{user}'>$BML::ML{'web.controlstrip.links.joincomm'}</a>";
             $links{'leave_community'}  = "<a href='$LJ::SITEROOT/community/leave.bml?comm=$journal->{user}'>$BML::ML{'web.controlstrip.links.leavecomm'}</a>";
             $links{'watch_community'}  = "<a href='$LJ::SITEROOT/friends/add.bml?user=$journal->{user}'>$BML::ML{'web.controlstrip.links.watchcomm'}</a>";
-            $links{'unwatch_community'}   = "<a href='$LJ::SITEROOT/friends/add.bml?user=$journal->{user}'>$BML::ML{'web.controlstrip.links.removecomm'}</a>";
+            $links{'unwatch_community'}   = "<a href='$LJ::SITEROOT/community/leave.bml?comm=$journal->{user}'>$BML::ML{'web.controlstrip.links.removecomm'}</a>";
             $links{'post_to_community'}   = "<a href='$LJ::SITEROOT/update.bml?usejournal=$journal->{user}'>$BML::ML{'web.controlstrip.links.postcomm'}</a>";
-            $links{'edit_community_profile'} = "<a href='$LJ::SITEROOT/editinfo.bml?authas=$journal->{user}'>$BML::ML{'web.controlstrip.links.editcommprofile'}</a>";
-            $links{'edit_community_settings'} = "<a href='$LJ::SITEROOT/community/settings.bml?comm=$journal->{user}'>$BML::ML{'web.controlstrip.links.changecommsettings'}</a>";
+            $links{'edit_community_profile'} = "<a href='$LJ::SITEROOT/manage/profile/?authas=$journal->{user}'>$BML::ML{'web.controlstrip.links.editcommprofile'}</a>";
             $links{'edit_community_invites'} = "<a href='$LJ::SITEROOT/community/sentinvites.bml?comm=$journal->{user}'>$BML::ML{'web.controlstrip.links.managecomminvites'}</a>";
             $links{'edit_community_members'} = "<a href='$LJ::SITEROOT/community/members.bml?comm=$journal->{user}'>$BML::ML{'web.controlstrip.links.editcommmembers'}</a>";
         }
@@ -2197,8 +2291,10 @@ sub control_strip
             my $haspostingaccess = LJ::check_rel($journal, $remote, 'P');
             if (LJ::can_manage_other($remote, $journal)) {
                 $ret .= "$statustext{'maintainer'}<br />";
-                $ret .= "$links{'edit_community_profile'}&nbsp;&nbsp; $links{'edit_community_settings'}&nbsp;&nbsp; " .
-                    "$links{'edit_community_invites'}&nbsp;&nbsp; $links{'edit_community_members'}";
+                if ($haspostingaccess) {
+                    $ret .= "$links{'post_to_community'}&nbsp;&nbsp; ";
+                }
+                $ret .= "$links{'edit_community_profile'}&nbsp;&nbsp; $links{'edit_community_invites'}&nbsp;&nbsp; $links{'edit_community_members'}";
             } elsif ($watching && $memberof) {
                 $ret .= "$statustext{'memberwatcher'}<br />";
                 if ($haspostingaccess) {
@@ -2243,7 +2339,7 @@ sub control_strip
             $ret .= "$statustext{'other'}<br />";
             $ret .= "&nbsp;";
         }
-        $ret .= LJ::run_hook('control_strip_logo');
+        $ret .= LJ::run_hook('control_strip_logo', $remote);
         $ret .= "</td>";
 
     } else {
@@ -2295,7 +2391,7 @@ LOGIN_BAR
 
         $ret .= "<br />";
         $ret .= "$links{'create_account'}&nbsp;&nbsp; $links{'learn_more'}";
-        $ret .= LJ::run_hook('control_strip_logo');
+        $ret .= LJ::run_hook('control_strip_logo', $remote);
         $ret .= "</td>";
     }
 
@@ -2332,6 +2428,309 @@ sub control_strip_js_inject
     };
     return $ret;
 }
+
+# prints out UI for subscribing to some events
+sub subscribe_interface {
+    my ($u, %opts) = @_;
+
+    croak "subscribe_interface wants a \$u" unless LJ::isu($u);
+
+    my $catref       = delete $opts{'categories'};
+    my $journal      = LJ::want_user(delete $opts{'journal'}) || LJ::get_remote();
+    my $formauth     = delete $opts{'formauth'} || LJ::form_auth();
+    my $showtracking = delete $opts{'showtracking'} || 0;
+    my $getextra     = delete $opts{'getextra'} || '';
+
+    croak "Invalid options passed to subscribe_interface" if (scalar keys %opts);
+
+    LJ::need_res('stc/esn.css');
+    LJ::need_res('js/core.js');
+    LJ::need_res('js/dom.js');
+    LJ::need_res('js/checkallbutton.js');
+    LJ::need_res('js/esn.js');
+
+    my @categories = $catref ? @$catref : ();
+
+    my $ret = qq {
+            <div id="manageSettings">
+            <span class="esnlinks"><a href="$LJ::SITEROOT/tools/notifications.bml">Message Center</a> | Manage Settings</span>
+            <form method='POST' action='$LJ::SITEROOT/manage/subscriptions/index.bml$getextra'>
+            $formauth
+    };
+
+    my $events_table = '<table class="Subscribe" cellpadding="0" cellspacing="0">';
+
+    my @notify_classes = LJ::NotificationMethod->all_classes or return "No notification methods";
+
+    # skip the inbox type; it's always on
+    @notify_classes = grep { $_ ne 'LJ::NotificationMethod::Inbox' } @notify_classes;
+
+    my $tracking = [];
+
+    # title of the tracking category
+    my $tracking_cat = "Notices";
+
+    # if showtracking, add things the user is tracking to the categories
+    if ($showtracking) {
+        my @subscriptions = $u->find_subscriptions(method => 'Inbox');
+
+        foreach my $subsc ( sort {$a->id <=> $b->id } @subscriptions ) {
+            # if this event class is already being displayed above, skip over it
+            my $etypeid = $subsc->etypeid or next;
+            my ($evt_class) = (LJ::Event->class($etypeid) =~ /LJ::Event::(.+)/i);
+            next unless $evt_class;
+
+            # search for this class in categories
+            next if grep { $_ eq $evt_class } map { @$_ } map { values %$_ } @categories;
+
+            if ($showtracking) {
+                # add this class to the tracking category
+                push @$tracking, $subsc;
+            }
+        }
+    }
+
+    push @categories, {$tracking_cat => $tracking};
+
+    my @catids;
+    my $catid = 0;
+
+    my %shown_subids = ();
+
+    foreach my $cat_hash (@categories) {
+        my ($category, $cat_events) = %$cat_hash;
+
+        next unless $cat_events && scalar @$cat_events;
+        push @catids, $catid;
+
+        # pending subscription objects
+        my $pending = [];
+
+        my $cat_empty = 1;
+        my $cat_html = '';
+
+        # is this category the tracking category?
+        my $is_tracking_category = $category eq $tracking_cat && $showtracking;
+
+        # build table of subscribeble events
+        foreach my $cat_event (@$cat_events) {
+            if ((ref $cat_event) =~ /Subscription/) {
+                push @$pending, $cat_event;
+            } else {
+                my $pending_sub = LJ::Subscription::Pending->new($u,
+                                                                 event => $cat_event,
+                                                                 journal => $journal);
+                push @$pending, $pending_sub;
+            }
+        }
+
+        next unless scalar @$pending;
+
+        $cat_html .= qq {
+            <div class="CategoryRow-$catid">
+                <tr class="CategoryRow">
+                <td>
+                <span class="CategoryHeading">$category</span>
+                <span class="CategoryHeadingNote">Notify me when...</span>
+                </td>
+                <td>
+                By
+                </td>
+            };
+
+        my @pending_subscriptions;
+        # build list of subscriptions to show the user
+        {
+            unless ($is_tracking_category) {
+                foreach my $pending_sub (@$pending) {
+                    my %sub_args = $pending_sub->sub_info;
+                    delete $sub_args{ntypeid};
+                    $sub_args{method} = 'Inbox';
+
+                    my @existing_subs = $u->has_subscription(%sub_args);
+                    push @pending_subscriptions, (scalar @existing_subs ? @existing_subs : $pending_sub);
+                }
+            } else {
+                push @pending_subscriptions, @$tracking;
+            }
+        }
+
+        # add notifytype headings
+        foreach my $notify_class (@notify_classes) {
+            my $title = eval { $notify_class->title($u) } or next;
+            my $ntypeid = $notify_class->ntypeid or next;
+
+            # create the checkall box for this event type.
+
+            # if all the $notify_class are enabled in this category, have
+            # the checkall button be checked by default
+            my $subscribed_count = 0;
+            foreach my $subscr (@pending_subscriptions) {
+                my %subscr_args = $subscr->sub_info;
+                $subscr_args{ntypeid} = $ntypeid;
+                $subscribed_count++ if scalar $u->find_subscriptions(%subscr_args);
+            }
+
+            my $checkall_checked = $subscribed_count == scalar @pending_subscriptions;
+
+            my $checkall_box = LJ::html_check({
+                id       => "CheckAll-$catid-$ntypeid",
+                label    => $title,
+                class    => "CheckAll",
+                selected => $checkall_checked,
+                noescape => 1,
+            });
+
+            $cat_html .= qq {
+                <td>
+                    $checkall_box
+                    </td>
+                };
+        }
+
+        $cat_html .= '</tr>';
+
+        # inbox method
+        foreach my $pending_sub (@pending_subscriptions) {
+            # print option to subscribe to this event, checked if already subscribed
+            my $input_name = $pending_sub->freeze or next;
+            my $title      = $pending_sub->as_html or next;
+            my $subscribed = ! $pending_sub->pending;
+
+            my $evt_class = $pending_sub->event_class or next;
+            unless ($is_tracking_category) {
+                next unless eval { $evt_class->subscription_applicable($pending_sub) };
+            } else {
+                my $no_show = 0;
+
+                foreach my $cat_info_ref (@$catref) {
+                    while (my ($_cat_name, $_cat_events) = each %$cat_info_ref) {
+                        foreach my $_cat_event (@$_cat_events) {
+                            next unless ref $_cat_event;
+                            next unless $pending_sub->equals($_cat_event);
+                            $no_show = 1;
+                            last;
+                        }
+                    }
+                }
+
+                next if $no_show;
+            }
+
+            $cat_html  .= "<tr><td>" .
+                LJ::html_check({
+                    id       => $input_name,
+                    name     => $input_name,
+                    class    => "SubscriptionInboxCheck",
+                    selected => $subscribed,
+                    noescape => 1,
+                    label    => $title,
+                }) .  "</td>";
+
+            unless ($pending_sub->pending) {
+                $cat_html .= LJ::html_hidden({
+                    name  => "${input_name}-old",
+                    value => $subscribed,
+                });
+            }
+
+            $shown_subids{$pending_sub->id}++ unless $pending_sub->pending;
+
+            $cat_empty = 0;
+
+            # print out notification options for this subscription (hidden if not subscribed)
+            $cat_html .= "<td>&nbsp;</td>";
+            my $hidden = $subscribed ? '' : 'style="visibility: hidden;"';
+
+            foreach my $note_class (@notify_classes) {
+                my $ntypeid = eval { $note_class->ntypeid } or next;
+
+                my %sub_args = $pending_sub->sub_info;
+                $sub_args{ntypeid} = $ntypeid;
+
+                my @subs = $u->has_subscription(%sub_args);
+
+                my $note_pending = scalar @subs ? $subs[0] : LJ::Subscription::Pending->new($u, %sub_args);
+                next unless $note_pending;
+
+                my $notify_input_name = $note_pending->freeze;
+
+                $cat_html .= qq {
+                    <td class='NotificationOptions' $hidden>
+                    } . LJ::html_check({
+                        id       => $notify_input_name,
+                        name     => $notify_input_name,
+                        class    => "SubscribeCheckbox-$catid-$ntypeid",
+                        selected => (scalar @subs),
+                        noescape => 1,
+                    }) . '</td>';
+
+                unless ($note_pending->pending) {
+                    $cat_html .= LJ::html_hidden({
+                        name  => "${notify_input_name}-old",
+                        value => (scalar @subs) ? 1 : 0,
+                    });
+                }
+            }
+        }
+
+        $cat_html .= '</tr></div>';
+        $events_table .= $cat_html unless $cat_empty;
+
+        $catid++;
+    }
+
+    $events_table .= '</table>';
+
+    # pass some info to javascript
+    my $catids = LJ::html_hidden({
+        'id'  => 'catids',
+        'value' => join(',', @catids),
+    });
+    my $ntypeids = LJ::html_hidden({
+        'id'  => 'ntypeids',
+        'value' => join(',', map { $_->ntypeid } LJ::NotificationMethod->all_classes),
+    });
+
+    $ret .= qq {
+        $ntypeids
+            $catids
+            $events_table
+        };
+
+    $ret .= LJ::html_hidden({name => 'mode', value => 'save_subscriptions'});
+
+    # print info stuff
+    my $extra_sub_status = LJ::run_hook("sub_status_extra", $u) || '';
+    my $sub_count = $u->find_subscriptions(method => 'Inbox');
+    my $sub_max = $u->get_cap('subscriptions');
+    my $event_plural = $sub_count == 1 ? 'event' : 'events';
+
+    # link to manage settings (if not at manage settings)
+    my $managelink = qq { | Manage your subscriptions in the <a href="$LJ::SITEROOT/manage/subscriptions/index.bml">
+            Subscription Center</a><br/>
+            $extra_sub_status
+    } unless BML::get_uri() =~ m!/manage/subscriptions/index.bml!i;
+
+    $ret .= qq {
+        <div id="SubscriptionInfo">
+            You are subscribed to $sub_count $event_plural ($sub_max available) $managelink
+            </div>
+        };
+
+    # print buttons
+    my $referer = BML::get_client_header('Referer');
+    my $uri = Apache->request->uri;
+    $referer = '' if $referer =~ /$uri/i;
+
+    $ret .= '<?standout ' .
+        LJ::html_submit('Save') . ' ' .
+        ($referer && $referer ne "$LJ::SITEROOT$uri" ? "<input type='button' value='Cancel' onclick='window.location=\"$referer\"' />" : '')
+        . '';
+
+    $ret .= "standout?> </div></form>";
+}
+
 
 # Common challenge/response javascript, needed by both login pages and comment pages alike.
 # Forms that use this should onclick='return sendForm()' in the submit button.

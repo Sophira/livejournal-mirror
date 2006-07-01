@@ -3,6 +3,8 @@
 # This is now just a wrapper around the non-LJ-specific multicvs.pl
 #
 
+use strict;
+
 unless (-d $ENV{'LJHOME'}) {
     die "\$LJHOME not set.\n";
 }
@@ -22,5 +24,15 @@ if ($LJ::IS_LJCOM_PRODUCTION) {
 # (useful if you tab-complete filenames)
 $_ =~ s!\Q$ENV{'LJHOME'}\E/?!! foreach (@ARGV);
 
-exit system("$ENV{'LJHOME'}/bin/multicvs.pl",
-            "--conf=$ENV{'LJHOME'}/cvs/multicvs.conf", @paranoia, @ARGV);
+my @extra;
+my $vcv_exe = "multicvs.pl";
+if (-e "$ENV{LJHOME}/bin/vcv") {
+    $vcv_exe = "vcv";
+    @extra = ("--headserver=code.sixapart.com:10000");
+}
+
+exec("$ENV{'LJHOME'}/bin/$vcv_exe",
+     "--conf=$ENV{'LJHOME'}/cvs/multicvs.conf",
+     @extra,
+     @paranoia,
+     @ARGV);

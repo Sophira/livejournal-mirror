@@ -21,7 +21,16 @@ my $SECONDS_IN_DAY  = 3600 * 24;
                      supportmakeinternal
                      supportmovetouch
                      supportviewscreened
+                     supportviewstocks
                      supportchangesummary/);
+
+# retrieve a database handle to be used for support-related 
+# slow queries... defaults to 'slow' role but can be 
+# overridden by @LJ::SUPPORT_SLOW_ROLES
+sub slow_query_dbh
+{
+    return LJ::get_dbh(@LJ::SUPPORT_SLOW_ROLES);
+}
 
 ## pass $id of zero or blank to get all categories
 sub load_cats
@@ -124,7 +133,7 @@ sub is_poster
     return 0 unless $remote;
 
     if ($sp->{'reqtype'} eq "email") {
-        if ($remote->{'email'} eq $sp->{'reqemail'} && $remote->{'status'} eq "A") {
+        if (lc($remote->{'email'}) eq lc($sp->{'reqemail'}) && $remote->{'status'} eq "A") {
             return 1;
         }
     } elsif ($sp->{'reqtype'} eq "user") {
@@ -282,6 +291,11 @@ sub can_change_summary
     return LJ::Support::support_check_priv(@_, 'supportchangesummary');
 }
 
+sub can_see_stocks
+{
+    return LJ::Support::support_check_priv(@_, 'supportviewstocks');
+}
+
 sub can_help
 {
     my ($sp, $remote) = @_;
@@ -436,6 +450,9 @@ sub file_request
 
     my $reqsubject = LJ::trim($o->{'subject'});
     my $reqbody = LJ::trim($o->{'body'});
+
+    # remove the auth portion of any see_request.bml links
+    $reqbody =~ s/(see_request\.bml.+?)\&auth=\w+/$1/ig;
 
     unless ($reqsubject) {
         push @$errors, "You must enter a problem summary.";
@@ -775,7 +792,7 @@ sub get_support_by_daterange {
     # Convert from times to IDs because support.timecreate isn't indexed
     my ($start_id, $end_id) = LJ::DB::time_range_to_ids
                                    (table       => 'support',
-                                    roles       => [qw/slow slave master/],
+                                    roles       => ['slow'],
                                     idcol       => 'spid',
                                     timecol     => 'timecreate',
                                     starttime   => $time1,
@@ -788,8 +805,8 @@ sub get_support_by_daterange {
             . "  AND timecreate >= ? AND timecreate < ?";
 
     # Get the results from the database
-    my $dbh = LJ::get_dbh("slow", "slave", "master")
-              || return "Database unavailable";
+    my $dbh = LJ::Support::slow_query_dbh()
+        or return "Database unavailable";
     my $sth = $dbh->prepare($sql);
     $sth->execute($start_id, $end_id, $time1, $time2);
     die $dbh->errstr if $dbh->err;
@@ -812,6 +829,8 @@ sub get_support_by_daterange {
 #
 sub get_support_by_ids {
     my ($support_ids_ref) = @_;
+    my %result_hash = ();
+    return \%result_hash unless @$support_ids_ref;
 
     # Build the query out based on the dates specified
     my $support_ids_bind = join ',', map { '?' } @$support_ids_ref;
@@ -819,15 +838,14 @@ sub get_support_by_ids {
             . "WHERE spid IN ($support_ids_bind)";
 
     # Get the results from the database
-    my $dbh = LJ::get_dbh("slow", "slave", "master")
-              || return "Database unavailable";
+    my $dbh = LJ::Support::slow_query_dbh()
+        or return "Database unavailable";
     my $sth = $dbh->prepare($sql);
     $sth->execute(@$support_ids_ref);
     die $dbh->errstr if $dbh->err;
     $sth->{mysql_use_result} = 1;
 
     # Loop over the results, generating a hash by Support ID
-    my %result_hash = ();
     while (my $row = $sth->fetchrow_hashref) {
         $result_hash{$row->{spid}} = $row;
     }
@@ -851,8 +869,8 @@ sub get_supportlogs {
     my $sql = "SELECT * FROM supportlog WHERE spid IN ($spid_bind) ";
 
     # Get the results from the database
-    my $dbh = LJ::get_dbh("slow", "slave", "master")
-              || return "Database unavailable";
+    my $dbh = LJ::Support::slow_query_dbh()
+        or return "Database unavailable";
     my $sth = $dbh->prepare($sql);
     $sth->execute(@$support_ids_ref);
     die $dbh->errstr if $dbh->err;
@@ -884,7 +902,7 @@ sub get_touch_supportlogs_by_user_and_date {
     # Convert from times to IDs because supportlog.timelogged isn't indexed
     my ($start_id, $end_id) = LJ::DB::time_range_to_ids
                                    (table       => 'supportlog',
-                                    roles       => [qw/slow slave master/],
+                                    roles       => \@LJ::SUPPORT_SLOW_ROLES,
                                     idcol       => 'splid',
                                     timecol     => 'timelogged',
                                     starttime   => $time1,
@@ -899,8 +917,8 @@ sub get_touch_supportlogs_by_user_and_date {
             . ($userid ? " AND userid = ?" : '');
 
     # Get the results from the database
-    my $dbh = LJ::get_dbh("slow", "slave", "master")
-              || return "Database unavailable";
+    my $dbh = LJ::Support::slow_query_dbh()
+        or return "Database unavailable";
     my $sth = $dbh->prepare($sql);
     my @parms = ($start_id, $end_id, $time1, $time2);
     push @parms, $userid if $userid;

@@ -14,10 +14,6 @@ sub new {
 
 sub is_common { 0 }
 
-sub title {
-    return 'User Left a Comment';
-}
-
 # when was this comment left?
 sub eventtime_unix {
     my $self = shift;
@@ -29,8 +25,5 @@ sub comment {
     my $self = shift;
     return LJ::Comment->new($self->journal, jtalkid => $self->arg1);
 }
-
-sub journal_sub_title { 'Journal' }
-sub journal_sub_type  { 'mutual_friend' }
 
 1;
