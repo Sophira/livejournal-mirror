@@ -1,0 +1,66 @@
+<?page
+body<=
+<?_code
+{
+    use strict;
+    use vars qw (%POST %GET $body $title $headextra);
+    use Carp qw(croak);
+
+    return "Not ready" if $LJ::DISABLED{'esn'};
+
+    use Class::Autouse qw(LJ::NotificationMethod LJ::Event);
+
+    BML::decl_params(
+                     lj_form_auth => qr/./,
+                     journal      => 'word',
+                     dtalkid      => 'digits',
+                     ditemid      => 'digits',
+                     );
+
+    my $remote = LJ::get_remote();
+    return "<?needlogin?>" unless $remote;
+
+    my $ditemid = $POST{'ditemid'} || $GET{'ditemid'};
+    my $dtalkid = $POST{'dtalkid'} || $GET{'dtalkid'};
+    my $journal = $POST{'journal'} || $GET{'journal'};
+
+    my $journal = LJ::load_user($journal) or return LJ::error_list("Invalid journal '$journal'");
+
+    return LJ::error_list("No entry specified") unless $dtalkid || $ditemid;
+
+    my $comment;
+    $comment = LJ::Comment->new($journal, dtalkid => $dtalkid) if $dtalkid;
+
+    my $categories = [
+                      {
+                          'Comments' => [
+                                         LJ::Subscription::Pending->new(
+                                                                        $remote,
+                                                                        journal => $journal,
+                                                                        event   => 'JournalNewComment',
+                                                                        arg1    => $ditemid,
+                                                                        arg2    => $comment && $comment->jtalkid,
+                                                                        default_selected => 1,
+                                                                        )
+                                         ],
+                                     },
+                      ];
+
+    return LJ::subscribe_interface(
+                                   $remote,
+                                   categories => $categories,
+                                   journal => $journal,
+                                   );
+
+}
+_code?>
+<=body
+title=><?_code return $title; _code?>
+head<=
+<style type='text/css'>
+</style>
+<?_code return $headextra; _code?>
+<=head
+<=body
+page?>
+
