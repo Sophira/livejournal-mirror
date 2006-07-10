@@ -1,0 +1,154 @@
+<?page
+body<=
+<?_code
+{
+    use strict;
+    use vars qw (%POST %GET $body $title $headextra);
+    use Carp qw(croak);
+
+    $title = 'Manage Message Settings';
+
+    use Class::Autouse qw(LJ::NotificationMethod LJ::Event);
+
+    my @errors;
+
+    my $remote = LJ::get_remote();
+    return "<?needlogin?>" unless $remote;
+
+    return "Not ready" unless $remote->can_use_esn;
+
+    my $authas = $GET{'authas'} || $remote->{'user'};
+    my $u = LJ::get_authas_user($authas);
+    return LJ::bad_input("You could not be authenticated as the specified user.")
+        unless $u;
+
+    my $formauth = LJ::form_auth();
+
+    # handle input
+    if (LJ::did_post()) {
+        return LJ::error_list(BML::ml('error.invalidform')) unless LJ::check_form_auth();
+
+        # do they want to add or edit subscriptions?
+        next unless $POST{mode} eq 'save_subscriptions';
+
+        my @sub_edit;
+        foreach my $postkey (keys %POST) {
+            my $subscr;
+            my $old_postkey = $postkey;
+            my $old = $postkey =~ /-old$/;
+
+            # are there other options for this pending subscription? if so, process those not this one
+            next if $postkey =~ /\.arg\d/;
+
+            $subscr = LJ::Subscription->thaw($postkey, $u, \%POST);
+
+            next unless $subscr;
+
+            if ($subscr->pending) {
+                # don't duplicate subscriptions
+                next if $u->has_subscription($subscr->sub_info);
+
+                if ((scalar $u->find_subscriptions(method => 'Inbox')) >= $u->get_cap('subscriptions')
+                    && $subscr->method eq 'LJ::NotificationMethod::Inbox') {
+                    push @errors, LJ::errobj("Subscription::TooMany", subscr => $subscr, u => $u);
+                } else {
+                    $subscr->commit;
+                }
+                next;
+            }
+
+            # remove old string
+            $postkey =~ s/-old// if $old;
+
+            next unless $old;
+
+            my $oldvalue = $POST{$old_postkey};
+            my $checked = $POST{$postkey};
+
+            push @sub_edit, [
+                             $subscr,
+                             $checked,
+                             $oldvalue,
+                             ];
+        }
+
+        foreach my $edit_info (@sub_edit) {
+            my ($subscr, $checked, $oldvalue) = @$edit_info;
+
+            # if it's pending and enabled, make it a real subscription
+            if (! $checked && $oldvalue) {
+                # if it's not checked and is currently a real subscription, delete it
+
+                # if it's the inbox method, delete everything
+                if ($subscr->method eq 'LJ::NotificationMethod::Inbox') {
+                    my @subs = $u->find_subscriptions(
+                                                      journalid => $subscr->journalid,
+                                                      etypeid   => $subscr->etypeid,
+                                                      arg1      => $subscr->arg1,
+                                                      arg2      => $subscr->arg2,
+                                                      );
+                    $_->delete foreach @subs;
+                } else {
+                    $subscr->delete;
+                }
+            }
+        }
+
+        delete $u->{_subscriptions};
+    }
+
+    $body .= "<?p" . LJ::error_list(@errors) . "p?>" if scalar @errors;
+
+    ###################### Print subscribe table
+    my @categories = (
+                      {
+                          "My Account" => [
+                                           'Befriended',
+                                           LJ::Subscription::Pending->new($u,
+                                                                          event     => 'OfficialPost',
+                                                                          ),
+                                           LJ::Subscription::Pending->new($u,
+                                                                          event     => 'JournalNewComment',
+                                                                          journal   => $u,
+                                                                          ),
+                                           ],
+                          },
+                      {
+                          "Friends and Communities" => [
+                                                        'InvitedFriendJoins',
+                                                        'CommunityInvite',
+                                                        'CommunityJoinRequest',
+                                                        LJ::Subscription::Pending->new($u,
+                                                                                       event     => 'NewUserpic',
+                                                                                       ),
+                                                        ],
+                          },
+                      );
+
+    my $authas_form = LJ::make_authas_select($remote, { 'authas' => $GET{'authas'} });
+    $body .= qq {
+        <div>
+            <form action='./' method='GET'>
+                $authas_form
+            </form>
+        </div>
+        };
+
+    $body .= LJ::subscribe_interface($u,
+                                     journal      => $u,
+                                     categories   => \@categories,
+                                     formauth     => $formauth,
+                                     showtracking => 1,
+                                     getextra     => "?authas=$GET{authas}",
+                                     );
+
+    return $body;
+}
+_code?>
+<=body
+title=><?_code return $title; _code?>
+head<=
+<?_code return $headextra; _code?>
+<=head
+<=body
+page?>
