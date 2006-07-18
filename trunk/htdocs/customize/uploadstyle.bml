@@ -1,0 +1,221 @@
+<?_code
+{
+    use strict;
+    use vars qw(%GET %POST $title $body $head @errors);
+    use Carp qw(croak);
+    use Archive::Zip;
+
+    BML::set_language_scope("/customize/uploadstyle.bml");
+
+    $title = $ML{'.title2'};
+    $body = "";
+    @errors = ();
+
+    my $suffix;
+    my $zip_contents;
+
+    my $err = sub {
+        $title = $ML{'Error'};
+        $body = LJ::bad_input(@_);
+        return;
+    };
+
+    unless (LJ::text_in(\%POST)) {
+        return $err->("Invalid UTF-8 Input");
+    }
+
+    my $remote = LJ::get_remote();
+    unless ($remote) {
+        $body = "<?needlogin?>";
+        return;
+    }
+
+    if ($remote->underage) {
+        return BML::redirect("$LJ::SITEROOT/agecheck/?s=1");
+    }
+
+    LJ::need_res('stc/lj_base.css');
+    LJ::need_res('stc/editpics.css');
+    $head .= q {
+      <script language="JavaScript" src="/js/core.js"></script>
+      <script language="JavaScript" src="/js/dom.js"></script>
+      <script language="JavaScript" src="/js/progressbar.js"></script>
+      <script language="JavaScript" src="/js/ljprogressbar.js"></script>
+      <script language="JavaScript" src="/js/perlbal-uploadtrack.js"></script>
+      <script language="JavaScript" src="/js/editpics.js"></script>
+    };
+
+    my $authas = $GET{'authas'} || $remote->{'user'};
+    my $u = LJ::get_authas_user($authas) or
+        return $err->("a".$ML{'error.invalidauth'});
+
+    # extra arguments for get requests
+    my $getextra = $authas ne $remote->{'user'} ? "?authas=$authas" : '';
+
+    my $returl = LJ::CleanHTML::canonical_url($POST{'ret'});
+    my $picurl = LJ::CleanHTML::canonical_url($POST{'urlpic'});
+
+    if (LJ::get_cap($u, "readonly")) {
+        $title = "Read-only mode";
+        $body = $LJ::MSG_READONLY_USER;
+        return;
+    }
+
+##!! Get max space quota here.
+
+    ### save mode
+    if (LJ::did_post()) {
+    
+        ### no post data, so we'll parse the multipart data
+        unless (%POST) {
+
+            my $r = Apache->request;
+            my $size = $r->header_in("Content-length");
+            unless ($size) {
+                return $err->("No content-length header: can't upload");
+            }
+            
+            #1 MB. Should be a variable we pull in from ljconfig.pl
+            my $MAX_UPLOAD = 1048576;
+            my $error;
+
+            # file over 1MB, return too large error
+            # (not sure why we're adding 2048, but editpics did that)
+            if ($size > $MAX_UPLOAD + 2048) {
+                # we have to suck in the data otherwise the browser gets upset because we're
+                # closing the connection before reading in all the data and it will sometimes
+                # refuse to show the error.
+
+                # pretend to tell apache that we care about parsing the data, but we really don't
+                my $bogus = sub {return 1;};
+                BML::parse_multipart_interactive($r, \$error, {
+                    newheaders => $bogus,
+                    data       => $bogus,
+                    enddata    => $bogus,
+                });
+
+                return $err->(BML::ml('.error.filetoolarge',
+                                      { 'maxsize' => int($MAX_UPLOAD / 1048576) .
+                                            $ML{'.megabytes'} }));
+            }
+
+            BML::parse_multipart(\%POST, \$error, $MAX_UPLOAD + 2048);
+            
+              # couldn't parse correctly
+              if ($error) {
+                  # return parse_multipart error
+                  use Data::Dumper;
+                  return $err->($error."#########\r\n".Dumper(\%POST));
+              }
+
+              if ($POST{'zip'}) {
+                  
+                  use IO::String;
+                  my $FH = IO::String->new( $POST{'zip'} );
+                  my $zip = Archive::Zip->new();
+                  my $status = $zip->readFromFileHandle( $FH );
+                  warn "Status = $status\r\n";
+                  use Data::Dumper;
+                  warn Dumper($zip)."\r\n";
+                  if ($zip->eocdOffset()){
+                    warn "Something has added ", $zip->eocdOffset, " bytes of garbage!\n";
+                  }
+                  
+                  my @members = $zip->members();
+                  $zip_contents .= "We found ".$zip->numberOfMembers()." files.<BR>";
+                  foreach ($zip->memberNames()){
+                    $zip_contents .= "/$_<BR>\n";
+                  }
+                  if ($zip->memberNamed("style.css")){
+                    $zip_contents .= "We did find a style.css!<BR>\r\n";
+                  } else {
+                    $zip_contents .= "Uh oh, no style.css!<BR>\r\n";
+                  }
+
+              } else {
+                  $zip_contents .= '*** $POST{\'zip\'} not defined! ***';
+              }
+          }
+      }
+
+
+##Print out stuff
+
+    # authas switcher form
+    $body .= "<form method='get' action='uploadstyle$suffix.bml'>\n";
+    $body .= LJ::make_authas_select($remote, { 'authas' => $GET{'authas'} }) . "\n";
+    $body .= "</form>\n\n";
+
+    # if we're disabling media, say so
+    $body .= "<?warningbar $ML{'error.mediauploadsdisabled'} warningbar?>"
+        if $LJ::DISABLE_MEDIA_UPLOADS;
+
+    if (@errors) {
+        $body .= LJ::error_list(@errors);
+    }
+
+    # print out upload pic box
+    my $emit_upload_box = sub {
+        $body .= '<a name="uploadBox"></a>';
+        $body .= "<?h1 $ML{'.uploadheader'} h1?>\n";
+        $body .= "<?p $ML{'.uploaddesc'} p?>\n";
+
+        # upload form (with perlbal upload-tracking)
+        $body .= qq {
+            <iframe name='upiframe' width='1' height='1' style='border: none'></iframe>
+                <?standout
+                <form enctype="multipart/form-data" action="uploadstyle$suffix.bml$getextra"
+                method='post' id='uploadZip'>
+                <input type="hidden" id="go_to" name="go_to" value="uploadstyle$suffix.bml$getextra" />
+
+                <table>
+            };
+
+        $body .= "<tr><td align='right'>\n";
+        $body .= LJ::html_check({ 'type' => 'radio', 'name' => 'src', 
+                                  'id' => 'radio_file', 'value' => 'file', 
+                                  'selected' => '1', 'accesskey' => $ML{'.fromfile.key'} });
+        $body .= "</td><td align='right'>";
+        $body .= "<label for='radio_file'>$ML{'.fromfile'}</label></td>";
+        $body .= "<td align='left'><input type='file' name='zip' size='28' /></td></tr>\n";
+
+        $body .= "<tr><td align='right'>";
+        $body .= LJ::html_check({ 'type' => 'radio', 'name' => 'src', 'value' => 'url',
+                                  'id' => 'radio_url', 'accesskey' => $ML{'.fromurl.key'} });
+        $body .= "</td><td align='right'>";
+        $body .= "<label for='radio_url'>$ML{'.fromurl'}</label></td><td align='left'>";
+        $body .= LJ::html_text({ 'name' => 'urlpic', 'size' => '40' });
+        $body .= "<div><small>$ML{'.label.formats.desc'}</small></div>";
+        $body .= "</td></tr>\n";
+
+        $body .= "<tr><td colspan='3' align='center'>";
+        $body .= LJ::html_submit(undef, $ML{'.btn.proceed'},
+                                 { disabled => $LJ::DISABLE_MEDIA_UPLOADS });
+        $body .= q {
+            </td>
+                </tr>
+                </table>
+                </form>
+                <div id="uploadStatus" style="display: none;"></div>
+                <div id="progressBar" style="display: none;"></div>
+            };
+
+        $body .= " standout?>\n\n";
+    };
+
+    $emit_upload_box->();
+
+### print out contents of zip:
+    $body .= $zip_contents;
+
+    return;
+}
+
+_code?><?page
+    head=><?_code return $head; _code?>
+    title=><?_code return $title; _code?>
+    body=><?_code return $body; _code?>
+    page?><?_c <LJDEP>
+link: htdocs/login.bml
+post: htdocs/customize/uploadstyle.bml
+    </LJDEP> _c?>
