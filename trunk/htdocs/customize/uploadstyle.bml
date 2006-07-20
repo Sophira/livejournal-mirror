@@ -4,6 +4,7 @@
     use vars qw(%GET %POST $title $body $head @errors);
     use Carp qw(croak);
     use Archive::Zip;
+    use IO::String;
 
     BML::set_language_scope("/customize/uploadstyle.bml");
 
@@ -60,6 +61,8 @@
         $body = $LJ::MSG_READONLY_USER;
         return;
     }
+    
+    my $lastmember;
 
 ##!! Get max space quota here.
 
@@ -99,44 +102,164 @@
                                             $ML{'.megabytes'} }));
             }
 
-            BML::parse_multipart(\%POST, \$error, $MAX_UPLOAD + 2048);
+            # Set everything up to use parse_multipart_interactive
+            my $io_string = undef;
+            my $curr_name = '';
+            my $valid_magic = 0;
             
-              # couldn't parse correctly
-              if ($error) {
-                  # return parse_multipart error
-                  use Data::Dumper;
-                  return $err->($error."#########\r\n".Dumper(\%POST));
-              }
+            my $hook_newheaders = sub {
+                my ($name, $filename) = @_;
+                
+                $POST{$name} = '';
+                $curr_name = $name; # for keeping state
+                
+                return 1 unless ($name eq 'zip');
+                
+                # now we know we're processing the expected file upload
+                $io_string = new IO::String;
+                
+                return 1;
+            };
+            
+            my $hook_data = sub {
+                my ($len, $data) = @_;
+                
+                unless ($curr_name eq 'zip') {
+                    $POST{$curr_name} .= $data;
+                    die "this shouldn't be so long...?"
+                        if length $data > (1<<20); #1MB.  Dies with 1KB?
+                    return 1;
+                }
+                
+                # now we know we're processing the file upload
+                
+                #check for magic bits, if we haven't already done so
+                # (and if there's data to check)
+                unless ($io_string->tell < 4 || $valid_magic) {
+                    my $pos = $io_string->getpos;
+                    $io_string->seek(0,0); #set position to head of file
+                    
+                    my $magic;
+                    $io_string->read($magic, 4);
+                    die "Doesn't look like a valid zip: found '$magic'"
+                        unless $magic =~ /^\x50\x4B\x03\x04/;
+                    $io_string->setpos($pos); #restore position
+                    $valid_magic = 1;
+                }
+                
+                $io_string->print($data); # or whatever
+                
+                # have we already read too much?
+                if ($io_string->tell > $MAX_UPLOAD) { # 1mb or so?
+                    die "maximum upload exceeded";
+                }
+                
+                return 1;
+            };
+            
+            my $hook_enddata = sub {
+                
+                # nothing to do on normal post elements
+                return 1 unless ($curr_name eq 'zip');
+                
+                # since we've just finished a potentially slow upload, we need to make
+                # sure the database handles in DBI::Role's cache haven't expired,
+                # so we'll just trigger a revalidation now so that subsequent database
+                # calls will be safe.
+                $LJ::DBIRole->clear_req_cache();
+            
+                # no filehandles to close or anything, this is an IO::String!
+            };
+            
+            # now actually call the parse_multipart_interactive to fill out $io_string
+            my $res = eval {
+               BML::parse_multipart_interactive
+                  ($r, \$error, {
+                                   newheaders => $hook_newheaders,
+                                   data       => $hook_data,
+                                   enddata    => $hook_enddata,
+                                });
+            };
+            
+            if ($io_string->tell < 4){
+                die "File too short!";
+            }
+        
+            if (!$valid_magic) { #still haven't checked magic bits?!
+                my $pos = $io_string->getpos;
+                $io_string->seek(0,0); #set position to head of file
+                
+                my $magic;
+                $io_string->read($magic, 4);
+                die "Doesn't look like a valid zip: found '$magic'"
+                    unless $magic =~ /^\x50\x4B\x03\x04/;
+                $io_string->setpos($pos); #restore position
+                $valid_magic = 1;
+            }
+            
+            unless ($res) {
+                # should be fancier than this, but basically:
+                
+                #TODO: parse and/or push errors into @errors
+                return "Error: $@";
+            }
 
-              if ($POST{'zip'}) {
-                  
-                  use IO::String;
-                  my $FH = IO::String->new( $POST{'zip'} );
-                  my $zip = Archive::Zip->new();
-                  my $status = $zip->readFromFileHandle( $FH );
-                  warn "Status = $status\r\n";
-                  use Data::Dumper;
-                  warn Dumper($zip)."\r\n";
-                  if ($zip->eocdOffset()){
+            if ($io_string) { 
+                my $zip = Archive::Zip->new();
+                my $status = $zip->readFromFileHandle( $io_string );
+                warn "Status = $status\r\n";
+                use Data::Dumper;
+                warn Dumper($zip)."\r\n";
+                if ($zip->eocdOffset()){
                     warn "Something has added ", $zip->eocdOffset, " bytes of garbage!\n";
-                  }
-                  
-                  my @members = $zip->members();
-                  $zip_contents .= "We found ".$zip->numberOfMembers()." files.<BR>";
-                  foreach ($zip->memberNames()){
-                    $zip_contents .= "/$_<BR>\n";
-                  }
-                  if ($zip->memberNamed("style.css")){
+                }
+                
+                my @members = $zip->members();
+                $zip_contents .= "We found ".$zip->numberOfMembers()." files.<BR>";
+                if ($zip->memberNamed("style.css")){
                     $zip_contents .= "We did find a style.css!<BR>\r\n";
-                  } else {
+                } else {
                     $zip_contents .= "Uh oh, no style.css!<BR>\r\n";
-                  }
-
-              } else {
-                  $zip_contents .= '*** $POST{\'zip\'} not defined! ***';
-              }
-          }
-      }
+                }
+                foreach my $pathname ($zip->memberNames()){
+                    my $filename = $pathname;
+                    $filename =~ s|.*/(.*?)$|$1|;
+                    if (!($pathname =~ /MACOSX/) && 
+                           ($filename eq 'style.css' ||
+                            $filename =~ /(?:\.jpg|\.gif|\.png|\.jpeg)$/i) ){
+                        $zip_contents .= "<B>$filename ($pathname)</B>\n";
+                        
+                        my $fh = IO::String->new();
+                        $fh->print($zip->contents($pathname));
+                        $fh->seek(0,0);
+                        $fh->read(my $magic, 4);
+                        
+                        my $format_magic = sub {
+                            my $magic = shift;
+                            my $hex = unpack "H*", $magic;
+                            my $mime;
+    
+                            # image formats
+                            $mime = 'image/jpeg' if $magic =~ /^\xff\xd8/; # JPEG
+                            $mime = 'image/gif'  if $magic =~ /^GIF8/;     # GIF
+                            $mime = 'image/png'  if $magic =~ /^\x89PNG/;  # PNG
+    
+                            return $mime;
+                        };
+                        
+                        $upload{md5ctx} = new Digest::MD5
+                        $upload{md5ctx}->add($data);
+                        $upload{md5sum} = $upload{md5ctx}->digest;
+    
+                        my $mime = $format_magic->($magic); #check image formats
+                        $zip_contents .= "...[magic:$magic]recognized as $mime<BR>\n";
+                    }
+                }
+            } else {
+                $zip_contents = "no io_string?";
+            }
+        }
+    }
 
 
 ##Print out stuff
@@ -207,6 +330,7 @@
 
 ### print out contents of zip:
     $body .= $zip_contents;
+    $body .= $lastmember;
 
     return;
 }
