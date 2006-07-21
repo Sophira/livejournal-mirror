@@ -18,7 +18,7 @@ ESN.initTrackBtns = function () {
     trackBtns.forEach(function (trackBtn) {
         if (!trackBtn || !trackBtn.getAttribute) return;
 
-        if (!trackBtn.getAttribute("lj:subid") && !trackBtn.getAttribute("lj:journalid")) return;
+        if (!trackBtn.getAttribute("lj_subid") && !trackBtn.getAttribute("lj_journalid")) return;
 
         DOM.addEventListener(trackBtn, "click", function (evt) {
             Event.stop(evt);
@@ -26,7 +26,7 @@ ESN.initTrackBtns = function () {
             var btnInfo = {};
 
             Array('arg1', 'arg2', 'etypeid', 'journalid', 'subid', 'auth_token').forEach(function (arg) {
-                btnInfo[arg] = trackBtn.getAttribute("lj:" + arg);
+                btnInfo[arg] = trackBtn.getAttribute("lj_" + arg);
             });
 
             ESN.toggleSubscription(btnInfo, evt, trackBtn);
@@ -75,22 +75,22 @@ ESN.toggleSubscription = function (subInfo, evt, btn) {
             if (info.subscribed) {
                 btn.src = LJVAR.imgprefix + "/btn_tracking.gif";
 
-                DOM.setElementAttribute(btn, "lj:subid", info.subid);
+                DOM.setElementAttribute(btn, "lj_subid", info.subid);
 
                 Array("journalid", "arg1", "arg2", "etypeid").forEach(function (param) {
-                    DOM.setElementAttribute(btn, "lj:" + param, null);
+                    DOM.setElementAttribute(btn, "lj_" + param, null);
                 });
             } else {
                 btn.src = LJVAR.imgprefix + "/btn_track.gif";
 
-                DOM.setElementAttribute(btn, "lj:subid", null);
+                DOM.setElementAttribute(btn, "lj_subid", null);
 
                 Array("journalid", "arg1", "arg2", "etypeid").forEach(function (param) {
-                    DOM.setElementAttribute(btn, "lj:" + param, info[param]);
+                    DOM.setElementAttribute(btn, "lj_" + param, info[param]);
                 });
             }
 
-            DOM.setElementAttribute(btn, "lj:auth_token", info.auth_token);
+            DOM.setElementAttribute(btn, "lj_auth_token", info.auth_token);
         }
     };
 
