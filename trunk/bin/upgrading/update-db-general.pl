@@ -2502,6 +2502,24 @@ CREATE TABLE jabroster (
 )
 EOC
 
+register_tablecreate("s2styleres", <<'EOC');
+CREATE TABLE s2styleres (
+   userid INT UNSIGNED NOT NULL,
+   styleid INT UNSIGNED NOT NULL,
+   filename VARCHAR(50) NOT NULL,
+   resid INT UNSIGNED NOT NULL,
+   PRIMARY KEY (userid, styleid, filename)
+)
+EOC
+
+register_tablecreate("s2res", <<'EOC');
+CREATE TABLE s2res (
+   resid INT UNSIGNED NOT NULL PRIMARY KEY,
+   sha1hex VARCHAR(32) NOT NULL,
+   KEY (sha1hex)
+)
+EOC
+
 
 # NOTE: new table declarations go here
 

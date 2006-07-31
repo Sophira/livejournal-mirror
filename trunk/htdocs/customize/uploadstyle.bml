@@ -4,6 +4,7 @@
     use vars qw(%GET %POST $title $body $head @errors);
     use Carp qw(croak);
     use Archive::Zip;
+    use Digest::SHA1 qw(sha1_hex);
     use IO::String;
 
     BML::set_language_scope("/customize/uploadstyle.bml");
@@ -64,7 +65,7 @@
     
     my $lastmember;
 
-##!! Get max space quota here.
+# TODO: Get max space quota here.
 
     ### save mode
     if (LJ::did_post()) {
@@ -207,9 +208,6 @@
             if ($io_string) { 
                 my $zip = Archive::Zip->new();
                 my $status = $zip->readFromFileHandle( $io_string );
-                warn "Status = $status\r\n";
-                use Data::Dumper;
-                warn Dumper($zip)."\r\n";
                 if ($zip->eocdOffset()){
                     warn "Something has added ", $zip->eocdOffset, " bytes of garbage!\n";
                 }
@@ -247,12 +245,22 @@
                             return $mime;
                         };
                         
-                        $upload{md5ctx} = new Digest::MD5
-                        $upload{md5ctx}->add($data);
-                        $upload{md5sum} = $upload{md5ctx}->digest;
+                        #$upload{md5ctx} = new Digest::MD5
+                        #$upload{md5ctx}->add($data);
+                        #$upload{md5sum} = $upload{md5ctx}->digest;
     
                         my $mime = $format_magic->($magic); #check image formats
                         $zip_contents .= "...[magic:$magic]recognized as $mime<BR>\n";
+                        
+                        if ($mime){
+                            my $data = $zip->contents($pathname);
+                            my $userpic = eval { 
+                                    LJ::S2res->create($u, data => \$data, filename => $filename); 
+                                };
+                            if (!$userpic) {
+                                return $err->($@);
+                            }
+                        }
                     }
                 }
             } else {

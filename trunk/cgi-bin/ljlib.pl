@@ -13,6 +13,7 @@ use LJ::Error;
 use LJ::User;
 use LJ::Entry;
 use LJ::Userpic;
+use LJ::S2res;
 use LJ::Constants;
 use Time::Local ();
 use Storable ();
@@ -1745,21 +1746,25 @@ sub start_request
     # include standard files if this is web-context
     unless ($LJ::DISABLED{sitewide_includes}) {
         if (eval { Apache->request }) {
+            # standard site-wide JS
             LJ::need_res(qw(
                             js/core.js
                             js/dom.js
-                            js/httpreq.js
-                            js/ippu.js
-                            js/lj_ippu.js
-                            js/hourglass.js
-                            js/contextualpopup.js
-                            stc/contextualpopup.css
-                            stc/lj_base.css
-                            )) if $LJ::CTX_POPUP;
+                            js/livejournal.js
+                            ));
+
+              # contextual popup JS
+              LJ::need_res(qw(
+                              js/httpreq.js
+                              js/ippu.js
+                              js/lj_ippu.js
+                              js/hourglass.js
+                              js/contextualpopup.js
+                              stc/contextualpopup.css
+                              stc/lj_base.css
+                              )) if $LJ::CTX_POPUP;
 
               LJ::need_res(qw(
-                              js/core.js
-                              js/dom.js
                               js/devel.js
                               )) if $LJ::IS_DEV_SERVER;
 
@@ -2629,7 +2634,7 @@ sub alloc_global_counter
 
     # $dom can come as a direct argument or as a string to be mapped via hook
     my $dom_unmod = $dom;
-    unless ($dom =~ /^[SPCEAO]$/) {
+    unless ($dom =~ /^[SPRCEAO]$/) {
         $dom = LJ::run_hook('map_global_counter_domain', $dom);
     }
     return LJ::errobj("InvalidParameters", params => { dom => $dom_unmod })->cond_throw
@@ -2652,6 +2657,8 @@ sub alloc_global_counter
         $newmax = $dbh->selectrow_array("SELECT MAX(styleid) FROM s1stylemap");
     } elsif ($dom eq "P") {
         $newmax = $dbh->selectrow_array("SELECT MAX(picid) FROM userpic");
+    } elsif ($dom eq "R") {
+        $newmax = $dbh->selectrow_array("SELECT MAX(resid) FROM s2res");
     } elsif ($dom eq "C") {
         $newmax = $dbh->selectrow_array("SELECT MAX(capid) FROM captchas");
     } elsif ($dom eq "E") {

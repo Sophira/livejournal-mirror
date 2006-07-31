@@ -699,6 +699,22 @@ sub kill_session {
 }
 
 # <LJFUNC>
+# name: LJ::User::mogfs_s2res_key
+# class: mogilefs
+# des: Make a mogilefs key for the given S2 resource for the user
+# args: res
+# res: Either the resource hash or the resid of the resource.
+# returns: mogilefs key
+# </LJFUNC>
+sub mogfs_s2res_key {
+    my $self = shift or return undef;
+    my $res = shift or croak "missing required arg: S2 resource";
+
+    my $resid = ref $res ? $res->{picid} : $res+0;
+    return "s2:$self->{userid}:$resid";
+}
+
+# <LJFUNC>
 # name: LJ::User::mogfs_userpic_key
 # class: mogilefs
 # des: Make a mogilefs key for the given pic for the user
@@ -873,7 +889,7 @@ sub ljuser_display {
         $url = LJ::ehtml($url);
         $name = LJ::ehtml($name);
 
-        return "<span class='ljuser' style='white-space: nowrap;'><a href='$LJ::SITEROOT/userinfo.bml?userid=$u->{userid}&amp;t=I$andfull'><img src='$img/openid-profile.gif' alt='[info]' width='16' height='16' style='vertical-align: bottom; border: 0;' /></a><a href='$url' rel='nofollow'><b>$name</b></a></span>";
+        return "<span class='ljuser' lj:user='$name' style='white-space: nowrap;'><a href='$LJ::SITEROOT/userinfo.bml?userid=$u->{userid}&amp;t=I$andfull'><img src='$img/openid-profile.gif' alt='[info]' width='16' height='16' style='vertical-align: bottom; border: 0;' /></a><a href='$url' rel='nofollow'><b>$name</b></a></span>";
 
     } else {
         return "<b>????</b>";
@@ -1045,15 +1061,17 @@ sub can_show_full_bday {
 
 sub bday_string {
     my $u = shift;
+    croak "invalid user object passed" unless LJ::isu($u);
+    return 0 if $u->underage;
 
     my $bdate = $u->{'bdate'};
     my ($year,$mon,$day) = split(/-/, $bdate);
     my $bday_string;
-    if ($u->can_show_full_bday) {
+    if ($u->can_show_full_bday && $day > 0 && $mon > 0) {
         $bday_string = $bdate;
-    } elsif ($u->can_show_bday) {
+    } elsif ($u->can_show_bday && $day > 0 && $mon > 0) {
         $bday_string = "$mon-$day";
-    } elsif ($u->can_show_bday_year && $year ne '0000') {
+    } elsif ($u->can_show_bday_year && $year > 0) {
         $bday_string = $year;
     } else {
         $bday_string = "";
@@ -1401,6 +1419,39 @@ sub activate_userpics {
     LJ::MemCache::delete([$userid, "upicinf:$userid"]);
 
     return 1;
+}
+
+# ensure that this user does not have more than the maximum number of subscriptions
+# allowed by their cap, and enable subscriptions up to their current limit
+sub enable_subscriptions {
+    my $u = shift;
+    my $max_subs = $u->get_cap('subscriptions');
+    my @inbox_subs = grep { $_->active && $_->enabled } $u->find_subscriptions(method => 'Inbox');
+
+    if ((scalar @inbox_subs) > $max_subs) {
+        # oh no, too many subs.
+        # disable the oldest subscriptions that are "tracking" subscriptions
+        my @tracking = grep { $_->is_tracking_category } @inbox_subs;
+        @tracking = sort { $a->createtime <=> $b->createtime } @tracking;
+
+        my $need_to_disable = (scalar @inbox_subs) - $max_subs;
+
+        for (1..$need_to_disable) {
+            my $sub_to_disable = shift @tracking;
+            $sub_to_disable->disable if $sub_to_disable;
+        }
+    } else {
+        # make sure all subscriptions are enabled
+        my $need_to_enable = $max_subs - (scalar @inbox_subs);
+
+        # get disabled subs
+        @inbox_subs = grep { $_->active && ! $_->enabled } $u->find_subscriptions(method => 'Inbox');
+
+        for (1..$need_to_enable) {
+            my $sub_to_enable = shift @inbox_subs;
+            $sub_to_enable->enable if $sub_to_enable;
+        }
+    }
 }
 
 sub uncache_prop {
@@ -1823,6 +1874,13 @@ sub display_username {
     my $u = shift;
     return $u->display_name if $u->is_identity;
     return $u->{user};
+}
+
+# userid
+*userid = \&id;
+sub id {
+    my $u = shift;
+    return $u->{userid};
 }
 
 package LJ;
@@ -3002,7 +3060,7 @@ sub ljuser
         $y ||= $x;  # make square if only one dimension given
         my $strike = $opts->{'del'} ? ' text-decoration: line-through;' : '';
 
-        return "<span class='ljuser' style='white-space: nowrap;$strike'><a href='$profile$andfull'><img src='$img/$fil' alt='[info]' width='$x' height='$y' style='vertical-align: bottom; border: 0;' /></a><a href='$url'><b>$user</b></a></span>";
+        return "<span class='ljuser' lj:user='$user' style='white-space: nowrap;$strike'><a href='$profile$andfull'><img src='$img/$fil' alt='[info]' width='$x' height='$y' style='vertical-align: bottom; border: 0;' /></a><a href='$url'><b>$user</b></a></span>";
     };
 
     my $u = isu($user) ? $user : LJ::load_user($user);
