@@ -173,6 +173,7 @@ sub get_blob_domainid
         "captcha_audio" => 3,
         "captcha_image" => 4,
         "fotobilder" => 5,
+        "s2res" => 6,
     }->{$name};
     # FIXME: add hook support, so sites can't define their own
     # general code gets priority on numbers, say, 1-200, so verify
@@ -2634,7 +2635,7 @@ sub alloc_global_counter
 
     # $dom can come as a direct argument or as a string to be mapped via hook
     my $dom_unmod = $dom;
-    unless ($dom =~ /^[SPRCEAO]$/) {
+    unless ($dom =~ /^[SPCEAO]$/) {
         $dom = LJ::run_hook('map_global_counter_domain', $dom);
     }
     return LJ::errobj("InvalidParameters", params => { dom => $dom_unmod })->cond_throw
@@ -2657,8 +2658,6 @@ sub alloc_global_counter
         $newmax = $dbh->selectrow_array("SELECT MAX(styleid) FROM s1stylemap");
     } elsif ($dom eq "P") {
         $newmax = $dbh->selectrow_array("SELECT MAX(picid) FROM userpic");
-    } elsif ($dom eq "R") {
-        $newmax = $dbh->selectrow_array("SELECT MAX(resid) FROM s2res");
     } elsif ($dom eq "C") {
         $newmax = $dbh->selectrow_array("SELECT MAX(capid) FROM captchas");
     } elsif ($dom eq "E") {

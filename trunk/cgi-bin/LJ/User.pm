@@ -699,22 +699,6 @@ sub kill_session {
 }
 
 # <LJFUNC>
-# name: LJ::User::mogfs_s2res_key
-# class: mogilefs
-# des: Make a mogilefs key for the given S2 resource for the user
-# args: res
-# res: Either the resource hash or the resid of the resource.
-# returns: mogilefs key
-# </LJFUNC>
-sub mogfs_s2res_key {
-    my $self = shift or return undef;
-    my $res = shift or croak "missing required arg: S2 resource";
-
-    my $resid = ref $res ? $res->{picid} : $res+0;
-    return "s2:$self->{userid}:$resid";
-}
-
-# <LJFUNC>
 # name: LJ::User::mogfs_userpic_key
 # class: mogilefs
 # des: Make a mogilefs key for the given pic for the user

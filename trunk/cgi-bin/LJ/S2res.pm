@@ -19,26 +19,26 @@ sub reset_singletons {
 }
 
 sub instance {
-    my ($class, $u, $picid) = @_;
+    my ($class, $u, $resid) = @_;
     my $up;
 
     # return existing one, if loaded
     if (my $us = $singletons{$u->{userid}}) {
-        return $up if $up = $us->{$picid};
+        return $up if $up = $us->{$resid};
     }
 
-    $up = $class->_skeleton($u, $picid);
-    $singletons{$u->{userid}}->{$picid} = $up;
+    $up = $class->_skeleton($u, $resid);
+    $singletons{$u->{userid}}->{$resid} = $up;
     return $up;
 }
 *new = \&instance;
 
 sub _skeleton {
-    my ($class, $u, $picid) = @_;
+    my ($class, $u, $resid) = @_;
     # starts out as a skeleton and gets loaded in over time, as needed:
     return bless {
         userid => $u->{userid},
-        picid  => int($picid),
+        picid  => int($resid),
     };
 }
 
@@ -177,7 +177,6 @@ sub create {
 
     my $dataref = delete $opts{'data'};
     my $filename = delete $opts{'filename'};
-    my $maxbytesize = delete $opts{'maxbytesize'};
     croak("dataref not a scalarref") unless ref $dataref eq 'SCALAR';
 
     croak("Unknown options: " . join(", ", scalar keys %opts)) if %opts;
@@ -193,9 +192,6 @@ sub create {
     my $fmterror = 0;
 
     my @errors;
-    
-    # not checking for byte size - code removed
-    #
 
     unless ($filetype eq "GIF" || $filetype eq "JPG" || $filetype eq "PNG") {
         push @errors, LJ::errobj("Userpic::FileType",
@@ -203,132 +199,91 @@ sub create {
         $fmterror = 1;
     }
 
-    # not checking for image size - code removed
-    #
-
     LJ::throw(@errors);
 
-    my $base64 = Digest::SHA1::sha1_base64($$dataref);
-
-    my $target;
-    if ($u->{dversion} > 6 && $LJ::S2res_MOGILEFS) {
-        $target = 'mogile';
-    } elsif ($LJ::S2res_BLOBSERVER) {
-        $target = 'blob';
-    }
-
+    #set up everything we'll need later
+    my $sha1hex = Digest::SHA1::sha1_hex($$dataref);
+    my $lockkey = "s2res:$sha1hex";
     my $dbh = LJ::get_db_writer();
+    my $resid;
+    my $release_lock = sub { 
+        LJ::release_lock($dbh, "global", $lockkey);
+        return 1;
+    };
 
-    # see if it's a duplicate, return it if it is
-    if (my $dup_up = LJ::S2res->new_from_sha1($u, $base64)) {
-        return $dup_up;
-    }
-
-    # start making a new onew
-    my $resid = LJ::alloc_global_counter('R');
-
-    my $contenttype;
-    if (LJ::S2res->userpics_partitioned($u)) {
-        $contenttype = {
-            'GIF' => 'G',
-            'PNG' => 'P',
-            'JPG' => 'J',
-        }->{$filetype};
-    } else {
-        $contenttype = {
-            'GIF' => 'image/gif',
-            'PNG' => 'image/png',
-            'JPG' => 'image/jpeg',
-        }->{$filetype};
-    }
-
-    @errors = (); # TEMP: FIXME: remove... using exceptions
-
-    my $dberr = 0;
-    
-#     # allocation
-#     my $rv = $dbh->do("INSERT IGNORE INTO s2res SET sha1hex=?", undef, $sha1hex)
-#     if ($rv) {
-#        $resid = $dbh->{mysql_insertid};
-#     } else {
-#        $resid = $dbh->selectrow_array("SELECT resid FROM s2res WHERE sha1hex=?",
-#                                       undef, $sha1hex);
-#     }
-    
-#     CREATE TABLE s2styleres (
-#        userid INT UNSIGNED NOT NULL,
-#        styleid INT UNSIGNED NOT NULL,
-#        filename VARCHAR(50) NOT NULL,
-#        resid INT UNSIGNED NOT NULL,
-#        PRIMARY KEY (userid, styleid, filename)
-#     );
-#     
-#     # global table
-#     CREATE TABLE s2res (
-#        resid INT UNSIGNED NOT NULL PRIMARY KEY,
-#        sha1hex VARCHAR(32) NOT NULL,
-#        KEY (sha1hex)
-#     );
-
-    my $styleid = 1; #get style id for user.
-    $u->do("INSERT INTO s2styleres (userid, styleid, filename, resid)".
-            "VALUES (?, ?, ?, ?)",
-           undef, $u->{'userid'}, $styleid, $filename, $resid);
-    if ($u->err) {
-        push @errors, $err->($u->errstr);
-        $dberr = 1;
-    }
-
+    my $styleid = $dbh->selectrow_array("SELECT styleid FROM s2styles "
+            ."WHERE userid=".$u->{'userid'}." AND name='wizard-voxish'");
     my $clean_err = sub {
         $u->do("DELETE FROM s2styleres WHERE userid=? AND styleid=? AND filename=?",
                undef, $u->{'userid'}, $styleid, $filename) if ($styleid && $filename);
         return $err->(@_);
     };
 
-    ### insert the resource
-    if (!$dberr) {
-        my $fh = LJ::mogclient()->new_file($u->mogfs_userpic_key($resid), 's2res');
-        if (defined $fh) {
-            $fh->print($$dataref);
-            my $rv = $fh->close;
-            push @errors, $clean_err->("Error saving to storage server: $@") unless $rv;
+    @errors = (); # TEMP: FIXME: remove... using exceptions
+
+    my $dberr = 0;
+
+    # get lock so other clients don't try to create a mogilefs
+    #  file for this sha1...
+    $release_lock->(); ## REMOVE ME LATER!
+    my $lock = LJ::get_lock($dbh, "global", $lockkey);
+    unless ($lock) {
+       # error unable to get lock...
+       return undef; # this is probably bad - should return something else.
+    }
+    
+    # allocation
+    my $rv = $dbh->do("INSERT IGNORE INTO s2res SET sha1hex=?", undef, $sha1hex);
+    
+    # another client could have inserted into s2res while we waited 
+    # for our lock, see if there is now a sha1 => resid mapping
+    if ($rv) {
+        $resid = $dbh->{'mysql_insertid'};
+
+        ### insert the resource
+        if (!$resid) {
+            my $fh = LJ::mogclient()->new_file("s2res:$resid", 's2res');
+            if (defined $fh) {
+                $fh->print($$dataref);
+                my $rv = $fh->close;
+                push @errors, $clean_err->("Error saving to storage server: $@") unless $rv;
+            } else {
+                # fatal error, we couldn't get a filehandle to use
+                push @errors, $clean_err->("Unable to contact storage server.  Your picture has not been saved.");
+            }
+    
+            # even in the non-LJ::Blob case we use the userblob table as a means
+            # to track the number and size of user blob assets
+            my $dmid = LJ::get_blob_domainid('s2res');
+            $u->do("INSERT INTO userblob (journalid, domain, blobid, length) ".
+                   "VALUES (?, ?, ?, ?)", undef, $u->{userid}, $dmid, $resid, length($$dataref));
+    
         } else {
-            # fatal error, we couldn't get a filehandle to use
-            push @errors, $clean_err->("Unable to contact storage server.  Your picture has not been saved.");
+            push @errors, "Database error?  Dying";
         }
+    }
+    
+    # all successful - unlock
+    $release_lock->(); 
+    
+    $resid = $dbh->selectrow_array
+                ("SELECT resid FROM s2res WHERE sha1hex=?",
+                 undef, $sha1hex);
+    die $dbh->errstr if $dbh->err;
 
-        # even in the non-LJ::Blob case we use the userblob table as a means
-        # to track the number and size of user blob assets
-        my $dmid = LJ::get_blob_domainid('userpic');
-        $u->do("INSERT INTO s2res (resid, sha1hex) ".
-               "VALUES (?, ?)", undef, $resid, $base64);
-
-    } else {
-        push @errors, "Database error?  Dying";
+    $u->do("INSERT IGNORE INTO s2styleres (userid, styleid, filename, resid)".
+           "VALUES (?, ?, ?, ?)",
+           undef, $u->{'userid'}, $styleid, $filename, $resid);
+    if ($u->err) {
+        push @errors, $err->($u->errstr);
+        $dberr = 1;
     }
 
     LJ::throw(@errors);
 
-    # now that we've created a new pic, invalidate the user's memcached userpic info
-    LJ::S2res->delete_cache($u);
-
-    my $upic = LJ::S2res->new($u, $resid) or die "Error insantiating S2 resource";
-    LJ::Event::NewUserpic->new($upic)->fire unless $LJ::DISABLED{esn};
+    my $upic = LJ::S2res->new($resid) or die "Error insantiating S2 resource";
 
     return $upic;
-}
-
-sub delete_cache {
-    my ($class, $u) = @_;
-    my $memkey = [$u->{'userid'},"upicinf:$u->{'userid'}"];
-    LJ::MemCache::delete($memkey);
-    $memkey = [$u->{'userid'},"upiccom:$u->{'userid'}"];
-    LJ::MemCache::delete($memkey);
-    $memkey = [$u->{'userid'},"upicurl:$u->{'userid'}"];
-    LJ::MemCache::delete($memkey);
-
-    # clear process cache
-    $LJ::CACHE_USERPIC_INFO{$u->{'userid'}} = undef;
 }
 
 # delete this userpic
@@ -344,44 +299,44 @@ sub delete {
     };
 
     my $u = $self->owner;
-    my $picid = $self->id;
+    my $resid = $self->id;
 
     # delete meta-data first so it doesn't get stranded if errors
     # between this and deleting row
     $u->do("DELETE FROM userblob WHERE journalid=? AND blobid=? " .
-           "AND domain=?", undef, $u->{'userid'}, $picid,
-           LJ::get_blob_domainid('userpic'));
+           "AND domain=?", undef, $u->{'userid'}, $resid,
+           LJ::get_blob_domainid('s2res'));
     $fail->() if $@;
 
     # userpic keywords
     if (LJ::S2res->userpics_partitioned($u)) {
         eval {
             $u->do("DELETE FROM userpicmap2 WHERE userid=? " .
-                   "AND picid=?", undef, $u->{userid}, $picid) or die;
+                   "AND picid=?", undef, $u->{userid}, $resid) or die;
             $u->do("DELETE FROM userpic2 WHERE picid=? AND userid=?",
-                   undef, $picid, $u->{'userid'}) or die;
+                   undef, $resid, $u->{'userid'}) or die;
             };
     } else {
         eval {
             my $dbh = LJ::get_db_writer();
             $dbh->do("DELETE FROM userpicmap WHERE userid=? " .
-                 "AND picid=?", undef, $u->{userid}, $picid) or die;
-            $dbh->do("DELETE FROM userpic WHERE picid=?", undef, $picid) or die;
+                 "AND picid=?", undef, $u->{userid}, $resid) or die;
+            $dbh->do("DELETE FROM userpic WHERE picid=?", undef, $resid) or die;
         };
     }
     $fail->() if $@;
 
-    # best-effort on deleteing the blobs
+    # best-effort on deleting the blobs
     # TODO: we could fire warnings if they fail, then if $LJ::DIE_ON_WARN is set,
     # the ->warn methods on errobjs are actually dies.
     eval {
         if ($self->location eq 'mogile') {
-            LJ::mogclient()->delete($u->mogfs_userpic_key($picid));
+            LJ::mogclient()->delete($u->mogfs_userpic_key($resid));
         } elsif ($LJ::S2res_BLOBSERVER &&
-                 LJ::Blob::delete($u, "userpic", $self->extension, $picid)) {
+                 LJ::Blob::delete($u, "userpic", $self->extension, $resid)) {
         } elsif ($u->do("DELETE FROM userpicblob2 WHERE ".
                         "userid=? AND picid=?", undef,
-                        $u->{userid}, $picid) > 0) {
+                        $u->{userid}, $resid) > 0) {
         }
     };
 

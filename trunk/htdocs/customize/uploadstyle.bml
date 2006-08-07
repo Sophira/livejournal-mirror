@@ -51,18 +51,31 @@
     my $u = LJ::get_authas_user($authas) or
         return $err->("a".$ML{'error.invalidauth'});
 
-    # extra arguments for get requests
-    my $getextra = $authas ne $remote->{'user'} ? "?authas=$authas" : '';
-
-    my $returl = LJ::CleanHTML::canonical_url($POST{'ret'});
-    my $picurl = LJ::CleanHTML::canonical_url($POST{'urlpic'});
-
     if (LJ::get_cap($u, "readonly")) {
         $title = "Read-only mode";
         $body = $LJ::MSG_READONLY_USER;
         return;
     }
+
+    # extra arguments for get requests
+    my $getextra = $authas ne $remote->{'user'} ? "?authas=$authas" : '';
+
+    my $returl = LJ::CleanHTML::canonical_url($POST{'ret'});
+
+    # for layer access (taken from options.bml)
+    my $pub = LJ::S2::get_public_layers();
+    my $userlay = LJ::S2::get_layers_of_user($u); #Hash of my layers
+    my %s2_style = LJ::S2::get_style($u, "verify"); #current layers used by user
+    my $has_cap = LJ::get_cap($u, "s2styles");
+    my ($style, $layer, $lyr_layout, $lyr_core, @layerids, %layerinfo, $lid_i18nc, $lid_theme, $lid_i18n, $layerid);
+    my %params = (authas           => 'word',
+                  opt_usesharedpic => qr/./,
+                  s1_overrides     => qr/./,
+                  'action:redir'   => 'word',
+                  'action:remove'  => qr/./,
+                  'lj_form_auth'   => qr/./,);
     
+    my $css_url;
     my $lastmember;
 
 # TODO: Get max space quota here.
@@ -212,19 +225,12 @@
                     warn "Something has added ", $zip->eocdOffset, " bytes of garbage!\n";
                 }
                 
-                my @members = $zip->members();
-                $zip_contents .= "We found ".$zip->numberOfMembers()." files.<BR>";
-                if ($zip->memberNamed("style.css")){
-                    $zip_contents .= "We did find a style.css!<BR>\r\n";
-                } else {
-                    $zip_contents .= "Uh oh, no style.css!<BR>\r\n";
-                }
+                # Store images and style.css
                 foreach my $pathname ($zip->memberNames()){
                     my $filename = $pathname;
                     $filename =~ s|.*/(.*?)$|$1|;
-                    if (!($pathname =~ /MACOSX/) && 
-                           ($filename eq 'style.css' ||
-                            $filename =~ /(?:\.jpg|\.gif|\.png|\.jpeg)$/i) ){
+                    if (!($pathname =~ /MACOSX/) && ($filename =~ /^style.css$/i || 
+                            $filename =~ /(?:\.jpg|\.gif|\.png|\.jpeg)$/i)){
                         $zip_contents .= "<B>$filename ($pathname)</B>\n";
                         
                         my $fh = IO::String->new();
@@ -244,10 +250,6 @@
     
                             return $mime;
                         };
-                        
-                        #$upload{md5ctx} = new Digest::MD5
-                        #$upload{md5ctx}->add($data);
-                        #$upload{md5sum} = $upload{md5ctx}->digest;
     
                         my $mime = $format_magic->($magic); #check image formats
                         $zip_contents .= "...[magic:$magic]recognized as $mime<BR>\n";
@@ -263,6 +265,46 @@
                         }
                     }
                 }
+                
+                #  (code from /customize/options.bml)
+                unless ($s2_style{'user'}) {
+                    $s2_style{'user'} = LJ::S2::create_layer($u->{userid}, $s2_style{'layout'}, "user");
+                    return "<?h1 $ML{'Error'} h1?> <?p $ML{'.error.cant_generate_user_layer'} p?>"
+                        unless $s2_style{'user'};
+                }
+                LJ::cmize::s2_implicit_style_create($u, %s2_style);
+                
+                $style = LJ::S2::load_style($u->prop('s2_style'));
+                return $err->("Style not found.") unless $style && $style->{'userid'} == $u->{'userid'};
+                $layer = LJ::S2::load_layer($style->{'layer'}->{'user'});
+                
+                my $b2lid = $layer->{b2lid};
+                if ($b2lid && $LJ::S2LID_REMAP{$b2lid}) {
+                    LJ::S2::b2lid_remap($u, $style->{'layer'}->{'user'}, $b2lid);
+                    $layer->{b2lid} = $LJ::S2LID_REMAP{$b2lid};
+                }
+                
+                my $dbh = LJ::get_db_writer();
+                $lyr_layout = LJ::S2::load_layer($dbh, $layer->{'b2lid'});
+                return $err->("Layout layer for this $layer->{'type'} layer not found.")
+                    unless $lyr_layout;
+                $lyr_core = LJ::S2::load_layer($dbh, $lyr_layout->{'b2lid'});
+                return $err->("Core layer for layout not found.")
+                    unless $lyr_core;
+            
+                $lyr_layout->{'uniq'} = $dbh->selectrow_array("SELECT value FROM s2info WHERE s2lid=? AND infokey=?",
+                                                              undef, $lyr_layout->{'s2lid'}, "redist_uniq");
+                ###
+                
+                my %override;
+                my $prop = S2::get_property($lyr_core->{'s2lid'}, 'custom_stylesheet');
+                $override{$prop->{'name'}} = [ $prop, $css_url ];
+                if (! LJ::S2::layer_compile_user($layer, \%override)) {
+                    return $err->("Failed while trying to save your css file.");
+                }
+                LJ::S2::load_layers($layerid);
+                
+                
             } else {
                 $zip_contents = "no io_string?";
             }
@@ -302,22 +344,9 @@
                 <table>
             };
 
-        $body .= "<tr><td align='right'>\n";
-        $body .= LJ::html_check({ 'type' => 'radio', 'name' => 'src', 
-                                  'id' => 'radio_file', 'value' => 'file', 
-                                  'selected' => '1', 'accesskey' => $ML{'.fromfile.key'} });
-        $body .= "</td><td align='right'>";
+        $body .= "<tr><td align='right'>";
         $body .= "<label for='radio_file'>$ML{'.fromfile'}</label></td>";
         $body .= "<td align='left'><input type='file' name='zip' size='28' /></td></tr>\n";
-
-        $body .= "<tr><td align='right'>";
-        $body .= LJ::html_check({ 'type' => 'radio', 'name' => 'src', 'value' => 'url',
-                                  'id' => 'radio_url', 'accesskey' => $ML{'.fromurl.key'} });
-        $body .= "</td><td align='right'>";
-        $body .= "<label for='radio_url'>$ML{'.fromurl'}</label></td><td align='left'>";
-        $body .= LJ::html_text({ 'name' => 'urlpic', 'size' => '40' });
-        $body .= "<div><small>$ML{'.label.formats.desc'}</small></div>";
-        $body .= "</td></tr>\n";
 
         $body .= "<tr><td colspan='3' align='center'>";
         $body .= LJ::html_submit(undef, $ML{'.btn.proceed'},
