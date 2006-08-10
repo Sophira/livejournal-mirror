@@ -2124,10 +2124,10 @@ sub mail_comments {
         !$item->{props}->{'opt_noemail'} &&
         !LJ::u_equals($comment->{u}, $entryu) &&
         $entryu->{'email'} ne $parentmailed &&
-        $entryu->{'status'} eq "A") &&
+        $entryu->{'status'} eq "A" &&
         ! $entryu->has_subscription(event  => "LJ::Event::JournalNewComment",
                                     method => "LJ::NotificationMethod::Email",
-                                    journal => $entryu)
+                                    journal => $entryu))
     {
         LJ::load_user_props($entryu, 'mailencoding');
         LJ::load_codes({ "encoding" => \%LJ::CACHE_ENCODINGS } )
