@@ -75,7 +75,7 @@
                   'action:remove'  => qr/./,
                   'lj_form_auth'   => qr/./,);
     
-    my $css_url;
+    my $css_contents;
     my $lastmember;
 
 # TODO: Get max space quota here.
@@ -225,44 +225,12 @@
                     warn "Something has added ", $zip->eocdOffset, " bytes of garbage!\n";
                 }
                 
-                # Store images and style.css
+                # Roundabout way of doing this; there's got to be some alternative method...
                 foreach my $pathname ($zip->memberNames()){
                     my $filename = $pathname;
                     $filename =~ s|.*/(.*?)$|$1|;
-                    if (!($pathname =~ /MACOSX/) && ($filename =~ /^style.css$/i || 
-                            $filename =~ /(?:\.jpg|\.gif|\.png|\.jpeg)$/i)){
-                        $zip_contents .= "<B>$filename ($pathname)</B>\n";
-                        
-                        my $fh = IO::String->new();
-                        $fh->print($zip->contents($pathname));
-                        $fh->seek(0,0);
-                        $fh->read(my $magic, 4);
-                        
-                        my $format_magic = sub {
-                            my $magic = shift;
-                            my $hex = unpack "H*", $magic;
-                            my $mime;
-    
-                            # image formats
-                            $mime = 'image/jpeg' if $magic =~ /^\xff\xd8/; # JPEG
-                            $mime = 'image/gif'  if $magic =~ /^GIF8/;     # GIF
-                            $mime = 'image/png'  if $magic =~ /^\x89PNG/;  # PNG
-    
-                            return $mime;
-                        };
-    
-                        my $mime = $format_magic->($magic); #check image formats
-                        $zip_contents .= "...[magic:$magic]recognized as $mime<BR>\n";
-                        
-                        if ($mime){
-                            my $data = $zip->contents($pathname);
-                            my $userpic = eval { 
-                                    LJ::S2res->create($u, data => \$data, filename => $filename); 
-                                };
-                            if (!$userpic) {
-                                return $err->($@);
-                            }
-                        }
+                    if (!($pathname =~ /MACOSX/) && $filename =~ /^style.css$/i){
+                        $css_contents = $zip->contents($pathname);
                     }
                 }
                 
@@ -292,21 +260,95 @@
                 return $err->("Core layer for layout not found.")
                     unless $lyr_core;
             
-                $lyr_layout->{'uniq'} = $dbh->selectrow_array("SELECT value FROM s2info WHERE s2lid=? AND infokey=?",
-                                                              undef, $lyr_layout->{'s2lid'}, "redist_uniq");
+                $lyr_layout->{'uniq'} = 
+                    $dbh->selectrow_array("SELECT value FROM s2info WHERE s2lid=? AND infokey=?",
+                            undef, $lyr_layout->{'s2lid'}, "redist_uniq");
                 ###
                 
+                my %orig_override;
                 my %override;
-                my $prop = S2::get_property($lyr_core->{'s2lid'}, 'custom_stylesheet');
-                $override{$prop->{'name'}} = [ $prop, $css_url ];
+                foreach my $prop (S2::get_properties($lyr_layout->{'s2lid'}))
+                {
+                    $prop = S2::get_property($lyr_core->{'s2lid'}, $prop)
+                        unless ref $prop;
+                    next unless ref $prop;
+                    next if $prop->{'noui'};
+                    my $name = $prop->{'name'};
+                    next unless LJ::S2::can_use_prop($u, $lyr_layout->{'uniq'}, $name);
+                    {
+                        # figure out existing value (if there was no user/theme layer)
+                        my $existing;
+                        foreach my $lid (reverse @layerids) {
+                            next if $lid == $layerid;
+                            $existing = S2::get_set($lid, $name);
+                            last if defined $existing;
+                        }
+            
+                        if (ref $existing eq "HASH") { $existing = $existing->{'as_string'}; }
+                        
+                        my $customized = S2::get_set($layer->{'s2lid'}, $name);
+                        $customized = $existing unless defined $customized;
+                        $override{$name} = [ $prop, $customized ];
+                        $orig_override{$name} = [ $prop, $customized ];
+                    }
+                    if ($name eq 'custom_css'){
+                        $override{$name} = [ $prop, $css_contents ];
+                    }
+                }
                 if (! LJ::S2::layer_compile_user($layer, \%override)) {
-                    return $err->("Failed while trying to save your css file.");
+                    return $err->("Failed while trying to save your css file. $zip_contents");
                 }
                 LJ::S2::load_layers($layerid);
                 
+                LJ::S2res->backup($u);
+                # Store images
+                foreach my $pathname ($zip->memberNames()){
+                    my $filename = $pathname;
+                    $filename =~ s|.*/(.*?)$|$1|;
+                    if (!($pathname =~ /MACOSX/) && $filename =~ /\.(?:jpg|gif|png|jpeg)$/i){
+                        $zip_contents .= "<B>$filename ($pathname)</B>\n";
+                        
+                        my $fh = IO::String->new();
+                        $fh->print($zip->contents($pathname));
+                        $fh->seek(0,0);
+                        $fh->read(my $magic, 4);
+                        
+                        my $format_magic = sub {
+                            my $magic = shift;
+                            my $hex = unpack "H*", $magic;
+                            my $mime;
+    
+                            # image formats
+                            $mime = 'image/jpeg' if $magic =~ /^\xff\xd8/; # JPEG
+                            $mime = 'image/gif'  if $magic =~ /^GIF8/;     # GIF
+                            $mime = 'image/png'  if $magic =~ /^\x89PNG/;  # PNG
+    
+                            return $mime;
+                        };
+    
+                        my $mime = $format_magic->($magic); #check image formats
+                        
+                        if ($mime){
+                            $zip_contents .= "...[magic:$magic]recognized as $mime<BR>\n";
+                            my $data = $zip->contents($pathname);
+                            my $resid = eval {
+                                    LJ::S2res->create($u, data => \$data, filename => $filename); 
+                                };
+                            if (!$resid) {
+                                LJ::S2res->restore($u);
+                                if (! LJ::S2::layer_compile_user($layer, \%orig_override)) {
+                                    return $err->("Failed while trying to restore your css file. $zip_contents");
+                                }
+                                return $err->($@);
+                            }
+                            $zip_contents .= $resid; 
+                        }
+                    }
+                }
+                LJ::S2res->cleanup($u);
                 
             } else {
-                $zip_contents = "no io_string?";
+                $zip_contents .= "no io_string?";
             }
         }
     }

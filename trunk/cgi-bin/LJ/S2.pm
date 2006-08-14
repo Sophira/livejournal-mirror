@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+﻿#!/usr/bin/perl
 #
 
 use strict;
@@ -56,6 +56,15 @@ sub make_journal
             $entry = "print_stylesheet()";
             $opts->{'contenttype'} = 'text/css';
             $con_opts->{'use_modtime'} = 1;
+        } elsif ($opts->{'pathextra'} =~ m!/(\d+)/(.+\.(?:jpg|gif|png|jpeg))$!i) {
+            $styleid = $1;
+            my $file = $2;
+            $entry = "";
+            $opts->{'contenttype'} = 'image/gif';
+            $con_opts->{'use_modtime'} = 1;
+            
+            my $data = LJ::S2res->imagedata($u, $styleid, $file);
+            return "Data:".LJ::D($data);
         } else {
             $opts->{'handler_return'} = 404;
             return;

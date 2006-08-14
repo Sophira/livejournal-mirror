@@ -152,25 +152,50 @@ sub load_row {
     $self->absorb_row($row);
 }
 
-sub load_user_userpics {
-    my ($class, $u) = @_;
+# Set the styleids of things in s2styleres that belong to the user to 0.
+# Called before we insert files.
+sub backup {
+    my ($class, $u, %opts) = @_;
     local $LJ::THROW_ERRORS = 1;
-    my @ret;
-
-    # select all of their userpics and iterate through them
-    my $sth;
-    $sth = $u->prepare("SELECT userid, picid, width, height, state, fmt, comment, location " .
-                       "FROM s2styleres WHERE userid=?");
-    $sth->execute($u->{'userid'});
-    while (my $rec = $sth->fetchrow_hashref) {
-        # ignore anything expunged
-        next if $rec->{state} eq 'X';
-        push @ret, LJ::S2res->new_from_row($rec);
-    }
-    return @ret;
+    
+    $u->do("UPDATE s2styleres SET styleid=0 WHERE userid=?;", undef, $u->{'userid'});
+    die $u->errstr if $u->err;
+    
+    return 1;
 }
 
-# FIXME: XXX: NOT YET FINISHED
+# Restore previous styleids from 0.  Plays well only with the assumtion that the
+# previous CSS is restored as well... called in the event of an error while
+# inserting files
+sub restore {
+    my ($class, $u, %opts) = @_;
+    local $LJ::THROW_ERRORS = 1;
+    
+    my $styleid = $u->selectrow_array("SELECT styleid FROM s2styles "
+            ."WHERE userid='".$u->{'userid'}."' AND name='wizard-voxish'");
+    LJ::throw("Error in locating user's wizard-voxish style while recovering from an error!") unless ($styleid);
+    
+    $u->do("DELETE FROM s2styleres WHERE styleid!=0 AND userid=?", undef, $u->{'userid'});
+    $u->do("UPDATE s2styleres SET styleid=? WHERE styleid=0 AND userid=?;",
+           undef, $styleid, $u->{'userid'});
+    die $u->errstr if $u->err;
+    
+    return 1;
+}
+
+# Delete all rows that belong to 0, and who's styleids have been zeroed.
+# Called on successful insertion of all files.
+sub cleanup {
+    my ($class, $u, %opts) = @_;
+    local $LJ::THROW_ERRORS = 1;
+    
+    $u->do("DELETE FROM s2styleres WHERE styleid=0 AND userid=?;", undef, $u->{'userid'});
+    die $u->errstr if $u->err;
+    
+    return 1;
+}
+
+# Adds one file to the mogileFS and database.  File data and filename in %opts.
 sub create {
     my ($class, $u, %opts) = @_;
     local $LJ::THROW_ERRORS = 1;
@@ -190,50 +215,52 @@ sub create {
     my ($w, $h, $filetype) = Image::Size::imgsize($dataref);
 
     my $fmterror = 0;
-
     my @errors;
 
     unless ($filetype eq "GIF" || $filetype eq "JPG" || $filetype eq "PNG") {
-        push @errors, LJ::errobj("Userpic::FileType",
-                                 type => $filetype);
+        push @errors, "Unacceptable filetype caught in S2res->create.";
         $fmterror = 1;
     }
+    
+    my $styleid = $u->selectrow_array("SELECT styleid FROM s2styles "
+            ."WHERE userid='".$u->{'userid'}."' AND name='wizard-voxish'");
+    push @errors, "Error in locating user's wizard-voxish style!" unless ($styleid);
 
     LJ::throw(@errors);
 
     #set up everything we'll need later
     my $sha1hex = Digest::SHA1::sha1_hex($$dataref);
     my $lockkey = "s2res:$sha1hex";
-    my $dbh = LJ::get_db_writer();
     my $resid;
-    my $release_lock = sub { 
-        LJ::release_lock($dbh, "global", $lockkey);
-        return 1;
-    };
 
-    my $styleid = $dbh->selectrow_array("SELECT styleid FROM s2styles "
-            ."WHERE userid=".$u->{'userid'}." AND name='wizard-voxish'");
-    my $clean_err = sub {
-        $u->do("DELETE FROM s2styleres WHERE userid=? AND styleid=? AND filename=?",
-               undef, $u->{'userid'}, $styleid, $filename) if ($styleid && $filename);
-        return $err->(@_);
-    };
 
     @errors = (); # TEMP: FIXME: remove... using exceptions
 
     my $dberr = 0;
-
+    my $dbh = LJ::get_db_writer();
+    my $release_lock = sub { 
+        LJ::release_lock($dbh, "global", $lockkey);
+        return 1;
+    };
+    my $clean_err = sub {
+        $u->do("DELETE FROM s2styleres WHERE userid=? AND styleid=? AND filename=?",
+               undef, $u->{'userid'}, $styleid, $filename) if ($styleid && $filename);
+        $release_lock->();
+        return $err->(@_);
+    };
+    
     # get lock so other clients don't try to create a mogilefs
     #  file for this sha1...
-    $release_lock->(); ## REMOVE ME LATER!
+    $release_lock->(); ## REMOVE ME!
     my $lock = LJ::get_lock($dbh, "global", $lockkey);
     unless ($lock) {
        # error unable to get lock...
-       return undef; # this is probably bad - should return something else.
+       return undef; # this is probably bad - should return an error or something
     }
     
     # allocation
     my $rv = $dbh->do("INSERT IGNORE INTO s2res SET sha1hex=?", undef, $sha1hex);
+    my $debug .= "SQL: INSERT IGNORE INTO s2res SET sha1hex=$sha1hex<BR>";
     
     # another client could have inserted into s2res while we waited 
     # for our lock, see if there is now a sha1 => resid mapping
@@ -241,8 +268,9 @@ sub create {
         $resid = $dbh->{'mysql_insertid'};
 
         ### insert the resource
-        if (!$resid) {
-            my $fh = LJ::mogclient()->new_file("s2res:$resid", 's2res');
+        if ($resid) {
+            my $fh = LJ::mogclient()->new_file("s2res:$resid", 's2res') or $clean_err->("MogileFS error: $@");
+            $debug .= "MOG: new_file(\"s2res:$resid\", 's2res')<BR>";
             if (defined $fh) {
                 $fh->print($$dataref);
                 my $rv = $fh->close;
@@ -257,33 +285,62 @@ sub create {
             my $dmid = LJ::get_blob_domainid('s2res');
             $u->do("INSERT INTO userblob (journalid, domain, blobid, length) ".
                    "VALUES (?, ?, ?, ?)", undef, $u->{userid}, $dmid, $resid, length($$dataref));
+            $debug .= "SQL: INSERT INTO userblob (journalid, domain, blobid, length) ".
+                   "VALUES (".$u->{userid}.", $dmid, $resid, ".length($$dataref)."<BR>";
     
         } else {
-            push @errors, "Database error?  Dying";
+            $debug .= "\$resid not defined by mysql_insertid [$sha1hex]: ".$dbh->{'mysql_error'}."<BR>";
         }
+    } else {
+        $debug .= "\$rv not defined for INSERT [$sha1hex]: ".$dbh->{'mysql_error'}."<BR>";
     }
     
     # all successful - unlock
-    $release_lock->(); 
+    $release_lock->();
     
-    $resid = $dbh->selectrow_array
-                ("SELECT resid FROM s2res WHERE sha1hex=?",
-                 undef, $sha1hex);
-    die $dbh->errstr if $dbh->err;
-
+    unless ($resid){
+        $dbh = LJ::get_db_reader(); #possibly unnecessary?
+        $resid = $dbh->selectrow_array("SELECT resid FROM s2res WHERE sha1hex='".$sha1hex."';");
+        $debug .= "SQL: SELECT resid FROM s2res WHERE sha1hex='".$sha1hex."';<BR>";
+        $debug .= LJ::D($dbh).LJ::D($resid);
+        die $dbh->errstr if $dbh->err;
+    }
+    
+    #LJ::throw("resid undefined! \n$debug") unless ($resid);
+    
     $u->do("INSERT IGNORE INTO s2styleres (userid, styleid, filename, resid)".
            "VALUES (?, ?, ?, ?)",
            undef, $u->{'userid'}, $styleid, $filename, $resid);
+    $debug .= "SQL: INSERT IGNORE INTO s2styleres (userid, styleid, filename, resid)".
+           "VALUES (".$u->{userid}.", $styleid, $filename, $resid)<BR>";    
+    
     if ($u->err) {
         push @errors, $err->($u->errstr);
         $dberr = 1;
     }
 
     LJ::throw(@errors);
+    
+    return $debug;
 
-    my $upic = LJ::S2res->new($resid) or die "Error insantiating S2 resource";
+    my $upic = LJ::S2res->new($resid) or LJ::throw("Error insantiating S2 resource");
 
     return $upic;
+}
+
+sub imagedata {
+    my ($self, $u, $styleid, $filename) = @_;
+    local $LJ::THROW_ERRORS = 1;
+    die "LJ::S2res->imagedata call missing user hash" unless ($u);
+    die "LJ::S2res->imagedata call missing styleid" unless ($styleid);
+    die "LJ::S2res->imagedata call missing filename" unless ($filename);
+    
+    my $resid = $u->selectrow_array("SELECT resid FROM s2styleres "
+            ."WHERE userid=? AND styleid=? AND filename=?;", undef, $u->{userid}, $styleid, $filename);
+    
+    my $data = LJ::mogclient()->list_keys("s2res", 1);
+    
+    return "Mog Data dump:".LJ::D($data);
 }
 
 # delete this userpic
@@ -341,17 +398,6 @@ sub delete {
     };
 
     LJ::S2res->delete_cache($u);
-
-    return 1;
-}
-
-sub set_fullurl {
-    my ($self, $url) = @_;
-    my $u = $self->owner;
-    return 0 unless LJ::S2res->userpics_partitioned($u);
-    $u->do("UPDATE userpic2 SET url=? WHERE userid=? AND picid=?",
-           undef, $url, $u->{'userid'}, $self->id);
-    $self->{url} = $url;
 
     return 1;
 }

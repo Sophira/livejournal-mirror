@@ -2514,8 +2514,8 @@ EOC
 
 register_tablecreate("s2res", <<'EOC');
 CREATE TABLE s2res (
-   resid INT UNSIGNED NOT NULL PRIMARY KEY,
-   sha1hex VARCHAR(32) NOT NULL,
+   resid INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+   sha1hex VARCHAR(40) NOT NULL UNIQUE,
    KEY (sha1hex)
 )
 EOC

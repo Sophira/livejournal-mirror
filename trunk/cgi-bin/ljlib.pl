@@ -42,7 +42,7 @@ sub END { LJ::end_request(); }
                     "tempanonips", "inviterecv", "invitesent",
                     "memorable2", "memkeyword2", "userkeywords",
                     "friendgroup2", "userpicmap2", "userpic2",
-                    "s2stylelayers2", "s2compiled2", "userlog",
+                    "s2stylelayers2", "s2styleres", "s2compiled2", "userlog",
                     "logtags", "logtagsrecent", "logkwsum",
                     "recentactions", "usertags", "pendcomments",
                     "user_schools", "portal_config", "portal_box_prop",
