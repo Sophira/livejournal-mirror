@@ -2520,6 +2520,13 @@ CREATE TABLE s2res (
 )
 EOC
 
+register_tablecreate("s2res_to_delete", <<'EOC');
+CREATE TABLE s2res_to_delete (
+   resid   INT UNSIGNED NOT NULL,
+   PRIMARY KEY (resid)
+)
+EOC
+
 
 # NOTE: new table declarations go here
 

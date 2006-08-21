@@ -194,7 +194,12 @@ sub cleanup {
     my ($class, $u, %opts) = @_;
     local $LJ::THROW_ERRORS = 1;
     
-    $u->do("DELETE FROM s2styleres WHERE styleid=0 AND userid=?;", undef, $u->{'userid'});
+    $u->do("INSERT IGNORE INTO s2res_to_delete (resid) ".
+            "SELECT resid FROM s2styleres WHERE styleid=0 AND userid=?;", 
+            undef, $u->{'userid'});
+    
+    $u->do("DELETE FROM s2styleres WHERE styleid=0 AND userid=?;", 
+            undef, $u->{'userid'});
     die $u->errstr if $u->err;
     
     return 1;
@@ -253,7 +258,6 @@ sub create {
     
     # get lock so other clients don't try to create a mogilefs
     #  file for this sha1...
-    $release_lock->(); ## REMOVE ME!
     my $lock = LJ::get_lock($dbh, "global", $lockkey);
     unless ($lock) {
        # error unable to get lock...
