@@ -64,7 +64,7 @@ sub make_journal
             $con_opts->{'use_modtime'} = 1;
             
             my $data = LJ::S2res->imagedata($u, $styleid, $file);
-            return "Data:".LJ::D($data);
+            return $data;
         } else {
             $opts->{'handler_return'} = 404;
             return;

@@ -232,7 +232,23 @@
                     if (!($pathname =~ /MACOSX/) && $filename =~ /^style.css$/i){
                         $css_contents = $zip->contents($pathname);
                     }
+                    last if defined $css_contents;
                 }
+                
+                # FIXME: wizard-voxhtml is hardcoded in here.  Should probably change this.
+                my $styleid = $u->selectrow_array("SELECT styleid FROM s2styles "
+                        ."WHERE userid='".$u->{'userid'}."' AND name='wizard-voxhtml'");
+                
+                # clean $css_contents and fix image links.
+                unless ($LJ::DISABLED{'css_cleaner'}) {
+                    my $cleaner = CSS::Cleaner->new;
+                    $css_contents = $cleaner->clean($css_contents);
+                    if ($LJ::IS_DEV_SERVER) {
+                        $css_contents = "/* cleaned in uploadstyle */\n" . $css_contents;
+                    }
+                }
+                my $base = $u->journal_base;
+                $css_contents =~ s!images/(.+?\.(?:jpg|gif|png|jpeg))!$base/res/$styleid/$1!ig;
                 
                 #  (code from /customize/options.bml)
                 unless ($s2_style{'user'}) {
@@ -240,18 +256,25 @@
                     return "<?h1 $ML{'Error'} h1?> <?p $ML{'.error.cant_generate_user_layer'} p?>"
                         unless $s2_style{'user'};
                 }
+                
                 LJ::cmize::s2_implicit_style_create($u, %s2_style);
                 
                 $style = LJ::S2::load_style($u->prop('s2_style'));
                 return $err->("Style not found.") unless $style && $style->{'userid'} == $u->{'userid'};
                 $layer = LJ::S2::load_layer($style->{'layer'}->{'user'});
                 
+                # if the b2lid of this layer has been remapped to a new layerid
+                # then update the b2lid mapping for this layer
                 my $b2lid = $layer->{b2lid};
                 if ($b2lid && $LJ::S2LID_REMAP{$b2lid}) {
                     LJ::S2::b2lid_remap($u, $style->{'layer'}->{'user'}, $b2lid);
                     $layer->{b2lid} = $LJ::S2LID_REMAP{$b2lid};
                 }
                 
+                return $err->("Layer belongs to another user. $layer->{userid} vs $u->{userid}") unless $layer->{'userid'} == $u->{'userid'};
+                return $err->("Layer isn't of type user or theme.")
+                    unless $layer->{'type'} eq "user" || $layer->{'type'} eq "theme";
+
                 my $dbh = LJ::get_db_writer();
                 $lyr_layout = LJ::S2::load_layer($dbh, $layer->{'b2lid'});
                 return $err->("Layout layer for this $layer->{'type'} layer not found.")
@@ -260,13 +283,47 @@
                 return $err->("Core layer for layout not found.")
                     unless $lyr_core;
             
-                $lyr_layout->{'uniq'} = 
-                    $dbh->selectrow_array("SELECT value FROM s2info WHERE s2lid=? AND infokey=?",
+                $lyr_layout->{'uniq'} = $dbh->selectrow_array("SELECT value FROM s2info WHERE s2lid=? AND infokey=?",
                             undef, $lyr_layout->{'s2lid'}, "redist_uniq");
-                ###
+                            
+                $lid_i18nc = $style->{'layer'}->{'i18nc'};
+                $lid_theme = $style->{'layer'}->{'theme'};
+                $lid_i18n = $style->{'layer'}->{'i18n'};
+        
+                $layerid = $layer->{'s2lid'};
+        
+                my @layers;
+                push @layers, ([ 'core' => $lyr_core->{'s2lid'} ],
+                               [ 'i18nc' => $lid_i18nc ],
+                               [ 'layout' => $lyr_layout->{'s2lid'} ],
+                               [ 'i18n' => $lid_i18n ]);
+                if ($layer->{'type'} eq "user" && $lid_theme) {
+                    push @layers, [ 'theme' => $lid_theme ];
+                }
+                push @layers, [ $layer->{'type'} => $layer->{'s2lid'} ];
+        
+                @layerids = grep { $_ } map { $_->[1] } @layers;
+                LJ::S2::load_layers(@layerids);
+        
+                # load the language and layout choices for core.
+                LJ::S2::load_layer_info(\%layerinfo, \@layerids);
+        
+                foreach my $prop (S2::get_properties($lyr_layout->{'s2lid'}))
+                {
+                    $prop = S2::get_property($lyr_core->{'s2lid'}, $prop) unless ref $prop;
+                    next unless ref $prop;
+                    next unless LJ::S2::can_use_prop($u, $lyr_layout->{'uniq'}, $prop->{'name'});
+                    $params{"s2_" . $prop->{'name'} . "_value"} = qr/./;
+                }
+
+                BML::decl_params(%params);
+                ### /end copied code
+                
+                $zip_contents .= "Installing custom_css!<BR>";
                 
                 my %orig_override;
                 my %override;
+                my $customized;
                 foreach my $prop (S2::get_properties($lyr_layout->{'s2lid'}))
                 {
                     $prop = S2::get_property($lyr_core->{'s2lid'}, $prop)
@@ -275,25 +332,30 @@
                     next if $prop->{'noui'};
                     my $name = $prop->{'name'};
                     next unless LJ::S2::can_use_prop($u, $lyr_layout->{'uniq'}, $name);
-                    {
+
                         # figure out existing value (if there was no user/theme layer)
+                        LJ::S2::load_layers(@layerids);
                         my $existing;
-                        foreach my $lid (reverse @layerids) {
-                            next if $lid == $layerid;
+                        foreach my $lid (reverse @layerids) {{
+                            next if $lid == $layer->{'s2lid'};
                             $existing = S2::get_set($lid, $name);
                             last if defined $existing;
-                        }
+                        }}
             
-                        if (ref $existing eq "HASH") { $existing = $existing->{'as_string'}; }
+                        if (ref $existing eq "HASH") {
+                            $existing = $existing->{'as_string'};
+                        }
                         
-                        my $customized = S2::get_set($layer->{'s2lid'}, $name);
+                        $customized = S2::get_set($layer->{'s2lid'}, $name);
                         $customized = $existing unless defined $customized;
                         $override{$name} = [ $prop, $customized ];
                         $orig_override{$name} = [ $prop, $customized ];
-                    }
+
                     if ($name eq 'custom_css'){
                         $override{$name} = [ $prop, $css_contents ];
                     }
+                    
+                    $zip_contents .= "$name=".LJ::D($customized)."<BR>\n";
                 }
                 if (! LJ::S2::layer_compile_user($layer, \%override)) {
                     return $err->("Failed while trying to save your css file. $zip_contents");
@@ -332,7 +394,10 @@
                             $zip_contents .= "...[magic:$magic]recognized as $mime<BR>\n";
                             my $data = $zip->contents($pathname);
                             my $resid = eval {
-                                    LJ::S2res->create($u, data => \$data, filename => $filename); 
+                                    LJ::S2res->create($u, 
+                                            data => \$data, 
+                                            filename => $filename,
+                                            styleid => $styleid); 
                                 };
                             if (!$resid) {
                                 LJ::S2res->restore($u);

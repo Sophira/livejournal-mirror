@@ -158,7 +158,12 @@ sub backup {
     my ($class, $u, %opts) = @_;
     local $LJ::THROW_ERRORS = 1;
     
-    $u->do("UPDATE s2styleres SET styleid=0 WHERE userid=?;", undef, $u->{'userid'});
+    $u->do("UPDATE s2styleres SET styleid=0 WHERE userid=?;", 
+            undef, $u->{'userid'});
+    # update failed?  Just delete leftovers and proceed.. :(
+    $u->do("DELETE FROM s2styleres WHERE userid=? AND styleid!=0;", 
+            undef, $u->{'userid'}) if $u->err; 
+    # ok, if delete failed, we've got a pretty big problem somewhere...
     die $u->errstr if $u->err;
     
     return 1;
@@ -202,8 +207,9 @@ sub create {
 
     my $dataref = delete $opts{'data'};
     my $filename = delete $opts{'filename'};
+    my $styleid = delete $opts{'styleid'};
     croak("dataref not a scalarref") unless ref $dataref eq 'SCALAR';
-
+    croak("No styleid in opts!") unless ($styleid);
     croak("Unknown options: " . join(", ", scalar keys %opts)) if %opts;
 
     my $err = sub {
@@ -221,10 +227,6 @@ sub create {
         push @errors, "Unacceptable filetype caught in S2res->create.";
         $fmterror = 1;
     }
-    
-    my $styleid = $u->selectrow_array("SELECT styleid FROM s2styles "
-            ."WHERE userid='".$u->{'userid'}."' AND name='wizard-voxish'");
-    push @errors, "Error in locating user's wizard-voxish style!" unless ($styleid);
 
     LJ::throw(@errors);
 
@@ -335,12 +337,16 @@ sub imagedata {
     die "LJ::S2res->imagedata call missing styleid" unless ($styleid);
     die "LJ::S2res->imagedata call missing filename" unless ($filename);
     
-    my $resid = $u->selectrow_array("SELECT resid FROM s2styleres "
-            ."WHERE userid=? AND styleid=? AND filename=?;", undef, $u->{userid}, $styleid, $filename);
+    my $resid = $u->selectrow_array("SELECT resid FROM s2styleres ".
+            "WHERE userid=? AND styleid=? AND filename=?;", 
+            undef, $u->{userid}, $styleid, $filename);
+    die "resid not found where userid=".$u->{userid}.
+            " styleid=$styleid filename=$filename" unless ($resid);
     
-    my $data = LJ::mogclient()->list_keys("s2res", 1);
+    my $data = LJ::mogclient()->get_file_data("s2res:$resid");
+    die "mogclient returned an undefined data variable for resid=$resid" unless ($data);
     
-    return "Mog Data dump:".LJ::D($data);
+    return $$data;
 }
 
 # delete this userpic
