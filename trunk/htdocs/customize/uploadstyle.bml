@@ -6,6 +6,10 @@
     use Archive::Zip;
     use Digest::SHA1 qw(sha1_hex);
     use IO::String;
+    
+    LJ::need_res( 'stc/customize.css', 'js/core.js', 'js/dom.js', 'js/customize.js', 'js/colorpicker.js' );
+
+    return LJ::server_down_html() if $LJ::SERVER_DOWN;
 
     BML::set_language_scope("/customize/uploadstyle.bml");
 
@@ -249,6 +253,7 @@
                 }
                 my $base = $u->journal_base;
                 $css_contents =~ s!images/(.+?\.(?:jpg|gif|png|jpeg))!$base/res/$styleid/$1!ig;
+                my @filelist = $css_contents =~ m!$base/res/$styleid/(.+?\.(?:jpg|gif|png|jpeg))!ig;
                 
                 #  (code from /customize/options.bml)
                 unless ($s2_style{'user'}) {
@@ -367,7 +372,8 @@
                 foreach my $pathname ($zip->memberNames()){
                     my $filename = $pathname;
                     $filename =~ s|.*/(.*?)$|$1|;
-                    if (!($pathname =~ /MACOSX/) && $filename =~ /\.(?:jpg|gif|png|jpeg)$/i){
+                    if (!($pathname =~ /MACOSX/) && $filename =~ /\.(?:jpg|gif|png|jpeg)$/i
+                            && join("\r", @filelist) =~ m/$filename/){
                         $zip_contents .= "<B>$filename ($pathname)</B>\n";
                         
                         my $fh = IO::String->new();
@@ -420,12 +426,17 @@
 
 
 ##Print out stuff
-
+    
     # authas switcher form
     $body .= "<form method='get' action='uploadstyle$suffix.bml'>\n";
     $body .= LJ::make_authas_select($remote, { 'authas' => $GET{'authas'} }) . "\n";
     $body .= "</form>\n\n";
 
+    $body .= LJ::cmize::html_tablinks("uploadstyle", $getextra);
+    $body .= "<div id='CurrentTab'>";
+    
+    $body .= LJ::run_hook('customize_advanced_upsell', $u);
+    
     # if we're disabling media, say so
     $body .= "<?warningbar $ML{'error.mediauploadsdisabled'} warningbar?>"
         if $LJ::DISABLE_MEDIA_UPLOADS;
@@ -475,6 +486,8 @@
 ### print out contents of zip:
     $body .= $zip_contents;
     $body .= $lastmember;
+    
+    $body .= "</div>";
 
     return;
 }

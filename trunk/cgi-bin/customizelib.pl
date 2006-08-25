@@ -290,10 +290,11 @@ sub html_tablinks
                    "style" => "Look and Feel",
                    "options" => "Custom Options",
                    "advanced" => "Advanced",
+                   "uploadstyle" => "Upload Style",
                    );
 
     $ret .= "<ul id='Tabs'>";
-    foreach my $tab ( "index", "style", "options", "advanced" ) {
+    foreach my $tab ( "index", "style", "options", "advanced", "uploadstyle" ) {
         if ($page eq $tab) {
             $ret .= "<li class='SelectedTab'>$strings{$tab}</li>";
         } else {

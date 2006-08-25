@@ -2508,7 +2508,8 @@ CREATE TABLE s2styleres (
    styleid INT UNSIGNED NOT NULL,
    filename VARCHAR(50) NOT NULL,
    resid INT UNSIGNED NOT NULL,
-   PRIMARY KEY (userid, styleid, filename)
+   PRIMARY KEY (userid, styleid, filename),
+   KEY (resid)
 )
 EOC
 
