@@ -90,6 +90,7 @@ sub _load {
     $sth->execute($u->{userid});
     die $sth->errstr if $sth->err;
 
+    my @items = ();
     while (my $row = $sth->fetchrow_hashref) {
         my $qid = $row->{qid};
 
