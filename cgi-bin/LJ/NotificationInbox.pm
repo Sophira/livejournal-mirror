@@ -75,7 +75,6 @@ sub unread_count {
 # returns internal items hashref
 sub _load {
     my $self = shift;
-    my @items = ();
 
     my $u = $self->u
         or die "No user object";
@@ -87,7 +86,7 @@ sub _load {
     # not cached, load
     my $sth = $u->prepare
         ("SELECT userid, qid, journalid, etypeid, arg1, arg2, state, createtime " .
-         "FROM notifyqueue WHERE userid=? ORDER BY createtime DESC");
+         "FROM notifyqueue WHERE userid=?");
     $sth->execute($u->{userid});
     die $sth->errstr if $sth->err;
 
@@ -98,13 +97,19 @@ sub _load {
         my $qitem = LJ::NotificationItem->new($u, $qid);
         $qitem->absorb_row($row);
 
-        push @items, $qid;
+        push @items, $qitem;
     }
 
-    # cache
-    LJ::MemCache::set($self->_memkey, \@items);
+    # sort based on create time
+    @items = sort { $a->when_unixtime <=> $b->when_unixtime } @items;
 
-    return @items;
+    # get sorted list of ids
+    my @item_ids = map { $_->qid } @items;
+
+    # cache
+    LJ::MemCache::set($self->_memkey, \@item_ids);
+
+    return @item_ids;
 }
 
 sub _memkey {
