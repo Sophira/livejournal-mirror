@@ -20,9 +20,12 @@ body<=
             if $u->{statusvis} ne 'V';
     }
 
+    my $testbodyclass = 'testtest';
+    
     my $body;
     my $lastmon = 0;
 
+    $body .= "<div id='ContentColumnWrapper'>\n<div id='primary' class='column'>";
     $body .= "<?p $ML{'.findothers'} p?>";
     $body .= "<form method='get' action='$LJ::SITEROOT/birthdays.bml'>";
     $body .= LJ::html_text({ name => 'user', maxlength => 15, size => 15 });
@@ -67,7 +70,8 @@ body<=
     } else {
         $body .= "<?p $ML{'.nobirthdays'} p?>";
     }
-
+    $body .= "</div><!-- end #primary -->\n</div><!-- end #ContentColumnWrapper -->";
+    
     return $body;
 }
 _code?>
