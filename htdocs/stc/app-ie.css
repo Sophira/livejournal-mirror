@@ -1,0 +1,10 @@
+/* base ie6 and lower styles */
+
+.LJ_Placeholder_Container {
+    position: relative;
+}
+.LJ_Placeholder_Container img {
+    position: absolute;
+    top: 45%;
+    left: 45%;
+}
