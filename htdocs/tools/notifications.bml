@@ -29,7 +29,6 @@ body<=
                   js/hourglass.js
                   js/esn_inbox.js
                   stc/esn.css
-                  stc/lj_base.css
                   ));
 
     my $formauth = LJ::form_auth();

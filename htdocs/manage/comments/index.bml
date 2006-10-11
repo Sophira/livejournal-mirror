@@ -235,7 +235,7 @@ _code?>
 <=body
 head<=
 <?_code
-    LJ::need_res('stc/lj_base.css', 'stc/lj_settings.css');
+    LJ::need_res('stc/lj_settings.css');
     return $head;
 _code?>
 <=head
