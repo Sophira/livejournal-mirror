@@ -69,7 +69,7 @@
     # see if we need to do any transformations
     LJ::run_hooks("transform_update_$POST{transform}", \%GET, \%POST) if $POST{transform};
 
-    LJ::need_res('stc/display_none.css');
+    LJ::need_res('stc/display_none.css','stc/entry.css');
 
     # Set up form default values:
     my @time = localtime(time);
@@ -134,26 +134,26 @@
         my $auth = '';
 
         if ($remote) { # so lynx won't show this
-            $auth .= "<tr valign='top' id='remotelogin' style='display: $remotelogin_display'><th>$ML{'.auth.poster'}</th><td><span id='remotelogin_content'>";
-            $auth .= BML::ml('.loggedinas2', {'user' => "<b>$remote->{'user'}</b>", 'aopts' => "href='$LJ::SITEROOT/update.bml?altlogin=1'"});
-            $auth .= "</span></td></tr>\n";
+#    $auth .= "<p valign='top' id='remotelogin' style='display: $remotelogin_display'>$ML{'.auth.poster'} <span id='remotelogin_content'>";
+#            $auth .= BML::ml('.loggedinas2', {'user' => "<b>$remote->{'user'}</b>", 'aopts' => "href='$LJ::SITEROOT/update.bml?altlogin=1'"});
+#            $auth .= "</span></p>\n";
         }
 
         # table with username/password fields
-        $auth .= "<tr id='altlogin_username' style='display: $altlogin_display;' valign='top'>\n";
-        $auth .= "<th>$ML{'.username'}</th>";
-        $auth .= "<td>" . LJ::html_text({ 'name' => 'user', 'size' => '15', 'maxlength' => '15',
+        $auth .= "<p style='display: $altlogin_display;'>\n";
+        $auth .= "$ML{'.username'}";
+        $auth .=  LJ::html_text({ 'name' => 'user', 'size' => '15', 'maxlength' => '15',
                                           'value' => $POST{'user'} || $GET{'user'} });
-        $auth .= "</td></tr>\n";
-        $auth .= "<tr id='altlogin_password' style='display: $altlogin_display;' valign='top'>";
-        $auth .= "<th>$ML{'.password'}</th>";
-        $auth .= "<td>" . LJ::html_text({ 'type' => 'password', 'name' => 'password',
+        $auth .= "</p>\n";
+        $auth .= "<p style='display: $altlogin_display;'>";
+        $auth .= "$ML{'.password'}";
+        $auth .= LJ::html_text({ 'type' => 'password', 'name' => 'password',
                                           'size' => '15', 'maxlength' => '30' });
         # posted with a user, but no password
         if ($did_post && $auth_missing) {
             $auth .= "<br /><?inerr $ML{'.error.nopass'} inerr?>";
         }
-        $auth .= "</td></tr>";
+        $auth .= "</p>";
 
         # if they submit the form and are spellchecking, remember
         # their settings from the GET requests
@@ -213,7 +213,7 @@
             $$body .= " warningbar?><br /></div>";
         }
 
-        $$body .= "<div style='width: 90%;'><form method='post' action='update.bml$getextra' id='updateForm' name='updateForm'>";
+        $$body .= "\n\n<form method='post' action='update.bml$getextra' id='updateForm' name='updateForm'>\n\n";
         $$body .= LJ::form_auth();
 
         if ($opts->{require_tos}){
@@ -221,9 +221,9 @@
         }
 
         $$body .= LJ::entry_form($entry, \$$head, $onload, $errors);
-        $$body .= "</form></div>";
+        $$body .= "</form>\n";
 
-        $$bodyopts .= "onresize=\"shift_contents();\" ";
+# $$bodyopts .= "onresize=\"shift_contents();\" ";
 
         return;
     };
@@ -363,7 +363,7 @@
                          $remote->set_prop('entry_editor', 'plain');
                  }
 
-                $$body .= "<table width='100%'><tr valign='top'><td>";
+                $$body .= "<table width='100%'><tr valign='top'><td>\n\n";
 
                 # short bail if this was posted moderated or some other special case (no itemid but a message)
                 if (!defined $res{itemid} && $res{message}) {
@@ -488,7 +488,7 @@ head<=
         var restoredDraft = $draft;
 
         function init_update_bml () {
-            shift_contents();
+            // shift_contents();
             $initDraft
             $pageload
             $_[1]->{'onload'}
