@@ -52,10 +52,10 @@ function LJUser(textArea) {
 
 function useRichText(textArea, statPrefix) {
     if ($("insobj")) {
-        $("insobj").className = 'display_none';
+        $("insobj").className = 'on';
     }
     if ($("jrich")) {
-        $("jrich").className = 'display_none';
+        $("jrich").className = 'on';
     }
     if ($("jplain")) {
         $("jplain").className = '';
@@ -153,7 +153,7 @@ function usePlainText(textArea) {
     if ($("jrich"))
         $("jrich").className = '';
     if ($("jplain"))
-        $("jplain").className = 'display_none';
+        $("jplain").className = 'on';
 
     editor_frame.style.display = "none";
     $(textArea).style.display = "block";

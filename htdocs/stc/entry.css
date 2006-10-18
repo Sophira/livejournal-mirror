@@ -26,6 +26,10 @@
     font-family: arial, verdana, 'sans-serif';
     min-width:700px;
 }
+#updateForm iframe {
+    margin: none;
+    padding: none;
+}
 #updateForm p {
     clear: left;
     margin: 0 0 6px 0;
@@ -93,7 +97,7 @@
 }
 #entry {
     clear: left;
-    background: url(entry-line.gif) repeat-x bottom;
+    background: url(/img/entry-line.gif) repeat-x bottom;
 }
 #entry p {
     margin: 0 !important;
@@ -114,6 +118,7 @@
     background-color: #fff;
     border: 1px solid #90B6DA;
     float: left;
+    outline: none;
 }
 #entry ul li.on a {
     border-bottom: 1px solid #fff;
@@ -136,13 +141,13 @@
     margin-bottom: 8px;
 }
 #draft-container {
-    border: 1px solid #ccc;
+    /* border: 1px solid #ccc; */
     margin-bottom: 12px;
 }
 #draft {
     display: block;
     width: 100%;
-    border: none;
+    border: 1px solid #ccc;
 }
 #prop_taglist {
     width:82%;

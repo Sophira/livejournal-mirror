@@ -1131,16 +1131,29 @@ sub entry_form {
         $out .= "<label class='left' for='subject'>" . BML::ml('entryform.subject') . "</label>\n";
         $out .= LJ::html_text({ 'name' => 'subject', 'value' => $opts->{'subject'},
                                 'class' => 'text', 'id' => 'subject', 'size' => '43', 'maxlength' => '100', 'tabindex' => $tabindex->(), 'disabled' => $opts->{'disabled_save'} }) . "\n";
+       
         $out .= "<ul>\n";
-        $out .= "<li class='on'><a href='#'>Rich Text</a></li>\n";
-        $out .= "<li><a href='#'>HTML</a></li>\n";
+        $out .= "<script>";
+        {
+            my $jrich = LJ::ejs(LJ::deemp(
+                                          BML::ml("entryform.htmlokay.rich2", { 'opts' => 'href="javascript:void(0);" onClick="return useRichText(\'draft\', \'' . LJ::ejs($LJ::WSTATPREFIX) . '\');"' })));
+            $out .= "\t\tdocument.write(\"<li id='jrich'>$jrich</li>\");\n";
+
+            my $jplain = LJ::ejs(LJ::deemp(
+                                           BML::ml("entryform.plainswitch", { 'aopts' => 'href="javascript:void(0);" onClick="return usePlainText(\'draft\');"' })));
+            $out .= "\t\tdocument.write(\"<li id='jplain' class='on'>$jplain</li>\");\n";
+        }
+        $out .= "</script>";
+            
+        # $out .= "<li class='on'><a href='#'>Rich Text</a></li>\n";
+        # $out .= "<li><a href='#'>HTML</a></li>\n";
         $out .= "</ul>\n";
         $out .= "</div><!-- end #entry -->\n\n";
-    }
+        }
 
-    ### Display Spell Check Results:
-    $out .= "<p><b>" . BML::ml('entryform.spellchecked') . "</b><br />$opts->{'spellcheck_html'}</p>"
-        if $opts->{'spellcheck_html'};
+        ### Display Spell Check Results:
+        $out .= "<p><b>" . BML::ml('entryform.spellchecked') . "</b><br />$opts->{'spellcheck_html'}</p>"
+            if $opts->{'spellcheck_html'};
     $out .= "<p><?inerr " . BML::ml('Error') . " inerr?><br />$errors->{'entry'}</p>"
         if $errors->{'entry'};
 
@@ -1175,8 +1188,7 @@ sub entry_form {
                                 'disabled' => $opts->{'disabled_save'},
                                 'id' => 'draft'}) . "\n";
     $out .= "</div><!-- end #draft-container -->\n\n";
-    
-    if ($opts->{'richtext'} && !$opts->{'did_spellcheck'}) {
+    if ($opts->{'richtext'} && !$opts->{'did_spellcheck'}) { 
         LJ::need_res('js/rte.js', 'stc/fck/fckeditor.js', 'stc/display_none.css');
 
         my $jnorich = LJ::ejs(LJ::deemp(BML::ml('entryform.htmlokay.norich2')));
