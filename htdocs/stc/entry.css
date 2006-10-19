@@ -50,9 +50,20 @@
     border-left: 1px solid #aaa;
     font-size: 13px;
     padding: 2px 2px;
-    background: url(inputshadow.gif) repeat-x 0 -1px;
+    /* FIX ME */
+    background: url(http://www.jramsey.dev.livejournal.org/img/input-bg.gif) repeat-x 0 -1px;
+    margin: 0px 3px 0px 0px;
 }
 #updateForm select {
+    float: left;
+    border: 1px solid #ccc;
+    border-top: 1px solid #aaa;
+    border-left: 1px solid #aaa;
+    font-size: 13px;
+    padding: 2px 1px 1px 1px;
+    margin: 0px 3px 0px 0px;
+}
+#updateForm .float-left {
     float: left;
 }
 #updateForm span.inputgroup-left {
@@ -80,12 +91,21 @@
 #userpic {
     float: left;
     margin-right: 10px;
+    width: 100px;
+}
+#lj_userpicselect {
+    float: left;
+    font-size: 80%;
+    border: none;
+    border: 1px solid #ccc;
+    border-top: 1px solid #aaa;
+    border-left: 1px solid #aaa;
 }
 #metainfo {
     float: left;
     margin-right: 10px;
     width: 50%;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
 }
 #infobox {
     border-left: 1px solid #000;
@@ -97,7 +117,9 @@
 }
 #entry {
     clear: left;
-    background: url(/img/entry-line.gif) repeat-x bottom;
+    border-bottom: 1px solid #90B6DA;
+    padding: 0px;
+    margin: 0px;
 }
 #entry p {
     margin: 0 !important;
@@ -111,23 +133,21 @@
 #entry ul li {
     float: left;
     margin: 0 4px 0 0;
+    background: url(http://www.jramsey.dev.livejournal.org/img/entry-tab-off-l.gif) no-repeat 0 0;
 }
 #entry ul li a {
     display: block;
     padding: 8px 10px;
-    background-color: #fff;
-    border: 1px solid #90B6DA;
+    background: url(http://www.jramsey.dev.livejournal.org/img/entry-tab-off-r.gif) no-repeat right top;
     float: left;
     outline: none;
 }
-#entry ul li.on a {
-    border-bottom: 1px solid #fff;
+#entry ul li.on {
+    background: url(http://www.jramsey.dev.livejournal.org/img/entry-tab-on-l.gif) no-repeat 0 0;
 }
-#controls {
-    border-left: 1px solid #90B6DA;
-    border-right: 1px solid #90B6DA;
-    clear: both;
-    padding: 2px 8px;
+
+#entry ul li.on a {
+    background: url(http://www.jramsey.dev.livejournal.org/img/entry-tab-on-r.gif) no-repeat right top;
 }
 #metainfo, #metainfo label, #metainfo input.text, #metainfo strong {
     font-size: 14px;
@@ -141,13 +161,21 @@
     margin-bottom: 8px;
 }
 #draft-container {
-    /* border: 1px solid #ccc; */
+    border: 1px solid #ccc;
+    border-top: 1px solid #90B6DA;
     margin-bottom: 12px;
 }
 #draft {
     display: block;
     width: 100%;
-    border: 1px solid #ccc;
+    border: none;
+}
+#draftstatus {
+    font-style: italic;
+    background-color: #E4EDF6;
+    margin: 0 !important;
+    padding: 0 8px;
+    font-size: 85%;
 }
 #prop_taglist {
     width:82%;

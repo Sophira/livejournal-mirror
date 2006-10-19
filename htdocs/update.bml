@@ -94,9 +94,9 @@
     my $altlogin_display = 'none';
     my $remotelogin_display = 'none';
     if ($auth_as_remote) {
-        $remotelogin_display = 'table-row';
+        $remotelogin_display = 'block';
     } else {
-        $altlogin_display = 'table-row';
+        $altlogin_display = 'block';
     }
 
     # Check for errors, store in hash to render later
@@ -140,20 +140,20 @@
         }
 
         # table with username/password fields
-        $auth .= "<p style='display: $altlogin_display;'>\n";
-        $auth .= "$ML{'.username'}";
-        $auth .=  LJ::html_text({ 'name' => 'user', 'size' => '15', 'maxlength' => '15',
-                                          'value' => $POST{'user'} || $GET{'user'} });
+        $auth .= "<p class='pkg' style='display: $altlogin_display;'>\n";
+        $auth .= "<label for='altlogin_username' class='left'>$ML{'.username'}</label>";
+        $auth .=  LJ::html_text({ 'name' => 'user', 'id' => 'altlogin_username', 'class' => 'text', 'size' => '15', 
+                'maxlength' => '15', 'value' => $POST{'user'} || $GET{'user'} });
         $auth .= "</p>\n";
-        $auth .= "<p style='display: $altlogin_display;'>";
-        $auth .= "$ML{'.password'}";
-        $auth .= LJ::html_text({ 'type' => 'password', 'name' => 'password',
-                                          'size' => '15', 'maxlength' => '30' });
+        $auth .= "<p class='pkg' style='display: $altlogin_display;'>\n";
+        $auth .= "<label for='altlogin_password' class='left'>$ML{'.password'}</label>";
+        $auth .= LJ::html_text({ 'type' => 'password', 'id' => 'altlogin_password', 'class' => 'text',  
+                'name' => 'password', 'size' => '15', 'maxlength' => '30' });
         # posted with a user, but no password
         if ($did_post && $auth_missing) {
             $auth .= "<br /><?inerr $ML{'.error.nopass'} inerr?>";
         }
-        $auth .= "</p>";
+        $auth .= "</p>\n\n";
 
         # if they submit the form and are spellchecking, remember
         # their settings from the GET requests

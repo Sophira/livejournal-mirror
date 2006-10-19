@@ -890,6 +890,8 @@ entryform.htmlokay.rich=(HTML okay; by default, newlines will be auto-formatted 
 
 entryform.htmlokay.rich2=(HTML okay; by default, new lines will be auto-formatted to <tt>&lt;br&gt;</tt> - or, use the <a [[opts]]>rich text</a> mode.)
 
+entryform.htmlokay.rich4=<a [[opts]]>Rich text</a>
+
 entryform.htmlokay.rte_nosupport=rte_nosupport=(Sorry, your browser does not currently support the rich text environment.)
 
 entryform.insert.header=Insert...
@@ -911,6 +913,9 @@ entryform.opt.defpic=(default)
 entryform.options=Options:
 
 entryform.plainswitch=(Use the 'Source' button to edit HTML.  You also can <a [[aopts]]>switch</a> back to the plain text mode.)
+
+entryform.plainswitch2=<a [[aopts]]>HTML</a>
+
 
 entryform.postto=Post to:
 

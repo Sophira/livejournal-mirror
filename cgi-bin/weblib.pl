@@ -964,54 +964,6 @@ sub entry_form {
     ### Userpic
    
     $out .= "<div id='userpic'>\n";
-        
-    $out .= "</div><!-- end #userpic -->\n\n";
-    
-    
-    ### Meta Information Column 1
-    {
-        $out .= "<div id='metainfo'>\n\n";
-        $out .= "<p class='pkg'>\n";
-        $out .= "<label for='current_username' class='left'>Posting as:</label>\n";
-        $out .= "<strong id='current_username'>username</strong> <a href='#' class='small'>Switch</a>\n";
-        $out .= "</p>\n\n";
-
-        $out .= "<p class='pkg'>\n";
-        if ($opts->{'mode'} eq "update") {
-            # communities the user can post in
-            my $usejournal = $opts->{'usejournal'};
-            if ($usejournal) {
-                $out .= "<label for='usejournal' class='left'>" . BML::ml('entryform.postto') . "</label>\n";
-                $out .= LJ::ljuser($usejournal);
-                $out .= LJ::html_hidden('usejournal' => $usejournal, 'usejournal_set' => 'true');
-            } elsif ($res && ref $res->{'usejournals'} eq 'ARRAY') {
-                $out .= "<label for='usejournal' class='left'>" . BML::ml('entryform.postto') . "</label>\n";
-                $out .= LJ::html_select({ 'name' => 'usejournal', 'selected' => $usejournal,
-                                          'tabindex' => $tabindex->() },
-                                        "", $remote->{'user'},
-                                        map { $_, $_ } @{$res->{'usejournals'}}) . "</span>\n";
-            }
-        }
-        $out .= "</p>";
-
-        # Authentication box
-        $out .= $opts->{'auth'};
-        $out .= "<p class='update-errors'><?inerr $errors->{'auth'} inerr?></p>\n" if $errors->{'auth'};
-        # Date / Time
-        {
-            my ($year, $mon, $mday, $hour, $min) = split( /\D/, $opts->{'datetime'});
-            # date entry boxes / formatting note
-            my $datetime = LJ::html_datetime({ 'name' => "date_ymd", 'notime' => 1, 'default' => "$year-$mon-$mday", 'disabled' => $opts->{'disabled_save'}}) . "&nbsp;" x 5;
-            $datetime .=   LJ::html_text({ size => 2, maxlength => 2, value => $hour, name => "hour", tabindex => $tabindex->(), disabled => $opts->{'disabled_save'} }) . ":";
-            $datetime .=   LJ::html_text({ size => 2, maxlength => 2, value => $min, name => "min", tabindex => $tabindex->(), disabled => $opts->{'disabled_save'} });
-
-            $out .= "<p class='pkg'>";
-            $out .= "<label for='' class='left'>" . BML::ml('entryform.date') . "</label>\n";
-            $out .= "<span>$datetime <?de " . BML::ml('entryform.date.24hournote') . " de?></span>";
-            $out .= "<noscript><span style='font-size: 0.85em;'>" . BML::ml('entryform.nojstime.note') . "</span></noscript>\n";
-            $out .= "</p>\n";
-        }
-
         my $userpic_preview = "";
 
             # User Picture
@@ -1097,6 +1049,77 @@ sub entry_form {
                                 js/selectable_table.js
                                 )) if ! $LJ::DISABLED{userpicselect} && $remote->get_cap('userpicselect');
 
+                $out .= "\n";
+
+                $userpic_preview = "<script type='text/javascript' language='JavaScript'>\n<!--\ndocument.write(\"" .
+                    LJ::ejs("<p id='userpic_preview' style='display: none'>" .
+                            "<img src='' alt='selected userpic' id='userpic_preview_image' /></p>") .
+                            "\");\n//-->\n</script>" if $remote;
+            }
+            if ($userpic_preview ne "") { $out .= "$userpic_preview"; }
+
+
+    $out .= "</div><!-- end #userpic -->\n\n";
+    
+    
+    ### Meta Information Column 1
+    {
+        $out .= "<div id='metainfo'>\n\n";
+        $out .= "<p class='pkg'>\n";
+        $out .= "<label for='current_username' class='left'>Posting as:</label>\n";
+        $out .= "<strong id='current_username'>" . $remote->{user} . "</strong> <a href='update.bml?altlogin=1' class='small'>Switch</a>\n";
+        $out .= "</p>\n\n";
+
+        if ($opts->{'mode'} eq "update") {
+            # communities the user can post in
+            my $usejournal = $opts->{'usejournal'};
+            if ($usejournal) {
+                $out .= "<p class='pkg'>\n";
+                $out .= "<label for='usejournal' class='left'>" . BML::ml('entryform.postto') . "</label>\n";
+                $out .= LJ::ljuser($usejournal);
+                $out .= LJ::html_hidden('usejournal' => $usejournal, 'usejournal_set' => 'true');
+                $out .= "</p>\n";
+            } elsif ($res && ref $res->{'usejournals'} eq 'ARRAY') {
+                $out .= "<p class='pkg'>\n";
+                $out .= "<label for='usejournal' class='left'>" . BML::ml('entryform.postto') . "</label>\n";
+                $out .= LJ::html_select({ 'name' => 'usejournal', 'selected' => $usejournal,
+                                          'tabindex' => $tabindex->() },
+                                        "", $remote->{'user'},
+                                        map { $_, $_ } @{$res->{'usejournals'}}) . "\n";
+                $out .= "</p>\n";
+            }
+        }
+
+        # Authentication box
+        $out .= $opts->{'auth'};
+        $out .= "<p class='update-errors'><?inerr $errors->{'auth'} inerr?></p>\n" if $errors->{'auth'};
+        # Date / Time
+        {
+            my ($year, $mon, $mday, $hour, $min) = split( /\D/, $opts->{'datetime'});
+            # date entry boxes / formatting note
+            my $datetime = LJ::html_datetime({ 'name' => "date_ymd", 'notime' => 1, 'default' => "$year-$mon-$mday", 'disabled' => $opts->{'disabled_save'}});
+            $datetime .= "<span class='float-left'>&nbsp;&nbsp;</span>";
+            $datetime .=   LJ::html_text({ size => 2, class => 'text', maxlength => 2, value => $hour, name => "hour", tabindex => $tabindex->(), disabled => $opts->{'disabled_save'} }) . "<span class='float-left'>:</span>";
+            $datetime .=   LJ::html_text({ size => 2, class => 'text', maxlength => 2, value => $min, name => "min", tabindex => $tabindex->(), disabled => $opts->{'disabled_save'} });
+
+            $out .= "<p class='pkg'>";
+            $out .= "<label for='' class='left'>" . BML::ml('entryform.date') . "</label>\n";
+            $out .= "<span id='currentdate' class='float-left'>$year, $mon, $mday, $hour" . ":" . "$min <a href='#'>change</a></span>";
+            $out .= "<span id='modifydate' style='display:none'>$datetime <?de " . BML::ml('entryform.date.24hournote') . " de?></span><!-- end #modifydate -->";
+            $out .= "<noscript><span style='font-size: 0.85em;'>" . BML::ml('entryform.nojstime.note') . "</span></noscript>\n";
+            $out .= "</p>\n";
+        }
+
+            # User Picture
+            if ($res && ref $res->{'pickws'} eq 'ARRAY' && scalar @{$res->{'pickws'}} > 0) {
+                my @pickws = map { ($_, $_) } @{$res->{'pickws'}};
+                my $num = 0;
+                $userpics .= "    userpics[$num] = \"$res->{'defaultpicurl'}\";\n";
+                foreach (@{$res->{'pickwurls'}}) {
+                    $num++;
+                    $userpics .= "    userpics[$num] = \"$_\";\n";
+                }
+                $out .= "<p class='pkg'>";
                 $out .= "<label for='prop_picture_keyword' class='left'>" . BML::ml('entryform.userpic') . "</label>" ;
                 $out .= LJ::html_select({'name' => 'prop_picture_keyword', 'id' => 'prop_picture_keyword',
                                          'selected' => $opts->{'prop_picture_keyword'}, 'onchange' => "userpic_preview()",
@@ -1105,16 +1128,11 @@ sub entry_form {
                                         @pickws);
 
                 # userpic browse button
-                $out .= "<input type='button' id='lj_userpicselect' value='Browse' style='float:left' />" if ! $LJ::DISABLED{userpicselect} && $remote->get_cap('userpicselect');
-                $out .= LJ::help_icon("userpics", "", " ");
-                $out .= "\n";
+                $out .= "<input type='button' id='lj_userpicselect' value='Browse' />" if ! $LJ::DISABLED{userpicselect} && $remote->get_cap('userpicselect');
+                $out .= LJ::help_icon_html("userpics", "", " ");
+                $out .= "</p>\n";
 
-                $userpic_preview = "<script type='text/javascript' language='JavaScript'>\n<!--\ndocument.write(\"" .
-                    LJ::ejs("<p id='userpic_preview' style='display: none'>" .
-                            "<img src='' alt='selected userpic' id='userpic_preview_image' /></p>") .
-                            "\");\n//-->\n</script>" if $remote;
             }
-            if ($userpic_preview ne "") { $out .= "<p>$userpic_preview</p>"; }
 
         $out .= "</div><!-- end #metainfo -->\n\n";
 
@@ -1130,24 +1148,21 @@ sub entry_form {
         $out .= "<div id='entry' class='pkg'>\n";
         $out .= "<label class='left' for='subject'>" . BML::ml('entryform.subject') . "</label>\n";
         $out .= LJ::html_text({ 'name' => 'subject', 'value' => $opts->{'subject'},
-                                'class' => 'text', 'id' => 'subject', 'size' => '43', 'maxlength' => '100', 'tabindex' => $tabindex->(), 'disabled' => $opts->{'disabled_save'} }) . "\n";
+                                'class' => 'text', 'id' => 'subject', 'size' => '43', 'maxlength' => '100', 'tabindex' => $tabindex->(), 'disabled' => $opts->{'disabled_save'} });
        
-        $out .= "<ul>\n";
+        $out .= "<ul>";
         $out .= "<script>";
         {
             my $jrich = LJ::ejs(LJ::deemp(
-                                          BML::ml("entryform.htmlokay.rich2", { 'opts' => 'href="javascript:void(0);" onClick="return useRichText(\'draft\', \'' . LJ::ejs($LJ::WSTATPREFIX) . '\');"' })));
+                                          BML::ml("entryform.htmlokay.rich4", { 'opts' => 'href="javascript:void(0);" onClick="return useRichText(\'draft\', \'' . LJ::ejs($LJ::WSTATPREFIX) . '\');"' })));
             $out .= "\t\tdocument.write(\"<li id='jrich'>$jrich</li>\");\n";
 
             my $jplain = LJ::ejs(LJ::deemp(
-                                           BML::ml("entryform.plainswitch", { 'aopts' => 'href="javascript:void(0);" onClick="return usePlainText(\'draft\');"' })));
+                                           BML::ml("entryform.plainswitch2", { 'aopts' => 'href="javascript:void(0);" onClick="return usePlainText(\'draft\');"' })));
             $out .= "\t\tdocument.write(\"<li id='jplain' class='on'>$jplain</li>\");\n";
         }
         $out .= "</script>";
-            
-        # $out .= "<li class='on'><a href='#'>Rich Text</a></li>\n";
-        # $out .= "<li><a href='#'>HTML</a></li>\n";
-        $out .= "</ul>\n";
+        $out .= "</ul>";
         $out .= "</div><!-- end #entry -->\n\n";
         }
 
@@ -1175,7 +1190,7 @@ sub entry_form {
     ### Draft Status Area
     {
         my $insobj = "<span id='insobj'>$insobjout</span>";
-        my $draft = "<span id='draftstatus' style='font-style: italic'></span>";
+        my $draft = "<p id='draftstatus'></p>";
 
         # hide this: $out .= "$draft&nbsp;&nbsp;$insobj";
         $out .= "$draft";
@@ -1282,7 +1297,7 @@ RTE
             $out .= "<label id='prop_current_moodid' class='left'>" . BML::ml('entryform.mood') . "</label>";
             # Current Mood
             {
-                my @moodlist = ('', BML::ml('entryform.noneother'));
+                my @moodlist = ('', BML::ml('entryform.mood.noneother'));
                 my $sel;
 
                 my $moods = LJ::get_moods();
@@ -1472,7 +1487,6 @@ PREVIEW
                 'disabled' => $opts->{'disabled_delete'},
                 'tabindex' => $tabindex->(),
                 'onclick' => "return confirm('" . LJ::ejs(BML::ml('entryform.delete.confirm')) . "')" }) . "&nbsp;";
-
 
             if (!$opts->{'disabled_spamdelete'}) {
                 $out .= LJ::html_submit('action:deletespam', BML::ml('entryform.deletespam'), {
