@@ -937,6 +937,8 @@ entryform.tags=Tags:
 
 entryform.update=Update Journal
 
+entryform.update2=Save to
+
 entryform.userpic=Userpic:
 
 entryform.userpics=User Picture Icon:

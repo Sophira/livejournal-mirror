@@ -9,6 +9,27 @@ if (! ("$" in window))
         return null;
     };
 
+function editdate() {
+    if (document.getElementById) {
+        var currentdate = document.getElementById('currentdate');
+        var modifydate = document.getElementById('modifydate');
+        currentdate.style.display = 'none';
+        modifydate.style.display = 'inline';
+    }
+}
+
+function changeSubmit(prefix, defaultjournal) {
+    if (document.getElementById) {
+        var usejournal = document.getElementById('usejournal');
+        var formsubmit = document.getElementById('formsubmit');
+        if (usejournal.value == '') {
+            var newvalue = prefix + ' ' + defaultjournal;
+        } else {
+            var newvalue = prefix + ' ' + usejournal.value;
+        }
+        formsubmit.value = newvalue;
+    }
+}
 
 function shift_contents() {
     if (! document.getElementById) { return false; }

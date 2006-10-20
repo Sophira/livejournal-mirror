@@ -221,7 +221,7 @@
         }
 
         $$body .= LJ::entry_form($entry, \$$head, $onload, $errors);
-        $$body .= "</form>\n";
+        $$body .= "</form><!-- end #updateForm -->\n";
 
 # $$bodyopts .= "onresize=\"shift_contents();\" ";
 

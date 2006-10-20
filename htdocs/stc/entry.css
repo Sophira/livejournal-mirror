@@ -50,8 +50,7 @@
     border-left: 1px solid #aaa;
     font-size: 13px;
     padding: 2px 2px;
-    /* FIX ME */
-    background: url(http://www.jramsey.dev.livejournal.org/img/input-bg.gif) repeat-x 0 -1px;
+    background: url(/img/input-bg.gif) repeat-x 0 -1px;
     margin: 0px 3px 0px 0px;
 }
 #updateForm select {
@@ -67,10 +66,10 @@
     float: left;
 }
 #updateForm span.inputgroup-left {
-    display: block; float: left; width: 65%;
+    display: block; float: left; width: 65%; position: relative;
 }
 #updateForm span.inputgroup-right {
-    display: block; float: right; width: 33%;
+    display: block; float: right; width: 33%;  position: relative;
 }
 #updateForm a.helplink {
     margin-left: 5px;
@@ -95,17 +94,19 @@
 }
 #lj_userpicselect {
     float: left;
-    font-size: 80%;
-    border: none;
-    border: 1px solid #ccc;
-    border-top: 1px solid #aaa;
-    border-left: 1px solid #aaa;
+    font-size: 85%;
+    color: #00C    
+    margin: 4px 0px 0px 5px;
 }
 #metainfo {
     float: left;
     margin-right: 10px;
-    width: 50%;
+    width: 55%;
     margin-bottom: 20px;
+}
+#currentdate-edit {
+    font-size: 85%;
+    margin-left: 5px;
 }
 #infobox {
     border-left: 1px solid #000;
@@ -133,21 +134,21 @@
 #entry ul li {
     float: left;
     margin: 0 4px 0 0;
-    background: url(http://www.jramsey.dev.livejournal.org/img/entry-tab-off-l.gif) no-repeat 0 0;
+    background: url(/img/entry-tab-off-l.gif) no-repeat 0 0;
 }
 #entry ul li a {
     display: block;
     padding: 8px 10px;
-    background: url(http://www.jramsey.dev.livejournal.org/img/entry-tab-off-r.gif) no-repeat right top;
+    background: url(/img/entry-tab-off-r.gif) no-repeat right top;
     float: left;
     outline: none;
 }
 #entry ul li.on {
-    background: url(http://www.jramsey.dev.livejournal.org/img/entry-tab-on-l.gif) no-repeat 0 0;
+    background: url(/img/entry-tab-on-l.gif) no-repeat 0 0;
 }
 
 #entry ul li.on a {
-    background: url(http://www.jramsey.dev.livejournal.org/img/entry-tab-on-r.gif) no-repeat right top;
+    background: url(/img/entry-tab-on-r.gif) no-repeat right top;
 }
 #metainfo, #metainfo label, #metainfo input.text, #metainfo strong {
     font-size: 14px;
@@ -163,7 +164,7 @@
 #draft-container {
     border: 1px solid #ccc;
     border-top: 1px solid #90B6DA;
-    margin-bottom: 12px;
+    margin-bottom: 5px;
 }
 #draft {
     display: block;
@@ -178,18 +179,22 @@
     font-size: 85%;
 }
 #prop_taglist {
-    width:82%;
+    width: 82%;
 }
 #prop_current_moodid {
-    width: 40%;
+    width: 35%;
 }
 #prop_current_mood {
-    width: 38%;
-    margin-left: 2%;
+    width: 18%;
+}
+#mood_preview {
+    float: left;
+position: absolute;
+left: 77%;
 }
 #prop_current_music,
 #prop_current_location {
-    width: 80%;
+    width: 75%;
 }
 #submitbar {
     background-color: #eee;
