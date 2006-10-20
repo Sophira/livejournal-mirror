@@ -938,7 +938,7 @@ sub entry_form {
 
     $opts->{'richtext_default'} = 0 unless $opts->{'richtext'};
 
-    my $tabnum = 1;
+    my $tabnum = 10; #make allowance for username and password
     my $tabindex = sub { return $tabnum++; };
     $opts->{'event'} = LJ::durl($opts->{'event'}) if $opts->{'mode'} eq "edit";
 
