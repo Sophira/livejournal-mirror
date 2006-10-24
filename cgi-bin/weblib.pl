@@ -1101,7 +1101,14 @@ sub entry_form {
             $out .= "<p class='pkg'>\n";
             $out .= "<label for='modifydate' class='left'>" . BML::ml('entryform.date') . "</label>\n";
             $out .= "<span id='currentdate' class='float-left js-req'><span id='currentdate-date'>$monthlong $mday, $year, $hour" . ":" . "$min</span> <a href='javascript:void(0)' onclick='editdate();' id='currentdate-edit'>Edit</a></span>\n";
-            $out .= "<span id='modifydate' style='display:none'>$datetime <?de " . BML::ml('entryform.date.24hournote') . " de?></span><!-- end #modifydate -->";
+            $out .= "<span id='modifydate' style='display:none'>$datetime <?de " . BML::ml('entryform.date.24hournote') . " de?><br />";
+            $out .= LJ::html_check({ 'type' => "check", 'id' => "prop_opt_backdated",
+                    'name' => "prop_opt_backdated", "value" => 1,
+                    'selected' => $opts->{'prop_opt_backdated'},
+                    'tabindex' => $tabindex->() });
+            $out .= "<label for='prop_opt_backdated' class='right'>" . BML::ml('entryform.backdated2') . "</label>";
+            $out .= LJ::help_icon_html("backdate", "", "") . "\n";
+            $out .= "</span><!-- end #modifydate -->\n";
             $out .= "<noscript>$datetime</noscript>";
             $out .= "</p>\n";
             $out .= "<noscript><p style='font-size: 0.85em;'>" . BML::ml('entryform.nojstime.note') . "</p></noscript>\n";

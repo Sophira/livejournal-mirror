@@ -119,7 +119,7 @@
     list-style: none;
 }
 #entry {
-    clear: left;
+    clear: both;
     border-bottom: 1px solid #6699CC;
     padding: 0px;
     margin: 0px;
@@ -191,6 +191,22 @@
 }
 #prop_current_mood {
     width: 18%;
+}
+#prop_opt_backdated {
+    clear: left;
+    display: block;
+    float: left;
+    margin-left: 6.5em;
+}
+#modifydate label.right {
+    float: left;
+    display: block;
+    font-size: 90%;
+    line-height: 200%;
+}
+#modifydate a.helplink {
+float: left;
+display: block;
 }
 #mood_preview {
     float: left;
