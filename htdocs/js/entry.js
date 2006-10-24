@@ -223,6 +223,17 @@ function settime() {
     f.hour_old.value = twodigit(now.getHours());
     f.min_old.value = twodigit(now.getMinutes());
 
+    var mNames = new Array("January", "February", "March", 
+        "April", "May", "June", "July", "August", "September", 
+        "October", "November", "December");
+    var currentdate = document.getElementById('currentdate-date');
+    var cMonth = now.getMonth();
+    var cDay = now.getDate();
+    var cYear = now.getYear() < 1900 ? now.getYear() + 1900 : now.getYear();
+    var cHour = now.getHours();
+    var cMinute = twodigit(now.getMinutes());
+    currentdate.innerHTML = mNames[cMonth] + " " + cDay + ", " + cYear + ", " + cHour + ":" + cMinute;
+    
     return false;
 }
 

@@ -107,7 +107,6 @@ FCKConfig.ToolbarSets["Update"] = [
         ['OrderedList','UnorderedList', 'Table'],
         ['Outdent','Indent'],
         ['JustifyLeft','JustifyCenter','JustifyRight','JustifyFull'],
-        ['Source'],
         ['Undo', 'Redo']
 ];
 

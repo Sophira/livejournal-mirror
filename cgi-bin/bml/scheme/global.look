@@ -16,6 +16,16 @@ ENTRYFORMCSS<=
 </style>
 <=ENTRYFORMCSS
 
+NOSCRIPTCSS<=
+<link id="noscript-css" rel="stylesheet" href="/stc/noscript.css" type="text/css" media="screen" title="noscrip" />
+<script type="text/javascript" charset="utf-8"><!--
+    var noscriptCSS = document.getElementById('noscript-css');
+    if (noscriptCSS) {
+        noscriptCSS.setAttribute('href', 'none');
+    }
+//--></script>
+<=NOSCRIPTCSS
+
 BADINPUT<=
 <?h1 <?_ml bml.badinput.head _ml?> h1?>
 <?p <?_ml bml.badinput.body _ml?> p?>

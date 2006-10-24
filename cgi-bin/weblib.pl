@@ -936,7 +936,7 @@ sub entry_form {
         delete $opts->{usejournal};
     }
 
-    $opts->{'richtext_default'} = 0 unless $opts->{'richtext'};
+    $opts->{'richtext_default'} = 1 unless !$opts->{'richtext'};
 
     my $tabnum = 10; #make allowance for username and password
     my $tabindex = sub { return $tabnum++; };
@@ -963,7 +963,7 @@ sub entry_form {
 
     ### Userpic
    
-    $out .= "<div id='userpic'>";
+    $out .= "<div id='userpic' class='js-req'>";
         my $userpic_preview = "";
 
             # User Picture
@@ -1044,17 +1044,14 @@ sub entry_form {
                                 js/hourglass.js
                                 js/inputcomplete.js
                                 stc/ups.css
-                                stc/lj_base.css
                                 js/datasource.js
                                 js/selectable_table.js
                                 )) if ! $LJ::DISABLED{userpicselect} && $remote->get_cap('userpicselect');
 
                 $out .= "\n";
 
-                $userpic_preview = "<script type='text/javascript' language='JavaScript'>\n<!--\ndocument.write(\"" .
-                    LJ::ejs("<p id='userpic_preview' style='display: none'>" .
-                            "<img src='' alt='selected userpic' id='userpic_preview_image' /></p>") .
-                            "\");\n//-->\n</script>\n" if $remote;
+                $userpic_preview = "<p id='userpic_preview' class='js-req' style='display: none'>" .
+                                    "<img src='' alt='selected userpic' id='userpic_preview_image' /></p>\n";
             }
             if ($userpic_preview ne "") { $out .= "$userpic_preview"; }
 
@@ -1065,11 +1062,7 @@ sub entry_form {
     ### Meta Information Column 1
     {
         $out .= "<div id='metainfo'>\n\n";
-        $out .= "<p class='pkg'>\n";
-        $out .= "<label for='current_username' class='left'>Posting as:</label>\n";
-        $out .= "<strong id='current_username'>" . $remote->{user} . "</strong> <a href='update.bml?altlogin=1' class='small'>Switch</a>\n";
-        $out .= "</p>\n\n";
-
+        $out .= $opts->{'auth'};
         if ($opts->{'mode'} eq "update") {
             # communities the user can post in
             my $usejournal = $opts->{'usejournal'};
@@ -1093,7 +1086,6 @@ sub entry_form {
         }
 
         # Authentication box
-        $out .= $opts->{'auth'};
         $out .= "<p class='update-errors'><?inerr $errors->{'auth'} inerr?></p>\n" if $errors->{'auth'};
         # Date / Time
         {
@@ -1105,14 +1097,14 @@ sub entry_form {
             $datetime .=   LJ::html_text({ size => 2, class => 'text', maxlength => 2, value => $hour, name => "hour", tabindex => $tabindex->(), disabled => $opts->{'disabled_save'} }) . "<span class='float-left'>:</span>";
             $datetime .=   LJ::html_text({ size => 2, class => 'text', maxlength => 2, value => $min, name => "min", tabindex => $tabindex->(), disabled => $opts->{'disabled_save'} });
             $datetime .= LJ::html_hidden(hour_old => $hour, min_old => $min);
-            $datetime .= '<span class="ljhidden">' . LJ::html_datetime({'name' => "date_ymd_old", 'notime' => 1, 'default' => "$year-$mon-$mday"}) . '</span>';
-
+            $datetime .= '<span class="ljhidden" style="display:none">' . LJ::html_datetime({'name' => "date_ymd_old", 'notime' => 1, 'default' => "$year-$mon-$mday"}) . '</span>';
             $out .= "<p class='pkg'>\n";
             $out .= "<label for='modifydate' class='left'>" . BML::ml('entryform.date') . "</label>\n";
-            $out .= "<span id='currentdate' class='float-left'>$monthlong $mday, $year, $hour" . ":" . "$min <a href='javascript:void(0)' onclick='editdate();' id='currentdate-edit'>Edit</a></span>\n";
+            $out .= "<span id='currentdate' class='float-left js-req'><span id='currentdate-date'>$monthlong $mday, $year, $hour" . ":" . "$min</span> <a href='javascript:void(0)' onclick='editdate();' id='currentdate-edit'>Edit</a></span>\n";
             $out .= "<span id='modifydate' style='display:none'>$datetime <?de " . BML::ml('entryform.date.24hournote') . " de?></span><!-- end #modifydate -->";
-            $out .= "<noscript><span style='font-size: 0.85em;'>" . BML::ml('entryform.nojstime.note') . "</span></noscript>\n";
+            $out .= "<noscript>$datetime</noscript>";
             $out .= "</p>\n";
+            $out .= "<noscript><p style='font-size: 0.85em;'>" . BML::ml('entryform.nojstime.note') . "</p></noscript>\n";
         }
 
             # User Picture
@@ -1133,7 +1125,7 @@ sub entry_form {
                                         @pickws) . "\n";
 
                 # userpic browse button
-                $out .= "<a href='javascript:void(0)' id='lj_userpicselect'>View Thumbnails</a>" if ! $LJ::DISABLED{userpicselect} && $remote->get_cap('userpicselect');
+                $out .= "<a href='javascript:void(0)' id='lj_userpicselect' class='js-req'>View Thumbnails</a>" if ! $LJ::DISABLED{userpicselect} && $remote->get_cap('userpicselect');
 #  $out .= "<input type='button' id='lj_userpicselect' value='View thumbnails' />" if ! $LJ::DISABLED{userpicselect} && $remote->get_cap('userpicselect');
                 $out .= LJ::help_icon_html("userpics", "", " ") . "\n";
                 $out .= "</p>\n\n";
@@ -1156,18 +1148,9 @@ sub entry_form {
         $out .= LJ::html_text({ 'name' => 'subject', 'value' => $opts->{'subject'},
                                 'class' => 'text', 'id' => 'subject', 'size' => '43', 'maxlength' => '100', 'tabindex' => $tabindex->(), 'disabled' => $opts->{'disabled_save'} }) . "\n";
        
-        $out .= "<ul>\n";
-        $out .= "<script type='text/javascript'>\n";
-        {
-            my $jrich = LJ::ejs(LJ::deemp(
-                                          BML::ml("entryform.htmlokay.rich4", { 'opts' => 'href="javascript:void(0);" onclick="return useRichText(\'draft\', \'' . LJ::ejs($LJ::WSTATPREFIX) . '\');"' })));
-            $out .= "\t\tdocument.write(\"<li id='jrich'>$jrich</li>\");\n";
-
-            my $jplain = LJ::ejs(LJ::deemp(
-                                           BML::ml("entryform.plainswitch2", { 'aopts' => 'href="javascript:void(0);" onclick="return usePlainText(\'draft\');"' })));
-            $out .= "\t\tdocument.write(\"<li id='jplain' class='on'>$jplain</li>\");\n";
-        }
-        $out .= "</script>";
+        $out .= "<ul class='js-req'>\n";
+        $out .= "<li id='jrich'>" . BML::ml("entryform.htmlokay.rich4", { 'opts' => 'href="javascript:void(0);" onclick="return useRichText(\'draft\', \'' . $LJ::WSTATPREFIX. '\');"' })  . "</li>";
+        $out .= "<li id='jplain'>" . BML::ml("entryform.plainswitch2", { 'aopts' => 'href="javascript:void(0);" onclick="return usePlainText(\'draft\');"' }) . "</li>";
         $out .= "</ul>";
         $out .= "</div><!-- end #entry -->\n\n";
         }
@@ -1186,7 +1169,7 @@ sub entry_form {
         $show .= "<select name='insobjsel' id='insobjsel' onchange='InOb.handleInsertSelect()'>\n";
         $show .= "<option value='insert' style='padding-left: 20px'>$BML::ML{'entryform.insert.header'}</option>\n";
         $show .= "<option value='image' style='background: url($LJ::IMGPREFIX/insobj_image.gif) no-repeat; background-color: #fff; background-position: 0px 1px; padding-left: 20px;'>$BML::ML{'entryform.insert.image'}</option>\n";
-#        $show .= "<option value='image' style='background: url($LJ::IMGPREFIX/insobj_poll.gif) no-repeat; background-color: #fff; background-position: 0px 1px; padding-left: 20px;'>$BML::ML{'entryform.insert.poll'}</option>";
+        # $show .= "<option value='image' style='background: url($LJ::IMGPREFIX/insobj_poll.gif) no-repeat; background-color: #fff; background-position: 0px 1px; padding-left: 20px;'>$BML::ML{'entryform.insert.poll'}</option>";
         $show .= "</select>\n\n";
 
         $insobjout = "<script> if (document.getElementById) { document.write(\"" . LJ::ejs($show) . "\"); } </script>\n";
@@ -1198,7 +1181,8 @@ sub entry_form {
         my $insobj = "<span id='insobj'>$insobjout</span>";
         my $draft = "<p id='draftstatus'></p>";
 
-        # hide this: $out .= "$draft&nbsp;&nbsp;$insobj";
+        # hide the insert object
+        # $out .= "$draft&nbsp;&nbsp;$insobj";
         $out .= "$draft";
     }
 
@@ -1294,7 +1278,7 @@ RTE
                         'tabindex'  => $tabindex->()
                     }
                 );
-                $out .= LJ::help_icon('addtags');
+                $out .= LJ::help_icon_html('addtags');
                 $out .= "</p>";
             }
 

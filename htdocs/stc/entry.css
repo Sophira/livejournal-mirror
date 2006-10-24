@@ -73,6 +73,7 @@
 }
 #updateForm a.helplink {
     margin-left: 5px;
+    margin-top: 4px;
 }
 #updateForm h4 {
     margin: 0 0 4px 0;
@@ -111,14 +112,15 @@
 #infobox {
     border-left: 1px solid #000;
     padding-left: 10px;
-    float: left;
+    float: right;
+    margin-bottom: 10px;
 }
 #infobox ul {
     list-style: none;
 }
 #entry {
     clear: left;
-    border-bottom: 1px solid #90B6DA;
+    border-bottom: 1px solid #6699CC;
     padding: 0px;
     margin: 0px;
 }
@@ -127,6 +129,7 @@
 }
 #entry ul {
     float: right;
+    clear: right;
     list-style: none;
     margin: 0;
     padding: 0;
@@ -148,6 +151,8 @@
 }
 
 #entry ul li.on a {
+    color: #fff !important;
+    font-weight: bold;
     background: url(/img/entry-tab-on-r.gif) no-repeat right top;
 }
 #metainfo, #metainfo label, #metainfo input.text, #metainfo strong {
@@ -163,7 +168,7 @@
 }
 #draft-container {
     border: 1px solid #ccc;
-    border-top: 1px solid #90B6DA;
+    border-top: 1px solid #6699CC;
     margin-bottom: 5px;
 }
 #draft {
@@ -190,11 +195,11 @@
 #mood_preview {
     float: left;
 position: absolute;
-left: 77%;
+left: 80%;
 }
 #prop_current_music,
 #prop_current_location {
-    width: 75%;
+    width: 60%;
 }
 #submitbar {
     background-color: #eee;
