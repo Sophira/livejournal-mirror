@@ -60,6 +60,9 @@ function useRichText(textArea, statPrefix) {
     if ($("jplain")) {
         $("jplain").className = '';
     }
+    if ($("htmltools")) {
+        $("htmltools").style.display = 'none';
+    }
 
     var editor_frame = $(textArea + '___Frame');
 
@@ -157,7 +160,8 @@ function usePlainText(textArea) {
 
     editor_frame.style.display = "none";
     $(textArea).style.display = "block";
-
+    $('htmltools').style.display = "block";
+    
     $("switched_rte_on").value = '0';
 
     // Remove onsubmit handler while in Plain text

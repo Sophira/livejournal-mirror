@@ -937,7 +937,7 @@ sub entry_form {
     }
 
     $opts->{'richtext_default'} = 1 unless !$opts->{'richtext'};
-
+   
     my $tabnum = 10; #make allowance for username and password
     my $tabindex = sub { return $tabnum++; };
     $opts->{'event'} = LJ::durl($opts->{'event'}) if $opts->{'mode'} eq "edit";
@@ -1193,6 +1193,10 @@ sub entry_form {
         $out .= "$draft";
     }
 
+    $out .= "<div id='htmltools'>\n";
+    $out .= "html tools";
+    $out .= "<span>Convert line breaks</span>";
+    $out .= "</div>\n";
     $out .= "<div id='draft-container' class='pkg'>\n";
     $out .= LJ::html_textarea({ 'name' => 'event', 'value' => $opts->{'event'},
                                 'rows' => '20', 'cols' => '50', 'style' => '',

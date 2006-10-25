@@ -24,7 +24,7 @@
 
 #updateForm {
     font-family: arial, verdana, 'sans-serif';
-    min-width:700px;
+    min-width: 600px;
 }
 #updateForm iframe {
     margin: none;
@@ -66,10 +66,10 @@
     float: left;
 }
 #updateForm span.inputgroup-left {
-    display: block; float: left; width: 65%; position: relative;
+    display: block; float: left; width: 62%; position: relative;
 }
 #updateForm span.inputgroup-right {
-    display: block; float: right; width: 33%;  position: relative;
+    display: block; float: right; width: 36%;  position: relative;
 }
 #updateForm a.helplink {
     margin-left: 5px;
@@ -87,7 +87,6 @@
     margin: 0 0 4px 0;
     padding: 0;
 }
-
 #userpic {
     float: left;
     margin-right: 10px;
@@ -162,7 +161,7 @@
     line-height: 1.5em ;
 }
 #subject {
-    width: 66%;
+    width: 62%;
     font-size: 16px;
     margin-bottom: 8px;
 }
@@ -183,8 +182,11 @@
     padding: 0 8px;
     font-size: 85%;
 }
+#htmltools {
+    padding: 2px 0;
+}
 #prop_taglist {
-    width: 82%;
+    width: 80%;
 }
 #prop_current_moodid {
     width: 35%;
@@ -205,13 +207,13 @@
     line-height: 200%;
 }
 #modifydate a.helplink {
-float: left;
-display: block;
+    float: left;
+    display: block;
 }
 #mood_preview {
     float: left;
-position: absolute;
-left: 80%;
+    position: absolute;
+    left: 80%;
 }
 #prop_current_music,
 #prop_current_location {
