@@ -316,6 +316,24 @@ InOb.handleInsertSelect = function () {
     return true;
 };
 
+InOb.handleInsertImage = function () {
+    var include;
+    include = 'imgupload.bml';
+    onInsertObject(include);
+    return true;
+}
+InOb.handleInsertVideo = function() {
+    var videoUrl = prompt('Please enter a video URL:');
+    var draft = $('draft');
+    var video = "<lj-template name=\"video\">" + videoUrl + "</lj-template>";
+    draft.value = draft.value + video;
+}
+InOb.handleInsertList = function() {
+    var list = "<ul><li></li></ul>";
+    var draft = $('draft');
+    draft.value = draft.value + list;
+}
+
 InOb.onClosePopup = function () {
     if (! currentPopup) return;
     document.body.removeChild(currentPopup);

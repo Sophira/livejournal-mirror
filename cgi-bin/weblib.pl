@@ -1182,6 +1182,14 @@ sub entry_form {
         $insobjout = "<script> if (document.getElementById) { document.write(\"" . LJ::ejs($show) . "\"); } </script>\n";
     }
 
+    $out .= "<div id='htmltools' class='pkg'>\n";
+    $out .= "<ul>\n";
+    $out .= "<li class='image'><a href='#' onclick='InOb.handleInsertImage();'>Image</a></li>\n";
+    $out .= "<li class='movie'><a href='#' onclick='InOb.handleInsertVideo();'>Video</a></li>\n";
+    $out .= "<li class='list'><a href='#' onclick='InOb.handleInsertList();'>List</a></li>\n";
+    $out .= "</ul>\n";
+    $out .= "<span id='linebreaks'><input type='checkbox' name='convert' /> Convert line breaks</span>\n";
+    $out .= "</div>\n";
 
     ### Draft Status Area
     {
@@ -1192,11 +1200,7 @@ sub entry_form {
         # $out .= "$draft&nbsp;&nbsp;$insobj";
         $out .= "$draft";
     }
-
-    $out .= "<div id='htmltools'>\n";
-    $out .= "html tools";
-    $out .= "<span id='linebreaks'>Convert line breaks</span>";
-    $out .= "</div>\n";
+    
     $out .= "<div id='draft-container' class='pkg'>\n";
     $out .= LJ::html_textarea({ 'name' => 'event', 'value' => $opts->{'event'},
                                 'rows' => '20', 'cols' => '50', 'style' => '',

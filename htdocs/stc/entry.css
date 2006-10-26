@@ -187,13 +187,53 @@
     font-size: 85%;
 }
 #htmltools {
-    padding: 2px 0;
+    padding: 4px 0;
     position: relative;
 }
+#htmltools ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+}
+#htmltools ul li {
+    float: left;
+margin: 0 4px 0 0;
+padding: 0;
+}
+#htmltools ul li a {
+    display: block;
+    overflow: hidden;
+    float: left;
+    height: 19px;
+            text-indent: -10000px;
+}
+#htmltools ul li.image a {
+    width: 20px;
+    background: url(/img/html-buttons-img.gif) no-repeat 0 0;
+}
+#htmltools ul li.image a:hover {
+    background: url(/img/html-buttons-img-over.gif) no-repeat 0 0;
+}
+#htmltools ul li.movie a {
+    width: 24px;
+    background: url(/img/html-buttons-movie.gif) no-repeat 0 0;
+}
+#htmltools ul li.movie a:hover {
+    background: url(/img/html-buttons-movie-over.gif) no-repeat 0 0;
+}
+#htmltools ul li.list a {
+    width: 21px;
+    background: url(/img/html-buttons-list.gif) no-repeat 0 0;
+}                              
+#htmltools ul li.list a:hover {
+    background: url(/img/html-buttons-list-over.gif) no-repeat 0 0;
+}   
 #linebreaks {
     position: absolute;
-    right: 3px;
-    font-size: 90%;
+    top: 0;
+    right: 0;
+    line-height: 100%;
 }
 #prop_taglist {
     width: 80%;
