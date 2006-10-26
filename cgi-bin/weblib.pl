@@ -1109,7 +1109,7 @@ sub entry_form {
             $out .= "<label for='prop_opt_backdated' class='right'>" . BML::ml('entryform.backdated3') . "</label>";
             $out .= LJ::help_icon_html("backdate", "", "") . "\n";
             $out .= "</span><!-- end #modifydate -->\n";
-            $out .= "<noscript>$datetime</noscript>";
+# $out .= "<noscript>$datetime</noscript>";
             $out .= "</p>\n";
             $out .= "<noscript><p style='font-size: 0.85em;'>" . BML::ml('entryform.nojstime.note') . "</p></noscript>\n";
         }
@@ -1195,7 +1195,7 @@ sub entry_form {
 
     $out .= "<div id='htmltools'>\n";
     $out .= "html tools";
-    $out .= "<span>Convert line breaks</span>";
+    $out .= "<span id='linebreaks'>Convert line breaks</span>";
     $out .= "</div>\n";
     $out .= "<div id='draft-container' class='pkg'>\n";
     $out .= LJ::html_textarea({ 'name' => 'event', 'value' => $opts->{'event'},
@@ -1522,7 +1522,7 @@ PREVIEW
         $out .= "</div><!-- end #security_container -->\n\n";       
         $out .= "</div><!-- end #submitbar -->\n\n";
     }
-    $out .= "</div><!-- end # -->\n\n";
+# $out .= "</div><!-- end # -->\n\n";
     return $out;
 }
 
@@ -1844,7 +1844,7 @@ sub res_includes {
 
     # include standard JS info
     $ret .= qq {
-        <script language="JavaScript">
+        <script language="JavaScript" type="text/javascript">
         var LJVAR;
         if (!LJVAR) LJVAR = {};
         LJVAR.imgprefix = "$imgprefix";

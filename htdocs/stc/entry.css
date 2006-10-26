@@ -188,6 +188,12 @@
 }
 #htmltools {
     padding: 2px 0;
+    position: relative;
+}
+#linebreaks {
+    position: absolute;
+    right: 3px;
+    font-size: 90%;
 }
 #prop_taglist {
     width: 80%;

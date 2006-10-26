@@ -490,8 +490,8 @@ head<=
     my $pageload = $LJ::SPELLER && $POST{'action:spellcheck'} ? "pageload(0);" : "pageload(1);";
 
     $ret .= qq^
-    <script>
-
+    <script type="text/javascript">
+    //<![CDATA[
         var restoredDraft = $draft;
 
         function init_update_bml () {
@@ -519,7 +519,8 @@ head<=
                 }
                 LJDraft.startTimer();
            }
-</script>^;
+    //]]>
+    </script>^;
 
     $ret .= (! $LJ::REQ_HEAD_HAS{'chalresp_js'}++) ? $LJ::COMMON_CODE{'chalresp_js'} : "";
     return $ret;
