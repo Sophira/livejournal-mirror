@@ -1106,7 +1106,7 @@ sub entry_form {
                     'name' => "prop_opt_backdated", "value" => 1,
                     'selected' => $opts->{'prop_opt_backdated'},
                     'tabindex' => $tabindex->() });
-            $out .= "<label for='prop_opt_backdated' class='right'>" . BML::ml('entryform.backdated2') . "</label>";
+            $out .= "<label for='prop_opt_backdated' class='right'>" . BML::ml('entryform.backdated3') . "</label>";
             $out .= LJ::help_icon_html("backdate", "", "") . "\n";
             $out .= "</span><!-- end #modifydate -->\n";
             $out .= "<noscript>$datetime</noscript>";
@@ -1362,7 +1362,7 @@ MOODS
             }
             $out .= "</span>\n";
             $out .= "<span class='inputgroup-right'>\n";
-            $out .= "<label for='comment_settings' class='left'>Comments:</label>\n";
+            $out .= "<label for='comment_settings' class='left'>" . BML::ml('entryform.comment.settings2') . "</label>\n";
             # BML::ml('entryform.comment.settings') 
             # Comment Settings
             my $comment_settings_selected = $opts->{'prop_opt_noemail'} ? "noemail" :
@@ -1370,7 +1370,8 @@ MOODS
             $comment_settings_selected  ||= $opts->{'comment_settings'};
             $out .= LJ::html_select({ 'name' => "comment_settings", 'id' => 'comment_settings', 'selected' => $comment_settings_selected,
                                   'tabindex' => $tabindex->() },
-                                "", BML::ml('entryform.comment.settings.default'), "noemail", BML::ml('entryform.comment.settings.noemail'), "nocomments", BML::ml('entryform.comment.settings.nocomments'));
+                                "", BML::ml('entryform.comment.settings.default2'), "noemail", BML::ml('entryform.comment.settings.noemail'), "nocomments", BML::ml('entryform.comment.settings.nocomments'));
+            $out .= LJ::help_icon_html("comment", "", " "); 
             $out .= "\n";
             
             $out .= "</span>\n";
@@ -1380,20 +1381,20 @@ MOODS
             unless ($LJ::DISABLED{'web_current_location'}) {
                 $out .= "<p class='pkg'>";
                 $out .= "<span class='inputgroup-left'>";
-                $out .= "<label for='prop_current_location' class='left'>Located at:</label>";
+                $out .= "<label for='prop_current_location' class='left'>" . BML::ml('entryform.location') . "</label>";
                 $out .= LJ::html_text({ 'name' => 'prop_current_location', 'value' => $opts->{'prop_current_location'}, 'id' => 'prop_current_location',
                                         'class' => 'text', 'size' => '35', 'maxlength' => '60', 'tabindex' => $tabindex->() }) . "\n";
                 $out .= "</span>";
                 $out .= "<span class='inputgroup-right'>\n";
-                $out .= "<label for='prop_opt_screening' class='left'>Screening:</label>\n";
+                $out .= "<label for='prop_opt_screening' class='left'>" . BML::ml('entryform.comment.screening2') . "</label>\n";
                 # BML::ml('entryform.comment.screening')
                 # Comment Screening settings
-                my @levels = ('', BML::ml('label.screening.default'), 'N', BML::ml('label.screening.none'),
+                my @levels = ('', BML::ml('label.screening.default2'), 'N', BML::ml('label.screening.none'),
                           'R', BML::ml('label.screening.anonymous'), 'F', BML::ml('label.screening.nonfriends'),
                           'A', BML::ml('label.screening.all'));
                 $out .= LJ::html_select({ 'name' => 'prop_opt_screening', 'id' => 'prop_opt_screening', 'selected' => $opts->{'prop_opt_screening'},
                           'tabindex' => $tabindex->() }, @levels);
-                $out .= LJ::help_icon("screening", "", " ");
+                $out .= LJ::help_icon_html("screening", "", " ");
                 $out .= "</span>\n";
                 $out .= "</p>\n";
             }
@@ -1401,7 +1402,7 @@ MOODS
             # Current Music
             $out .= "<p class='pkg'>\n";
             $out .= "<span class='inputgroup-left'>\n";
-            $out .= "<label for='prop_current_music' class='left'>Listening to:</label>\n";
+            $out .= "<label for='prop_current_music' class='left'>" . BML::ml('entryform.music') . "</label>\n";
             # BML::ml('entryform.music')
             $out .= LJ::html_text({ 'name' => 'prop_current_music', 'value' => $opts->{'prop_current_music'}, 'id' => 'prop_current_music',
                                     'class' => 'text', 'size' => '35', 'maxlength' => '60', 'tabindex' => $tabindex->() }) . "\n";
@@ -1440,11 +1441,11 @@ PREVIEW
         $out .= "<div id='submitbar' class='pkg'>\n\n";
 
         $out .= "<div id='security_container'>\n";
-        $out .= "<label for='security'>" . BML::ml('entryform.security') . " </label>\n";
+        $out .= "<label for='security'>" . BML::ml('entryform.security2') . " </label>\n";
 
         # Security
             {
-                my @secs = ("public", BML::ml('label.security.public'), "private", BML::ml('label.security.private'),
+                my @secs = ("public", BML::ml('label.security.public2'), "private", BML::ml('label.security.private2'),
                             "friends", BML::ml('label.security.friends'));
 
                 my @secopts;
@@ -1461,13 +1462,36 @@ PREVIEW
                 # if custom security groups available, show them in a hideable div
                 if ($res && ref $res->{'friendgroups'} eq 'ARRAY' && scalar @{$res->{'friendgroups'}}) {
                     my $display = $opts->{'security'} eq "custom" ? "block" : "none";
-                    $out .= "<div id='custom_boxes' style='display: $display;'>\n";
+                    my $groupcount = @{$res->{'friendgroups'}};
+                    my ($groupcolumns,$percolumn);
+                    if ($groupcount < 6) {
+                        $groupcolumns = 1;
+                    } elsif ($groupcount < 11) {
+                        $groupcolumns = 2;
+                    } elsif ($groupcount < 16) {
+                        $groupcolumns = 3;
+                    } else {
+                        $groupcolumns = 4;
+                    }
+                    $percolumn = $groupcount / $groupcolumns;
+                    $percolumn = POSIX::ceil($percolumn);
+                    my $fgloopcount = 0;
+                    $out .= "<div id='custom_boxes' class='cb_$groupcolumns' style='display: $display;'>\n";
+                    $out .= "<div class='custom_boxes_col'>";
                     foreach my $fg (@{$res->{'friendgroups'}}) {
+                        $fgloopcount++;
+                        $out .= "<p>";
                         $out .= LJ::html_check({ 'name' => "custom_bit_$fg->{'id'}",
                                                  'id' => "custom_bit_$fg->{'id'}",
                                                  'selected' => $opts->{"custom_bit_$fg->{'id'}"} || $opts->{'security_mask'}+0 & 1 << $fg->{'id'} }) . " ";
-                        $out .= "<label for='custom_bit_$fg->{'id'}'>" . LJ::ehtml($fg->{'name'}) . "</label><br />\n";
+                        $out .= "<label for='custom_bit_$fg->{'id'}'>" . LJ::ehtml($fg->{'name'}) . "</label>\n";
+                        $out .= "</p>";
+                        if (($fgloopcount %  $percolumn) eq 0 && $groupcount != $fgloopcount) {
+                            $out .= "</div>\n";
+                            $out .= "<div class='custom_boxes_col'>";
+                        }
                     }
+                    $out .= "</div>\n";
                     $out .= "</div><!-- end #custom_boxes -->\n";
                 }
             }
@@ -1475,7 +1499,7 @@ PREVIEW
         if ($opts->{'mode'} eq "update") {
             my $onclick = "";
             $onclick .= "return sendForm('updateForm');" if ! $LJ::IS_SSL;
-            $out .= LJ::html_submit('action:update', BML::ml('entryform.update2') . " " . $remote->{user}, 
+            $out .= LJ::html_submit('action:update', BML::ml('entryform.update3') . " " . $remote->{user}, 
                     { 'onclick' => $onclick, 'class' => 'submit', 'id' => 'formsubmit',
                       'tabindex' => $tabindex->() }) . "&nbsp;\n"; }
 

@@ -854,11 +854,19 @@ entryform.backdated=Entry is Backdated:
 
 entryform.backdated2=Backdate &amp; exclude from all Friends Pages
 
+entryform.backdated3=Date Out of Order
+
 entryform.comment.screening=Screen Comments:
+
+entryform.comment.screening2=Comment Screening:
 
 entryform.comment.settings=Comment Settings:
 
+entryform.comment.settings2=Allow Comments?
+
 entryform.comment.settings.default=Default
+
+entryform.comment.settings.default2=Default (Journal Wide)
 
 entryform.comment.settings.nocomments=Disabled
 
@@ -902,6 +910,8 @@ entryform.insert.image=Image
 
 entryform.insert.poll=Poll
 
+entryform.location=Location:
+
 entryform.mood=Mood:
 
 entryform.mood.noneother=None, or other:
@@ -919,6 +929,8 @@ entryform.plainswitch=(Use the 'Source' button to edit HTML.  You also can <a [[
 entryform.plainswitch2=<a [[aopts]]>HTML</a>
 
 
+entryform.postas=Post as:
+
 entryform.postto=Post to:
 
 entryform.preview=Preview
@@ -926,6 +938,8 @@ entryform.preview=Preview
 entryform.save=Save Entry
 
 entryform.security=Security:
+
+entryform.security2=Show this entry to:
 
 entryform.spellcheck=Spell check
 
@@ -940,6 +954,8 @@ entryform.tags=Tags:
 entryform.update=Update Journal
 
 entryform.update2=Save to
+
+entryform.update3=Post to
 
 entryform.userpic=Userpic:
 
@@ -1044,6 +1060,8 @@ label.screening.anonymous=Anonymous only
 
 label.screening.default=Default
 
+label.screening.default2=Default (Journal Wide)
+
 label.screening.header=Screened Comments:
 
 label.screening.none=None
@@ -1062,7 +1080,11 @@ label.security.members=Members
 
 label.security.private=Private
 
+label.security.private2=Just Me (Private)
+
 label.security.public=Public
+
+label.security.public2=Everyone (Public)
 
 label.switch.button=Switch
 

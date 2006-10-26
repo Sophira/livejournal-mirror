@@ -66,14 +66,18 @@
     float: left;
 }
 #updateForm span.inputgroup-left {
-    display: block; float: left; width: 62%; position: relative;
+    display: block; float: left; width: 41%; position: relative;
 }
 #updateForm span.inputgroup-right {
-    display: block; float: right; width: 36%;  position: relative;
+    display: block; float: right; width: 57%;  position: relative;
+}
+#updateForm span.inputgroup-right label.left {
+    width: 11em;
 }
 #updateForm a.helplink {
     margin-left: 5px;
     margin-top: 4px;
+    float: left;
 }
 #updateForm h4 {
     margin: 0 0 4px 0;
@@ -189,10 +193,10 @@
     width: 80%;
 }
 #prop_current_moodid {
-    width: 35%;
+    width: 40%;
 }
 #prop_current_mood {
-    width: 18%;
+    width: 20%;
 }
 #prop_opt_backdated {
     clear: left;
@@ -217,7 +221,7 @@
 }
 #prop_current_music,
 #prop_current_location {
-    width: 60%;
+    width: 63%;
 }
 #submitbar {
     background-color: #eee;
@@ -237,7 +241,37 @@
     display: none;
     text-align:left;
     float: left;
+}
+.cb_1 {
     margin-left: 235px;
+}
+.cb_2 {
+    margin-left: 160px;
+}
+* html .cb_2 {
+    margin-left: 80px;
+}
+.cb_3 {
+    margin-left: 90px;
+}
+* html .cb_3 {
+    margin-left: 0;
+}
+.cb_4 {
+    margin-left: 0;
+}
+.custom_boxes_col {
+    width: 140px;
+    clear: none;
+    float: left;
+    margin: 0 10px 0 0;
+    padding: 8px 0 0 0;
+}
+#custom_boxes p {
+    margin: 0 0 0 25px;
+    padding: 0;
+    line-height: 120%;
+    text-indent: -25px;
 }
 #security-help {
     position: absolute;
