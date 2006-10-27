@@ -937,7 +937,7 @@ sub entry_form {
     }
 
     $opts->{'richtext_default'} = 1 unless !$opts->{'richtext'};
-   
+
     my $tabnum = 10; #make allowance for username and password
     my $tabindex = sub { return $tabnum++; };
     $opts->{'event'} = LJ::durl($opts->{'event'}) if $opts->{'mode'} eq "edit";
@@ -1155,7 +1155,7 @@ sub entry_form {
         $out .= LJ::html_text({ 'name' => 'subject', 'value' => $opts->{'subject'},
                                 'class' => 'text', 'id' => 'subject', 'size' => '43', 'maxlength' => '100', 'tabindex' => $tabindex->(), 'disabled' => $opts->{'disabled_save'} }) . "\n";
        
-        $out .= "<ul class='js-req'>\n";
+        $out .= "<ul id='entry-tabs' class='js-req'>\n";
         $out .= "<li id='jrich'>" . BML::ml("entryform.htmlokay.rich4", { 'opts' => 'href="javascript:void(0);" onclick="return useRichText(\'draft\', \'' . $LJ::WSTATPREFIX. '\');"' })  . "</li>";
         $out .= "<li id='jplain'>" . BML::ml("entryform.plainswitch2", { 'aopts' => 'href="javascript:void(0);" onclick="return usePlainText(\'draft\');"' }) . "</li>";
         $out .= "</ul>";
@@ -1252,6 +1252,8 @@ RTE
 
         $out .= <<RTE;
         } else {
+            document.getElementById('entry-tabs').style.display = 'none';
+            document.getElementById('htmltools').style.display = 'none';
             document.write("$jnorich");
         }
         //-->
