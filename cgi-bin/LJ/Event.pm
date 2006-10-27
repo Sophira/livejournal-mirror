@@ -245,6 +245,12 @@ sub subscriptions {
         @wildcards_from = LJ::get_friendofs($self->u);
     } elsif ($zeromeans eq 'all') {
         $allmatch = 1;
+    } elsif ($zeromeans eq 'method') {
+        if ($self->can('wildcard_matches')) {
+            @wildcards_from = $self->wildcard_matches;
+        } else {
+            die "No wildcard_matches method for " . $self->class . " but zeromeans='method'";
+        }
     }
 
     # TODO: gearman parallelize:

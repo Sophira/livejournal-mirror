@@ -36,6 +36,10 @@ sub run_tests {
     # have $u1 post in community $c1, and create a communitynewcomment subscription
     # to be notified of replies to its posts
 
+    # clear all subs
+    $_->delete foreach $u1->subscriptions;
+    $_->delete foreach $u2->subscriptions;
+
     # post an entry in $c1
     ok($u1 && $u2, "Got users");
     my $entry = $u2->t_post_fake_comm_entry($c1);
