@@ -888,6 +888,8 @@ entryform.entry=Entry:
 
 entryform.format=Text Formatting:
 
+entryform.format2=Convert line breaks
+
 entryform.format.auto=Auto
 
 entryform.format.preformatted=None

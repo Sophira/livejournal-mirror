@@ -936,8 +936,7 @@ sub entry_form {
         delete $opts->{usejournal};
     }
 
-    $opts->{'richtext_default'} = 1 unless !$opts->{'richtext'};
-
+$opts->{'richtext_default'} = 1 unless $opts->{'richtext'};
     my $tabnum = 10; #make allowance for username and password
     my $tabindex = sub { return $tabnum++; };
     $opts->{'event'} = LJ::durl($opts->{'event'}) if $opts->{'mode'} eq "edit";
@@ -1073,7 +1072,7 @@ sub entry_form {
                 $out .= LJ::html_hidden('usejournal' => $usejournal, 'usejournal_set' => 'true');
                 $out .= "</p>\n";
             } elsif ($res && ref $res->{'usejournals'} eq 'ARRAY') {
-                my $submitprefix = BML::ml('entryform.update2');
+                my $submitprefix = BML::ml('entryform.update3');
                 $out .= "<p class='pkg'>\n";
                 $out .= "<label for='usejournal' class='left'>" . BML::ml('entryform.postto') . "</label>\n";
                 $out .= LJ::html_select({ 'name' => 'usejournal', 'id' => 'usejournal', 'selected' => $usejournal,
@@ -1184,12 +1183,12 @@ sub entry_form {
 
     $out .= "<div id='htmltools' class='pkg'>\n";
     $out .= "<ul>\n";
-    $out .= "<li class='image'><a href='#' onclick='InOb.handleInsertImage();'>Image</a></li>\n";
-    $out .= "<li class='movie'><a href='#' onclick='InOb.handleInsertVideo();'>Video</a></li>\n";
-    $out .= "<li class='list'><a href='#' onclick='InOb.handleInsertList();'>List</a></li>\n";
+    $out .= "<li class='image'><a href='javascript:void(0);' onclick='InOb.handleInsertImage();'>Image</a></li>\n";
+    $out .= "<li class='movie'><a href='javascript:void(0);' onclick='InOb.handleInsertVideo();'>Video</a></li>\n";
+    $out .= "<li class='list'><a href='javascript:void(0);' onclick='InOb.handleInsertList();'>List</a></li>\n";
     $out .= "</ul>\n";
-    $out .= "<span id='linebreaks'><input type='checkbox' name='convert' /> Convert line breaks</span>\n";
-    $out .= "</div>\n";
+    $out .= "<span id='linebreaks'><input type='checkbox' class='check' name='event_format' id='event_format' /> <label for='event_format''>" . BML::ml('entryform.format2') . "</label></span>\n";
+    $out .= "</div>\n\n";
 
     ### Draft Status Area
     {
@@ -1198,10 +1197,11 @@ sub entry_form {
 
         # hide the insert object
         # $out .= "$draft&nbsp;&nbsp;$insobj";
-        $out .= "$draft";
+# $out .= "$draft";
     }
     
     $out .= "<div id='draft-container' class='pkg'>\n";
+    $out .= "<div id='draftstatus'></div>";
     $out .= LJ::html_textarea({ 'name' => 'event', 'value' => $opts->{'event'},
                                 'rows' => '20', 'cols' => '50', 'style' => '',
                                 'tabindex' => $tabindex->(),

@@ -63,6 +63,9 @@ function useRichText(textArea, statPrefix) {
     if ($("htmltools")) {
         $("htmltools").style.display = 'none';
     }
+    if ($("draftstatus")) {
+        $("draftstatus").className = $("draftstatus").className + ' rich';
+    }
 
     var editor_frame = $(textArea + '___Frame');
 
