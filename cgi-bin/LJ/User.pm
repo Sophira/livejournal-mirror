@@ -1227,6 +1227,37 @@ sub init_age {
     return;
 }
 
+# This returns an authaction for a user to join a given community
+sub comm_join_authaction {
+    my $u = shift;
+    my $comm = shift;
+
+    return undef unless ref $comm && ref $u;
+
+    my $arg = "targetid=$u->{userid}";
+    my $dbh = LJ::get_db_writer();
+
+    # check for duplicates within the same hour (to prevent spamming)
+    my $oldaa = $dbh->selectrow_hashref("SELECT aaid, authcode, datecreate FROM authactions " .
+                                        "WHERE userid=? AND arg1=? " .
+                                        "AND action='comm_join_request' AND used='N' " .
+                                        "AND NOW() < datecreate + INTERVAL 1 HOUR " .
+                                        "ORDER BY 1 DESC LIMIT 1",
+                                        undef, $comm->{'userid'}, $arg);
+    return $oldaa if $oldaa;
+
+    # insert authactions row
+    my $aa = LJ::register_authaction($comm->{'userid'}, 'comm_join_request', $arg);
+    return undef unless $aa;
+
+    # if there are older duplicates, invalidate any existing unused authactions of this type
+    $dbh->do("UPDATE authactions SET used='Y' WHERE userid=? AND aaid<>? AND arg1=? " .
+             "AND action='comm_invite' AND used='N'",
+             undef, $comm->{'userid'}, $aa->{'aaid'}, $arg);
+
+    return $aa;
+}
+
 # should this user be promoted via CommPromo
 sub should_promote_comm {
     my $u = shift;

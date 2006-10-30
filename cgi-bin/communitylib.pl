@@ -486,65 +486,24 @@ sub comm_join_request {
     my ($comm, $u) = @_;
     return undef unless ref $comm && ref $u;
 
-    my $arg = "targetid=$u->{userid}";
-    my $dbh = LJ::get_db_writer();
+    my $auth = $u->comm_join_authaction($comm);
 
-    # check for duplicates within the same hour (to prevent spamming)
-    my $oldaa = $dbh->selectrow_hashref("SELECT aaid, authcode, datecreate FROM authactions " .
-                                        "WHERE userid=? AND arg1=? " .
-                                        "AND action='comm_join_request' AND used='N' " .
-                                        "AND NOW() < datecreate + INTERVAL 1 HOUR " .
-                                        "ORDER BY 1 DESC LIMIT 1",
-                                        undef, $comm->{'userid'}, $arg);
-    return $oldaa if $oldaa;
-
-    # insert authactions row
-    my $aa = LJ::register_authaction($comm->{'userid'}, 'comm_join_request', $arg);
-    return undef unless $aa;
-
-    # if there are older duplicates, invalidate any existing unused authactions of this type
-    $dbh->do("UPDATE authactions SET used='Y' WHERE userid=? AND aaid<>? AND arg1=? " .
-             "AND action='comm_invite' AND used='N'",
-             undef, $comm->{'userid'}, $aa->{'aaid'}, $arg);
+    # We'll only have a datecreate if we've sent out an invite already
+    return undef if $auth->{datecreate};
 
     # get maintainers of community
     my $adminids = LJ::load_rel_user($comm->{userid}, 'A') || [];
     my $admins = LJ::load_userids(@$adminids);
 
     # now prepare the emails
-    my %dests;
-    my $cuser = $comm->{user};
     foreach my $au (values %$admins) {
-        next if $dests{$au->{email}}++;
         LJ::load_user_props($au, 'opt_communityjoinemail');
         next if $au->{opt_communityjoinemail} =~ /[DN]/; # Daily, None
-        
-        my $body = "Dear $au->{name},\n\n" .
-                   "The user \"$u->{user}\" has requested to join the \"$cuser\" community.  If you wish " .
-                   "to add this user to your community, please click this link:\n\n" .
-                   "\t$LJ::SITEROOT/approve/$aa->{aaid}.$aa->{authcode}\n\n" .
-                   "Alternately, to approve or reject all outstanding membership requests at the same time, " .
-                   "visit the community member management page:\n\n" .
-                   "\t$LJ::SITEROOT/community/pending.bml?comm=$cuser\n\n" .
-                   "You may also ignore this e-mail.  The request to join will expire after a period of 30 days.\n\n" .
-                   "If you wish to no longer receive these e-mails, visit the community management page and " .
-                   "set the relevant options:\n\n\t$LJ::SITEROOT/community/manage.bml\n\n" .
-                   "Regards,\n$LJ::SITENAME Team\n";
-
-        LJ::send_mail({
-            to => $au->{email},
-            from => $LJ::COMMUNITY_EMAIL,
-            fromname => $LJ::SITENAME,
-            charset => 'utf-8',
-            subject => "$cuser Membership Request by $u->{user}",
-            body => $body,
-            wrap => 76,
-        });
 
         LJ::Event::CommunityJoinRequest->new($au, $u, $comm)->fire;
     }
 
-    return $aa;
+    return $auth;
 }
 
 1;
