@@ -497,6 +497,7 @@ sub comm_join_request {
 
     # now prepare the emails
     foreach my $au (values %$admins) {
+        ### TODO: Migrate these props over to ESN subscriptions
         LJ::load_user_props($au, 'opt_communityjoinemail');
         next if $au->{opt_communityjoinemail} =~ /[DN]/; # Daily, None
 
