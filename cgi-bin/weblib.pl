@@ -1085,7 +1085,7 @@ sub entry_form {
                 $out .= "\n";
 
                 $userpic_preview = "<p id='userpic_preview' class='js-req' style='display: none'>" .
-                                    "<a href='javascript:void(0);' id='lj_userpicselect_img'><img src='' alt='selected userpic' id='userpic_preview_image' /><span id='lj_userpicselect_img_txt'>Choose userpic</span></a></p>\n";
+                                    "<a href='javascript:void(0);' id='lj_userpicselect_img'><img src='' alt='selected userpic' id='userpic_preview_image' /><span id='lj_userpicselect_img_txt'>" . BML::ml('entryform.userpic.choose') . "</span></a></p>\n";
             }
             if ($userpic_preview ne "") { $out .= "$userpic_preview"; }
 

@@ -961,6 +961,8 @@ entryform.update3=Post to
 
 entryform.userpic=Userpic:
 
+entryform.userpic.choose=Choose userpic
+
 entryform.userpics=User Picture Icon:
 
 Error|notes=typically used inside an H1 tag to announce an error.
