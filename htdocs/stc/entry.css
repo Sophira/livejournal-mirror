@@ -126,6 +126,7 @@
     border-bottom: 1px solid #6699CC;
     padding: 0px;
     margin: 0px;
+    position: relative;
 }
 #entry p {
     margin: 0 !important;
@@ -171,7 +172,8 @@
 }
 #draft-container {
     border: 1px solid #ccc;
-    border-top: 1px solid #6699CC;
+    border-top: none;
+    /* border-top: 1px solid #6699CC; */
     margin-bottom: 5px;
     position: relative;
 }
@@ -181,39 +183,39 @@
     border: none;
 }
 #draftstatus {
+    display: none;
+    border-bottom: 1px solid #6699CC;
     font-style: italic;
     font-size: 85%;
-    position: absolute;
-    right: 0;
-    top: 0;
     background-color: #E4EDF6;
     padding: 2px;
 }
 #draftstatus.rich {
-    top: 33px;
-    right: 3px;
 }
 #htmltools {
-    padding: 4px 0;
+    padding: 2px 2px 2px 1px;
     position: relative;
+    border-right: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+    margin: 0;
 }
 #htmltools ul {
     list-style: none;
     margin: 0;
-    padding: 0;
-
+    padding: 5px 2px 5px 2px;
+    border-bottom: 1px solid #8D8D8D;
 }
 #htmltools ul li {
     float: left;
-margin: 0 4px 0 0;
-padding: 0;
+    margin: 0 4px 0 0;
+    padding: 0;
 }
 #htmltools ul li a {
     display: block;
     overflow: hidden;
     float: left;
     height: 19px;
-            text-indent: -10000px;
+    text-indent: -10000px;
 }
 #htmltools ul li.image a {
     width: 20px;
@@ -237,8 +239,9 @@ padding: 0;
     background: url(/img/html-buttons-lists.gif) no-repeat 0 -40px;
 }   
 #linebreaks {
-    float: right;    
-    line-height: 100%;
+    position: absolute;
+    right: 6px;
+    top: 5px;    
 }
 #prop_taglist {
     width: 80%;

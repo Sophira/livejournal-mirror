@@ -164,7 +164,9 @@ function usePlainText(textArea) {
     editor_frame.style.display = "none";
     $(textArea).style.display = "block";
     $('htmltools').style.display = "block";
-    
+    if ($('draftstatus')) {
+        $('draftstatus').className = 'plain';
+    }
     $("switched_rte_on").value = '0';
 
     // Remove onsubmit handler while in Plain text

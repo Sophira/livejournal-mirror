@@ -936,7 +936,7 @@ sub entry_form {
         delete $opts->{usejournal};
     }
 
-$opts->{'richtext_default'} = 1 unless $opts->{'richtext'};
+    $opts->{'richtext'} = $opts->{'richtext_default'};
     my $tabnum = 10; #make allowance for username and password
     my $tabindex = sub { return $tabnum++; };
     $opts->{'event'} = LJ::durl($opts->{'event'}) if $opts->{'mode'} eq "edit";
@@ -1156,9 +1156,10 @@ $opts->{'richtext_default'} = 1 unless $opts->{'richtext'};
        
         $out .= "<ul id='entry-tabs' class='js-req'>\n";
         $out .= "<li id='jrich'>" . BML::ml("entryform.htmlokay.rich4", { 'opts' => 'href="javascript:void(0);" onclick="return useRichText(\'draft\', \'' . $LJ::WSTATPREFIX. '\');"' })  . "</li>";
-        $out .= "<li id='jplain'>" . BML::ml("entryform.plainswitch2", { 'aopts' => 'href="javascript:void(0);" onclick="return usePlainText(\'draft\');"' }) . "</li>";
+        $out .= "<li id='jplain' class='on'>" . BML::ml("entryform.plainswitch2", { 'aopts' => 'href="javascript:void(0);" onclick="return usePlainText(\'draft\');"' }) . "</li>";
         $out .= "</ul>";
         $out .= "</div><!-- end #entry -->\n\n";
+        $out .= "<div id='draftstatus'></div>";    
         }
 
         ### Display Spell Check Results:
@@ -1182,10 +1183,9 @@ $opts->{'richtext_default'} = 1 unless $opts->{'richtext'};
     }
 
     $out .= "<div id='htmltools' class='pkg'>\n";
-    $out .= "<ul>\n";
+    $out .= "<ul class='pkg'>\n";
     $out .= "<li class='image'><a href='javascript:void(0);' onclick='InOb.handleInsertImage();'>Image</a></li>\n";
     $out .= "<li class='movie'><a href='javascript:void(0);' onclick='InOb.handleInsertVideo();'>Video</a></li>\n";
-    $out .= "<li class='list'><a href='javascript:void(0);' onclick='InOb.handleInsertList();'>List</a></li>\n";
     $out .= "</ul>\n";
     $out .= "<span id='linebreaks'><input type='checkbox' class='check' name='event_format' id='event_format' /> <label for='event_format''>" . BML::ml('entryform.format2') . "</label></span>\n";
     $out .= "</div>\n\n";
@@ -1193,7 +1193,6 @@ $opts->{'richtext_default'} = 1 unless $opts->{'richtext'};
     ### Draft Status Area
     {
         my $insobj = "<span id='insobj'>$insobjout</span>";
-        my $draft = "<p id='draftstatus'></p>";
 
         # hide the insert object
         # $out .= "$draft&nbsp;&nbsp;$insobj";
@@ -1208,8 +1207,8 @@ $opts->{'richtext_default'} = 1 unless $opts->{'richtext'};
                                 'disabled' => $opts->{'disabled_save'},
                                 'id' => 'draft'}) . "\n";
     $out .= "</div><!-- end #draft-container -->\n\n";
-    if ($opts->{'richtext'} && !$opts->{'did_spellcheck'}) { 
-        LJ::need_res('js/rte.js', 'stc/fck/fckeditor.js', 'stc/display_none.css');
+    LJ::need_res('js/rte.js', 'stc/fck/fckeditor.js', 'stc/display_none.css');
+    if (!$opts->{'did_spellcheck'}) { 
 
         my $jnorich = LJ::ejs(LJ::deemp(BML::ml('entryform.htmlokay.norich2')));
 
@@ -1261,8 +1260,8 @@ RTE
 RTE
 
         $out .= '<noscript><?de ' . BML::ml('entryform.htmlokay.norich2') . ' de?></noscript>';
-        $out .= LJ::html_hidden({ name => 'switched_rte_on', id => 'switched_rte_on', value => '0'});
     }
+    $out .= LJ::html_hidden({ name => 'switched_rte_on', id => 'switched_rte_on', value => '0'});
     $out .= '<br />';
 
     $out .= "<div id='options' class='pkg'>";
