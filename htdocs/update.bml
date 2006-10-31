@@ -147,14 +147,14 @@
         }
         # table with username/password fields
         $auth .= "<p class='pkg' style='display: $altlogin_display;'>\n";
-        $auth .= "<label for='altlogin_username' class='left'>$ML{'.username'}</label>";
+        $auth .= "<label for='altlogin_username' class='left'>$ML{'.username'}</label>\n";
         $auth .=  LJ::html_text({ 'name' => 'user', 'id' => 'altlogin_username', 'class' => 'text', 'size' => '15', 
-                'maxlength' => '15', 'tabindex' => '5', 'value' => $POST{'user'} || $GET{'user'} });
+                'maxlength' => '15', 'tabindex' => '5', 'value' => $POST{'user'} || $GET{'user'} }) . "\n";
         $auth .= "</p>\n";
         $auth .= "<p class='pkg' style='display: $altlogin_display;'>\n";
-        $auth .= "<label for='altlogin_password' class='left'>$ML{'.password'}</label>";
+        $auth .= "<label for='altlogin_password' class='left'>$ML{'.password'}</label>\n";
         $auth .= LJ::html_text({ 'type' => 'password', 'id' => 'altlogin_password', 'class' => 'text',  
-                'name' => 'password', 'tabindex' => '6', 'size' => '15', 'maxlength' => '30' });
+                'name' => 'password', 'tabindex' => '6', 'size' => '15', 'maxlength' => '30' }) . "\n";
         # posted with a user, but no password
         if ($did_post && $auth_missing) {
             $auth .= "<br /><?inerr $ML{'.error.nopass'} inerr?>";

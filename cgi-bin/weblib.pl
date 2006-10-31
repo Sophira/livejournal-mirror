@@ -1000,6 +1000,7 @@ sub entry_form {
                     DOM.addEventListener(window, "load", function (evt) {
                         // attach userpicselect code to userpicbrowse button
                             var ups_btn = \$("lj_userpicselect");
+                            var ups_btn_img = \$("lj_userpicselect_img");
                         if (ups_btn) {
                             DOM.addEventListener(ups_btn, "click", function (evt) {
                                 var ups = new UserpicSelect();
@@ -1026,6 +1027,40 @@ sub entry_form {
                                 ups.show();
                             });
                         }
+                        if (ups_btn) {
+                            DOM.addEventListener(ups_btn_img, "click", function (evt) {
+                                var ups = new UserpicSelect();
+                                ups.init();
+                                ups.setPicSelectedCallback(function (picid, keywords) {
+                                    var kws_dropdown = \$("prop_picture_keyword");
+
+                                    if (kws_dropdown) {
+                                        var items = kws_dropdown.options;
+
+                                        // select the keyword in the dropdown
+                                        keywords.forEach(function (kw) {
+                                            for (var i = 0; i < items.length; i++) {
+                                                var item = items[i];
+                                                if (item.value == kw) {
+                                                    kws_dropdown.selectedIndex = i;
+                                                    userpic_preview();
+                                                    return;
+                                                }
+                                            }
+                                        });
+                                    }
+                                });
+                                ups.show();
+                            });
+                            DOM.addEventListener(ups_btn_img, "mouseover", function (evt) {
+                                var msg = \$("lj_userpicselect_img_txt");
+                                msg.style.display = 'block';
+                            });
+                            DOM.addEventListener(ups_btn_img, "mouseout", function (evt) {
+                                var msg = \$("lj_userpicselect_img_txt");
+                                msg.style.display = 'none';
+                            });
+                        }
                     });
                     </script>
                 } unless $LJ::DISABLED{userpicselect} || ! $remote->get_cap('userpicselect');
@@ -1050,7 +1085,7 @@ sub entry_form {
                 $out .= "\n";
 
                 $userpic_preview = "<p id='userpic_preview' class='js-req' style='display: none'>" .
-                                    "<img src='' alt='selected userpic' id='userpic_preview_image' /></p>\n";
+                                    "<a href='javascript:void(0);' id='lj_userpicselect_img'><img src='' alt='selected userpic' id='userpic_preview_image' /><span id='lj_userpicselect_img_txt'>Choose userpic</span></a></p>\n";
             }
             if ($userpic_preview ne "") { $out .= "$userpic_preview"; }
 
@@ -1100,17 +1135,17 @@ sub entry_form {
             $out .= "<p class='pkg'>\n";
             $out .= "<label for='modifydate' class='left'>" . BML::ml('entryform.date') . "</label>\n";
             $out .= "<span id='currentdate' class='float-left js-req'><span id='currentdate-date'>$monthlong $mday, $year, $hour" . ":" . "$min</span> <a href='javascript:void(0)' onclick='editdate();' id='currentdate-edit'>Edit</a></span>\n";
-            $out .= "<span id='modifydate' style='display:none'>$datetime <?de " . BML::ml('entryform.date.24hournote') . " de?><br />";
+            $out .= "<span id='modifydate' style='display:none'>$datetime <?de " . BML::ml('entryform.date.24hournote') . " de?><br />\n";
             $out .= LJ::html_check({ 'type' => "check", 'id' => "prop_opt_backdated",
                     'name' => "prop_opt_backdated", "value" => 1,
                     'selected' => $opts->{'prop_opt_backdated'},
                     'tabindex' => $tabindex->() });
-            $out .= "<label for='prop_opt_backdated' class='right'>" . BML::ml('entryform.backdated3') . "</label>";
+            $out .= "<label for='prop_opt_backdated' class='right'>" . BML::ml('entryform.backdated3') . "</label>\n";
             $out .= LJ::help_icon_html("backdate", "", "") . "\n";
             $out .= "</span><!-- end #modifydate -->\n";
-# $out .= "<noscript>$datetime</noscript>";
+            $out .= "<noscript>$datetime</noscript>\n"; # this doesn't validate. may need to change.
             $out .= "</p>\n";
-            $out .= "<noscript><p style='font-size: 0.85em;'>" . BML::ml('entryform.nojstime.note') . "</p></noscript>\n";
+            $out .= "<noscript><p class='small'>" . BML::ml('entryform.nojstime.note') . "</p></noscript>\n";
         }
 
             # User Picture
@@ -1132,7 +1167,6 @@ sub entry_form {
 
                 # userpic browse button
                 $out .= "<a href='javascript:void(0)' id='lj_userpicselect' class='js-req'>View Thumbnails</a>" if ! $LJ::DISABLED{userpicselect} && $remote->get_cap('userpicselect');
-#  $out .= "<input type='button' id='lj_userpicselect' value='View thumbnails' />" if ! $LJ::DISABLED{userpicselect} && $remote->get_cap('userpicselect');
                 $out .= LJ::help_icon_html("userpics", "", " ") . "\n";
                 $out .= "</p>\n\n";
 
@@ -1141,10 +1175,10 @@ sub entry_form {
         $out .= "</div><!-- end #metainfo -->\n\n";
 
         
-        ### Meta Information Column 2    
+        ### Other Posting Options    
         {
         $out .= "<div id='infobox'>\n";
-        $out .= LJ::run_hook('entryforminfo', $opts->{'usejournal'}, $opts->{'remote'}) . "\n";
+        $out .= LJ::run_hook('entryforminfo', $opts->{'usejournal'}, $opts->{'remote'});
         $out .= "</div><!-- end #infobox -->\n\n";
         }
         
@@ -1155,18 +1189,18 @@ sub entry_form {
                                 'class' => 'text', 'id' => 'subject', 'size' => '43', 'maxlength' => '100', 'tabindex' => $tabindex->(), 'disabled' => $opts->{'disabled_save'} }) . "\n";
        
         $out .= "<ul id='entry-tabs' class='js-req'>\n";
-        $out .= "<li id='jrich'>" . BML::ml("entryform.htmlokay.rich4", { 'opts' => 'href="javascript:void(0);" onclick="return useRichText(\'draft\', \'' . $LJ::WSTATPREFIX. '\');"' })  . "</li>";
-        $out .= "<li id='jplain' class='on'>" . BML::ml("entryform.plainswitch2", { 'aopts' => 'href="javascript:void(0);" onclick="return usePlainText(\'draft\');"' }) . "</li>";
+        $out .= "<li id='jrich'>" . BML::ml("entryform.htmlokay.rich4", { 'opts' => 'href="javascript:void(0);" onclick="return useRichText(\'draft\', \'' . $LJ::WSTATPREFIX. '\');"' })  . "</li>\n";
+        $out .= "<li id='jplain' class='on'>" . BML::ml("entryform.plainswitch2", { 'aopts' => 'href="javascript:void(0);" onclick="return usePlainText(\'draft\');"' }) . "</li>\n";
         $out .= "</ul>";
         $out .= "</div><!-- end #entry -->\n\n";
-        $out .= "<div id='draftstatus'></div>";    
+        $out .= "<div id='draftstatus'></div>\n\n";
         }
 
         ### Display Spell Check Results:
-        $out .= "<p><b>" . BML::ml('entryform.spellchecked') . "</b><br />$opts->{'spellcheck_html'}</p>"
+        $out .= "<p><b>" . BML::ml('entryform.spellchecked') . "</b><br />$opts->{'spellcheck_html'}</p>\n"
             if $opts->{'spellcheck_html'};
-    $out .= "<p><?inerr " . BML::ml('Error') . " inerr?><br />$errors->{'entry'}</p>"
-        if $errors->{'entry'};
+        $out .= "<p><?inerr " . BML::ml('Error') . " inerr?><br />$errors->{'entry'}</p>\n"
+            if $errors->{'entry'};
 
     ### Event Text Area:
     my $insobjout;

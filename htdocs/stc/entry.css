@@ -101,6 +101,36 @@
     font-size: 85%;
     color: #00C    
     margin: 4px 0px 0px 5px;
+    position: relative;
+    font-size: 85%;
+}
+#lj_userpicselect_img {
+    display: block;
+    border: 1px solid #fff;
+}
+#lj_userpicselect_img:hover {
+    border: 1px solid #003366;
+}
+#lj_userpicselect_img img {
+    display: block;
+    margin: 0 auto;
+}
+#lj_userpicselect_img:hover img {
+    filter:alpha(opacity=35);
+    -moz-opacity:.35;
+    opacity:.35;
+}
+#lj_userpicselect_img_txt {
+    display: none;
+    position: absolute;
+    text-align: center;
+    left: 0;
+    top: 33px;
+    color: #003366 !important;
+    cursor: pointer;
+}
+html>body #lj_userpicselect_img_txt {
+    width: 100%;
 }
 #metainfo {
     float: left;
@@ -181,6 +211,11 @@
     display: block;
     width: 100%;
     border: none;
+}
+/* IE7 only */
+*:first-child+html #draft {
+    width: 98%;
+    margin: 0 auto;
 }
 #draftstatus {
     display: none;
