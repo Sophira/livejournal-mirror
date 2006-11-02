@@ -66,7 +66,6 @@ function useRichText(textArea, statPrefix) {
     if ($("draftstatus")) {
         $("draftstatus").className = $("draftstatus").className + ' rich';
     }
-
     var editor_frame = $(textArea + '___Frame');
 
     // Check for RTE already existing.  IE will show multiple iframes otherwise.

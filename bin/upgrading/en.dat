@@ -886,6 +886,8 @@ entryform.deletespam.confirm=Are you sure you want to delete this entry and mark
 
 entryform.entry=Entry:
 
+entryform.entry.hint=Begin your entry
+
 entryform.format=Text Formatting:
 
 entryform.format2=Convert line breaks
@@ -950,6 +952,8 @@ entryform.spellcheck.noerrors=No spelling errors found
 entryform.spellchecked=Spell checked entry:
 
 entryform.subject=Subject:
+
+entryform.subject.hint=Post title
 
 entryform.tags=Tags:
 

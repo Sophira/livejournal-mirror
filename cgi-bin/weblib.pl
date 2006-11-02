@@ -1185,9 +1185,15 @@ sub entry_form {
         ### Subject
         $out .= "<div id='entry' class='pkg'>\n";
         $out .= "<label class='left' for='subject'>" . BML::ml('entryform.subject') . "</label>\n";
+        if (!$opts->{'subject'}) {
+            $opts->{'subject'} = BML::ml('entryform.subject.hint');
+        }
         $out .= LJ::html_text({ 'name' => 'subject', 'value' => $opts->{'subject'},
-                                'class' => 'text', 'id' => 'subject', 'size' => '43', 'maxlength' => '100', 'tabindex' => $tabindex->(), 'disabled' => $opts->{'disabled_save'} }) . "\n";
-       
+                                'class' => 'text', 'id' => 'subject', 'size' => '43', 'maxlength' => '100', 
+                                'tabindex' => $tabindex->(),  
+                                'disabled' => $opts->{'disabled_save'}}) . "\n";
+        $$onload .= " insertFormHints();"; 
+        $out .= "<input type='hidden' id='formhint-subject' value='" . BML::ml('entryform.subject.hint') . "' />";
         $out .= "<ul id='entry-tabs' class='js-req'>\n";
         $out .= "<li id='jrich'>" . BML::ml("entryform.htmlokay.rich4", { 'opts' => 'href="javascript:void(0);" onclick="return useRichText(\'draft\', \'' . $LJ::WSTATPREFIX. '\');"' })  . "</li>\n";
         $out .= "<li id='jplain' class='on'>" . BML::ml("entryform.plainswitch2", { 'aopts' => 'href="javascript:void(0);" onclick="return usePlainText(\'draft\');"' }) . "</li>\n";
@@ -1221,7 +1227,10 @@ sub entry_form {
     $out .= "<li class='image'><a href='javascript:void(0);' onclick='InOb.handleInsertImage();'>Image</a></li>\n";
     $out .= "<li class='movie'><a href='javascript:void(0);' onclick='InOb.handleInsertVideo();'>Video</a></li>\n";
     $out .= "</ul>\n";
-    $out .= "<span id='linebreaks'><input type='checkbox' class='check' name='event_format' id='event_format' /> <label for='event_format''>" . BML::ml('entryform.format2') . "</label></span>\n";
+    my $format_selected = $opts->{'prop_opt_preformatted'} ? "" : "checked='checked'";
+    $format_selected ||= $opts->{'event_format'};
+    $out .= "<span id='linebreaks'><input type='checkbox' class='check' name='event_format' id='event_format' $format_selected  /> 
+            <label for='event_format''>" . BML::ml('entryform.format2') . "</label>$opts->{'event_format'}</span>\n";
     $out .= "</div>\n\n";
 
     ### Draft Status Area
@@ -1239,7 +1248,8 @@ sub entry_form {
                                 'rows' => '20', 'cols' => '50', 'style' => '',
                                 'tabindex' => $tabindex->(),
                                 'disabled' => $opts->{'disabled_save'},
-                                'id' => 'draft'}) . "\n";
+                                'id' => 'draft'}) . "\n";  
+    $out .= "<input type='hidden' id='drafthint' value='" . BML::ml('entryform.entry.hint') . "' />";
     $out .= "</div><!-- end #draft-container -->\n\n";
     LJ::need_res('js/rte.js', 'stc/fck/fckeditor.js', 'stc/display_none.css');
     if (!$opts->{'did_spellcheck'}) { 
@@ -1382,6 +1392,8 @@ if (document.getElementById) {
             var mood_text_preview = document.getElementById('mood_text_preview');
             var mood_custom_text  = document.getElementById('prop_current_mood').value;
             mood_text_preview.innerHTML = mood_custom_text == "" ? moods[moodid] : mood_custom_text;
+            \$('prop_current_music').className = \$('prop_current_music').className + ' narrow';
+            \$('prop_current_location').className = \$('prop_current_location').className + ' narrow';
         }
     }
 }
@@ -1446,10 +1458,7 @@ MOODS
             $out .= LJ::html_text({ 'name' => 'prop_current_music', 'value' => $opts->{'prop_current_music'}, 'id' => 'prop_current_music',
                                     'class' => 'text', 'size' => '35', 'maxlength' => '60', 'tabindex' => $tabindex->() }) . "\n";
             $out .= "</span>\n";
-            $out .= "<span class='inputgroup-right'>";
-            if ($LJ::SPELLER && !$opts->{'disabled_save'}) {
-                $out .= LJ::html_submit('action:spellcheck', BML::ml('entryform.spellcheck'), { 'tabindex' => $tabindex->() }) . "&nbsp;";
-            }
+            $out .= "<span class='inputgroup-right'>"; 
 
             my $preview = "var f=this.form; var action=f.action; f.action='/preview/entry.bml'; f.target='preview'; ";
             $preview   .= "window.open('','preview','width=760,height=600,resizable=yes,status=yes,toolbar=no,location=no,menubar=no,scrollbars=yes'); ";
@@ -1466,7 +1475,10 @@ if (document.getElementById) {
 //-->
 </script>
 PREVIEW
-            }            
+            }
+            if ($LJ::SPELLER && !$opts->{'disabled_save'}) {
+                $out .= LJ::html_submit('action:spellcheck', BML::ml('entryform.spellcheck'), { 'tabindex' => $tabindex->() }) . "&nbsp;";
+            }
             $out .= "</span>\n";
             $out .= "</p>\n";
         }
@@ -1718,6 +1730,9 @@ sub entry_form_decode
         $req->{$_} = $POST->{$_};
     }
 
+    if ($POST->{"subject"} eq BML::ml('entryform.subject.hint')) {
+        $req->{"subject"} = "";
+    }
     $req->{"prop_opt_preformatted"} ||= $POST->{'switched_rte_on'} ? 1 :
         $POST->{'event_format'} eq "preformatted" ? 1 : 0;
     $req->{"prop_opt_nocomments"}   ||= $POST->{'comment_settings'} eq "nocomments" ? 1 : 0;

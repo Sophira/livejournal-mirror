@@ -200,6 +200,43 @@ function altlogin (e) {
 
     return false;    
 }
+
+function insertFormHints() {
+    var subject = $('subject');
+    var subjectHint = $('formhint-subject').value;          // get value of hidden input
+    // alert(subjectHint);
+    DOM.addEventListener(subject, "focus", function (evt) { 
+        if (subject.value == subjectHint) {
+            subject.value = '';
+        }
+    });
+    DOM.addEventListener(subject, "blur",  function (evt) { 
+        if (subject.value == '') {
+            subject.value = subjectHint;
+        }
+    });
+    var draft = $('draft');
+    draftclass = draft.className;
+    draft.className = draftclass + ' off';
+    var drafthint = $('drafthint').value;
+    if (draft.value == '') {
+        draft.value = drafthint;
+    }
+    DOM.addEventListener(draft, "focus", function (evt) {
+        if (draft.value == drafthint) {
+            draft.value = '';
+            draft.className = draftclass;
+        }
+    });
+    DOM.addEventListener(draft, "blur",  function (evt) {
+        if (draft.value.length == 0) {
+            draft.className = draftclass + ' off'; 
+            draft.value = drafthint;
+        }
+    });
+}
+
+
 function settime() {
     function twodigit (n) {
         if (n < 10) { return "0" + n; }

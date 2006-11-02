@@ -36,6 +36,9 @@
     position: relative;
     line-height: 1.8em;
 }
+#updateForm label {
+    font-weight: bold;
+}
 #updateForm label.left {
     display: block;
     float: left;
@@ -153,10 +156,11 @@ html>body #lj_userpicselect_img_txt {
 }
 #entry {
     clear: both;
-    border-bottom: 1px solid #6699CC;
+    /* border-bottom: 1px solid #6699CC; */
     padding: 0px;
     margin: 0px;
     position: relative;
+    background: url(/img/entry-tab-bg.gif) repeat-x 0 bottom;
 }
 #entry p {
     margin: 0 !important;
@@ -171,23 +175,21 @@ html>body #lj_userpicselect_img_txt {
 #entry ul li {
     float: left;
     margin: 0 4px 0 0;
-    background: url(/img/entry-tab-off-l.gif) no-repeat 0 0;
 }
 #entry ul li a {
     display: block;
     padding: 8px 10px;
-    background: url(/img/entry-tab-off-r.gif) no-repeat right top;
+    background-color: #fff;
     float: left;
     outline: none;
+    border: 1px solid #6699CC;
+    border-bottom: none;
 }
 #entry ul li.on {
-    background: url(/img/entry-tab-on-l.gif) no-repeat 0 0;
 }
-
 #entry ul li.on a {
-    color: #fff !important;
     font-weight: bold;
-    background: url(/img/entry-tab-on-r.gif) no-repeat right top;
+    padding-bottom: 9px;
 }
 #metainfo, #metainfo label, #metainfo input.text, #metainfo strong {
     font-size: 14px;
@@ -201,21 +203,36 @@ html>body #lj_userpicselect_img_txt {
     margin-bottom: 8px;
 }
 #draft-container {
-    border: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
     border-top: none;
     /* border-top: 1px solid #6699CC; */
     margin-bottom: 5px;
     position: relative;
+    padding: 0px 4px 5px 4px;
 }
 #draft {
     display: block;
     width: 100%;
     border: none;
+    font-family: Arial, Verdana;
+    font-size: 95%;
 }
 /* IE7 only */
 *:first-child+html #draft {
     width: 98%;
     margin: 0 auto;
+}
+#draft.off {
+    color: #999;
+}
+#drafthint {
+    display: none;    
+    color: #999;
+    position: absolute;
+    top: 2px;
+    left: 4px;
 }
 #draftstatus {
     display: none;
@@ -306,11 +323,17 @@ html>body #lj_userpicselect_img_txt {
 #mood_preview {
     float: left;
     position: absolute;
-    left: 80%;
+    left: 82%;
+    font-size: 90%;
+    text-align: center;
 }
 #prop_current_music,
 #prop_current_location {
     width: 63%;
+}
+#prop_current_music.narrow,
+#prop_current_location.narrow {
+    width: 42%;
 }
 #submitbar {
     background-color: #eee;
