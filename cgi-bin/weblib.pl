@@ -1087,8 +1087,12 @@ sub entry_form {
                 $userpic_preview = "<p id='userpic_preview' class='js-req' style='display: none'>" .
                                     "<a href='javascript:void(0);' id='lj_userpicselect_img'><img src='' alt='selected userpic' id='userpic_preview_image' /><span id='lj_userpicselect_img_txt'>" . BML::ml('entryform.userpic.choose') . "</span></a></p>\n";
             }
-            if ($userpic_preview ne "") { $out .= "$userpic_preview"; }
-
+            if ($userpic_preview ne "") { 
+                $out .= "$userpic_preview"; 
+            } else {
+                $out .= "<img src='/img/userpic_loggedout.gif' alt='selected userpic' id='userpic_preview_image' class='userpic_loggedout'  />";
+            }
+                
 
     $out .= "</div><!-- end #userpic -->\n\n";
     
@@ -1221,12 +1225,13 @@ sub entry_form {
 
         $insobjout = "<script> if (document.getElementById) { document.write(\"" . LJ::ejs($show) . "\"); } </script>\n";
     }
-
     $out .= "<div id='htmltools' class='pkg'>\n";
-    $out .= "<ul class='pkg'>\n";
-    $out .= "<li class='image'><a href='javascript:void(0);' onclick='InOb.handleInsertImage();'>Image</a></li>\n";
-    $out .= "<li class='movie'><a href='javascript:void(0);' onclick='InOb.handleInsertVideo();'>Video</a></li>\n";
-    $out .= "</ul>\n";
+    $out .= "<ul class='pkg'>\n";    
+    if ($remote) {
+        $out .= "<li class='image'><a href='javascript:void(0);' onclick='InOb.handleInsertImage();'>Image</a></li>\n";
+        $out .= "<li class='movie'><a href='javascript:void(0);' onclick='InOb.handleInsertVideo();'>Video</a></li>\n";
+    }
+    $out .= "</ul>\n";  
     my $format_selected = $opts->{'prop_opt_preformatted'} ? "" : "checked='checked'";
     $format_selected ||= $opts->{'event_format'};
     $out .= "<span id='linebreaks'><input type='checkbox' class='check' name='event_format' id='event_format' $format_selected  /> 
@@ -1400,12 +1405,13 @@ if (document.getElementById) {
 //--></script>
 MOODS
                 }
-
+                my $moodpreviewoc; 
+                $moodpreviewoc = 'mood_preview()' if $remote;
                 $out .= LJ::html_select({ 'name' => 'prop_current_moodid', 'id' => 'prop_current_moodid',
-                                          'selected' => $sel, 'onchange' => "mood_preview()",
+                                          'selected' => $sel, 'onchange' => $moodpreviewoc,
                                           'tabindex' => $tabindex->() }, @moodlist);
                 $out .= " " . LJ::html_text({ 'name' => 'prop_current_mood', 'id' => 'prop_current_mood', 'class' => 'text',
-                                              'value' => $opts->{'prop_current_mood'}, 'onchange' => "mood_preview()",
+                                              'value' => $opts->{'prop_current_mood'}, 'onchange' => $moodpreviewoc,
                                               'size' => '15', 'maxlength' => '30',
                                               'tabindex' => $tabindex->() });
                 my $mood_preview = LJ::ejs("<span id='mood_preview'><img src='javascript:true' alt='' id='mood_image_preview' /> <span id='mood_text_preview'></span></span>");
@@ -1496,8 +1502,8 @@ PREVIEW
 
         # Security
             {
-                my @secs = ("public", BML::ml('label.security.public2'), "private", BML::ml('label.security.private2'),
-                            "friends", BML::ml('label.security.friends'));
+                my @secs = ("public", BML::ml('label.security.public2'), "friends", BML::ml('label.security.friends'), 
+                            "private", BML::ml('label.security.private2'));
 
                 my @secopts;
                 if ($res && ref $res->{'friendgroups'} eq 'ARRAY' && scalar @{$res->{'friendgroups'}} && !$opts->{'usejournal'}) {
@@ -1505,7 +1511,6 @@ PREVIEW
                     push @secopts, ("onchange" => "customboxes()");
                 }
 
-                $out .= LJ::help_icon("security", "<span id='security-help'>\n", "\n</span>\n");
                 $out .= LJ::html_select({ 'id' => "security", 'name' => 'security', 'include_ids' => 1,
                                           'selected' => $opts->{'security'},
                                           'tabindex' => $tabindex->(), @secopts }, @secs) . "\n";
@@ -1550,7 +1555,8 @@ PREVIEW
         if ($opts->{'mode'} eq "update") {
             my $onclick = "";
             $onclick .= "return sendForm('updateForm');" if ! $LJ::IS_SSL;
-            $out .= LJ::html_submit('action:update', BML::ml('entryform.update3') . " " . $remote->{user}, 
+            my $defaultjournal = $remote->{user} || 'Journal';
+            $out .= LJ::html_submit('action:update', BML::ml('entryform.update3') . " " . $defaultjournal, 
                     { 'onclick' => $onclick, 'class' => 'submit', 'id' => 'formsubmit',
                       'tabindex' => $tabindex->() }) . "&nbsp;\n"; }
 
@@ -1571,6 +1577,7 @@ PREVIEW
         }
         
         $out .= "</div><!-- end #security_container -->\n\n";       
+        $out .= LJ::help_icon("security", "<span id='security-help'>\n", "\n</span>\n");
         $out .= "</div><!-- end #submitbar -->\n\n";
     }
 # $out .= "</div><!-- end # -->\n\n";

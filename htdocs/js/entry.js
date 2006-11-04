@@ -440,7 +440,7 @@ InOb.selectRadio = function (which) {
 
     else if (which == "fromfb") {
         submit.value = "Next -->";  // &#x2192 is a right arrow
-        fromfile.focus();
+        // fromfile.focus();
     }
 
     return true;
@@ -461,6 +461,7 @@ InOb.onSubmit = function () {
     if (! form) return InOb.fail('no form');
 
     var div_err = InOb.popid('img_error');
+    if (div_err) { div_err.style.display = 'block'; }
     if (! div_err) return InOb.fail('Unable to get error div');
 
     var setEnc = function (vl) {
@@ -728,12 +729,15 @@ LJDraft.checkIfDirty = function () {
 
     // async save, and pass in our callback
     var curEpoch = LJDraft.epoch;
+    var draftHint = $("drafthint").value;
     LJDraft.save(curBody, function () {
-        var msg = LJDraft.savedMsg.replace(/\[\[time\]\]/, LJDraft.getTime());
-        $("draftstatus").style.display = 'block';
-        $("draftstatus").innerHTML = msg;
-        LJDraft.lastSaveTime  = curEpoch; /* capture lexical.  remember: async! */
-        LJDraft.lastSavedBody = curBody;
+        if (curBody != draftHint) { 
+            var msg = LJDraft.savedMsg.replace(/\[\[time\]\]/, LJDraft.getTime());
+            $("draftstatus").style.display = 'block';
+            $("draftstatus").innerHTML = msg;
+            LJDraft.lastSaveTime  = curEpoch; /* capture lexical.  remember: async! */
+            LJDraft.lastSavedBody = curBody;
+        }
     });
 };
 

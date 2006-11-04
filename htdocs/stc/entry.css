@@ -135,6 +135,9 @@
 html>body #lj_userpicselect_img_txt {
     width: 100%;
 }
+#userpic_preview_image.userpic_loggedout {
+    border: 1px solid #003366;
+}
 #metainfo {
     float: left;
     margin-right: 10px;
@@ -156,7 +159,6 @@ html>body #lj_userpicselect_img_txt {
 }
 #entry {
     clear: both;
-    /* border-bottom: 1px solid #6699CC; */
     padding: 0px;
     margin: 0px;
     position: relative;
@@ -207,10 +209,12 @@ html>body #lj_userpicselect_img_txt {
     border-right: 1px solid #ccc;
     border-bottom: 1px solid #ccc;
     border-top: none;
-    /* border-top: 1px solid #6699CC; */
     margin-bottom: 5px;
     position: relative;
     padding: 0px 4px 5px 4px;
+}
+* html #draft-container {
+    padding: 0; 
 }
 #draft {
     display: block;
@@ -218,6 +222,10 @@ html>body #lj_userpicselect_img_txt {
     border: none;
     font-family: Arial, Verdana;
     font-size: 95%;
+}
+* html #draft {
+    width: 99%;
+    margin: 0 auto;
 }
 /* IE7 only */
 *:first-child+html #draft {
@@ -251,11 +259,15 @@ html>body #lj_userpicselect_img_txt {
     border-left: 1px solid #ccc;
     margin: 0;
 }
+* html #htmltools ul {
+    height: 20px;
+}
 #htmltools ul {
     list-style: none;
     margin: 0;
     padding: 5px 2px 5px 2px;
     border-bottom: 1px solid #8D8D8D;
+    min-height: 18px;
 }
 #htmltools ul li {
     float: left;
@@ -309,6 +321,9 @@ html>body #lj_userpicselect_img_txt {
     display: block;
     float: left;
     margin-left: 6.5em;
+}
+* html #prop_opt_backdated {
+    margin-left: 3em;
 }
 #modifydate label.right {
     float: left;
@@ -390,4 +405,5 @@ html>body #lj_userpicselect_img_txt {
     right: 10px;
     top: 0.9em;
 }
+
 

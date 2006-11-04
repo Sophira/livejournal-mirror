@@ -67,7 +67,6 @@ function useRichText(textArea, statPrefix) {
         $("draftstatus").className = $("draftstatus").className + ' rich';
     }
     var editor_frame = $(textArea + '___Frame');
-
     // Check for RTE already existing.  IE will show multiple iframes otherwise.
     if (!editor_frame) {
         var oFCKeditor = new FCKeditor(textArea);
@@ -126,7 +125,7 @@ function RTEAddClasses(textArea, statPrefix) {
     html = html.replace(/<lj-raw>([\w\s]+?)<\/lj-raw>/g, '<lj-raw class="ljraw">$1</lj-raw>');
     LJUser(textArea);
     html = html.replace(/<lj-template name=['"]video['"]>(\S+)<\/lj-template>/g, "<div url=\"$1\" class=\"ljvideo\"><img src='" + statPrefix + "/fck/editor/plugins/livejournal/ljvideo.gif' /></div>");
-    editor_frame.focus();
+    if (focus()) { editor_frame.focus() };
     oEditor.Focus();
     oEditor.SetHTML(html);
 }
