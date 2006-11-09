@@ -289,19 +289,12 @@ html>body #lj_userpicselect_img_txt {
     background: url(/img/html-buttons-image.gif) no-repeat 0 -40px;
 }
 #htmltools ul li.movie a {
-    width: 24px;
-    background: url(/img/html-buttons-video.gif) no-repeat 0 0;
+    width: 21px;
+    background: url(/img/html-buttons-media.gif) no-repeat 0 0;
 }
 #htmltools ul li.movie a:hover {
-    background: url(/img/html-buttons-video.gif) no-repeat 0 -40px;
+    background: url(/img/html-buttons-media.gif) no-repeat 0 -40px;
 }
-#htmltools ul li.list a {
-    width: 21px;
-    background: url(/img/html-buttons-lists.gif) no-repeat 0 0;
-}                              
-#htmltools ul li.list a:hover {
-    background: url(/img/html-buttons-lists.gif) no-repeat 0 -40px;
-}   
 #linebreaks {
     position: absolute;
     right: 6px;

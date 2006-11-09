@@ -1046,9 +1046,13 @@ fcklang.invalidchars=Invalid characters in username
 
 fcklang.ljcut=LiveJournal Cut
 
+fckland.ljimage=Insert/Edit Image
+
 fcklang.ljuser=LiveJournal User
 
 fcklang.ljvideo=LiveJournal Video
+
+fcklang.ljvideo2=Embed Media
 
 fcklang.readmore=Read more...
 

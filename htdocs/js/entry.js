@@ -215,6 +215,7 @@ function insertFormHints() {
             subject.value = subjectHint;
         }
     });
+    /*
     var draft = $('draft');
     draftclass = draft.className;
     draft.className = draftclass + ' off';
@@ -234,6 +235,7 @@ function insertFormHints() {
             draft.value = drafthint;
         }
     });
+    */
 }
 
 
@@ -320,13 +322,12 @@ function onInsertObject (include) {
     iframe.style.overflow = "hidden";
 
     //iframe.src = include;
-    iframe.innerHTML = "<iframe id='popupsIframe' style='border:0' width='100%' height='100%' src='" + include + "'></iframe>";
-
+    iframe.innerHTML = "<iframe id='popupsIframe' style='border:none' frameborder='0' width='100%' height='100%' src='" + include + "'></iframe>";
+    
     currentPopup = iframe;
     document.body.appendChild(iframe);
 
-    setTimeout(function () { iframe.src = include; }, 500);
-
+    setTimeout(function () { document.getElementById('popupsIframe').setAttribute('src', include); }, 500);
     InOb.smallCenter();
 }
 // the select's onchange:
@@ -355,7 +356,7 @@ InOb.handleInsertSelect = function () {
 
 InOb.handleInsertImage = function () {
     var include;
-    include = 'imgupload.bml';
+    include = '/imgupload.bml';
     onInsertObject(include);
     return true;
 }
@@ -364,11 +365,6 @@ InOb.handleInsertVideo = function() {
     var draft = $('draft');
     var video = "<lj-template name=\"video\">" + videoUrl + "</lj-template>";
     draft.value = draft.value + video;
-}
-InOb.handleInsertList = function() {
-    var list = "<ul><li></li></ul>";
-    var draft = $('draft');
-    draft.value = draft.value + list;
 }
 
 InOb.onClosePopup = function () {

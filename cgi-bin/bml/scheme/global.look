@@ -17,11 +17,12 @@ ENTRYFORMCSS<=
 <=ENTRYFORMCSS
 
 NOSCRIPTCSS<=
-<link id="noscript-css" rel="stylesheet" href="/stc/noscript.css" type="text/css" media="screen" title="noscrip" />
+<link id="noscript-css" rel="stylesheet" href="/stc/noscript.css" type="text/css" media="screen" title="noscript" />
 <script type="text/javascript" charset="utf-8"><!--
+    var head = document.getElementsByTagName('head')[0];
     var noscriptCSS = document.getElementById('noscript-css');
-    if (noscriptCSS) {
-        noscriptCSS.setAttribute('href', 'none');
+    if (head && noscriptCSS) {
+        head.removeChild(noscriptCSS);
     }
 //--></script>
 <=NOSCRIPTCSS

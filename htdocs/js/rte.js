@@ -73,7 +73,7 @@ function useRichText(textArea, statPrefix) {
         oFCKeditor.BasePath = statPrefix + "/fck/";
         oFCKeditor.Height = 350;
         oFCKeditor.ToolbarSet = "Update";
-        if ($("event_format") && $("event_format").selectedIndex == 0) {
+        if ($("event_format") && $("event_format").checked) {
             $(textArea).value = $(textArea).value.replace(/\n/g, '<br />');
         }
         oFCKeditor.ReplaceTextarea();

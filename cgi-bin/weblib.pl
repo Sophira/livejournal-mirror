@@ -1125,6 +1125,7 @@ sub entry_form {
 
         # Authentication box
         $out .= "<p class='update-errors'><?inerr $errors->{'auth'} inerr?></p>\n" if $errors->{'auth'};
+        
         # Date / Time
         {
             my ($year, $mon, $mday, $hour, $min) = split( /\D/, $opts->{'datetime'});
@@ -1207,7 +1208,7 @@ sub entry_form {
         }
 
         ### Display Spell Check Results:
-        $out .= "<p><b>" . BML::ml('entryform.spellchecked') . "</b><br />$opts->{'spellcheck_html'}</p>\n"
+        $out .= "<p><strong>" . BML::ml('entryform.spellchecked') . "</strong><br />$opts->{'spellcheck_html'}</p>\n"
             if $opts->{'spellcheck_html'};
         $out .= "<p><?inerr " . BML::ml('Error') . " inerr?><br />$errors->{'entry'}</p>\n"
             if $errors->{'entry'};
@@ -1228,25 +1229,19 @@ sub entry_form {
     $out .= "<div id='htmltools' class='pkg'>\n";
     $out .= "<ul class='pkg'>\n";    
     if ($remote) {
-        $out .= "<li class='image'><a href='javascript:void(0);' onclick='InOb.handleInsertImage();'>Image</a></li>\n";
-        $out .= "<li class='movie'><a href='javascript:void(0);' onclick='InOb.handleInsertVideo();'>Video</a></li>\n";
+        $out .= "<li class='image'><a href='javascript:void(0);' onclick='InOb.handleInsertImage();' title='"
+            . BML::ml('fckland.ljimage') . "'>Image</a></li>\n";
+        $out .= "<li class='movie'><a href='javascript:void(0);' onclick='InOb.handleInsertVideo();' title='"
+            . BML::ml('fcklang.ljvideo2') . "'>Video</a></li>\n";
     }
     $out .= "</ul>\n";  
     my $format_selected = $opts->{'prop_opt_preformatted'} ? "" : "checked='checked'";
     $format_selected ||= $opts->{'event_format'};
     $out .= "<span id='linebreaks'><input type='checkbox' class='check' name='event_format' id='event_format' $format_selected  /> 
-            <label for='event_format''>" . BML::ml('entryform.format2') . "</label>$opts->{'event_format'}</span>\n";
+            <label for='event_format'>" . BML::ml('entryform.format2') . "</label>$opts->{'event_format'}</span>\n";
     $out .= "</div>\n\n";
 
-    ### Draft Status Area
-    {
-        my $insobj = "<span id='insobj'>$insobjout</span>";
-
-        # hide the insert object
-        # $out .= "$draft&nbsp;&nbsp;$insobj";
-# $out .= "$draft";
-    }
-    
+    ### Draft Status Area    
     $out .= "<div id='draft-container' class='pkg'>\n";
     $out .= "<div id='draftstatus'></div>";
     $out .= LJ::html_textarea({ 'name' => 'event', 'value' => $opts->{'event'},
@@ -1260,7 +1255,6 @@ sub entry_form {
     if (!$opts->{'did_spellcheck'}) { 
 
         my $jnorich = LJ::ejs(LJ::deemp(BML::ml('entryform.htmlokay.norich2')));
-
 
         $out .= <<RTE;
         <script language='JavaScript' type='text/javascript'>
@@ -1278,7 +1272,7 @@ RTE
     $out .= "FCKLang.InvalidChars = \"".LJ::ejs(BML::ml('fcklang.invalidchars'))."\";\n";
     $out .= "FCKLang.LJUser = \"".LJ::ejs(BML::ml('fcklang.ljuser'))."\";\n";
     $out .= "FCKLang.VideoPrompt = \"".LJ::ejs(BML::ml('fcklang.videoprompt'))."\";\n";
-    $out .= "FCKLang.LJVideo = \"".LJ::ejs(BML::ml('fcklang.ljvideo'))."\";\n";
+    $out .= "FCKLang.LJVideo = \"".LJ::ejs(BML::ml('fcklang.ljvideo2'))."\";\n";
     $out .= "FCKLang.CutPrompt = \"".LJ::ejs(BML::ml('fcklang.cutprompt'))."\";\n";
     $out .= "FCKLang.ReadMore = \"".LJ::ejs(BML::ml('fcklang.readmore'))."\";\n";
     $out .= "FCKLang.CutContents = \"".LJ::ejs(BML::ml('fcklang.cutcontents'))."\";\n";
@@ -1301,14 +1295,14 @@ RTE
         $out .= <<RTE;
         } else {
             document.getElementById('entry-tabs').style.display = 'none';
-            document.getElementById('htmltools').style.display = 'none';
+            // document.getElementById('htmltools').style.display = 'none';
             document.write("$jnorich");
         }
         //-->
             </script>
 RTE
 
-        $out .= '<noscript><?de ' . BML::ml('entryform.htmlokay.norich2') . ' de?></noscript>';
+        $out .= '<noscript><?de ' . BML::ml('entryform.htmlokay.norich2') . ' de?></noscript><br />';
     }
     $out .= LJ::html_hidden({ name => 'switched_rte_on', id => 'switched_rte_on', value => '0'});
     $out .= '<br />';
@@ -2189,7 +2183,10 @@ sub ads {
         if ($LJ::IS_DEV_SERVER || exists $LJ::DEBUG{'ad_url_markers'}) {
             my $marker = $LJ::DEBUG{'ad_url_markers'} || '#';
             # This is so while working on ad related problems I can easily open the iframe in a new window
-            $adhtml .= "<a href=\"${LJ::ADSERVER}?$adparams\">$marker</a> | ";
+            # $Adhtml .= "<a href=\"${LJ::ADSERVER}?$adparams\">$marker</a> | ";
+            $adhtml .= "<div id=\"ad2\">";
+            $adhtml .= "<script id=\"ads2s\" dsrc=\"${LJ::ADSERVER}js/?f=insertAd&p=vox&id=ad2&$adparams\"></script> ";
+            $adhtml .= "</div>";
         }
         $adhtml .= "<a href='$LJ::SITEROOT/manage/payments/adsettings.bml'>Customize</a> | ";
         $adhtml .= "<a href=\"$LJ::SITEROOT/feedback/ads.bml?adcall=$eadcall&channel=$echannel&uri=$euri\">Feedback</a>";
@@ -2212,14 +2209,17 @@ sub ads {
             warn "Inline ad call failed with error: $@" if $@;
         }
         else {
-            $adhtml .= "<iframe src='${LJ::ADSERVER}?$adparams' frameborder='0' scrolling='no' id='adframe' ";
-            $adhtml .= "width='" . LJ::ehtml($adcall{width}) . "' ";
-            $adhtml .= "height='" . LJ::ehtml($adcall{height}) . "' ";
-            $adhtml .= "></iframe>";
+            # $adhtml .= "<iframe src='${LJ::ADSERVER}?$adparams' frameborder='0' scrolling='no' id='adframe' ";
+            # $adhtml .= "width='" . LJ::ehtml($adcall{width}) . "' ";
+            # $adhtml .= "height='" . LJ::ehtml($adcall{height}) . "' ";
+            # $adhtml .= "></iframe>";
+            $adhtml .= "<div id=\"ad2\">";
+            $adhtml .= "<script id=\"ad2s\" src=\"${LJ::ADSERVER}js/?f=insertAd&p=vox&id=ad2&$adparams\"></script>";
+            $adhtml .= "</div>";
+            }
         }
-    }
 
-    # For non-leaderboards show links on the bottom right
+     # For non-leaderboards show links on the bottom right
     unless ($adcall{adunit} =~ /^leaderboard/) {
         $adhtml .= "<div style='text-align: right; margin-top: 2px; white-space: nowrap;'>";
         if ($LJ::IS_DEV_SERVER || exists $LJ::DEBUG{'ad_url_markers'}) {
