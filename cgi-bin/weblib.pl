@@ -2184,8 +2184,9 @@ sub ads {
             my $marker = $LJ::DEBUG{'ad_url_markers'} || '#';
             # This is so while working on ad related problems I can easily open the iframe in a new window
             # $Adhtml .= "<a href=\"${LJ::ADSERVER}?$adparams\">$marker</a> | ";
-            $adhtml .= "<div id=\"ad2\">";
-            $adhtml .= "<script id=\"ads2s\" dsrc=\"${LJ::ADSERVER}js/?f=insertAd&p=vox&id=ad2&$adparams\"></script> ";
+            my $eadid = int(rand(100000));
+            $adhtml .= "<div id=\"ad$eadid\">";
+            $adhtml .= "<script id=\"ad$eadid\" dsrc=\"${LJ::ADSERVER}js/?f=LiveJournal.insertAd&p=vox&id=ad$eadid&$adparams\"></script> ";
             $adhtml .= "</div>";
         }
         $adhtml .= "<a href='$LJ::SITEROOT/manage/payments/adsettings.bml'>Customize</a> | ";
@@ -2213,8 +2214,9 @@ sub ads {
             # $adhtml .= "width='" . LJ::ehtml($adcall{width}) . "' ";
             # $adhtml .= "height='" . LJ::ehtml($adcall{height}) . "' ";
             # $adhtml .= "></iframe>";
-            $adhtml .= "<div id=\"ad2\">";
-            $adhtml .= "<script id=\"ad2s\" src=\"${LJ::ADSERVER}js/?f=insertAd&p=vox&id=ad2&$adparams\"></script>";
+            my $adid = int(rand(100000));
+            $adhtml .= "<div id=\"ad$adid\">";
+            $adhtml .= "<script id=\"ad$adid\" dsrc=\"${LJ::ADSERVER}js/?f=LiveJournal.insertAd&p=vox&id=ad$adid&$adparams\"></script>";
             $adhtml .= "</div>";
             }
         }
