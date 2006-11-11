@@ -997,7 +997,8 @@ sub entry_form {
 
                 $$head .= qq {
                     <script type="text/javascript" language="JavaScript">
-                    DOM.addEventListener(window, "load", function (evt) {
+                    // <![CDATA[  
+                        DOM.addEventListener(window, "load", function (evt) {
                         // attach userpicselect code to userpicbrowse button
                             var ups_btn = \$("lj_userpicselect");
                             var ups_btn_img = \$("lj_userpicselect_img");
@@ -1062,6 +1063,7 @@ sub entry_form {
                             });
                         }
                     });
+                    // ]]>
                     </script>
                 } unless $LJ::DISABLED{userpicselect} || ! $remote->get_cap('userpicselect');
 
@@ -1140,7 +1142,7 @@ sub entry_form {
             $out .= "<p class='pkg'>\n";
             $out .= "<label for='modifydate' class='left'>" . BML::ml('entryform.date') . "</label>\n";
             $out .= "<span id='currentdate' class='float-left js-req'><span id='currentdate-date'>$monthlong $mday, $year, $hour" . ":" . "$min</span> <a href='javascript:void(0)' onclick='editdate();' id='currentdate-edit'>Edit</a></span>\n";
-            $out .= "<span id='modifydate' style='display:none'>$datetime <?de " . BML::ml('entryform.date.24hournote') . " de?><br />\n";
+            $out .= "<span id='modifydate'>$datetime <?de " . BML::ml('entryform.date.24hournote') . " de?><br />\n";
             $out .= LJ::html_check({ 'type' => "check", 'id' => "prop_opt_backdated",
                     'name' => "prop_opt_backdated", "value" => 1,
                     'selected' => $opts->{'prop_opt_backdated'},
@@ -1148,9 +1150,9 @@ sub entry_form {
             $out .= "<label for='prop_opt_backdated' class='right'>" . BML::ml('entryform.backdated3') . "</label>\n";
             $out .= LJ::help_icon_html("backdate", "", "") . "\n";
             $out .= "</span><!-- end #modifydate -->\n";
-            $out .= "<noscript>$datetime</noscript>\n"; # this doesn't validate. may need to change.
             $out .= "</p>\n";
-            $out .= "<noscript><p class='small'>" . BML::ml('entryform.nojstime.note') . "</p></noscript>\n";
+            $out .= "<noscript><p id='time-correct' class='small'>" . BML::ml('entryform.nojstime.note') . "</p></noscript>\n";
+            $$onload .= " defaultDate();";
         }
 
             # User Picture
@@ -1214,24 +1216,12 @@ sub entry_form {
             if $errors->{'entry'};
 
     ### Event Text Area:
-    my $insobjout;
-    if ($remote && ($LJ::UPDATE_INSERT_OBJECT || $opts->{'include_insert_object'})) {
-        my $show;
-
-        $show .= "<select name='insobjsel' id='insobjsel' onchange='InOb.handleInsertSelect()'>\n";
-        $show .= "<option value='insert' style='padding-left: 20px'>$BML::ML{'entryform.insert.header'}</option>\n";
-        $show .= "<option value='image' style='background: url($LJ::IMGPREFIX/insobj_image.gif) no-repeat; background-color: #fff; background-position: 0px 1px; padding-left: 20px;'>$BML::ML{'entryform.insert.image'}</option>\n";
-        # $show .= "<option value='image' style='background: url($LJ::IMGPREFIX/insobj_poll.gif) no-repeat; background-color: #fff; background-position: 0px 1px; padding-left: 20px;'>$BML::ML{'entryform.insert.poll'}</option>";
-        $show .= "</select>\n\n";
-
-        $insobjout = "<script> if (document.getElementById) { document.write(\"" . LJ::ejs($show) . "\"); } </script>\n";
-    }
     $out .= "<div id='htmltools' class='pkg'>\n";
     $out .= "<ul class='pkg'>\n";    
     if ($remote) {
-        $out .= "<li class='image'><a href='javascript:void(0);' onclick='InOb.handleInsertImage();' title='"
+        $out .= "<li class='image js-req'><a href='javascript:void(0);' onclick='InOb.handleInsertImage();' title='"
             . BML::ml('fckland.ljimage') . "'>Image</a></li>\n";
-        $out .= "<li class='movie'><a href='javascript:void(0);' onclick='InOb.handleInsertVideo();' title='"
+        $out .= "<li class='movie js-req'><a href='javascript:void(0);' onclick='InOb.handleInsertVideo();' title='"
             . BML::ml('fcklang.ljvideo2') . "'>Video</a></li>\n";
     }
     $out .= "</ul>\n";  
@@ -1243,7 +1233,6 @@ sub entry_form {
 
     ### Draft Status Area    
     $out .= "<div id='draft-container' class='pkg'>\n";
-    $out .= "<div id='draftstatus'></div>";
     $out .= LJ::html_textarea({ 'name' => 'event', 'value' => $opts->{'event'},
                                 'rows' => '20', 'cols' => '50', 'style' => '',
                                 'tabindex' => $tabindex->(),
@@ -1342,7 +1331,7 @@ RTE
             }
 
             $out .= "<p class='pkg'>\n";
-            $out .= "<span class='inputgroup-left'>\n";
+            $out .= "<span id='prop_mood_wrapper' class='inputgroup-left'>\n";
             $out .= "<label for='prop_current_moodid' class='left'>" . BML::ml('entryform.mood') . "</label>";
             # Current Mood
             {
@@ -1376,25 +1365,6 @@ if (document.getElementById) {
     $moodpics
     var moods    = new Array();
     $moodlist
-    function mood_preview() {
-        if (! document.getElementById) return false;
-        var mood_preview = document.getElementById('mood_preview');
-        var mood_list  = document.getElementById('prop_current_moodid');
-        var moodid = mood_list[mood_list.selectedIndex].value;
-        if (moodid == "") {
-            mood_preview.style.display = "none";
-        } else {
-            mood_preview.style.display = "block";
-            var mood_image_preview = document.getElementById('mood_image_preview');
-            mood_image_preview.src = moodpics[moodid];
-
-            var mood_text_preview = document.getElementById('mood_text_preview');
-            var mood_custom_text  = document.getElementById('prop_current_mood').value;
-            mood_text_preview.innerHTML = mood_custom_text == "" ? moods[moodid] : mood_custom_text;
-            \$('prop_current_music').className = \$('prop_current_music').className + ' narrow';
-            \$('prop_current_location').className = \$('prop_current_location').className + ' narrow';
-        }
-    }
 }
 //--></script>
 MOODS
@@ -1408,8 +1378,6 @@ MOODS
                                               'value' => $opts->{'prop_current_mood'}, 'onchange' => $moodpreviewoc,
                                               'size' => '15', 'maxlength' => '30',
                                               'tabindex' => $tabindex->() });
-                my $mood_preview = LJ::ejs("<span id='mood_preview'><img src='javascript:true' alt='' id='mood_image_preview' /> <span id='mood_text_preview'></span></span>");
-            $out .= "<script type='text/javascript' language='JavaScript'>\n<!--\ndocument.write(\"$mood_preview\");\n//-->\n</script>" if $remote;
             }
             $out .= "</span>\n";
             $out .= "<span class='inputgroup-right'>\n";
@@ -1464,7 +1432,7 @@ MOODS
             $preview   .= "window.open('','preview','width=760,height=600,resizable=yes,status=yes,toolbar=no,location=no,menubar=no,scrollbars=yes'); ";
             $preview   .= "f.submit(); f.action=action; f.target='_self'; return false; ";
             $preview    = LJ::ejs(LJ::html_submit('action:preview', BML::ml('entryform.preview'), { 'onclick' => $preview,
-                                                                                                'tabindex' => $tabindex->() }));
+                'tabindex' => $tabindex->() }));
             if(!$opts->{'disabled_save'}) {
             $out .= <<PREVIEW;
 <script type="text/javascript" language="JavaScript">

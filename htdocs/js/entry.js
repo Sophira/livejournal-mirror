@@ -31,66 +31,6 @@ function changeSubmit(prefix, defaultjournal) {
     }
 }
 
-function shift_contents() {
-    if (! document.getElementById) { return false; }
-    var infobox = $("infobox");
-    var column_one = $("column_one_td");
-    var column_two = $("column_two_td");
-    var column_one_table = $("column_one_table");
-    var column_two_table = $("column_two_table");
-
-    var shifting_rows = new Array();
-
-    if (shift_init == "true") {
-        shift_init = "false";
-        bsMacIE5Fix = document.createElement("tr");
-        bsMacIE5Fix.style.display = "none";
-        sc_old_border_style = column_one.style.borderRight;
-    }
-
-    var width;
-    if (self.innerWidth) {
-        width = self.innerWidth;
-    } else if (document.documentElement && document.documentElement.clientWidth) {
-	width = document.documentElement.clientWidth;
-    } else if (document.body) {
-        width = document.body.clientWidth;
-    }
-
-    if (width < 1000) {
-        if (layout_mode == "thin" && shift_init == "true") { return true; }
-
-        layout_mode = "thin";
-        column_one.style.borderRight = "0";
-        column_two.style.display = "none";
-
-        infobox.style.display = "none";
-        column_two_table.lastChild.appendChild(bsMacIE5Fix);
-
-        column_one_table.lastChild.appendChild($("backdate_row"));
-        column_one_table.lastChild.appendChild($("comment_settings_row"));
-        column_one_table.lastChild.appendChild($("comment_screen_settings_row"));
-        if ($("userpic_list_row")) {
-            column_one_table.lastChild.appendChild($("userpic_list_row"));
-        }
-    } else {
-        if (layout_mode == "wide") { return false; }
-        layout_mode = "wide";
-        column_one.style.borderRight = sc_old_border_style;
-        column_two.style.display = "block";
-
-        infobox.style.display = "block";
-        column_one_table.lastChild.appendChild(bsMacIE5Fix);
-
-        column_two_table.lastChild.appendChild($("backdate_row"));
-        column_two_table.lastChild.appendChild($("comment_settings_row"));
-        column_two_table.lastChild.appendChild($("comment_screen_settings_row"));
-        if ($("userpic_list_row")) {
-            column_two_table.lastChild.appendChild($("userpic_list_row"));
-        }
-    }
-}
-
 function pageload (dotime) {
 
     if (dotime) settime();
@@ -108,7 +48,7 @@ function pageload (dotime) {
     var userbox = f.user;
     if (! userbox) return false;
     if (userbox.value) altlogin();
-
+ 
     return false;
 }
 
@@ -238,6 +178,44 @@ function insertFormHints() {
     */
 }
 
+function defaultDate() {
+    $('currentdate').style.display = 'block';
+    $('modifydate').style.display = 'none';
+}
+
+function mood_preview() {
+    if (! document.getElementById) return false;
+    var mood_list  = document.getElementById('prop_current_moodid'); // get select
+    var moodid = mood_list[mood_list.selectedIndex].value; // get value of select
+    if (moodid == "") {
+        if ($('mood_preview')) {
+            moodPreview = $('mood_preview');
+            moodPreview.innerHTML = '';         
+        }
+        return false
+    } else {
+        var wrapper = $('prop_mood_wrapper');
+        if ($('mood_preview')) {
+            moodPreview = $('mood_preview');
+            moodPreview.innerHTML = '';
+        } else {
+            var moodPreview = document.createElement('span');
+            moodPreview.id = 'mood_preview';
+            wrapper.appendChild(moodPreview);
+        } 
+        var moodPreviewImage = document.createElement('img');
+        moodPreviewImage.id = 'mood_image_preview';
+        moodPreviewImage.src = moodpics[moodid];
+        var moodPreviewText = document.createElement('span');
+        moodPreviewText.id = 'mood_text_preview';
+        var mood_custom_text  = $('prop_current_mood').value;
+        moodPreviewText.innerHTML = mood_custom_text == "" ? moods[moodid] : mood_custom_text;
+        moodPreview.appendChild(moodPreviewImage);
+        moodPreview.appendChild(moodPreviewText);
+        $('prop_current_music').className = $('prop_current_music').className + ' narrow';
+        $('prop_current_location').className = $('prop_current_location').className + ' narrow';
+    }
+}
 
 function settime() {
     function twodigit (n) {
