@@ -962,7 +962,6 @@ sub entry_form {
 
     ### Userpic
    
-    $out .= "<div id='userpic' class='js-req'>";
         my $userpic_preview = "";
 
             # User Picture
@@ -975,6 +974,10 @@ sub entry_form {
                     $userpics .= "    userpics[$num] = \"$_\";\n";
                 }
                 $$onload .= " userpic_preview();";
+                
+                my $userpic_link_text;
+                $userpic_link_text = BML::ml('entryform.userpic.choose') if $remote;
+                
                 $$head .= qq {
                     <script type="text/javascript" language="JavaScript"><!--
                         if (document.getElementById) {
@@ -983,12 +986,44 @@ sub entry_form {
                             function userpic_preview() {
                                 if (! document.getElementById) return false;
                                 var userpic_select          = document.getElementById('prop_picture_keyword');
-                                var userpic_preview         = document.getElementById('userpic_preview');
-                                var userpic_preview_image   = document.getElementById('userpic_preview_image');
+                               
+                                if (!\$('userpic_preview')) {
+                                    // get the form element
+                                    var updateForm = \$('updateForm');
+                                
+                                    // create wrapper div
+                                    var userpic = document.createElement('div');
+                                    userpic.id = 'userpic';
+                                
+                                    // create other elements
+                                    var userpic_preview = document.createElement('p');
+                                    userpic_preview.id = 'userpic_preview';
 
+                                    userpic_preview.innerHTML = '<a href="javascript:void(0);" id="lj_userpicselect_img">' + 
+                                        '<img src="" alt="selected userpic" id="userpic_preview_image" /><span id="lj_userpicselect_img_txt">$userpic_link_text</span></a>';
+                                
+                                    // userpic_preview.appendChild(userpic_preview_image);
+                                    userpic.appendChild(userpic_preview);
+                                
+                                    // insert userpic into form
+                                    updateForm.insertBefore(userpic, \$('metainfo'));
+                                }
+
+                                var userpic_msg;
+                                if (userpics[0] == "") { userpic_msg = 'Choose default userpic' }
+                                if (userpics.length == 0) { userpic_msg = 'Upload a userpic' }
+                                
                                 if (userpics[userpic_select.selectedIndex] != "") {
-                                    userpic_preview.style.display = "block";
+                                    \$('userpic_preview').className = '';
+                                    var userpic_preview_image = \$('userpic_preview_image');
+                                    userpic_preview_image.style.display = 'block';
+                                    if (\$('userpic_msg')) {
+                                        \$('userpic_msg').style.display = 'none';
+                                    }
                                     userpic_preview_image.src = userpics[userpic_select.selectedIndex];
+                                } else {
+                                    userpic_preview.className += " userpic_preview_border";
+                                    userpic_preview.innerHTML = '<a href="$LJ::SITEROOT/editpics.bml"><img src="" alt="selected userpic" id="userpic_preview_image" style="display: none;" /><span id="userpic_msg">' + userpic_msg + '</span></a>';
                                 }
                             }
                         }
@@ -1086,19 +1121,13 @@ sub entry_form {
 
                 $out .= "\n";
 
-                $userpic_preview = "<p id='userpic_preview' class='js-req' style='display: none'>" .
-                                    "<a href='javascript:void(0);' id='lj_userpicselect_img'><img src='' alt='selected userpic' id='userpic_preview_image' /><span id='lj_userpicselect_img_txt'>" . BML::ml('entryform.userpic.choose') . "</span></a></p>\n";
-            }
-            if ($userpic_preview ne "") { 
-                $out .= "$userpic_preview"; 
+            } elsif (!$remote)  {
+                $out .= "<div id='userpic'><p id='userpic_preview'><img src='/img/userpic_loggedout.gif' alt='selected userpic' id='userpic_preview_image' class='userpic_loggedout'  /></p></div>";
             } else {
-                $out .= "<img src='/img/userpic_loggedout.gif' alt='selected userpic' id='userpic_preview_image' class='userpic_loggedout'  />";
+                $out .= "<div id='userpic'><p id='userpic_preview' class='userpic_preview_border'><a href='$LJ::SITEROOT/editpics.bml'>Upload a userpic</a></p></div>";
             }
-                
 
-    $out .= "</div><!-- end #userpic -->\n\n";
-    
-    
+                
     ### Meta Information Column 1
     {
         $out .= "<div id='metainfo'>\n\n";
@@ -1221,8 +1250,8 @@ sub entry_form {
     if ($remote) {
         $out .= "<li class='image js-req'><a href='javascript:void(0);' onclick='InOb.handleInsertImage();' title='"
             . BML::ml('fckland.ljimage') . "'>Image</a></li>\n";
-        $out .= "<li class='movie js-req'><a href='javascript:void(0);' onclick='InOb.handleInsertVideo();' title='"
-            . BML::ml('fcklang.ljvideo2') . "'>Video</a></li>\n";
+        # $out .= "<li class='movie js-req'><a href='javascript:void(0);' onclick='InOb.handleInsertVideo();' title='"
+        #    . BML::ml('fcklang.ljvideo2') . "'>Video</a></li>\n";
     }
     $out .= "</ul>\n";  
     my $format_selected = $opts->{'prop_opt_preformatted'} ? "" : "checked='checked'";
@@ -1384,15 +1413,24 @@ MOODS
             $out .= "<label for='comment_settings' class='left'>" . BML::ml('entryform.comment.settings2') . "</label>\n";
             # BML::ml('entryform.comment.settings') 
             # Comment Settings
-            my $comment_settings_selected = $opts->{'prop_opt_noemail'} ? "noemail" :
-                $opts->{'prop_opt_nocomments'} ? "nocomments" : "";
-            $comment_settings_selected  ||= $opts->{'comment_settings'};
-            $out .= LJ::html_select({ 'name' => "comment_settings", 'id' => 'comment_settings', 'selected' => $comment_settings_selected,
+            my $comment_settings_selected = sub {
+                return "noemail" if $opts->{'prop_opt_noemail'};
+                return "nocomments" if $opts->{'prop_opt_nocomments'};
+                return $opts->{'comment_settings'};
+            };
+            
+            my $comment_settings_journaldefault = sub {
+                return "Disabled" if $opts->{'prop_opt_default_nocomments'} eq 'N';
+                return "No Email" if $opts->{'prop_opt_default_noemail'} eq 'N';
+                return "Enabled";
+            };
+                        
+            my $comment_settings_default = BML::ml('entryform.comment.settings.default4', {'aopts' => $comment_settings_journaldefault->()});
+            $out .= LJ::html_select({ 'name' => "comment_settings", 'id' => 'comment_settings', 'selected' => $comment_settings_selected->(),
                                   'tabindex' => $tabindex->() },
-                                "", BML::ml('entryform.comment.settings.default2'), "noemail", BML::ml('entryform.comment.settings.noemail'), "nocomments", BML::ml('entryform.comment.settings.nocomments'));
+                                "", $comment_settings_default, "nocomments", BML::ml('entryform.comment.settings.nocomments',"noemail"), "noemail", BML::ml('entryform.comment.settings.noemail'));
             $out .= LJ::help_icon_html("comment", "", " "); 
             $out .= "\n";
-            
             $out .= "</span>\n";
             $out .= "</p>\n";
             
@@ -1408,9 +1446,13 @@ MOODS
                 $out .= "<label for='prop_opt_screening' class='left'>" . BML::ml('entryform.comment.screening2') . "</label>\n";
                 # BML::ml('entryform.comment.screening')
                 # Comment Screening settings
-                my @levels = ('', BML::ml('label.screening.default2'), 'N', BML::ml('label.screening.none'),
-                          'R', BML::ml('label.screening.anonymous'), 'F', BML::ml('label.screening.nonfriends'),
-                          'A', BML::ml('label.screening.all'));
+                my $screening_levels_default = $opts->{'prop_opt_default_screening'} eq 'N' ? BML::ml('label.screening.none2') : 
+                        $opts->{'prop_opt_default_screening'} eq 'R' ? BML::ml('label.screening.anonymous2') :
+                        $opts->{'prop_opt_default_screening'} eq 'F' ? BML::ml('label.screening.nonfriends2') :
+                        $opts->{'prop_opt_default_screening'} eq 'A' ? BML::ml('label.screening.all2') : BML::ml('label.screening.none2');
+                my @levels = ('', BML::ml('label.screening.default3', {'aopts'=>$screening_levels_default}), 'N', BML::ml('label.screening.none2'),
+                          'R', BML::ml('label.screening.anonymous2'), 'F', BML::ml('label.screening.nonfriends2'),
+                          'A', BML::ml('label.screening.all2'));
                 $out .= LJ::html_select({ 'name' => 'prop_opt_screening', 'id' => 'prop_opt_screening', 'selected' => $opts->{'prop_opt_screening'},
                           'tabindex' => $tabindex->() }, @levels);
                 $out .= LJ::help_icon_html("screening", "", " ");
@@ -1511,6 +1553,7 @@ PREVIEW
                     }
                     $out .= "</div>\n";
                     $out .= "</div><!-- end #custom_boxes -->\n";
+                    $out .= LJ::help_icon("security", "<span id='security-help'>\n", "\n</span>\n");
                 }
             }
 
@@ -1539,10 +1582,8 @@ PREVIEW
         }
         
         $out .= "</div><!-- end #security_container -->\n\n";       
-        $out .= LJ::help_icon("security", "<span id='security-help'>\n", "\n</span>\n");
         $out .= "</div><!-- end #submitbar -->\n\n";
     }
-# $out .= "</div><!-- end # -->\n\n";
     return $out;
 }
 

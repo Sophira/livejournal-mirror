@@ -103,8 +103,8 @@
     my $errors;
     my $showform = $POST{'showform'} || $auth_missing;                            # show entry form
     my $preview = $POST{'action:preview'};
-
-    # are we spellchecking before we post?
+    
+        # are we spellchecking before we post?
     my $did_spellcheck; my $spellcheck_html;
     if ($LJ::SPELLER && $POST{'action:spellcheck'}) {
         $did_spellcheck++;
@@ -138,7 +138,7 @@
 #            $auth .= BML::ml('.loggedinas2', {'user' => "<b>$remote->{'user'}</b>", 'aopts' => "href='$LJ::SITEROOT/update.bml?altlogin=1'"});
 #            $auth .= "</span></p>\n";
         }
-        
+ 
         if ($altlogin_display eq 'none') {
             $auth.= "<p class='pkg'>\n";
             $auth .= "<label for='current_username' class='left'>" . BML::ml('entryform.postas') . "</label>\n";
@@ -167,7 +167,7 @@
         $getextra .= "altlogin=1&" if $GET{'altlogin'};
         chop $getextra;
         $getextra = "?$getextra" if $getextra;
-
+        
         my $entry = {
             'mode' => "update",
             'auth_as_remote' => $auth_as_remote,
@@ -185,6 +185,12 @@
             'include_insert_object' => $GET{'insobj'},
         };
 
+        if ($remote) {
+            $entry->{prop_opt_default_noemail} = $remote->prop('opt_gettalkemail');
+            $entry->{prop_opt_default_nocomments} = $remote->prop('opt_showtalklinks');
+            $entry->{prop_opt_default_screening} = $remote->prop('opt_whoscreened');
+        }
+        
         if ($did_post) {
             $entry->{$_} = $POST{$_} foreach keys %POST;
 
@@ -228,8 +234,6 @@
 
         $$body .= LJ::entry_form($entry, \$$head, $onload, $errors);
         $$body .= "</form><!-- end #updateForm -->\n";
-
-# $$bodyopts .= "onresize=\"shift_contents();\" ";
 
         return;
     };

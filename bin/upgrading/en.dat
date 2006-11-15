@@ -868,6 +868,10 @@ entryform.comment.settings.default=Default
 
 entryform.comment.settings.default2=Default (Journal Wide)
 
+entryform.comment.settings.default3=Enabled (Default)
+
+entryform.comment.settings.default4=Journal Default ([[aopts]])
+
 entryform.comment.settings.nocomments=Disabled
 
 entryform.comment.settings.noemail=Don't E-mail
@@ -1068,17 +1072,27 @@ Help=Help
 
 label.screening.all=All comments
 
+label.screening.all2=All Comments
+
 label.screening.anonymous=Anonymous only
+
+label.screening.anonymous2=Anonymous Only
 
 label.screening.default=Default
 
 label.screening.default2=Default (Journal Wide)
 
+label.screening.default3=Journal Default ([[aopts]])
+
 label.screening.header=Screened Comments:
 
 label.screening.none=None
 
+label.screening.none2=Disabled
+
 label.screening.nonfriends=By non-friends
+
+label.screening.nonfriends2=Non-friends
 
 label.security.custom=Custom...
 
