@@ -183,6 +183,16 @@ function defaultDate() {
     $('modifydate').style.display = 'none';
 }
 
+function insertViewThumbs() {
+    var userpic_select_wrapper = $('userpic_select_wrapper');
+    var prop_picture_keyword = $('prop_picture_keyword');
+    var lj_userpicselect = document.createElement('a');
+    lj_userpicselect.id = 'lj_userpicselect';
+    lj_userpicselect.href = 'javascript:void(0)';
+    lj_userpicselect.innerHTML = 'View Thumbnails';
+    userpic_select_wrapper.insertBefore(lj_userpicselect, prop_picture_keyword.nextSibling);
+}
+
 function mood_preview() {
     if (! document.getElementById) return false;
     var mood_list  = document.getElementById('prop_current_moodid'); // get select

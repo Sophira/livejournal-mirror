@@ -1170,7 +1170,7 @@ sub entry_form {
             $datetime .= '<span class="ljhidden" style="display:none">' . LJ::html_datetime({'name' => "date_ymd_old", 'notime' => 1, 'default' => "$year-$mon-$mday"}) . '</span>';
             $out .= "<p class='pkg'>\n";
             $out .= "<label for='modifydate' class='left'>" . BML::ml('entryform.date') . "</label>\n";
-            $out .= "<span id='currentdate' class='float-left js-req'><span id='currentdate-date'>$monthlong $mday, $year, $hour" . ":" . "$min</span> <a href='javascript:void(0)' onclick='editdate();' id='currentdate-edit'>Edit</a></span>\n";
+            $out .= "<span id='currentdate' class='float-left'><span id='currentdate-date'>$monthlong $mday, $year, $hour" . ":" . "$min</span> <a href='javascript:void(0)' onclick='editdate();' id='currentdate-edit'>Edit</a></span>\n";
             $out .= "<span id='modifydate'>$datetime <?de " . BML::ml('entryform.date.24hournote') . " de?><br />\n";
             $out .= LJ::html_check({ 'type' => "check", 'id' => "prop_opt_backdated",
                     'name' => "prop_opt_backdated", "value" => 1,
@@ -1193,7 +1193,7 @@ sub entry_form {
                     $num++;
                     $userpics .= "    userpics[$num] = \"$_\";\n";
                 }
-                $out .= "<p class='pkg'>\n";
+                $out .= "<p id='userpic_select_wrapper' class='pkg'>\n";
                 $out .= "<label for='prop_picture_keyword' class='left'>" . BML::ml('entryform.userpic') . "</label>\n" ;
                 $out .= LJ::html_select({'name' => 'prop_picture_keyword', 'id' => 'prop_picture_keyword',
                                          'selected' => $opts->{'prop_picture_keyword'}, 'onchange' => "userpic_preview()",
@@ -1202,7 +1202,7 @@ sub entry_form {
                                         @pickws) . "\n";
 
                 # userpic browse button
-                $out .= "<a href='javascript:void(0)' id='lj_userpicselect' class='js-req'>View Thumbnails</a>" if ! $LJ::DISABLED{userpicselect} && $remote->get_cap('userpicselect');
+                $$onload .= " insertViewThumbs();" if ! $LJ::DISABLED{userpicselect} && $remote->get_cap('userpicselect');      
                 $out .= LJ::help_icon_html("userpics", "", " ") . "\n";
                 $out .= "</p>\n\n";
 
@@ -1230,7 +1230,7 @@ sub entry_form {
                                 'disabled' => $opts->{'disabled_save'}}) . "\n";
         $$onload .= " insertFormHints();"; 
         $out .= "<input type='hidden' id='formhint-subject' value='" . BML::ml('entryform.subject.hint') . "' />";
-        $out .= "<ul id='entry-tabs' class='js-req'>\n";
+        $out .= "<ul id='entry-tabs'>\n";
         $out .= "<li id='jrich'>" . BML::ml("entryform.htmlokay.rich4", { 'opts' => 'href="javascript:void(0);" onclick="return useRichText(\'draft\', \'' . $LJ::WSTATPREFIX. '\');"' })  . "</li>\n";
         $out .= "<li id='jplain' class='on'>" . BML::ml("entryform.plainswitch2", { 'aopts' => 'href="javascript:void(0);" onclick="return usePlainText(\'draft\');"' }) . "</li>\n";
         $out .= "</ul>";
@@ -1248,9 +1248,9 @@ sub entry_form {
     $out .= "<div id='htmltools' class='pkg'>\n";
     $out .= "<ul class='pkg'>\n";    
     if ($remote) {
-        $out .= "<li class='image js-req'><a href='javascript:void(0);' onclick='InOb.handleInsertImage();' title='"
+        $out .= "<li class='image'><a href='javascript:void(0);' onclick='InOb.handleInsertImage();' title='"
             . BML::ml('fckland.ljimage') . "'>Image</a></li>\n";
-        # $out .= "<li class='movie js-req'><a href='javascript:void(0);' onclick='InOb.handleInsertVideo();' title='"
+        # $out .= "<li class='movie'><a href='javascript:void(0);' onclick='InOb.handleInsertVideo();' title='"
         #    . BML::ml('fcklang.ljvideo2') . "'>Video</a></li>\n";
     }
     $out .= "</ul>\n";  
