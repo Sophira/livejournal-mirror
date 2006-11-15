@@ -824,8 +824,6 @@ sub userpic {
 
 package LJ;
 
-use Class::Autouse qw (LJ::Poll);
-
 # <LJFUNC>
 # name: LJ::get_logtext2multi
 # des: Gets log text from clusters.
@@ -1770,7 +1768,8 @@ sub expand_embedded
 {
     &nodb;
     my ($u, $ditemid, $remote, $eventref) = @_;
-    LJ::Poll->expand_entry($eventref);
+    require 'ljpoll.pl';  # if it's not already
+    LJ::Poll::show_polls($ditemid, $remote, $eventref);
     LJ::run_hooks("expand_embedded", $u, $ditemid, $remote, $eventref);
 }
 
