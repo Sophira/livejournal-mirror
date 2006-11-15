@@ -108,9 +108,6 @@ sub clean
 
     my $p = HTML::TokeParser->new($data);
 
-    # don't decode html entities in attributes, we'll escape those later
-    $p->attr_encoded(1);
-
     my $wordlength = $opts->{'wordlength'};
     my $addbreaks = $opts->{'addbreaks'};
     my $keepcomments = $opts->{'keepcomments'};
@@ -333,15 +330,6 @@ sub clean
             };
             next if !$@ && !$clean_res;
 
-            # this is so rte converts it's source to the standard ljuser html
-            my $ljuser_div = $tag eq "div" && $attr->{class} eq "ljuser";
-            if ($ljuser_div) {
-                my $ljuser_text = $p->get_text("/b");
-                $p->get_tag("/div");
-                $ljuser_text =~ s/\[info\]//;
-                $tag = "lj";
-                $attr->{'user'} = $ljuser_text;
-            }
             # stupid hack to remove the class='ljcut' from divs when we're
             # disabling them, so we account for the open div normally later.
             my $ljcut_div = $tag eq "div" && lc $attr->{class} eq "ljcut";
@@ -674,10 +662,7 @@ sub clean
                                 if exists $hash->{$_};
                         }
 
-                        # ignore the effects of slashclose unless we're dealing with a tag that can
-                        # actually close itself. Otherwise, a tag like <em /> can pass through as valid
-                        # even though some browsers just render it as an opening tag
-                        if ($slashclose && $tag =~ /^(area|base|basefont|br|col|frame|hr|img|input|isindex|link|meta|param)$/) {
+                        if ($slashclose) {
                             $newdata .= " /";
                             $opencount{$tag}--;
                             $tablescope[-1]->{$tag}-- if $opts->{'tablecheck'} && @tablescope;
@@ -921,9 +906,6 @@ sub resolve_relative_urls
 {
     my ($data, $base) = @_;
     my $p = HTML::TokeParser->new($data);
-
-    # don't decode html entities in attributes, we'll escape those later
-    $p->attr_encoded(1);
 
     # where we look for relative URLs
     my $rel_source = {
