@@ -9,7 +9,6 @@ use Class::Autouse qw(
                       LJ::Event::UserNewEntry
                       LJ::Event::Befriended
                       LJ::Entry
-                      LJ::Poll
                       );
 
 BEGIN {
@@ -28,6 +27,7 @@ BEGIN {
     }
 }
 
+require "$ENV{'LJHOME'}/cgi-bin/ljpoll.pl";
 require "$ENV{'LJHOME'}/cgi-bin/ljconfig.pl";
 require "$ENV{'LJHOME'}/cgi-bin/console.pl";
 require "$ENV{'LJHOME'}/cgi-bin/taglib.pl";
@@ -814,7 +814,7 @@ sub postevent
     # do processing of embedded polls (doesn't add to database, just
     # does validity checking)
     my @polls = ();
-    if (LJ::Poll->contains_new_poll(\$event))
+    if (LJ::Poll::contains_new_poll(\$event))
     {
         return fail($err,301,"Your account type doesn't permit creating polls.")
             unless (LJ::get_cap($u, "makepoll")
@@ -823,7 +823,7 @@ sub postevent
                         && LJ::can_manage_other($u, $uowner)));
 
         my $error = "";
-        @polls = LJ::Poll->new_from_html(\$event, \$error, {
+        @polls = LJ::Poll::parse(\$event, \$error, {
             'journalid' => $ownerid,
             'posterid' => $posterid,
         });
@@ -1016,17 +1016,7 @@ sub postevent
         ### not going to check it for now.
 
         my $error = "";
-        foreach my $poll (@polls) {
-            $poll->save_to_db(
-                              journalid => $ownerid,
-                              posterid  => $posterid,
-                              ditemid   => $ditemid,
-                              );
-
-            my $pollid = $poll->pollid;
-
-            $event =~ s/<lj-poll-placeholder>/<lj-poll-$pollid>/;
-        }
+        LJ::Poll::register(\$event, \$error, $ditemid, @polls);
     }
     #### /embedding
 
