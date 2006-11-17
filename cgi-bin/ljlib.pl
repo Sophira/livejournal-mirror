@@ -2661,6 +2661,7 @@ sub get_secret
 # LJ-generic domains:
 #  $dom: 'S' == style, 'P' == userpic, 'A' == stock support answer
 #        'C' == captcha, 'E' == external user, 'O' == school
+#        'L' == poLL
 #
 sub alloc_global_counter
 {
@@ -2703,6 +2704,10 @@ sub alloc_global_counter
         $newmax = $dbh->selectrow_array("SELECT MAX(ansid) FROM support_answers");
     } elsif ($dom eq "O") {
         $newmax = $dbh->selectrow_array("SELECT MAX(schoolid) FROM schools");
+    } elsif ($dom eq "L") {
+        # pick maximum id from poll and pollowner
+        my ($poll, $pollowner) = $dbh->selectrow_array("SELECT MAX(p.pollid),MAX(po.pollid) FROM poll p, pollowner po");
+        $newmax = $poll > $pollowner ? $poll : $pollowner;
     } else {
         $newmax = LJ::run_hook('global_counter_init_value', $dom);
         die "No alloc_global_counter initalizer for domain '$dom'"
