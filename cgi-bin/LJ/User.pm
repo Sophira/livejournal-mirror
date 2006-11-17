@@ -2501,6 +2501,17 @@ sub caps {
     return $u->{caps};
 }
 
+# returns if this user's polls are clustered
+sub polls_clustered {
+    my $u = shift;
+    return $u->dversion >= 8;
+}
+
+sub dversion {
+    my $u = shift;
+    return $u->{dversion};
+}
+
 package LJ;
 
 use Carp;
