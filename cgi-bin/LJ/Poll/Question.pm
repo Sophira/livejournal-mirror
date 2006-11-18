@@ -46,14 +46,21 @@ sub _load {
     croak "_load called on a LJ::Poll::Question object with no pollqid"
         unless $self->pollqid;
 
-    my $dbr = LJ::get_db_reader();
-    my $sth = $dbr->prepare('SELECT * FROM pollquestion WHERE pollid=? AND pollqid=?');
+    my $sth;
+
+    if ($self->is_clustered) {
+        $sth = $self->poll->journal->prepare('SELECT * FROM pollquestion2 WHERE pollid=? AND pollqid=?');
+    } else {
+        my $dbr = LJ::get_db_reader();
+        my $sth = $dbr->prepare('SELECT * FROM pollquestion WHERE pollid=? AND pollqid=?');
+    }
+
     $sth->execute($self->pollid, $self->pollqid);
     $self->absorb_row($sth->fetchrow_hashref);
 }
 
-# returns the question rendered
-sub as_html {
+# returns the question rendered for previewing
+sub preview_as_html {
     my $self = shift;
     my $ret = '';
 
@@ -98,7 +105,6 @@ sub as_html {
 
         # questions with items
     } else {
-
         # drop-down list
         if ($type eq 'drop') {
             my @optlist = ('', '');
@@ -125,15 +131,26 @@ sub items {
 
     return @{$self->{items}} if $self->{items};
 
-    my $dbr = LJ::get_db_reader();
-    my $sth = $dbr->prepare('SELECT * FROM pollitem WHERE pollid=? AND pollqid=?');
-    $sth->execute($self->pollid, $self->pollqid);
+    my $sth;
+
+    if ($self->is_clustered) {
+        $sth = $self->poll->journal->prepare('SELECT pollid, pollqid, pollitid, sortorder, item ' .
+                                             'FROM pollitem2 WHERE pollid=? AND pollqid=?');
+        $sth->execute($self->pollid, $self->pollqid);
+    } else {
+        my $dbr = LJ::get_db_reader();
+        $sth = $dbr->prepare('SELECT pollid, pollqid, pollitid, sortorder, item ' .
+                                             'FROM pollitem WHERE pollid=? AND pollqid=?');
+        $sth->execute($self->pollid, $self->pollqid);
+    }
+
+    die $sth->errstr if $sth->err;
 
     my @items;
 
     while (my $row = $sth->fetchrow_hashref) {
         my $item = {};
-        $item->{$_} = $row->{$_} foreach qw(pollitid sortorder item);
+        $item->{$_} = $row->{$_} foreach qw(pollitid sortorder item pollid pollqid);
         push @items, $item;
     }
 
@@ -148,6 +165,10 @@ sub items {
 sub poll {
     my $self = shift;
     return $self->{poll};
+}
+sub is_clustered {
+    my $self = shift;
+    return $self->poll->is_clustered;
 }
 sub pollid {
     my $self = shift;
@@ -172,6 +193,7 @@ sub opts {
     $self->_load;
     return $self->{opts};
 }
+*text = \&qtext;
 sub qtext {
     my $self = shift;
     $self->_load;
