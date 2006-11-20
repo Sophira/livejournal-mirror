@@ -1313,8 +1313,9 @@ RTE
         $out .= <<RTE;
         } else {
             document.getElementById('entry-tabs').style.display = 'none';
-            // document.getElementById('htmltools').style.display = 'none';
+            document.getElementById('htmltools').style.display = 'block';
             document.write("$jnorich");
+            usePlainText('draft');
         }
         //-->
             </script>
@@ -1744,7 +1745,7 @@ sub entry_form_decode
         $req->{"subject"} = "";
     }
     $req->{"prop_opt_preformatted"} ||= $POST->{'switched_rte_on'} ? 1 :
-        $POST->{'event_format'} eq "preformatted" ? 1 : 0;
+        $POST->{'event_format'} ? 0 : 1;
     $req->{"prop_opt_nocomments"}   ||= $POST->{'comment_settings'} eq "nocomments" ? 1 : 0;
     $req->{"prop_opt_noemail"}      ||= $POST->{'comment_settings'} eq "noemail" ? 1 : 0;
     $req->{'prop_opt_backdated'}      = $POST->{'prop_opt_backdated'} ? 1 : 0;
