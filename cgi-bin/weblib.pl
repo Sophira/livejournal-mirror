@@ -2196,7 +2196,7 @@ sub ads {
             # $Adhtml .= "<a href=\"${LJ::ADSERVER}?$adparams\">$marker</a> | ";
             my $eadid = int(rand(100000));
             $adhtml .= "<div id=\"ad$eadid\">";
-            $adhtml .= "<script id=\"ad$eadid\" dsrc=\"${LJ::ADSERVER}js/?f=LiveJournal.insertAd&p=vox&id=ad$eadid&$adparams\"></script> ";
+            $adhtml .= "<script id=\"ad$eadid\" dsrc=\"${LJ::ADSERVER}js/?f=insertAd&p=lj&id=ad$eadid&$adparams\"></script> ";
             $adhtml .= "</div>";
         }
         $adhtml .= "<a href='$LJ::SITEROOT/manage/payments/adsettings.bml'>Customize</a> | ";
@@ -2226,7 +2226,7 @@ sub ads {
             # $adhtml .= "></iframe>";
             my $adid = int(rand(100000));
             $adhtml .= "<div id=\"ad$adid\">";
-            $adhtml .= "<script id=\"ad$adid\" dsrc=\"${LJ::ADSERVER}js/?f=LiveJournal.insertAd&p=vox&id=ad$adid&$adparams\"></script>";
+            $adhtml .= "<script id=\"ad$adid\" dsrc=\"${LJ::ADSERVER}js/?f=insertAd&p=lj&id=ad$adid&$adparams\"></script>";
             $adhtml .= "</div>";
             }
         }

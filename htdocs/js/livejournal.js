@@ -168,10 +168,10 @@ LiveJournal.initAds = function () {
         var url = ads[i].getAttribute('dsrc');
         ads[i].setAttribute('src',url);
     }
-}
+};
 
 // insert ads
-LiveJournal.insertAd = function (params) {
+insertAd = function (params) {
     var e = document.getElementById( params.id );
     if( !e )
         return;
@@ -184,3 +184,4 @@ LiveJournal.insertAd = function (params) {
     if( params.js )
         return eval( "(" + params.js + ")" );
 }
+
