@@ -2512,6 +2512,15 @@ sub dversion {
     return $u->{dversion};
 }
 
+# take a user on dversion 7 and upgrade them to dversion 8 (clustered polls)
+sub upgrade_to_dversion_8 {
+    my $u = shift;
+
+    my $ok = LJ::Poll->make_polls_clustered($u);
+
+    LJ::update_user($u, { 'dversion' => 8 }) if $ok;
+}
+
 package LJ;
 
 use Carp;
