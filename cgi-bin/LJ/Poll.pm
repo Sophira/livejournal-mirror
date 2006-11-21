@@ -62,24 +62,27 @@ sub create {
         or die "Invalid journalid $journalid";
 
     my $dbh = LJ::get_db_writer();
+    my $sth;
 
     if ($u->polls_clustered) {
         # poll stored on user cluster
-        my $sth = $u->prepare("INSERT INTO poll2 (journalid, pollid, posterid, whovote, whoview, name) " .
+        $sth = $u->prepare("INSERT INTO poll2 (journalid, pollid, posterid, whovote, whoview, name) " .
                                 "VALUES (?, ?, ?, ?, ?, ?)");
         $sth->execute($journalid, $pollid, $posterid, $whovote, $whoview, $name);
-        die $u->errstr if $u->err;
 
         # made poll, insert global pollid->journalid mapping into global pollowner map
         $dbh->do("INSERT INTO pollowner (journalid, pollid) VALUES (?, ?)", undef,
                  $journalid, $pollid);
+
+        die $dbh->errstr if $dbh->err;
     } else {
         # poll stored on global
-        my $sth = $dbh->prepare("INSERT INTO poll (pollid, itemid, journalid, posterid, whovote, whoview, name) " .
+        $sth = $dbh->prepare("INSERT INTO poll (pollid, itemid, journalid, posterid, whovote, whoview, name) " .
                                 "VALUES (?, ?, ?, ?, ?, ?, ?)");
         $sth->execute($pollid, $ditemid, $journalid, $posterid, $whovote, $whoview, $name);
-        die $dbh->errstr if $dbh->err;
     }
+
+    die $sth->errstr if $sth->err;
 
     ## start inserting poll questions
     my $qnum = 0;
@@ -88,12 +91,12 @@ sub create {
         $qnum++;
 
         if ($u->polls_clustered) {
-            my $sth = $u->prepare("INSERT INTO pollquestion2 (journalid, pollid, pollqid, sortorder, type, opts, qtext) " .
+            $sth = $u->prepare("INSERT INTO pollquestion2 (journalid, pollid, pollqid, sortorder, type, opts, qtext) " .
                                   "VALUES (?, ?, ?, ?, ?, ?, ?)");
             $sth->execute($journalid, $pollid, $qnum, $qnum, $q->{'type'}, $q->{'opts'}, $q->{'qtext'});
             die $u->errstr if $u->err;
         } else {
-            my $sth = $dbh->prepare("INSERT INTO pollquestion (pollid, pollqid, sortorder, type, opts, qtext) " .
+            $sth = $dbh->prepare("INSERT INTO pollquestion (pollid, pollqid, sortorder, type, opts, qtext) " .
                                     "VALUES (?, ?, ?, ?, ?, ?)");
             $sth->execute($pollid, $qnum, $qnum, $q->{'type'}, $q->{'opts'}, $q->{'qtext'});
             die $dbh->errstr if $dbh->err;
@@ -492,16 +495,14 @@ sub _load {
 
     my $dbr = LJ::get_db_reader();
 
-    my $journalid;
+    my $journalid = $dbr->selectrow_array("SELECT journalid FROM pollowner WHERE pollid=?", undef, $self->pollid);
+    die $dbr->errstr if $dbr->err;
+    my $u = LJ::load_userid($journalid) or die "Invalid journalid $journalid";
+
     my $row;
 
-    # if this is a clustered poll, then it will have a mapping on the global
-    # pollowner table
-    if ($journalid = $dbr->selectrow_array("SELECT journalid FROM pollowner WHERE pollid=?", undef, $self->pollid)) {
+    if ($u->polls_clustered) {
         # clustered poll
-        $self->{journalid} = $journalid;
-        my $u = $self->journal or die "Invalid journalid $journalid";
-
         $row = $u->selectrow_hashref("SELECT pollid, journalid, ditemid, " .
                                      "posterid, whovote, whoview, name " .
                                      "FROM poll2 WHERE pollid=?", undef, $self->pollid);
@@ -1161,6 +1162,88 @@ sub process_submission {
     }
 
     return 1;
+}
+
+# take a user on dversion 7 and upgrade them to dversion 8 (clustered polls)
+sub make_polls_clustered {
+    my ($class, $u) = @_;
+
+    my $dbh = LJ::get_db_reader()
+        or die "Could not get db reader";
+
+    # find polls this user owns
+    my $psth = $dbh->prepare("SELECT pollid, itemid, journalid, posterid, whovote, whoview, name " .
+                             "FROM poll WHERE journalid=?");
+    $psth->execute($u->userid);
+    die $psth->errstr if $psth->err;
+
+    while (my @prow = $psth->fetchrow_array) {
+        my $pollid = $prow[0];
+        # insert a copy into poll2
+        $u->do("INSERT INTO poll2 (pollid, ditemid, journalid, posterid, whovote, whoview, name) " .
+               "VALUES (?,?,?,?,?,?,?)", undef, @prow);
+        die $u->errstr if $u->err;
+
+        # map pollid -> userid
+        $dbh->do("INSERT INTO pollowner (journalid, pollid) VALUES (?, ?)", undef,
+                 $u->userid, $pollid);
+
+        # get questions
+        my $qsth = $dbh->prepare("SELECT pollid, pollqid, sortorder, type, opts, qtext FROM " .
+                                 "pollquestion WHERE pollid=?");
+        $qsth->execute($pollid);
+        die $qsth->errstr if $qsth->err;
+
+        # copy questions to clustered table
+        while (my @qrow = $qsth->fetchrow_array) {
+            my $pollqid = $qrow[1];
+
+            # insert question into pollquestion2
+            $u->do("INSERT INTO pollquestion2 (journalid, pollid, pollqid, sortorder, type, opts, qtext) " .
+                   "VALUES (?, ?, ?, ?, ?, ?, ?)", undef, $u->userid, @qrow);
+            die $u->errstr if $u->err;
+
+            # get items
+            my $isth = $dbh->prepare("SELECT pollid, pollqid, pollitid, sortorder, item FROM pollitem " .
+                                     "WHERE pollid=? AND pollqid=?");
+            $isth->execute($pollid, $pollqid);
+            die $isth->errstr if $isth->err;
+
+            # copy items
+            while (my @irow = $isth->fetchrow_array) {
+                # copy item to pollitem2
+                $u->do("INSERT INTO pollitem2 (journalid, pollid, pollqid, pollitid, sortorder, item) VALUES " .
+                       "(?, ?, ?, ?, ?, ?)", undef, $u->userid, @irow);
+                die $u->errstr if $u->err;
+            }
+        }
+
+        # copy submissions
+        my $ssth = $dbh->prepare("SELECT pollid, userid, datesubmit FROM pollsubmission WHERE pollid=?");
+        $ssth->execute($pollid);
+        die $ssth->errstr if $ssth->err;
+
+        while (my @srow = $ssth->fetchrow_array) {
+            # copy to pollsubmission2
+            $u->do("INSERT INTO pollsubmission2 (pollid, journalid, userid, datesubmit) " .
+                   "VALUES (?, ?, ?, ?)", undef, $u->userid, @srow);
+            die $u->errstr if $u->err;
+        }
+
+        # copy results
+        my $rsth = $dbh->prepare("SELECT pollid, pollqid, userid, value FROM pollresult WHERE pollid=?");
+        $rsth->execute($pollid);
+        die $rsth->errstr if $rsth->err;
+
+        while (my @rrow = $rsth->fetchrow_array) {
+            # copy to pollresult2
+            $u->do("INSERT INTO pollresult2 (journalid, pollid, pollqid, userid, value) " .
+                   "VALUES (?, ?, ?, ?, ?)", undef, $u->userid, @rrow);
+            die $u->errstr if $u->err;
+        }
+    }
+
+    return 0;
 }
 
 1;
