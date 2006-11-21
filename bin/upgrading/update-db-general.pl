@@ -2669,7 +2669,7 @@ CREATE TABLE pollitem2 (
   pollitid TINYINT UNSIGNED NOT NULL,
   sortorder TINYINT UNSIGNED NOT NULL DEFAULT '0',
   item VARCHAR(255) DEFAULT NULL,
-  PRIMARY KEY  (journlid,pollid,pollqid,pollitid))
+  PRIMARY KEY  (journalid,pollid,pollqid,pollitid))
 EOC
 
 register_tablecreate("pollquestion2", <<'EOC');
