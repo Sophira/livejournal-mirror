@@ -62,6 +62,8 @@ sub END { LJ::end_request(); }
                     "sms_msg", "sms_msgprop", "sms_msgack",
                     "sms_msgtext", "sms_msgerror",
                     "jabroster", "jablastseen",
+                    "poll2", "pollquestion2", "pollitem2",
+                    "pollresult2", "pollsubmission2",
                     );
 
 # keep track of what db locks we have out
