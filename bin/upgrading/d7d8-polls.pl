@@ -14,9 +14,11 @@ my $VERBOSE    = 0;      # print out extra info
 my $dbh = LJ::get_db_writer()
     or die "Could not connect to global master";
 
+print "\n--- Upgrading users to dversion 8 (clustered polls) ---\n\n";
+
 # get user count
 my $total = $dbh->selectrow_array("SELECT COUNT(*) FROM user WHERE dversion = 7");
-print "Total users at dversion 7: $total\n";
+print "\tTotal users at dversion 7: $total\n\n";
 
 my $migrated = 0;
 
@@ -30,7 +32,7 @@ foreach my $cid (@LJ::CLUSTERS) {
         die $sth->errstr if $sth->err;
 
         my $count = $sth->rows;
-        print "Got $count users on cluster $cid with dversion=7\n";
+        print "\tGot $count users on cluster $cid with dversion=7\n";
         last unless $count;
 
         while (my ($userid) = $sth->fetchrow_array) {
@@ -40,17 +42,17 @@ foreach my $cid (@LJ::CLUSTERS) {
             my $ok = $u->upgrade_to_dversion_8;
             my $ok = 1;
 
-            print "Migrated user " . $u->user . "... " . ($ok ? 'ok' : 'ERROR') . "\n"
+            print "\tMigrated user " . $u->user . "... " . ($ok ? 'ok' : 'ERROR') . "\n"
                 if $VERBOSE;
 
             $migrated++ if $ok;
         }
 
-        print "Migrated $migrated users so far\n\n";
+        print "\t - Migrated $migrated users so far\n\n";
 
         # make sure we don't end up running forever for whatever reason
         last if $migrated > $total;
     }
 }
 
-print "\nDone migrating $migrated of $total users to dversion 8\n";
+print "--- Done migrating $migrated of $total users to dversion 8 ---\n";
