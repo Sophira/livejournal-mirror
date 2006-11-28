@@ -58,7 +58,7 @@ sub create {
         return 0;
     }
 
-    my $u = LJ::load_user($journalid)
+    my $u = LJ::load_userid($journalid)
         or die "Invalid journalid $journalid";
 
     my $dbh = LJ::get_db_writer();
@@ -66,9 +66,9 @@ sub create {
 
     if ($u->polls_clustered) {
         # poll stored on user cluster
-        $sth = $u->prepare("INSERT INTO poll2 (journalid, pollid, posterid, whovote, whoview, name) " .
-                                "VALUES (?, ?, ?, ?, ?, ?)");
-        $sth->execute($journalid, $pollid, $posterid, $whovote, $whoview, $name);
+        $sth = $u->prepare("INSERT INTO poll2 (journalid, pollid, posterid, whovote, whoview, name, ditemid) " .
+                                "VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $sth->execute($journalid, $pollid, $posterid, $whovote, $whoview, $name, $ditemid);
 
         # made poll, insert global pollid->journalid mapping into global pollowner map
         $dbh->do("INSERT INTO pollowner (journalid, pollid) VALUES (?, ?)", undef,
@@ -488,7 +488,7 @@ sub save_to_db {
 # loads poll from db
 sub _load {
     my $self = shift;
-    return if $self->{_loaded};
+    return $self if $self->{_loaded};
 
     croak "_load called on LJ::Poll with no pollid"
         unless $self->pollid;
@@ -497,7 +497,9 @@ sub _load {
 
     my $journalid = $dbr->selectrow_array("SELECT journalid FROM pollowner WHERE pollid=?", undef, $self->pollid);
     die $dbr->errstr if $dbr->err;
-    my $u = LJ::load_userid($journalid) or die "Invalid journalid $journalid";
+
+    my $u = LJ::load_userid($journalid)
+        or die "Invalid journalid $journalid";
 
     my $row;
 
@@ -506,17 +508,21 @@ sub _load {
         $row = $u->selectrow_hashref("SELECT pollid, journalid, ditemid, " .
                                      "posterid, whovote, whoview, name " .
                                      "FROM poll2 WHERE pollid=?", undef, $self->pollid);
+        die $u->errstr if $u->err;
     } else {
         # unclustered poll
         $row = $dbr->selectrow_hashref("SELECT pollid, itemid, journalid, " .
                                        "posterid, whovote, whoview, name " .
                                        "FROM poll WHERE pollid=?", undef, $self->pollid);
+        die $dbr->errstr if $dbr->err;
     }
 
     return undef unless $row;
 
     $self->absorb_row($row);
     $self->{_loaded} = 1;
+
+    return $self;
 }
 
 sub absorb_row {
@@ -584,7 +590,7 @@ sub is_clustered {
 sub valid {
     my $self = shift;
     return 0 unless $self->pollid;
-    return $self->_load ? 1 : 0;
+    return eval { $self->_load } ? 1 : 0;
 }
 
 # get a question by pollqid
@@ -1077,7 +1083,9 @@ sub expand_entry {
     my ($class, $entryref) = @_;
 
     my $expand = sub {
-        my $pollid = shift;
+        my $pollid = (shift) + 0;
+
+        return "[Error: no poll ID]" unless $pollid;
 
         my $poll = LJ::Poll->new($pollid);
         return "[Error: Invalid poll ID $pollid]" unless $poll && $poll->valid;
@@ -1143,7 +1151,7 @@ sub process_submission {
             }
         } else {
             if ($poll->is_clustered) {
-                $dbh->do("DELETE FROM pollresult2 WHERE journalid=? AND pollid=? AND pollqid=? AND userid=?",
+                $poll->journal->do("DELETE FROM pollresult2 WHERE journalid=? AND pollid=? AND pollqid=? AND userid=?",
                          undef, $poll->journalid, $pollid, $qid, $remote->userid);
             } else {
                 $dbh->do("DELETE FROM pollresult WHERE pollid=? AND pollqid=? AND userid=?",
