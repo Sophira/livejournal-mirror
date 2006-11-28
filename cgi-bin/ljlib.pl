@@ -2673,7 +2673,7 @@ sub alloc_global_counter
 
     # $dom can come as a direct argument or as a string to be mapped via hook
     my $dom_unmod = $dom;
-    unless ($dom =~ /^[SPCEAO]$/) {
+    unless ($dom =~ /^[SPCEAOL]$/) {
         $dom = LJ::run_hook('map_global_counter_domain', $dom);
     }
     return LJ::errobj("InvalidParameters", params => { dom => $dom_unmod })->cond_throw
@@ -2708,8 +2708,9 @@ sub alloc_global_counter
         $newmax = $dbh->selectrow_array("SELECT MAX(schoolid) FROM schools");
     } elsif ($dom eq "L") {
         # pick maximum id from poll and pollowner
-        my ($poll, $pollowner) = $dbh->selectrow_array("SELECT MAX(p.pollid),MAX(po.pollid) FROM poll p, pollowner po");
-        $newmax = $poll > $pollowner ? $poll : $pollowner;
+        my $max_poll      = $dbh->selectrow_array("SELECT MAX(pollid) FROM poll");
+        my $max_pollowner = $dbh->selectrow_array("SELECT MAX(pollid) FROM pollowner");
+        $newmax = $max_poll > $max_pollowner ? $max_poll : $max_pollowner;
     } else {
         $newmax = LJ::run_hook('global_counter_init_value', $dom);
         die "No alloc_global_counter initalizer for domain '$dom'"
