@@ -1021,6 +1021,7 @@ sub postevent
                               journalid => $ownerid,
                               posterid  => $posterid,
                               ditemid   => $ditemid,
+                              error     => \$error,
                               );
 
             my $pollid = $poll->pollid;
