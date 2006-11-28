@@ -1219,14 +1219,14 @@ sub make_polls_clustered {
         }
 
         # copy submissions
-        my $ssth = $dbh->prepare("SELECT pollid, userid, datesubmit FROM pollsubmission WHERE pollid=?");
+        my $ssth = $dbh->prepare("SELECT userid, datesubmit FROM pollsubmission WHERE pollid=?");
         $ssth->execute($pollid);
         die $ssth->errstr if $ssth->err;
 
         while (my @srow = $ssth->fetchrow_array) {
             # copy to pollsubmission2
             $u->do("INSERT INTO pollsubmission2 (pollid, journalid, userid, datesubmit) " .
-                   "VALUES (?, ?, ?, ?)", undef, $u->userid, @srow);
+                   "VALUES (?, ?, ?, ?)", undef, $pollid, $u->userid, @srow);
             die $u->errstr if $u->err;
         }
 
@@ -1243,7 +1243,7 @@ sub make_polls_clustered {
         }
     }
 
-    return 0;
+    return 1;
 }
 
 1;
