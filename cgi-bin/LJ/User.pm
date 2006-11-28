@@ -2519,6 +2519,8 @@ sub upgrade_to_dversion_8 {
     my $ok = LJ::Poll->make_polls_clustered($u);
 
     LJ::update_user($u, { 'dversion' => 8 }) if $ok;
+
+    return $ok;
 }
 
 package LJ;
