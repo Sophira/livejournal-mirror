@@ -702,57 +702,10 @@ sub render {
         my $q = $self->question($qid)
             or return "<b>[" . LJ::Lang::ml('poll.error.questionnotfound') . "]</b>";
 
-        my $text = $q->text;
+        my $text = $self->text;
         LJ::Poll->clean_poll(\$text);
         $ret .= $text;
-        $ret .= "<p>";
-
-        my $LIMIT = 2000;
-
-        if ($self->is_clustered) {
-            $sth = $self->journal->prepare("SELECT pr.value, ps.datesubmit, pr.userid ".
-                                           "FROM pollresult2 pr, pollsubmission2 ps " .
-                                           "WHERE pr.pollid=? AND pollqid=? " .
-                                           "AND ps.pollid=pr.pollid LIMIT $LIMIT");
-        } else {
-            $sth = $dbr->prepare("SELECT pr.value, ps.datesubmit, pr.userid ".
-                                 "FROM pollresult pr, pollsubmission ps " .
-                                 "WHERE pr.pollid=? AND pollqid=? " .
-                                 "AND ps.pollid=pr.pollid LIMIT $LIMIT");
-        }
-        $sth->execute($pollid, $qid);
-        die $sth->errstr if $sth->err;
-
-        my @res;
-        push @res, $_ while $_ = $sth->fetchrow_hashref;
-        @res = sort { $a->{datesubmit} cmp $b->{datesubmit} } @res;
-
-        foreach my $res (@res) {
-            my ($userid, $value) = ($res->{userid}, $res->{value}, $res->{pollqid});
-            my @items = $q->items;
-
-            my %it;
-            $it{$_->{pollitid}} = $_->{item} foreach @items;
-
-            my $u = LJ::load_userid($userid) or die "Invalid userid $userid";
-
-            ## some question types need translation; type 'text' doesn't.
-            if ($q->type eq "radio" || $q->type eq "drop") {
-                $value = $it{$value};
-            } elsif ($q->type eq "check") {
-                $value = join(", ", map { $it{$_} } split(/,/, $value));
-            }
-
-            LJ::Poll->clean_poll(\$value);
-            $ret .= "<p>" . $u->ljuser_display . " -- $value</p>\n";
-        }
-
-        # temporary
-        if (@res == $LIMIT) {
-            $ret .= "<p>[" . LJ::Lang::ml('poll.error.truncated') . "]</p>";
-        }
-
-        return $ret;
+        $ret .= '<div>' . $q->answers_as_html . '</div>';
     }
 
     # Users cannot vote unless they are logged in
@@ -844,7 +797,8 @@ sub render {
             my $posterid = $self->posterid;
             $ret .= qq {
                 <a href='$LJ::SITEROOT/poll/?id=$pollid&amp;qid=$qid&amp;mode=ans'
-                    class='LJPollAnswerLink' lj_pollid='$pollid' lj_qid='$qid' lj_posterid='$posterid'>
+                    class='LJ_PollAnswerLink' lj_pollid='$pollid' lj_qid='$qid' lj_posterid='$posterid'
+                    id="LJ_PollAnswerLink_${pollid}_$qid">
                 } . LJ::Lang::ml('poll.viewanswers') . "</a><br />";
 
             ### but, if this is a non-text item, and we're showing results, need to load the answers:
@@ -992,7 +946,10 @@ sub render {
     }
 
     if ($do_form) {
-        $ret .= LJ::html_submit('poll-submit', LJ::Lang::ml('poll.submit')) . "</form>\n";;
+        $ret .= LJ::html_submit(
+                                'poll-submit',
+                                LJ::Lang::ml('poll.submit'),
+                                {class => 'LJ_PollSubmit'}) . "</form>\n";;
     }
 
     return $ret;

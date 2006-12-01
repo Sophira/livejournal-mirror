@@ -200,4 +200,58 @@ sub qtext {
     return $self->{qtext};
 }
 
+sub answers_as_html {
+    my $self = shift;
+
+    my $ret = '';;
+    my $LIMIT = 2000;
+    my $sth;
+
+    if ($self->is_clustered) {
+        $sth = $self->poll->journal->prepare("SELECT pr.value, ps.datesubmit, pr.userid ".
+                                             "FROM pollresult2 pr, pollsubmission2 ps " .
+                                             "WHERE pr.pollid=? AND pollqid=? " .
+                                             "AND ps.pollid=pr.pollid LIMIT $LIMIT");
+    } else {
+        my $dbr = LJ::get_db_reader();
+        $sth = $dbr->prepare("SELECT pr.value, ps.datesubmit, pr.userid ".
+                             "FROM pollresult pr, pollsubmission ps " .
+                             "WHERE pr.pollid=? AND pollqid=? " .
+                             "AND ps.pollid=pr.pollid LIMIT $LIMIT");
+    }
+    $sth->execute($self->pollid, $self->pollqid);
+    die $sth->errstr if $sth->err;
+
+    my @res;
+    push @res, $_ while $_ = $sth->fetchrow_hashref;
+    @res = sort { $a->{datesubmit} cmp $b->{datesubmit} } @res;
+
+    foreach my $res (@res) {
+        my ($userid, $value) = ($res->{userid}, $res->{value}, $res->{pollqid});
+        my @items = $self->items;
+
+        my %it;
+        $it{$_->{pollitid}} = $_->{item} foreach @items;
+
+        my $u = LJ::load_userid($userid) or die "Invalid userid $userid";
+
+        ## some question types need translation; type 'text' doesn't.
+        if ($self->type eq "radio" || $self->type eq "drop") {
+            $value = $it{$value};
+        } elsif ($self->type eq "check") {
+            $value = join(", ", map { $it{$_} } split(/,/, $value));
+        }
+
+        LJ::Poll->clean_poll(\$value);
+        $ret .= "<div>" . $u->ljuser_display . " -- $value</div>\n";
+    }
+
+    # temporary
+    if (@res == $LIMIT) {
+        $ret .= "<div>[" . LJ::Lang::ml('poll.error.truncated') . "]</div>";
+    }
+
+    return $ret;
+}
+
 1;
