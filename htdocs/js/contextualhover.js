@@ -431,7 +431,7 @@ ContextualPopup.changeRelation = function (info, ctxPopupId, action, evt) {
     postData.auth_token = authtoken;
 
     // needed on journal subdomains
-    var url = LJVAR.currentJournal ? "/" + LJVAR.currentJournal + "/__rpc_changerelation" : "/__rpc_changerelation";
+    var url = LiveJournal.getAjaxUrl("changerelation");
 
     // callback from changing relation request
     var changedRelation = function (data) {
@@ -534,7 +534,7 @@ ContextualPopup.getInfo = function (target) {
     });
 
     // needed on journal subdomains
-    var url = LJVAR.currentJournal ? "/" + LJVAR.currentJournal + "/__rpc_ctxpopup" : "/__rpc_ctxpopup";
+    var url = LiveJournal.getAjaxUrl("ctxpopup");
 
     // got data callback
     var gotInfo = function (data) {
