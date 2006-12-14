@@ -66,23 +66,23 @@ sub create {
 
     if ($u->polls_clustered) {
         # poll stored on user cluster
-        $sth = $u->prepare("INSERT INTO poll2 (journalid, pollid, posterid, whovote, whoview, name, ditemid) " .
-                                "VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $sth->execute($journalid, $pollid, $posterid, $whovote, $whoview, $name, $ditemid);
+        $u->do("INSERT INTO poll2 (journalid, pollid, posterid, whovote, whoview, name, ditemid) " .
+               "VALUES (?, ?, ?, ?, ?, ?, ?)", undef,
+               $journalid, $pollid, $posterid, $whovote, $whoview, $name, $ditemid);
+        die $u->errstr if $u->err;
 
         # made poll, insert global pollid->journalid mapping into global pollowner map
         $dbh->do("INSERT INTO pollowner (journalid, pollid) VALUES (?, ?)", undef,
                  $journalid, $pollid);
 
-        die $dbh->errstr if $dbh->err;
+        die $u->errstr if $u->err;
     } else {
         # poll stored on global
-        $sth = $dbh->prepare("INSERT INTO poll (pollid, itemid, journalid, posterid, whovote, whoview, name) " .
-                                "VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $sth->execute($pollid, $ditemid, $journalid, $posterid, $whovote, $whoview, $name);
+        $dbh->do("INSERT INTO poll (pollid, itemid, journalid, posterid, whovote, whoview, name) " .
+                 "VALUES (?, ?, ?, ?, ?, ?, ?)", undef,
+                 $pollid, $ditemid, $journalid, $posterid, $whovote, $whoview, $name);
+        die $dbh->errstr if $dbh->err;
     }
-
-    die $sth->errstr if $sth->err;
 
     ## start inserting poll questions
     my $qnum = 0;
@@ -91,14 +91,14 @@ sub create {
         $qnum++;
 
         if ($u->polls_clustered) {
-            $sth = $u->prepare("INSERT INTO pollquestion2 (journalid, pollid, pollqid, sortorder, type, opts, qtext) " .
-                                  "VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $sth->execute($journalid, $pollid, $qnum, $qnum, $q->{'type'}, $q->{'opts'}, $q->{'qtext'});
+            $u->prepare("INSERT INTO pollquestion2 (journalid, pollid, pollqid, sortorder, type, opts, qtext) " .
+                        "VALUES (?, ?, ?, ?, ?, ?, ?)", undef,
+                        $journalid, $pollid, $qnum, $qnum, $q->{'type'}, $q->{'opts'}, $q->{'qtext'});
             die $u->errstr if $u->err;
         } else {
-            $sth = $dbh->prepare("INSERT INTO pollquestion (pollid, pollqid, sortorder, type, opts, qtext) " .
-                                    "VALUES (?, ?, ?, ?, ?, ?)");
-            $sth->execute($pollid, $qnum, $qnum, $q->{'type'}, $q->{'opts'}, $q->{'qtext'});
+            $dbh->prepare("INSERT INTO pollquestion (pollid, pollqid, sortorder, type, opts, qtext) " .
+                          "VALUES (?, ?, ?, ?, ?, ?)", undef,
+                          $pollid, $qnum, $qnum, $q->{'type'}, $q->{'opts'}, $q->{'qtext'});
             die $dbh->errstr if $dbh->err;
         }
 
