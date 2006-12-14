@@ -717,7 +717,7 @@ sub render {
 
     if ($do_form) {
         if ($self->is_clustered) {
-            $sth = $dbr->prepare("SELECT pollqid, value FROM pollresult2 WHERE pollid=? AND userid=?");
+            $sth = $self->journal->prepare("SELECT pollqid, value FROM pollresult2 WHERE pollid=? AND userid=?");
         } else {
             $sth = $dbr->prepare("SELECT pollqid, value FROM pollresult WHERE pollid=? AND userid=?");
         }
