@@ -49,13 +49,14 @@ sub _load {
     my $sth;
 
     if ($self->is_clustered) {
-        $sth = $self->poll->journal->prepare('SELECT * FROM pollquestion2 WHERE pollid=? AND pollqid=?');
+        $sth = $self->poll->journal->prepare('SELECT * FROM pollquestion2 WHERE pollid=? AND pollqid=? and journalid=?');
+        $sth->execute($self->pollid, $self->pollqid, $self->poll->journalid);
     } else {
         my $dbr = LJ::get_db_reader();
         my $sth = $dbr->prepare('SELECT * FROM pollquestion WHERE pollid=? AND pollqid=?');
+        $sth->execute($self->pollid, $self->pollqid);
     }
 
-    $sth->execute($self->pollid, $self->pollqid);
     $self->absorb_row($sth->fetchrow_hashref);
 }
 
@@ -135,8 +136,8 @@ sub items {
 
     if ($self->is_clustered) {
         $sth = $self->poll->journal->prepare('SELECT pollid, pollqid, pollitid, sortorder, item ' .
-                                             'FROM pollitem2 WHERE pollid=? AND pollqid=?');
-        $sth->execute($self->pollid, $self->pollqid);
+                                             'FROM pollitem2 WHERE pollid=? AND pollqid=? AND journalid=?');
+        $sth->execute($self->pollid, $self->pollqid, $self->poll->journalid);
     } else {
         my $dbr = LJ::get_db_reader();
         $sth = $dbr->prepare('SELECT pollid, pollqid, pollitid, sortorder, item ' .

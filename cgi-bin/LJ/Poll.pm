@@ -679,7 +679,7 @@ sub render {
         my $time;
         if ($self->is_clustered) {
             $time = $self->journal->selectrow_array('SELECT datesubmit FROM pollsubmission2 '.
-                                                    'WHERE pollid=? AND userid=?', undef, $pollid, $remote->userid);
+                                                    'WHERE pollid=? AND userid=? AND journalid=?', undef, $pollid, $remote->userid, $self->journalid);
         } else {
             $time = $dbr->selectrow_array('SELECT datesubmit FROM pollsubmission '.
                                           'WHERE pollid=? AND userid=?', undef, $pollid, $remote->userid);
@@ -717,11 +717,13 @@ sub render {
 
     if ($do_form) {
         if ($self->is_clustered) {
-            $sth = $self->journal->prepare("SELECT pollqid, value FROM pollresult2 WHERE pollid=? AND userid=?");
+            $sth = $self->journal->prepare("SELECT pollqid, value FROM pollresult2 WHERE pollid=? AND userid=? AND journalid=?");
+            $sth->execute($pollid, $remote->{'userid'}, $self->journalid);
         } else {
             $sth = $dbr->prepare("SELECT pollqid, value FROM pollresult WHERE pollid=? AND userid=?");
+            $sth->execute($pollid, $remote->{'userid'});
         }
-        $sth->execute($pollid, $remote->{'userid'});
+
         while (my ($qid, $value) = $sth->fetchrow_array) {
             $preval{$qid} = $value;
         }
@@ -753,12 +755,14 @@ sub render {
         if ($q->type eq "scale") {
             # get stats
             if ($self->is_clustered) {
-                $sth = $self->journal->prepare("SELECT COUNT(*), AVG(value), STDDEV(value) FROM pollresult2 WHERE pollid=? AND pollqid=?");
+                $sth = $self->journal->prepare("SELECT COUNT(*), AVG(value), STDDEV(value) FROM pollresult2 " .
+                                               "WHERE pollid=? AND pollqid=? AND journalid=?");
+                $sth->execute($pollid, $qid, $self->journalid);
             } else {
                 $sth = $dbr->prepare("SELECT COUNT(*), AVG(value), STDDEV(value) FROM pollresult WHERE pollid=? AND pollqid=?");
+                $sth->execute($pollid, $qid);
             }
 
-            $sth->execute($pollid, $qid);
             ($valcount, $valmean, $valstddev) = $sth->fetchrow_array;
 
             # find median:
@@ -773,14 +777,15 @@ sub render {
                 my $skip = $mid-1;
 
                 if ($self->is_clustered) {
-                    $sth = $self->journal->prepare("SELECT value FROM pollresult2 WHERE pollid=? AND pollqid=? " .
+                    $sth = $self->journal->prepare("SELECT value FROM pollresult2 WHERE pollid=? AND pollqid=? AND journalid=? " .
                                          "ORDER BY value+0 LIMIT $skip,$fetch");
+                    $sth->execute($pollid, $qid, $self->journalid);
                 } else {
                     $sth = $dbr->prepare("SELECT value FROM pollresult WHERE pollid=? AND pollqid=? " .
                                          "ORDER BY value+0 LIMIT $skip,$fetch");
+                    $sth->execute($pollid, $qid);
                 }
 
-                $sth->execute($pollid, $qid);
                 while (my ($v) = $sth->fetchrow_array) {
                     $valmedian += $v;
                 }
