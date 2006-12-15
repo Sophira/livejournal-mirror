@@ -1138,6 +1138,8 @@ sub process_submission {
 sub make_polls_clustered {
     my ($class, $u) = @_;
 
+    return 1 if $u->dversion >= 8;
+
     my $dbh = LJ::get_db_reader()
         or die "Could not get db reader";
 
