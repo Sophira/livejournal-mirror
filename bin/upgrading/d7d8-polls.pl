@@ -8,7 +8,7 @@ use lib "$ENV{'LJHOME'}/cgi-bin/";
 require "ljlib.pl";
 use LJ::Poll;
 
-my $BLOCK_SIZE = 10_000; # get users in blocks of 10,000
+my $BLOCK_SIZE = 5_000; # get users in blocks of 10,000
 my $VERBOSE    = 0;      # print out extra info
 
 my $dbh = LJ::get_db_writer()
@@ -39,8 +39,17 @@ foreach my $cid (@LJ::CLUSTERS) {
             my $u = LJ::load_userid($userid)
                 or die "Invalid userid: $userid";
 
-            my $ok = $u->upgrade_to_dversion_8;
-            my $ok = 1;
+            # lock while upgrading
+            my $lock = LJ::locker()->trylock("d7d8-$userid");
+            unless ($lock) {
+                print STDERR "Could not get a lock for user " . $u->user . ".\n";
+                next;
+            }
+
+            my $ok = eval { $u->upgrade_to_dversion_8 };
+            $lock->release;
+
+            die $@ if $@;
 
             print "\tMigrated user " . $u->user . "... " . ($ok ? 'ok' : 'ERROR') . "\n"
                 if $VERBOSE;
