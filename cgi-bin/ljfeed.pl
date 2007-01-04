@@ -4,6 +4,15 @@ package LJ::Feed;
 use strict;
 use LJ::Entry;
 
+BEGIN {
+    $LJ::OPTMOD_XMLATOM = eval q{
+        use XML::Atom::Feed;
+        use XML::Atom::Entry;
+        use XML::Atom::Link;
+        XML::Atom->VERSION < 0.09 ? 0 : 1;
+    };
+};
+
 my %feedtypes = (
     rss  => \&create_view_rss,
     atom => \&create_view_atom,
@@ -743,7 +752,7 @@ sub create_view_yadis {
     $println->('<xrds:XRDS xmlns:xrds="xri://$xrds" xmlns="xri://$xrd*($v*2.0)"><XRD>');
 
     # Only people (not communities, etc) can be OpenID authenticated
-    if ($person && LJ::OpenID->server_enabled) {
+    if ($person && LJ::OpenID::server_enabled()) {
         $println->('    <Service>');
         $println->('        <Type>http://openid.net/signon/1.0</Type>');
         $println->('        <URI>'.LJ::ehtml($LJ::OPENID_SERVER).'</URI>');
