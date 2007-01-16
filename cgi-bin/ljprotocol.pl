@@ -1960,10 +1960,6 @@ sub editfriends
                 push @jobs, LJ::Event::Befriended->new(LJ::load_userid($friendid), LJ::load_userid($userid))->fire_job
                     if !$LJ::DISABLED{esn};
 
-                push @jobs, TheSchwartz::Job->new(
-                                                  funcname => "LJ::Worker::FriendChange",
-                                                  arg      => [$userid, 'add', $friendid],
-                                                  );
                 $sclient->insert_jobs(@jobs);
             }
 
