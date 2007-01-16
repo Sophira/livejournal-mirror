@@ -4729,25 +4729,10 @@ sub add_friend
     my $res = LJ::_friends_do
         ($userid, "INSERT IGNORE INTO friends (userid, friendid, fgcolor, bgcolor, groupmask) VALUES $bind", @vals);
 
-    my $sclient = LJ::theschwartz();
-
     # delete friend-of memcache keys for anyone who was added
-    foreach my $fid (@add_ids) {
-        LJ::MemCache::delete([ $userid, "frgmask:$userid:$fid" ]);
-        LJ::memcache_kill($fid, 'friendofs');
-
-        if ($sclient) {
-            my @jobs;
-            push @jobs, LJ::Event::Befriended->new(LJ::load_userid($fid), LJ::load_userid($userid))->fire_job
-                unless $LJ::DISABLED{esn};
-
-            push @jobs, TheSchwartz::Job->new(
-                                              funcname => "LJ::Worker::FriendChange",
-                                              arg      => [$fid, 'add', $userid],
-                                              );
-            $sclient->insert_jobs(@jobs);
-        }
-
+    foreach (@add_ids) {
+        LJ::MemCache::delete([ $userid, "frgmask:$userid:$_" ]);
+        LJ::memcache_kill($_, 'friendofs');
     }
 
     return $res;
@@ -4772,21 +4757,10 @@ sub remove_friend
     my $res = LJ::_friends_do($userid, "DELETE FROM friends WHERE userid=? AND friendid IN ($bind)",
                               $userid, @del_ids);
 
-    my $sclient = LJ::theschwartz();
-    my $u = LJ::load_userid($userid);
-
     # delete friend-of memcache keys for anyone who was removed
     foreach my $fid (@del_ids) {
         LJ::MemCache::delete([ $userid, "frgmask:$userid:$fid" ]);
         LJ::memcache_kill($fid, 'friendofs');
-
-        if ($sclient) {
-            my $job = TheSchwartz::Job->new(
-                                            funcname => "LJ::Worker::FriendChange",
-                                            arg      => [$fid, 'del', $userid],
-                                            );
-            $sclient->insert_jobs($job);
-        }
     }
 
     return $res;
