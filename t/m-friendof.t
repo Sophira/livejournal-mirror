@@ -1,7 +1,7 @@
 # -*-perl-*-
 
 use strict;
-use Test::More 'no_plan';
+use Test::More tests => 144;
 use lib "$ENV{LJHOME}/cgi-bin";
 require 'ljlib.pl';
 use FindBin qw($Bin);
@@ -18,7 +18,7 @@ our $SLOPPY;
 
 {
     local @STATUSVIS = qw(V);
-    local $PREFIX = "No Whammy's";
+    local $PREFIX = "Only Visibles";
     local $MUTUALS_SEPARATE = 0;
     local $USER_COUNT = 25;
     local $COMM_COUNT = 10;
@@ -129,7 +129,6 @@ sub run_all {
             LJ::add_friend($u, $c) or die;
             LJ::add_friend($c, $u) or die;
             push @expected_friends, $cid;
-            push @expected_mutual, $cid;
             push @expected_memberofs, $cid;
             $expected_readers++;
         } elsif ($rand < .67) {
