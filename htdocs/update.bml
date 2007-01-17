@@ -464,7 +464,6 @@ head<=
                     js/httpreq.js
                     js/livejournal.js
                     js/entry.js
-                    js/poll.js
                     ));
 
     # draft autosave and restore
@@ -492,9 +491,6 @@ head<=
     }
 
     my $pageload = $LJ::SPELLER && $POST{'action:spellcheck'} ? "pageload(0);" : "pageload(1);";
-
-    # JS vars for the RTE
-    $ret .= LJ::rte_js_vars($remote);
 
     # Turning off BML parsing for the rest of this code block
     # The draft might contain BML like syntax and cause problems
