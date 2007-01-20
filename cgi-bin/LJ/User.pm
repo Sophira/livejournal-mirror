@@ -2650,12 +2650,6 @@ sub friends {
     return $users;
 }
 
-sub friend_uids {
-    my $u = shift;
-    my $friends = LJ::get_friends($u);
-    return keys %$friends;
-}
-
 sub set_password {
     my ($u, $password) = @_;
     return LJ::set_password($u->id, $password);
@@ -2670,23 +2664,64 @@ sub set_email {
 sub friendof_uids {
     my ($u, %args) = @_;
     my $limit = int(delete $args{limit}) || 50000;
-    Carp::croak("unknown options") if %args;
+    Carp::croak("unknown option") if %args;
 
-    # FIXME: this memkey isn't yet document in doc/raw/memcache-keys.txt
-    # FIXME: nothing invalidates this memcache key yet.
-    my $memkey = [$u->id, "friendofs2:" . $u->id];
+    return $u->_friend_friendof_uids(limit => $limit, mode => "friendofs");
+}
+
+# returns array of friend uids.  by default, limited at 50,000 items.
+sub friend_uids {
+    my ($u, %args) = @_;
+    my $limit = int(delete $args{limit}) || 50000;
+    Carp::croak("unknown option") if %args;
+
+    return $u->_friend_friendof_uids(limit => $limit, mode => "friends");
+}
+
+
+# helper method since the logic for both friends and friendofs is so similar
+sub _friend_friendof_uids {
+    my ($u, %args) = @_;
+    my $limit = int(delete $args{limit}) || 50000;
+    my $mode = delete $args{mode};
+    Carp::croak("unknown option") if %args;
+
+    my $sql;
+    my $memkey;
+
+    if ($mode eq "friends") {
+        $sql = "SELECT friendid FROM friends WHERE userid=? LIMIT $limit";
+        $memkey = [$u->id, "friends2:" . $u->id];
+    } elsif ($mode eq "friendofs") {
+        $sql = "SELECT userid FROM friends WHERE friendid=? LIMIT $limit";
+        $memkey = [$u->id, "friendofs2:" . $u->id];
+    } else {
+        Carp::croak("mode must either be 'friends' or 'friendofs'");
+    }
+
     if (my $pack = LJ::MemCache::get($memkey)) {
         my ($slimit, @uids) = unpack("N*", $pack);
-        # return only if stored limit is equal/greater
-        return @uids if $slimit >= $limit;
+        # value in memcache is good if stored limit (from last time)
+        # is >= the limit currently being requested.  we just made
+        # have to truncate it to match the requested limit
+        if ($slimit >= $limit) {
+            @uids = @uids[0..$limit-1] if @uids > $limit;
+            return @uids;
+        }
+
+        # value in memcache is also good if number of items is less
+        # than the stored limit... because then we know it's the full
+        # set that got stored, not a truncated version.
+        return @uids if @uids < $slimit;
     }
 
     my $dbh = LJ::get_db_writer();
-    my $uids = $dbh->selectcol_arrayref("SELECT userid FROM friends WHERE friendid=? LIMIT $limit",
-                                        undef, $u->id);
+    my $uids = $dbh->selectcol_arrayref($sql, undef, $u->id);
     LJ::MemCache::add($memkey, pack("N*", $limit, @$uids), 3600) if $uids;
+
     return @$uids;
 }
+
 
 sub fb_push {
     my $u = shift;
@@ -4730,9 +4765,10 @@ sub add_friend
         ($userid, "INSERT IGNORE INTO friends (userid, friendid, fgcolor, bgcolor, groupmask) VALUES $bind", @vals);
 
     # delete friend-of memcache keys for anyone who was added
-    foreach (@add_ids) {
+    foreach my $fid (@add_ids) {
         LJ::MemCache::delete([ $userid, "frgmask:$userid:$_" ]);
-        LJ::memcache_kill($_, 'friendofs');
+        LJ::memcache_kill($fid, 'friendofs');
+        LJ::memcache_kill($fid, 'friendofs2');
     }
 
     return $res;
@@ -4761,6 +4797,7 @@ sub remove_friend
     foreach my $fid (@del_ids) {
         LJ::MemCache::delete([ $userid, "frgmask:$userid:$fid" ]);
         LJ::memcache_kill($fid, 'friendofs');
+        LJ::memcache_kill($fid, 'friendofs2');
     }
 
     return $res;
@@ -4862,6 +4899,7 @@ sub get_friends {
             $idx++;
         }
     }
+    LJ::memcache_kill($userid, 'friends');
 
     LJ::MemCache::add($memkey, $mempack);
 
@@ -4888,6 +4926,7 @@ sub get_friendofs {
         my $memfriendofs = LJ::MemCache::get($memkey);
         return @$memfriendofs if $memfriendofs;
     }
+    LJ::memcache_kill($userid, 'friends2');
 
     # nothing from memcache, select all rows from the
     # database and insert those into memcache
