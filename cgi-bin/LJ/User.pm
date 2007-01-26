@@ -971,7 +971,7 @@ sub prop {
     # some props have accessors which do crazy things, if so they need
     # to be redirected from this method, which only loads raw values
     if ({ map { $_ => 1 }
-          qw(opt_showbday opt_showlocation opt_showmutualfriends
+          qw(opt_showbday opt_showlocation
              view_control_strip show_control_strip opt_ctxpopup opt_embedplaceholders
              esn_inbox_default_expand)
         }->{$prop})
@@ -1487,11 +1487,6 @@ sub emails_visible {
 sub email_status {
     my $u = shift;
     return $u->{status};
-}
-
-sub is_validated {
-    my $u = shift;
-    return $u->email_status eq "A";
 }
 
 sub share_contactinfo {
@@ -2267,18 +2262,11 @@ sub delete_and_purge_completely {
     # TODO: delete from user tables
     # TODO: delete from global tables
     my $dbh = LJ::get_db_writer();
+    $dbh->do("DELETE FROM user WHERE userid=?", undef, $u->{userid});
 
-    my @tables = qw(user useridmap reluser priv_map);
-    foreach my $table (@tables) {
-        $dbh->do("DELETE FROM $table WHERE userid=?", undef, $u->id);
+    if ($u->{journaltype} eq 'C') {
+        $dbh->do("DELETE FROM community WHERE userid=?", undef, $u->{userid});
     }
-
-    $dbh->do("DELETE FROM reluser WHERE targetid=?", undef, $u->id);
-
-    $dbh->do("DELETE FROM community WHERE userid=?", undef, $u->id)
-        if $u->is_community;
-    $dbh->do("DELETE FROM syndicated WHERE userid=?", undef, $u->id)
-        if $u->is_syndicated;
 
     return 1;
 }
@@ -2398,7 +2386,6 @@ sub check_ajax_auth_token {
 }
 
 # returns username
-*username = \&user;
 sub user {
     my $u = shift;
     return $u->{user};
@@ -2417,36 +2404,11 @@ sub display_username {
     return $u->{user};
 }
 
-# returns the user-specified name of a journal exactly as entered
-sub name_orig {
-    my $u = shift;
-    return $u->{name};
-}
-
-# returns the user-specified name of a journal in valid UTF-8
-sub name_raw {
-    my $u = shift;
-    LJ::text_out(\$u->{name});
-    return $u->{name};
-}
-
-# returns the user-specified name of a journal in valid UTF-8
-# and with HTML escaped
-sub name_html {
-    my $u = shift;
-    return LJ::ehtml($u->name_raw);
-}
-
 # userid
 *userid = \&id;
 sub id {
     my $u = shift;
     return $u->{userid};
-}
-
-sub clusterid {
-    my $u = shift;
-    return $u->{clusterid};
 }
 
 sub opt_ctxpopup {
@@ -2469,19 +2431,6 @@ sub opt_embedplaceholders {
         my $imagelinks = $u->prop('opt_imagelinks');
         return $imagelinks;
     }
-}
-
-sub opt_showmutualfriends {
-    my $u = shift;
-    return $u->raw_prop('opt_showmutualfriends') ? 1 : 0;
-}
-
-# only certain journaltypes can show mutual friends
-sub show_mutualfriends {
-    my $u = shift;
-
-    return 0 unless $u->journaltype =~ /[PSI]/;
-    return $u->opt_showmutualfriends ? 1 : 0;
 }
 
 # find what servers a user is logged in to, and send them an IM
@@ -4903,28 +4852,12 @@ sub add_friend
     my $res = LJ::_friends_do
         ($userid, "INSERT IGNORE INTO friends (userid, friendid, fgcolor, bgcolor, groupmask) VALUES $bind", @vals);
 
-    my $sclient = LJ::theschwartz();
-
     # delete friend-of memcache keys for anyone who was added
     foreach my $fid (@add_ids) {
-        LJ::MemCache::delete([ $userid, "frgmask:$userid:$fid" ]);
+        LJ::MemCache::delete([ $userid, "frgmask:$userid:$_" ]);
         LJ::memcache_kill($fid, 'friendofs');
         LJ::memcache_kill($fid, 'friendofs2');
-
-        if ($sclient) {
-            my @jobs;
-            push @jobs, LJ::Event::Befriended->new(LJ::load_userid($fid), LJ::load_userid($userid))->fire_job
-                unless $LJ::DISABLED{esn};
-
-            push @jobs, TheSchwartz::Job->new(
-                                              funcname => "LJ::Worker::FriendChange",
-                                              arg      => [$fid, 'add', $userid],
-                                              );
-            $sclient->insert_jobs(@jobs);
-        }
-
     }
-    LJ::memcache_kill($userid, 'friends');
 
     return $res;
 }
@@ -4948,24 +4881,12 @@ sub remove_friend
     my $res = LJ::_friends_do($userid, "DELETE FROM friends WHERE userid=? AND friendid IN ($bind)",
                               $userid, @del_ids);
 
-    my $sclient = LJ::theschwartz();
-    my $u = LJ::load_userid($userid);
-
     # delete friend-of memcache keys for anyone who was removed
     foreach my $fid (@del_ids) {
         LJ::MemCache::delete([ $userid, "frgmask:$userid:$fid" ]);
         LJ::memcache_kill($fid, 'friendofs');
         LJ::memcache_kill($fid, 'friendofs2');
-
-        if ($sclient) {
-            my $job = TheSchwartz::Job->new(
-                                            funcname => "LJ::Worker::FriendChange",
-                                            arg      => [$fid, 'del', $userid],
-                                            );
-            $sclient->insert_jobs($job);
-        }
     }
-    LJ::memcache_kill($userid, 'friends2');
 
     return $res;
 }
@@ -5066,6 +4987,7 @@ sub get_friends {
             $idx++;
         }
     }
+    LJ::memcache_kill($userid, 'friends');
 
     LJ::MemCache::add($memkey, $mempack);
 
@@ -5092,6 +5014,7 @@ sub get_friendofs {
         my $memfriendofs = LJ::MemCache::get($memkey);
         return @$memfriendofs if $memfriendofs;
     }
+    LJ::memcache_kill($userid, 'friends2');
 
     # nothing from memcache, select all rows from the
     # database and insert those into memcache
