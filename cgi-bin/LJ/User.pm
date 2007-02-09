@@ -5139,8 +5139,9 @@ sub add_friend
             push @jobs, TheSchwartz::Job->new(
                                               funcname => "LJ::Worker::FriendChange",
                                               arg      => [$fid, 'add', $userid],
-                                              );
-            $sclient->insert_jobs(@jobs);
+                                              ) unless $LJ::DISABLED{friendchange-schwartz};
+
+            $sclient->insert_jobs(@jobs) if @jobs;
         }
 
     }
@@ -5177,7 +5178,7 @@ sub remove_friend
         LJ::memcache_kill($fid, 'friendofs');
         LJ::memcache_kill($fid, 'friendofs2');
 
-        if ($sclient) {
+        if ($sclient && ! $LJ::DISABLED{'friendchange-schwartz'}) {
             my $job = TheSchwartz::Job->new(
                                             funcname => "LJ::Worker::FriendChange",
                                             arg      => [$fid, 'del', $userid],
