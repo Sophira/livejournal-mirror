@@ -3150,6 +3150,12 @@ sub info_for_js {
     return %ret;
 }
 
+# return if $target is banned from $u's journal
+sub is_banned {
+    my ($u, $target) = @_;
+    return LJ::is_banned($target->userid, $u->userid);
+}
+
 package LJ;
 
 use Carp;
@@ -5133,8 +5139,14 @@ sub add_friend
 
         if ($sclient) {
             my @jobs;
-            push @jobs, LJ::Event::Befriended->new(LJ::load_userid($fid), LJ::load_userid($userid))->fire_job
-                unless $LJ::DISABLED{esn};
+
+            # only fire event if the friender is a person and not banned and visible
+            my $friender = LJ::load_userid($userid);
+            my $friendee = LJ::load_userid($fid);
+            if ($friender->is_person && $friender->is_visible && ! $friendee->is_banned($friender)) {
+                push @jobs, LJ::Event::Befriended->new($friendee, $friender)->fire_job
+                    unless $LJ::DISABLED{esn};
+            }
 
             push @jobs, TheSchwartz::Job->new(
                                               funcname => "LJ::Worker::FriendChange",
