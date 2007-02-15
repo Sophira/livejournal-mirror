@@ -206,6 +206,8 @@ body<=
             my $subject = $POST{'subject'} || $res{'events_1_subject'};
             my $event   = $POST{'event'}   || $res{'events_1_event'};
 
+            my $journal = $usejournal_u || $u;
+
             my $curmask = $res{'events_1_allowmask'};
             my $cursec  = $res{'events_1_security'} || $POST{'security'};
             if ($cursec eq 'usemask') {

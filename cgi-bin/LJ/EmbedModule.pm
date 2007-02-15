@@ -2,6 +2,9 @@
 package LJ::EmbedModule;
 use strict;
 use Carp qw (croak);
+use Class::Autouse qw (
+                       LJ::Auth
+                       );
 
 # can optionally pass in an id of a module to change its contents
 # returns module id
@@ -23,6 +26,10 @@ sub save_module {
                  "(?, ?, ?)", undef, $journal->userid, $id, $contents);
     die $journal->errstr if $journal->err;
 
+    # save in memcache
+    my $memkey = $class->memkey($journal->userid, $id);
+    LJ::MemCache::set($memkey, $contents);
+
     return $id;
 }
 
@@ -36,23 +43,27 @@ sub expand_entry {
         return $class->module_iframe_tag($journal, $moduleid);
     };
 
-    $$entryref =~ s!<lj-embed\s+id="(\d*)"\s*/>!$expand->($1)!egi;
+    $class->parse_module_embed($journal, $entryref, expand => 1);
 }
 
 # take a scalarref to a post, parses any lj-embed tags, saves the contents
 # of the tags and replaces them with a module tag with the id.
 sub parse_module_embed {
-    my ($class, $journal, $postref) = @_;
+    my ($class, $journal, $postref, %opts) = @_;
 
     return unless $postref && $$postref;
+
+    # do we want to replace with the lj-embed tags or iframes?
+    my $expand = $opts{expand};
+
+    # if this is editing mode, then we want to expand embed tags for editing
+    my $edit = $opts{edit};
 
     my $p = HTML::TokeParser->new($postref);
     my $newdata = '';
     my $embedopen = 0;
     my $embedcontents = '';
     my $embedid;
-
-    warn "parsing embed modules!\n";
 
   TOKEN:
     while (my $token = $p->get_token) {
@@ -63,11 +74,21 @@ sub parse_module_embed {
         if ($type eq "S") {
             # start tag
             if (lc $tag eq "lj-embed" && ! $LJ::DISABLED{embed_module}) {
-                # XHTML style open/close tags done as a singleton shouldn't actually
-                # start a capture loop, because there won't be a close tag.
                 if ($attr->{'/'}) {
-                    # this is an already-existing embed tag
-                    $newdata .= qq(<lj-embed id="$attr->{id}" />);
+                    # this is an already-existing lj-embed tag.
+                    if ($expand) {
+                        if ($attr->{id}+0) {
+                            $newdata .= $class->module_iframe_tag($journal, $attr->{id});
+                        } else {
+                            $newdata .= "[Error: lj-embed tag with no id]";
+                        }
+                    } elsif ($edit) {
+                        my $content = $class->module_content(moduleid  => $attr->{id},
+                                                             journalid => $journal->id);
+                        $newdata .= qq{<lj-embed id="$attr->{id}">\n$content\n</lj-embed>};
+                    } else {
+                        $newdata .= qq(<lj-embed id="$attr->{id}" />);
+                    }
                     next TOKEN;
                 } else {
                     $embedopen = 1;
@@ -77,12 +98,25 @@ sub parse_module_embed {
 
                 next TOKEN;
             } else {
-                # ok, whatever
-                $newdata .= "<$tag";
+                my $tagcontent = "<$tag";
+                my $selfclose;
                 foreach (keys %$attr) {
-                    $newdata .= " $_=\"$attr->{$_}\"";
+                    if ($_ eq '/') {
+                        $selfclose = 1;
+                        next;
+                    }
+
+                    $tagcontent .= " $_=\"$attr->{$_}\"";
                 }
-                $newdata .= ">";
+                $tagcontent .= $selfclose ? "/>" : ">";
+
+                if ($embedopen) {
+                    # capture this in the embed contents cuz we're in an lj-embed tag
+                    $embedcontents .= $tagcontent;
+                } else {
+                    # this is outside an lj-embed tag, ignore it
+                    $newdata .= $tagcontent;
+                }
             }
         } elsif ($type eq "T" || $type eq "D") {
             # tag contents
@@ -106,14 +140,29 @@ sub parse_module_embed {
                                                                 id       => $embedid,
                                                                 journal  => $journal,
                                                                 );
-                        $newdata .= qq(<lj-embed id="$embedid" />) if $embedid;
+
+                        if ($embedid) {
+                            if ($expand) {
+                                $newdata .= $class->module_iframe_tag($journal, $embedid);
+                            } elsif ($edit) {
+                                my $content = $class->module_content(moduleid  => $attr->{id},
+                                                                     journalid => $journal->id);
+                                $newdata .= qq{<lj-embed id="$attr->{id}">\n$content\n</lj-embed>};
+                            } else {
+                                $newdata .= qq(<lj-embed id="$embedid" />);
+                            }
+                        }
                     }
                     $embedid = undef;
                 } else {
                     $newdata .= "[Error: close lj-embed tag without open tag]";
                 }
             } else {
-                $newdata .= "</$tag>";
+                if ($embedopen) {
+                    $embedcontents .= "</$tag>";
+                } else {
+                    $newdata .= "</$tag>";
+                }
             }
         }
     }
@@ -124,56 +173,42 @@ sub parse_module_embed {
 sub module_iframe_tag {
     my ($class, $u, $moduleid) = @_;
 
-    my ($content) = $u->selectrow_array("SELECT content FROM embedcontent WHERE " .
-                                        "moduleid=? AND userid=?",
-                                        undef, $moduleid, $u->userid);
-    die $u->errstr if $u->err;
-    return "iframe for id $moduleid: [$content]";
+    my $journalid = $u->userid;
+    $moduleid += 0;
+
+    my $auth_token = LJ::eurl(LJ::Auth->sessionless_auth_token('embedcontent', moduleid => $moduleid, journalid => $journalid));
+    return qq {<iframe src="http://$LJ::EMBED_MODULE_DOMAIN/?journalid=$journalid&moduleid=$moduleid&auth_token=$auth_token" class="lj_embedcontent"></iframe>};
 }
 
-sub transform_module {
-    my ($class, $journal, $tokensref) = @_;
+sub module_content {
+    my ($class, %opts) = @_;
 
-    my ($moduleid, $contents);
+    my $moduleid  = $opts{moduleid}+0 or croak "No moduleid";
+    my $journalid = $opts{journalid}+0 or croak "No journalid";
 
-    foreach my $token (@$tokensref) {
-        if ($token->[0] eq 'T') {
-            $contents = $token->[1];
-        }
+    # try memcache
+    my $memkey = $class->memkey($journalid, $moduleid);
+    my $content = LJ::MemCache::get($memkey);
+    return $content if $content;
 
-        next unless $token->[0] eq 'S';
-        my $check = sub {
-            my $attr = shift;
-            $moduleid = $attr->{id}
-                if $attr->{id};
-        };
+    my $journal = LJ::load_userid($journalid) or die "Invalid userid $journalid";
+    my $dbid; # module id from the database
+    ($content, $dbid) = $journal->selectrow_array("SELECT content, moduleid FROM embedcontent WHERE " .
+                                                  "moduleid=? AND userid=?",
+                                                  undef, $moduleid, $journalid);
+    die $journal->errstr if $journal->err;
 
-        my $attr = $token->[2] || {};
-        $check->($attr);
-    }
+    $content ||= '';
+    # save in memcache if we got something out of the db
+    LJ::MemCache::set($memkey, $content) if $dbid;
 
-    return __PACKAGE__->expand_module_tag(id => $moduleid);
+    # if we didn't get a moduleid out of the database then this entry is not valid
+    return $dbid ? $content : "[Invalid lj-embed id $moduleid]";
 }
 
-sub expand_module_tag {
-    my $class = shift;
-    my %opts = @_;
-
-    my $moduleid = $opts{id};
-    my $contents = $opts{contents};
-
-    # if this has an ID but no contents, then we need to replace it
-    # with an iframe containing the content.
-    if ($moduleid && ! $contents) {
-        # already just a plain module embed tag
-        return qq(<lj-embed id="$moduleid" />);
-    } elsif ($contents) {
-        # save this module, replace with the module tag
-        LJ::EmbedModule->save_module(contents => $contents, id => $moduleid);
-      } else {
-          # no id or contents
-          return "Invalid module tag";
-      }
+sub memkey {
+    my ($class, $journalid, $moduleid) = @_;
+    return [$journalid, "embedcont:$journalid:$moduleid"];
 }
 
 1;
