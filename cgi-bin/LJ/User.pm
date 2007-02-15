@@ -4072,6 +4072,7 @@ sub remote_has_priv
 #       'P' == phone post, 'C' == pending comment
 #       'O' == pOrtal box id, 'V' == 'vgift', 'E' == ESN subscription id
 #       'Q' == Notification Inbox, 'G' == 'SMS messaGe'
+#       'D' == 'moDule embed contents'
 #
 # FIXME: both phonepost and vgift are ljcom.  need hooks. but then also
 #        need a sepate namespace.  perhaps a separate function/table?
@@ -4082,7 +4083,7 @@ sub alloc_user_counter
 
     ##################################################################
     # IF YOU UPDATE THIS MAKE SURE YOU ADD INITIALIZATION CODE BELOW #
-    return undef unless $dom =~ /^[LTMPSRKCOVEQG]$/;                  #
+    return undef unless $dom =~ /^[LTMPSRKCOVEQGD]$/;                #
     ##################################################################
 
     my $dbh = LJ::get_db_writer();
@@ -4193,6 +4194,9 @@ sub alloc_user_counter
                                       undef, $uid);
     } elsif ($dom eq "G") {
         $newmax = $u->selectrow_array("SELECT MAX(msgid) FROM sms_msg WHERE userid=?",
+                                      undef, $uid);
+    } elsif ($dom eq "D") {
+        $newmax = $u->selectrow_array("SELECT MAX(moduleid) FROM embedcontent WHERE userid=?",
                                       undef, $uid);
     } else {
         die "No user counter initializer defined for area '$dom'.\n";

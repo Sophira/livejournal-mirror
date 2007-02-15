@@ -2692,6 +2692,16 @@ CREATE TABLE incoming_email_handle (
 )
 EOC
 
+# clustered
+register_tablecreate("embedcontent", <<'EOC');
+CREATE TABLE embedcontent (
+  userid     INT UNSIGNED NOT NULL,
+  moduleid   INT UNSIGNED NOT NULL,
+  content    TEXT,
+  PRIMARY KEY  (userid, moduleid)
+)
+EOC
+
 # NOTE: new table declarations go here
 
 ### changes

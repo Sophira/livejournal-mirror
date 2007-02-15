@@ -824,6 +824,9 @@ sub postevent
         return fail($err,103,$error) if $error;
     }
 
+    # process module embedding
+    LJ::EmbedModule->parse_module_embed($uowner, \$event);
+
     my $now = $dbcm->selectrow_array("SELECT UNIX_TIMESTAMP()");
     my $anum  = int(rand(256));
 
