@@ -8,6 +8,10 @@ use lib "$ENV{'LJHOME'}/cgi-bin/";
 require "ljlib.pl";
 use LJ::Poll;
 
+# only run one of these at a time
+my $lock = LJ::locker()->trylock("clusterpolls");
+die "Could not get lock - only run one of these at a time." unless $lock;
+
 my $BLOCK_SIZE = 10_000; # get users in blocks of 10,000
 my $VERBOSE    = 0;      # print out extra info
 
@@ -65,3 +69,4 @@ foreach my $cid (@LJ::CLUSTERS) {
 }
 
 print "--- Done migrating $migrated of $total users to dversion 8 ---\n";
+$lock->release;
