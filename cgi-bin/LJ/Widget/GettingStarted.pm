@@ -7,13 +7,12 @@ use Carp qw(croak);
 sub render_body {
     my $class = shift;
     my %opts = @_;
-    my $ret;
 
     my $remote = LJ::get_remote();
     return "" unless $remote;
 
     # do we really even want to render this?
-    return "" unless $class->should_render;
+    return "" unless $class->should_render($remote);
 
     # epoch -> pretty
     my $date_format = sub {
@@ -22,15 +21,15 @@ sub render_body {
         return $exp ? $exp->date() : "";
     };
 
-    $ret .= "<h2>Getting Started</h2>";
+    my $ret = "<h2>Getting Started</h2>";
 
     unless ($remote->postreg_completed) {
         $ret .= "<p>You haven't filled out your profile.<br />";
         $ret .= "&raquo; <a href='$LJ::SITEROOT/postreg/'>Edit Profile</a></p>";
     }
 
-    unless ($remote->has_enough_friends) {
-        $ret .= "<p>You've only made " . $remote->get_friends_count( include_initial_friends => 0 ) . " friends.<br />";
+    unless ($class->has_enough_friends($remote)) {
+        $ret .= "<p>You've only made " . $remote->friends_added_count . " friends.<br />";
         $ret .= "&raquo; <a href='$LJ::SITEROOT/postreg/find.bml'>Find Friends and Communities</a></p>";
     }
 
@@ -63,13 +62,13 @@ sub should_render {
     my $remote = LJ::get_remote();
     return 0 unless $remote;
 
-    return 0 unless $remote->postreg_completed;
-    return 0 unless $class->has_enough_friends($remote);
+    return 1 unless $remote->postreg_completed;
+    return 1 unless $class->has_enough_friends($remote);
 
-    return 0 unless $remote->number_of_posts;
-    return 0 unless $remote->get_userpic_count;
+    return 1 unless $remote->number_of_posts > 0;
+    return 1 unless $remote->get_userpic_count > 0;
 
-    return 1;
+    return 0;
 }
 
 # helper functions used within this widget, but don't
