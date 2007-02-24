@@ -2893,30 +2893,15 @@ sub friends {
     return $users;
 }
 
-# can pass in option "include_initial_friends" to specify if you want the friend count to include
-# the initial friends or not.  default is to include them.
-sub get_friends_count {
+# the count of friends that the user has added
+# -- eg, not initial friends auto-added for them
+sub friends_added_count {
     my $u = shift;
-    my %opts = @_;
 
-    my $include_initial_friends = 1;
-    $include_initial_friends = $opts{include_initial_friends} if defined $opts{include_initial_friends};
+    my %initial = ( map { $_ => 1 } @LJ::INITIAL_FRIENDS, @LJ::INITIAL_OPTIONAL_FRIENDS );
 
-    my @friends = $u->friends;
-    my $count = scalar @friends;
-
-    unless ($include_initial_friends) {
-        my @initial_friends;
-        push @initial_friends, @LJ::INITIAL_FRIENDS;
-        push @initial_friends, @LJ::INITIAL_OPTIONAL_FRIENDS;
-        my %initial_friends_uniq = map { $_ => 1 } @initial_friends;
-
-        foreach my $friend (@friends) {
-            $count-- if $initial_friends_uniq{$friend->user};
-        }
-    }
-
-    return $count;
+    # return count of friends who were not initial
+    return scalar grep { ! $initial{$_->user} } $u->friends;
 }
 
 sub set_password {
@@ -3167,6 +3152,13 @@ sub interests {
     return \%interests;
 }
 
+sub interest_count {
+    my $u = shift;
+
+    # FIXME: fall back to SELECT COUNT(*) if not cached already?
+    return scalar LJ::get_interests($u, { justids => 1 });
+}
+
 sub set_interests {
     my $u = shift;
     LJ::set_interests($u, @_);
@@ -3209,23 +3201,7 @@ sub postreg_completed {
     my $u = shift;
 
     return 0 unless $u->bio;
-    return 0 unless keys %{$u->interests};
-    return 1;
-}
-
-sub has_enough_friends {
-    my $u = shift;
-
-    return $u->get_friends_count( include_initial_friends => 0 ) < 4 ? 0 : 1;
-}
-
-sub getting_started_completed {
-    my $u = shift;
-
-    return 0 unless $u->postreg_completed;
-    return 0 unless $u->has_enough_friends;
-    return 0 unless $u->number_of_posts;
-    return 0 unless $u->get_userpic_count;
+    return 0 unless $u->interest_count;
     return 1;
 }
 
@@ -4939,6 +4915,8 @@ sub get_interests
     return undef unless $u;
     my $uid = $u->{userid};
     my $uitable = $u->{'journaltype'} eq 'C' ? 'comminterests' : 'userinterests';
+
+    # FIXME: should do caching on $u
 
     # load the ids
     my $ids;
