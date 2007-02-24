@@ -12,6 +12,9 @@ sub render_body {
     my $remote = LJ::get_remote();
     return "" unless $remote;
 
+    # do we really even want to render this?
+    return "" unless $class->should_render;
+
     # epoch -> pretty
     my $date_format = sub {
         my $epoch = shift;
@@ -52,6 +55,32 @@ sub render_body {
     $ret .= "<p><a href='$LJ::SITEROOT/manage/'>Manage Account</a></p>";
 
     return $ret;
+}
+
+sub should_render {
+    my $class = shift;
+
+    my $remote = LJ::get_remote();
+    return 0 unless $remote;
+
+    return 0 unless $remote->postreg_completed;
+    return 0 unless $class->has_enough_friends($remote);
+
+    return 0 unless $remote->number_of_posts;
+    return 0 unless $remote->get_userpic_count;
+
+    return 1;
+}
+
+# helper functions used within this widget, but don't
+# make a lot of sense out of context
+
+sub has_enough_friends {
+    my $self = shift;
+    my $u = shift;
+
+    # need 4 friends for us to stop bugging them
+    return $u->friends_added_count < 4 ? 0 : 1;
 }
 
 1;
