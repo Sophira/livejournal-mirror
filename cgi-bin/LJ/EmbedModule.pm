@@ -111,15 +111,21 @@ sub parse_module_embed {
             } else {
                 my $tagcontent = "<$tag";
                 my $selfclose;
-                foreach (keys %$attr) {
-                    if ($_ eq '/') {
+
+                # preserve order of attributes. the original order is
+                # in element 4 of $token
+                foreach my $attrname (@{$token->[3]}) {
+                    if ($attrname eq '/') {
                         $selfclose = 1;
                         next;
                     }
 
-                    $tagcontent .= " $_=\"$attr->{$_}\"";
+                    # FIXME: ultra ghetto.
+                    $attr->{$attrname} = LJ::no_utf8_flag($attr->{$attrname});
+
+                    $tagcontent .= " $attrname=\"$attr->{$attrname}\"";
                 }
-                $tagcontent .= $selfclose ? "/>" : ">";
+                $tagcontent .= $selfclose ? " />" : ">";
 
                 if ($embedopen) {
                     # capture this in the embed contents cuz we're in an lj-embed tag
@@ -140,7 +146,7 @@ sub parse_module_embed {
             }
         } elsif ($type eq 'E') {
             # end tag
-            if ($tag eq 'lj-embed') {
+            if (lc $tag eq 'lj-embed') {
                 if ($embedopen) {
                     $embedopen = 0;
                     if ($embedcontents) {
@@ -173,7 +179,7 @@ sub parse_module_embed {
                     }
                     $embedid = undef;
                 } else {
-                    $newdata .= "[Error: close lj-embed tag without open tag]";
+                    $newdata .= "[Error: close lj-embed tag without open tag]" unless $LJ::DISABLED{embed_module};
                 }
             } else {
                 if ($embedopen) {
