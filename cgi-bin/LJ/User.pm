@@ -415,7 +415,7 @@ sub selectcol_arrayref {
 sub selectall_hashref {
     my $u = shift;
     my $dbcm = $u->{'_dbcm'} ||= LJ::get_cluster_master($u)
-        or die "Database handle unavailable";
+        or die "Database handle unavailable ($u->{user}, cluster $u->{clusterid})";
 
     my $rv = $dbcm->selectall_hashref(@_);
 
