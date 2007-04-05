@@ -89,6 +89,8 @@ require "$ENV{'LJHOME'}/cgi-bin/customizelib.pl";
 require "$ENV{'LJHOME'}/cgi-bin/modperl_subs-local.pl"
     if -e "$ENV{'LJHOME'}/cgi-bin/modperl_subs-local.pl";
 
+require "$ENV{LJHOME}/cgi-bin/fotobilder.pl";
+
 # defer loading of hooks, better that in the future, the hook loader
 # will be smarter and only load in the *.pm files it needs to fulfill
 # the hooks to be run
