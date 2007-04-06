@@ -19,6 +19,7 @@ use Class::Autouse qw(
                       Apache::LiveJournal::Interface::AtomAPI
                       Apache::LiveJournal::Interface::S2
                       Apache::LiveJournal::PalImg
+                      Apache::FotoBilder
                       LJ::ModuleCheck
                       LJ::AccessLogSink
                       LJ::AccessLogRecord
@@ -239,6 +240,9 @@ sub trans
     my $args_wq = $args ? "?$args" : "";
     my $host = $r->header_in("Host");
     my $hostport = ($host =~ s/:\d+$//) ? $& : "";
+
+    # use fotobilder trans handler if a fb url
+    return Apache::FotoBilder::trans($r) if $host =~ /^$FB::DOMAIN/i;
 
     # disable TRACE (so scripts on non-LJ domains can't invoke
     # a trace to get the LJ cookies in the echo)
