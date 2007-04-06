@@ -1,0 +1,50 @@
+#!/usr/bin/perl
+
+# Gearman FB::Magick worker
+#
+# Brad Whitaker <whitaker@danga.com>
+#
+# * Requires fotobilder.pl to get at full API, but only
+#   does operations such as scale, thumbnail, and other
+#   alterations available via FB::Magick
+#
+
+use strict;
+use lib "$ENV{FBHOME}/lib";
+
+require "fotobilder.pl";
+
+use Gearman::Worker;
+use Carp;
+use FB::Magick;
+
+use Data::Dumper;
+
+my $worker = Gearman::Worker->new
+    ( job_servers => \@FB::GEARMAN_SERVERS )
+    or croak "unable to instantiate Gearman::Worker";
+
+$worker->register_function('scale_image' => sub {
+    my $job = shift;
+
+    return FB::Job->do_as_gearman
+        ( job_name => 'scale_image',
+          arg_ref  => $job->{argref},
+          task_ref => \&FB::Gpic::_load_scaled_do,
+          );
+});
+
+$worker->register_function('thumbnail_image' => sub {
+    my $job = shift;
+
+    return FB::Job->do_as_gearman
+        ( job_name => 'thumbnail_image',
+          arg_ref  => $job->{argref},
+          task_ref => \&FB::Upic::_thumbnail_gpic_do,
+          );
+});
+
+# worker loop
+while (1) {
+    $worker->work;
+}
