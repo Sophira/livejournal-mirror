@@ -19,7 +19,6 @@ use Class::Autouse qw(
                       Apache::LiveJournal::Interface::AtomAPI
                       Apache::LiveJournal::Interface::S2
                       Apache::LiveJournal::PalImg
-                      Apache::FotoBilder
                       LJ::ModuleCheck
                       LJ::AccessLogSink
                       LJ::AccessLogRecord
@@ -42,9 +41,8 @@ BEGIN {
     require "$ENV{'LJHOME'}/cgi-bin/ljlib.pl";
     require "$ENV{'LJHOME'}/cgi-bin/ljviews.pl";
     require "$ENV{'LJHOME'}/cgi-bin/ljprotocol.pl";
-    if (%LJ::FOTOBILDER_IP) {
-        use Apache::LiveJournal::Interface::FotoBilder;
-    }
+    use Apache::LiveJournal::Interface::FotoBilder;
+    use Apache::FotoBilder;
 }
 
 my %RQ;       # per-request data
@@ -242,7 +240,9 @@ sub trans
     my $hostport = ($host =~ s/:\d+$//) ? $& : "";
 
     # use fotobilder trans handler if a fb url
-    return Apache::FotoBilder::trans($r) if $host =~ /^$FB::DOMAIN/i;
+    if ($host =~ /^$FB::DOMAIN/i) {
+        return Apache::FotoBilder::trans($r);
+    }
 
     # disable TRACE (so scripts on non-LJ domains can't invoke
     # a trace to get the LJ cookies in the echo)
