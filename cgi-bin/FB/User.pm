@@ -420,12 +420,7 @@ sub url_root
     die "FB::url_user(): No user\n" unless $u && $u->{'userid'};
 
     my $user = FB::canonical_username($u);
-    if ($u->{'domainid'} == 0 && $FB::ROOT_USER eq $user) {
-        return "$FB::SITEROOT/";
-    } else {
-        my $root = FB::user_siteroot($u);
-        return "$root/$user/";
-    }
+    return "$FB::SITEROOT/$user/";
 }
 
 sub get_userpic_count {
@@ -1248,30 +1243,6 @@ sub load_user
 
     my $uid = FB::User->get_userid($user, $domainid);
     my $u = $uid ? FB::load_userid($uid) : undef;
-
-    # get authmod if we'll need it soon
-    my $authmod = ($opts->{'create'} || $opts->{'validate'}) ? FB::current_domain_plugin() : undef;
-
-    # virt install, create new account and populate disk usage.
-    if ($authmod && ! $u && $opts->{create}) {
-        $u = $authmod->load_user({ user => $user, vivify => 1 });
-    }
-    return undef unless $u;
-
-    # get any necessary props, including whatever $authmod->validate_user will need
-    my @props = ref $opts->{'props'} eq 'ARRAY' ? @{$opts->{'props'}} : ();
-    if ($authmod && $opts->{'validate'}) {
-        my @vprops = $authmod->validate_props;
-        push @props, @vprops if @vprops;
-    }
-    load_user_props($u, @props) if @props;
-
-    # validate this user if the caller requests it
-    if ($authmod && $opts->{'validate'}) {
-        $authmod->validate_user($u);
-    }
-
-    FB::add_u_user($u);
     return $u;
 }
 
@@ -1354,14 +1325,6 @@ sub get_cap
     my ($u, $cname) = @_;
     my $caps = $u->{'caps'};
     my $max = undef;
-
-    # Check domain capid first, return if found.
-    if ($u->{domainid}) {
-        my $mod = FB::domain_plugin($u);
-        my $mod_cap = $mod->get_cap($u, $cname);
-        return $mod_cap if defined $mod_cap;
-        # else fall through to user caps
-    }
 
     # user caps
     foreach my $bit (keys %FB::CAP) {
