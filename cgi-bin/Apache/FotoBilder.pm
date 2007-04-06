@@ -148,23 +148,6 @@ sub trans
         }
     }
 
-    my $auth_plugin = FB::current_domain_plugin();
-    my $auth_domain = FB::domainweb();
-    if ($uri =~ m!^/__using/\Q$auth_domain\E/(\w+)$!) {
-        my $handler = $1;
-        my $handlers = FB::run_hook('trans_using_handlers');
-
-        return DECLINED unless $handlers;
-
-        return DECLINED unless defined $handlers->{$handler};
-        return DECLINED unless -f "$FB::HOME/htdocs/$handlers->{$handler}";
-
-        $r->handler("perl-script");
-        $r->push_handlers(PerlHandler => \&Apache::BML::handler);
-        $r->filename("$FB::HOME/htdocs/$handlers->{$handler}");
-        return OK;
-    }
-
     # /~user -> /user
     if ($uri =~ m#^/\~([\w-]+)#) {
         return redir($r, "$siteroot/$1");
