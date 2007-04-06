@@ -5,6 +5,22 @@ package LJ;
 
 use strict;
 
+sub html_file
+{
+    my $opts = shift;
+
+    my $disabled = $opts->{'disabled'} ? " disabled='disabled'" : "";
+    my $ehtml = $opts->{'noescape'} ? 0 : 1;
+    my $ret;
+    $ret .= "<input type='file'";
+    foreach (grep { ! /^(disabled|raw|value|noescape)$/ } keys %$opts) {
+        $ret .= " $_=\"" . ($ehtml ? ehtml($opts->{$_}) : $opts->{$_}) . "\"";
+    }
+    if ($opts->{'raw'}) { $ret .= " $opts->{'raw'}"; }
+    $ret .= "$disabled />";
+    return $ret;
+}
+
 # <WCMFUNC>
 # name: html_datetime
 # class: component
