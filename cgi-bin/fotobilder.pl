@@ -38,6 +38,8 @@ use constant FMT_GIF => 2;
 use constant FMT_PNG => 3;
 use constant FMT_TIFF => 4;
 
+use Carp qw (confess);
+
 require 'htmlcontrols.pl';
 require 'export.pl';
 require "$ENV{'FBHOME'}/etc/fbconfig.pl";
@@ -82,10 +84,6 @@ foreach my $dmid (keys %FB::AUTH_DOMAIN) {
     next if $FB::AUTH_DOMAIN_LOADED{$dmid}++;
     my $v = $FB::AUTH_DOMAIN{$dmid};
     my $a = FB::new_domain_plugin($dmid, $v->[0], $v->[1]);
-}
-
-if (-e "$FB::HOME/cgi-bin/fblocal.pl") {
-    require "$FB::HOME/cgi-bin/fblocal.pl";
 }
 
 # if this is a dev server, alias FB::D to Data::Dumper::Dumper
@@ -654,6 +652,7 @@ sub make_dirs
 
 sub current_domain_id
 {
+    return 1;
     my $r = eval { Apache->request };
 
     # this shouldn't ever be called from outside of web context
@@ -676,29 +675,23 @@ sub current_domain_id
 
 sub domain_plugin
 {
-    my $arg = shift;
-    my $dmid = ref $arg ? $arg->{'domainid'} : $arg;
-    return $FB::DOMAINID_PLUGIN{$dmid};
+    confess "no domain plugin";
 }
 
 sub current_domain_plugin
 {
-    my $dmid = FB::current_domain_id();
-    return $dmid ? $FB::DOMAINID_PLUGIN{$dmid} : undef;
+    confess "no domain plugin";
 }
 
 # returns domain id or undef if unknown domain
 sub get_domain_id
 {
-    my $domain = lc(shift);
-    return $FB::DOMAIN_DOMAINID{$domain};
+    confess "no domain plugin";
 }
 
 sub get_domainid_name
 {
-    my $dmid = shift;
-    return $FB::DOMAIN unless $dmid;
-    return $FB::DOMAINID_DOMAIN{$dmid};
+    confess "no domain plugin";
 }
 
 sub new_domain_plugin
@@ -942,37 +935,21 @@ sub domainweb
 
 sub siteroot
 {
-    if (my $authmod = FB::current_domain_plugin()) {
-        return $authmod->site_root;
-    }
-
     return $FB::SITEROOT;
 }
 
 sub user_siteroot
 {
-    if (my $authmod = FB::domain_plugin(@_)) {
-        return $authmod->site_root;
-    }
-
     return FB::siteroot();
 }
 
 sub remote_root
 {
-    if (my $authmod = FB::current_domain_plugin()) {
-        return $authmod->remote_root;
-    }
-
-    return '';
+    confess "no auth module";
 }
 
 sub sitename
 {
-    if (my $authmod = FB::current_domain_plugin()) {
-        return $authmod->site_name;
-    }
-
     return $FB::SITENAME;
 }
 
@@ -1172,7 +1149,7 @@ sub html_security ### DEPRECATED:  use $u->security_widget
         unshift @extra, '', "----------" if @extra;
     }
 
-    return FB::html_select({ 'name' => $name,
+    return LJ::html_select({ 'name' => $name,
                              'selected' => $default,
                              'disabled' => ! $u, },
                            255 => "Public",
