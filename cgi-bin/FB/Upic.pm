@@ -1049,7 +1049,7 @@ sub exif_header {
         if (ref $src eq 'SCALAR') {
             $rbuf = substr($$src, $offset, $len);
             $n = length($rbuf);
-        } else {
+        } elsif ($src) {
             $n = read($src, $rbuf, $len);
         }
         return FB::error("Error reading EXIF header: read failed: $!")
