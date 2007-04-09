@@ -239,11 +239,6 @@ sub trans
     my $host = $r->header_in("Host");
     my $hostport = ($host =~ s/:\d+$//) ? $& : "";
 
-    # use fotobilder trans handler if a fb url
-    if ($host =~ /^$FB::DOMAIN/i) {
-        return Apache::FotoBilder::trans($r);
-    }
-
     # disable TRACE (so scripts on non-LJ domains can't invoke
     # a trace to get the LJ cookies in the echo)
     return FORBIDDEN if $r->method_number == M_TRACE;
@@ -258,6 +253,12 @@ sub trans
     LJ::start_request();
     LJ::procnotify_check();
     S2::set_domain('LJ');
+
+    # use fotobilder trans handler if a fb url
+    if ($host =~ /^$FB::DOMAIN/i) {
+
+        return Apache::FotoBilder::trans($r);
+    }
 
     my $lang = $LJ::DEFAULT_LANG || $LJ::LANGS[0];
     BML::set_language($lang, \&LJ::Lang::get_text);
