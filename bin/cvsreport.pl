@@ -9,10 +9,6 @@ unless (-d $ENV{'LJHOME'}) {
     die "\$LJHOME not set.\n";
 }
 
-if (defined $ENV{'FBHOME'} && $ENV{'PWD'} =~ /^$ENV{'FBHOME'}/i) {
-    die "You are running this LJ script while working in FBHOME";
-}
-
 # be paranoid in production, force --these
 my @paranoia;
 eval { require "$ENV{LJHOME}/cgi-bin/ljconfig.pl"; };
