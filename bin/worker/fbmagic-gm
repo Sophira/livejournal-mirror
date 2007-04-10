@@ -10,21 +10,20 @@
 #
 
 use strict;
-use lib "$ENV{FBHOME}/lib";
-
+use lib "$ENV{LJHOME}/cgi-bin";
+require "ljlib.pl";
 require "fotobilder.pl";
-
 use Gearman::Worker;
-use Carp;
+use Image::Magick;
+use LJ::Worker::Gearman;
 use FB::Magick;
+use FB::Job;
 
-use Data::Dumper;
+gearman_decl(scale_image     => \&scale_image);
+gearman_decl(thumbnail_image => \&thumbnail_image);
+gearman_work();
 
-my $worker = Gearman::Worker->new
-    ( job_servers => \@FB::GEARMAN_SERVERS )
-    or croak "unable to instantiate Gearman::Worker";
-
-$worker->register_function('scale_image' => sub {
+sub scale_image {
     my $job = shift;
 
     return FB::Job->do_as_gearman
@@ -32,9 +31,9 @@ $worker->register_function('scale_image' => sub {
           arg_ref  => $job->{argref},
           task_ref => \&FB::Gpic::_load_scaled_do,
           );
-});
+}
 
-$worker->register_function('thumbnail_image' => sub {
+sub thumbnail_image {
     my $job = shift;
 
     return FB::Job->do_as_gearman
@@ -42,9 +41,4 @@ $worker->register_function('thumbnail_image' => sub {
           arg_ref  => $job->{argref},
           task_ref => \&FB::Upic::_thumbnail_gpic_do,
           );
-});
-
-# worker loop
-while (1) {
-    $worker->work;
 }
