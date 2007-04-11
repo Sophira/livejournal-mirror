@@ -118,6 +118,78 @@ sub new_from_url {
     return undef;
 }
 
+
+# <LJFUNC>
+# name: LJ::Comment::create
+# class: comment
+# des: Create a new comment. Add them to db.
+# args: !!!!!!!!!
+# returns: A new LJ::Comment object.  undef on failure.
+# </LJFUNC>
+
+sub create {
+    my $class = shift;
+    my %opts  = @_;
+    
+    my $need_captcha = delete($opts{ need_captcha }) || 0;
+
+    # %talk_opts emulates parameters received from web form.
+    # Fill it with nessesary options.
+    my %talk_opts = map { $_ => delete $opts{$_} }
+                    qw/journal ditemid nodetype parenttalkid usertype
+                       poster  body    subject props/;
+
+    # Strictly parameters check. Do not allow any unused params to be passed in.
+    croak (__PACKAGE__ . "->create: Unsupported params: " . join " " => keys %opts )
+        if %opts;
+
+    # LJ::Talk::init uses 'itemid', not 'ditemid'.
+    $talk_opts{itemid} = $talk_opts{ditemid};
+
+    # Move props values to the talk_opts hash.
+    # Because LJ::Talk::Post::init needs this.
+    foreach my $key (  keys %{ $talk_opts{props} }  ){
+        my $talk_key = "prop_$key";
+         
+        $talk_opts{$talk_key} = delete $talk_opts{props}->{$key} 
+                            if not exists $talk_opts{$talk_key};
+    }
+
+    # The following 2 options are nessesary for successfull user authentification 
+    # in the depth of LJ::Talk::Post::init.
+    $talk_opts{cookieuser} ||= $talk_opts{poster}->user;
+    $talk_opts{usertype}   ||= 'cookieuser';
+    $talk_opts{nodetype}   ||= 'L';
+
+    ## init.  this handles all the error-checking, as well.
+    my @errors       = ();
+    my $init = LJ::Talk::Post::init(\%talk_opts, $talk_opts{poster}, \$need_captcha, \@errors); 
+    croak( join "\n" => @errors )
+        unless defined $init;
+
+    # check max comments
+    croak ("Sorry, this entry already has the maximum number of comments allowed.")
+        if LJ::Talk::Post::over_maxcomments($init->{journalu}, $init->{item}->{'jitemid'});
+
+    # no replying to frozen comments
+    croak('No reply to frozen thread')
+        if $init->{parent}->{state} eq 'F';
+
+    ## insertion
+    my $wasscreened = ($init->{parent}->{state} eq 'S');
+    my $err;
+    croak ($err)
+        unless LJ::Talk::Post::post_comment($init->{entryu},  $init->{journalu},
+                                            $init->{comment}, $init->{parent}, 
+                                            $init->{item},   \$err,
+                                            );
+    
+    return 
+        LJ::Comment->new($init->{journalu}, jtalkid => $init->{comment}->{talkid});
+
+}
+
+
 sub absorb_row {
     my ($self, %row) = @_;
 
@@ -196,8 +268,7 @@ sub journalid {
 sub entry {
     my $self = shift;
     __PACKAGE__->preload_rows([ $self->unloaded_singletons ]);
-    return undef unless $self->{nodetype} eq "L";
-    return LJ::Entry->new($self->journal, jitemid => $self->{nodeid});
+    return LJ::Entry->new($self->journal, jitemid => $self->nodeid);
 }
 
 sub jtalkid {
@@ -209,6 +280,18 @@ sub dtalkid {
     my $self = shift;
     my $entry = $self->entry;
     return ($self->jtalkid * 256) + $entry->anum;
+}
+
+sub nodeid {
+    my $self = shift;
+    __PACKAGE__->preload_rows([ $self->unloaded_singletons] );
+    return $self->{nodeid};
+}
+
+sub nodetype {
+    my $self = shift;
+    __PACKAGE__->preload_rows([ $self->unloaded_singletons] );
+    return $self->{nodetype};
 }
 
 sub parenttalkid {
@@ -468,28 +551,25 @@ sub state {
     return $self->{state};
 }
 
+
 sub is_active {
     my $self = shift;
-    __PACKAGE__->preload_rows([ $self->unloaded_singletons] );
-    return $self->{state} eq 'A' ? 1 : 0;
+    return $self->state eq 'A' ? 1 : 0;
 }
 
 sub is_screened {
     my $self = shift;
-    __PACKAGE__->preload_rows([ $self->unloaded_singletons ]);
-    return $self->{state} eq 'S' ? 1 : 0;
+    return $self->state eq 'S' ? 1 : 0;
 }
 
 sub is_deleted {
     my $self = shift;
-    __PACKAGE__->preload_rows([ $self->unloaded_singletons ]);
-    return $self->{state} eq 'D' ? 1 : 0;
+    return $self->state eq 'D' ? 1 : 0;
 }
 
 sub is_frozen {
     my $self = shift;
-    __PACKAGE__->preload_rows([ $self->unloaded_singletons ]);
-    return $self->{state} eq 'F' ? 1 : 0;
+    return $self->state eq 'F' ? 1 : 0;
 }
 
 sub visible_to {
@@ -527,6 +607,12 @@ sub user_can_delete {
 
     return LJ::Talk::can_delete($targetu, $journalu, $posteru, $poster);
 }
+
+sub mark_as_spam {
+    my $self = shift;
+    LJ::Talk::mark_comment_as_spam($self->poster, $self->jtalkid)
+}
+
 
 # returns comment action buttons (screen, freeze, delete, etc...)
 sub manage_buttons {
@@ -854,6 +940,49 @@ sub format_html_mail {
     $html .= "</body>\n";
 
     return $html;
+}
+
+sub delete {
+    my $self = shift;
+
+    return LJ::Talk::delete_comment
+        ( $self->journal,
+          $self->nodeid, # jitemid
+          $self->jtalkid, 
+          $self->state );
+}
+
+sub delete_thread {
+    my $self = shift;
+
+    return LJ::Talk::delete_thread
+        ( $self->journal,
+          $self->nodeid, # jitemid
+          $self->jtalkid );
+}
+
+#
+# Returns true if passed text is a spam.
+#
+# Class method.
+#   LJ::Comment->is_text_spam( $some_text );
+#
+sub is_text_spam($\$) {
+    my $class = shift;
+
+    # REF on text
+    my $ref   = shift; 
+       $ref   = \$ref unless ref ($ref) eq 'SCALAR';
+    
+    my $plain = $$ref; # otherwise we modify the source text
+       $plain = LJ::CleanHTML::clean_comment(\$plain);
+
+    foreach my $re ($LJ::TALK_ABORT_REGEXP, @LJ::TALKSPAM){
+        return 1 # spam
+            if $re and ($plain =~ /$re/ or $$ref =~ /$re/);
+    }
+    
+    return 0; # normal text
 }
 
 1;
