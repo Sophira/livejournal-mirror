@@ -352,6 +352,7 @@ table.stats-meter {
 }
 
 /* recent posts widget */
-.appwidget-recentposts .detail {
+.appwidget-recentposts .detail,
+.appwidget-recentposts h2 {
     display: none;
 }
