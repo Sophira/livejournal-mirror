@@ -1750,8 +1750,6 @@ widget.qotd.answer=Answer
 
 widget.qotd.entry.subject=Writer's Block
 
-widget.qotd.title=Question of the Day
-
 widget.search.aim=AIM
 
 widget.search.email=Email
@@ -1771,6 +1769,4 @@ widget.search.title=Search by
 widget.search.username=Username
 
 widget.search.yahoo=Yahoo! ID
-
-widget.sitemessages.title=Announcement
 
