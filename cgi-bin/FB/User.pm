@@ -37,6 +37,16 @@ sub new_from_lj_user {
     return FB::load_userid($fbuid);
 }
 
+# get a LJ::User object that corresponds to this FB::User object
+sub lj_u {
+    my $fb_u = shift;
+
+    my $dbr = FB::get_db_reader();
+    my ($ljuid) = $dbr->selectrow_array("SELECT kval FROM useridlookup WHERE ktype='I' AND userid=?",
+                                      undef, $fb_u->id);
+    return LJ::load_userid($ljuid);
+}
+
 # fields in object:
 #    by default, all columns from "user" table
 #
@@ -420,7 +430,7 @@ sub url_root
     die "FB::url_user(): No user\n" unless $u && $u->{'userid'};
 
     my $user = FB::canonical_username($u);
-    return "$FB::SITEROOT/$user/";
+    return $u->media_base_url;
 }
 
 sub get_userpic_count {
@@ -498,7 +508,7 @@ sub security_widget
         unshift @extra, '', "----------" if @extra;
     }
 
-    return FB::html_select({ 'name' => $name,
+    return LJ::html_select({ 'name' => $name,
                              'selected' => $default,
                              'disabled' => ! $u, },
                            255 => "Public",
@@ -994,13 +1004,6 @@ sub get_userid
                                 undef, $domainid);
     return $set->($uid) if $uid;
 
-    # virt install, create new account and populate disk usage.
-    my $authmod = FB::domain_plugin($domainid);
-    if ($authmod && $opts->{'create'}) {
-        my $u = $authmod->load_user({ user => $user, vivify => 1 });
-        return $set->($u->{userid}) if $u;
-    }
-
     # no hope now
     return undef;
 }
@@ -1081,7 +1084,7 @@ sub gallery_select_menu
 {
     my $u = shift;
 
-    my $ret = FB::html_select({ 'name' => 'gallid',
+    my $ret = LJ::html_select({ 'name' => 'gallid',
                                 'id' => 'gal_select_js',
                               },
                               '' => "(Unsorted)",
@@ -1205,6 +1208,22 @@ sub alloc_counter {
     return $u->alloc_counter($dom, { recurse => 1 });
 }
 
+# returns a url to the base path of the user's media
+sub media_base_url {
+    my $u = shift;
+
+    return "http://" . $u->user . ".$LJ::USER_DOMAIN/media";
+}
+
+
+sub diskusage_bytes {
+    my ($u) = @_;
+
+    # get LJ diskusage
+    my $lj_u = $u->lj_u;
+    return $lj_u->diskusage;
+}
+
 ######## deprecated APIs
 
 package FB;
@@ -1231,10 +1250,7 @@ sub load_user
         $user = FB::canonical_username($user);
     }
 
-    unless (defined $domainid) {
-        $domainid = FB::current_domain_id();
-    }
-    $domainid += 0;
+    $domainid = 1 unless defined $domainid;
 
     if (ref $opts eq "ARRAY") {
         $opts = { 'props' => $opts };
@@ -1420,12 +1436,10 @@ sub make_upic  ## DEPRECATED: use FB::Upic->create
     return $p;
 }
 
-sub user_upic_bytes
-{
+sub user_upic_bytes {
     my ($u, $opts) = @_;
 
-    return $u->selectrow_array("SELECT SUM(bytes) FROM upic WHERE userid=?",
-                               $u->{'userid'})+0;
+    return $u->selectrow_array("SELECT SUM(bytes) FROM upic WHERE userid=?", $u->{'userid'})+0;
 }
 
 sub load_user_props
@@ -1926,13 +1940,7 @@ sub url_user  ## DEPRECATED: use $u->url
 {
     my ($u) = @_;
     die "FB::url_user(): No user\n" unless $u && $u->{'userid'};
-    my $user = FB::canonical_username($u);
-    if ($u->{'domainid'} == 0 && $FB::ROOT_USER eq $user) {
-        return "$FB::SITEROOT/";
-    } else {
-        my $root = FB::user_siteroot($u);
-        return "$root/$user/";
-    }
+    return $u->url;
 }
 
 sub gallery_select_list

@@ -138,6 +138,13 @@ sub userpic {
     return LJ::Userpic->new($u, $u->{defaultpicid});
 }
 
+# returns FB::User corrresponding to this user
+*fb_user = \&fb_u;
+sub fb_u {
+    my $lj_u = shift;
+    return FB::User->new_from_lj_user($lj_u);
+}
+
 # returns a true value if the user is underage; or if you give it an argument,
 # will turn on/off that user's underage status.  can also take a second argument
 # when you're setting the flag to also update the underage_status userprop
@@ -495,6 +502,17 @@ sub dudata_set {
                $u->{userid}, $area);
     }
     return 1;
+}
+
+# return total number of bytes used
+sub diskusage_bytes {
+    my $u = shift;
+
+    my $lj_blobusage = 0;
+    $lj_blobusage += LJ::Blob->get_disk_usage($u, $_) foreach qw(userpic phonepost);
+    my $fb_diskusage = FB::user_upic_bytes($u->fb_user);
+
+    return $lj_blobusage + $fb_diskusage;
 }
 
 sub make_login_session {
