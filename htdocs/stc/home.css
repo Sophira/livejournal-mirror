@@ -350,3 +350,8 @@ table.stats-meter {
     font-weight: bold;
     font-size: 14px;
 }
+
+/* recent posts widget */
+.appwidget-recentposts .detail {
+    display: none;
+}
