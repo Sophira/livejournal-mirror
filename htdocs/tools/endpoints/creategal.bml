@@ -1,0 +1,47 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%POST);
+
+    my $err = sub {
+        my $msg = shift;
+        return JSON::objToJson({
+            'alert' => $msg,
+        });
+    };
+
+    my $gal_name = $POST{'gal_name'};
+    return $err->("Error, no gallery name specified.") unless $gal_name;
+
+    # clean gal_name
+    $gal_name = FB::Gallery->clean_name($gal_name)
+        or return $err->("Invalid gallery name");
+
+    my $ret;
+    $ret->{'gal_created'} = 0;
+
+    my $u = FB::get_remote()
+        or return $err->("Couldn't save.  No longer logged in.");
+
+    # create gal
+    my $gal = FB::Gallery->create($u, name => $gal_name)
+        or return $err->("Could not create gallery.");
+
+    # tags
+    $gal->link_from_tags($POST{'gal_tags'}) if $POST{'gal_tags'};
+
+    # date
+    $gal->set_date($POST{'gal_date'})       if $POST{'gal_date'};
+
+    # link from top level
+    $gal->link_from(0);
+
+    $ret->{'gal_created'} = 1;
+    $ret->{'gal_name'} = $gal->display_name;
+    $ret->{'gal_id'} = $gal->id;
+
+    sleep 1 if $FB::IS_DEV_SERVER;
+
+    return JSON::objToJson($ret);
+}
+_code?>

@@ -1,0 +1,48 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%FORM);
+
+    my $err = sub {
+        my $msg = shift;
+        return JSON::objToJson({
+            'alert' => $msg,
+        });
+    };
+
+    my $empty = JSON::objToJson([]);
+
+    # get user
+    my $u = FB::get_remote()
+        or return $err->("User not logged in.");
+
+    # get pics
+    my @pics;
+
+    my $galid = $FORM{galleryid}+0;
+
+    if ($galid) {
+        my $gal = FB::Gallery->new($u, $galid);
+        return $err->('No such gallery') unless $gal;
+        @pics = $gal->pictures;
+    } else {
+        # get gals
+        my $gals = $u->galleries
+            or return $err->("No galleries for user $u->{user}.");
+
+        @pics = map { $_->pictures } values %$gals;
+    }
+
+    # build reponse of handy gallery info
+    my $ret = [];
+    foreach my $pic (@pics) {
+        push @$ret, { 'name'          => $pic->title,
+                      'id'            => $pic->id,
+                  };
+    }
+
+    sleep 1 if $FB::IS_DEV_SERVER;
+
+    return JSON::objToJson($ret);
+}
+_code?>
