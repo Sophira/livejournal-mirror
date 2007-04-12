@@ -150,8 +150,8 @@ $LJ::PROTOCOL_VER = ($LJ::UNICODE ? "1" : "0");
                  "res" => {
                      "des" => "S2-specific resources (stylesheet)",
                  },
-                 "pics" => {
-                     "des" => "FotoBilder pics (root gallery)",
+                 "media" => {
+                     "media" => "Scrapbook",
                  },
                  "info" => {
                      # just a redirect to userinfo.bml for now.
