@@ -1,0 +1,57 @@
+<?_code
+{
+    use strict;
+    use vars qw(%GET %POST $title $body);
+
+    my $ret;
+    my $u = FB::User->remote or
+        return BML::redirect("/login");
+    my $gallid = $GET{'gallid'} + 0;
+
+
+    if ($GET{'jscallup'}) {
+        my $eurl = FB::ejs("/manage/annotate?gal=$gallid&ids=$GET{'ids'}");
+        BML::finish();
+        return "<html><body><script>
+if (window.parent && window.parent.onUploadComplete) {
+        window.parent.onUploadComplete(\"$eurl\");
+}
+</script></body></html>";
+    }
+
+
+    # FIXME: port this to new APIs:
+    my @pics = map { $_+0 } split(/\,/, $GET{'ids'});
+    my $count = @pics;
+    if ($count > 50) { @pics = @pics[0..49]; }
+
+    my $in = join(',', @pics);
+    unless (@pics) {
+        $ret .= "<?h1 No pictures uploaded h1?><?p No pictures were uploaded. p?>";
+        return $ret;
+    }
+
+    my $sth = $u->prepare("SELECT * FROM upic WHERE userid=? AND upicid IN ($in)",
+                          $u->{userid});
+    $sth->execute;
+    my %p;
+    while (my $p = $sth->fetchrow_hashref) { $p{$p->{'upicid'}} = $p; }
+
+    $ret .= "<?p The following <b>$count</b> picture(s) were uploaded. ";
+    $ret .= "You can click on a picture to change its settings, or <a href='/manage/gal?id=$gallid'>manage the uploaded gallery</a>. p?>";
+    $ret .= "<p>";
+
+    foreach my $id (@pics) {
+        my $up = $p{$id};
+        my ($url, $w, $h) = FB::scaled_url($u, $up, 320, 320);
+        $ret .= "<p><a href='/manage/pic?id=$id'><img src='$url' border='0' width='$w' height='$h'></a>\n";
+    }
+    $body = $ret;
+    return;
+}
+_code?>
+
+<?page
+title=>Upload Pictures
+body=><?_code return $body _code?>
+page?>

@@ -1,0 +1,348 @@
+<?_code # -*-perl-*-
+{
+    use strict;
+    use vars qw(%POST %GET $title $body);
+
+    my $u = FB::get_remote();
+    my $styleid = $GET{'id'}+0;
+
+    return BML::redirect("/login?to=" . 
+                         FB::eurl("manage/edit?id=$styleid")) unless $u;
+    FB::load_user_props($u, "styleid");
+
+    # Check for preview image urls
+    my $preview_urls = FB::get_style_thumbnails();
+    my $previews;
+
+    $body = ""; $title = "Edit Style";
+
+    my $err = sub {
+        $title = "Error";
+        $body = shift;
+        return;
+    };
+    my $style = FB::load_style($styleid);
+
+    return BML::redirect("/manage/styles") unless $style;
+    return $err->("Style belongs to another user.") unless $style->{'userid'} == $u->{'userid'};
+
+    my %layerinfo;
+    my $publay = FB::get_public_layers();
+    warn LJ::D($publay);
+    my $corelayer = $publay->{'core1'};
+    return $err->("Can't find corelayer.") unless $corelayer;
+
+    my %ulay;
+    if ($u) {
+        my $dbr = FB::get_db_reader();
+        my $sth = $dbr->prepare("SELECT s2lid, type, b2lid FROM s2layers WHERE userid=? ".
+                                "AND type IN ('layout', 'i18n', 'i18nc', 'theme')");
+        $sth->execute($u->{'userid'});
+        $ulay{$_->{'s2lid'}} = $_ while $_ = $sth->fetchrow_hashref;
+        FB::load_layer_info(\%layerinfo, [ keys %ulay ]);
+    }
+
+    my $curlays = $style->{'layer'};
+
+    # load the language and layout choices for core.
+    FB::load_layer_info(\%layerinfo, $corelayer->{'children'});
+
+    # load the themes for current layout
+    if ($curlays->{'layout'}) {
+        my $layout = $publay->{$curlays->{'layout'}};
+        FB::load_layer_info(\%layerinfo, $layout->{'children'});
+    }
+
+    # success text
+    my $save;
+
+    # action path
+    if (FB::did_post()) {
+        # prevent spoofing:
+        return BML::redirect("/manage") 
+            unless $POST{'userid'} == $u->{'userid'};
+
+        my %newlay;
+        my $id;
+
+        if ($POST{'action:edituser'}) {
+            my $id = $curlays->{'user'}+0;
+            unless ($id) {
+                # have to make one
+                $id = FB::create_layer($u, $curlays->{'layout'}, "user");
+                return $err->("Couldn't generate user layer") unless $id;
+                FB::set_style_layers($u, $styleid, "user", $id);
+            }
+            return BML::redirect("/manage/layer?id=$id&style=$styleid");
+        }
+        if ($POST{'action:deleteuser'}) {	 
+            $newlay{'user'} = 0;
+            $save = "<strong>Success:</strong><br />Your customizations have been deleted.";
+        }
+        my $check_type = sub {
+            my ($id, $type) = @_;
+            return 1 if $id == 0;
+            return 0 unless $layerinfo{$id};
+            return 0 unless $layerinfo{$id}->{'type'} eq $type;
+            return 1;            
+        };
+        unless ($curlays->{'core'} == $corelayer->{'s2lid'}) {
+            $newlay{'core'} = $corelayer->{'s2lid'};
+        }
+        if ($POST{'action:save'}) {
+            if ($POST{'name'} ne $style->{'name'}) {
+                my $dbh = FB::get_db_writer();
+                unless ($POST{'name'} =~ /\S/) {
+                    $POST{'name'} = "Unnamed";
+                }
+                $dbh->do("UPDATE s2styles SET name=? WHERE styleid=?", undef,
+                         $POST{'name'}, $styleid);
+                return $dbh->errstr if $dbh->err;
+            }
+            $id = $POST{'i18nc_id'};
+            if ($id != $curlays->{'i18nc'}) {
+                $newlay{'i18nc'} = $id;
+                return $err->("Invalid language layer")
+                    unless $check_type->($id, "i18nc");
+            }
+            $id = $POST{'layout_id'};
+            if ($id != $curlays->{'layout'}) {
+                $newlay{'layout'} = $id;
+                $newlay{'theme'} = 0;
+                $newlay{'user'} = 0;
+
+                return $err->("Invalid layout layer")
+                    unless $check_type->($id, "layout");
+            }
+            if ($POST{'theme_id'} != $curlays->{'theme'} || $POST{'preview_theme_id'} != $curlays->{'theme'}) {
+                my $id;
+
+                # Determine if only one of the selections has changed
+                # (this should only occur in non js browsers)
+                if ($POST{'theme_id'} != $curlays->{'theme'} && $POST{'preview_theme_id'} == $curlays->{'theme'}) {
+                    $id = $POST{'theme_id'};
+                } elsif ($POST{'theme_id'} == $curlays->{'theme'} && $POST{'preview_theme_id'} != $curlays->{'theme'}) {
+                    $id = $POST{'preview_theme_id'};
+                # If they've both changed, or if there are no previews, use the dropdown theme value
+                } else {
+                    $id = $POST{'theme_id'};
+                }
+                $newlay{'theme'} = $id;
+                $newlay{'user'} = 0;
+
+                return $err->("Invalid theme layer")
+                    unless $check_type->($id, "theme");
+            }
+            my $url = FB::url_user($u);
+            $save = "<strong>Success:</strong><br />Your style has been saved. <a href='$url'>View your gallery</a> or <a href='/manage/upload'>upload images</a>.";
+        }
+
+        if (%newlay) {
+            FB::delete_layer($curlays->{'user'}) if $newlay{'user'} == 0;
+            FB::set_style_layers($u, $styleid, %newlay);
+            while (my ($l,$v) = each %newlay) { $style->{'layer'}->{$l} = $v; }
+        }
+    }
+
+    $body .= "<form method='post' action='edit?id=$styleid'>";
+    $body .= FB::html_hidden("userid", $u->{'userid'});
+
+    $body .= "<?p $save p?>" if $save;
+    $body .= "<fieldset><legend>Style Settings:</legend><table style='width: 100%'>";
+    $body .= "<tr valign='top'><td style='width: 300px'><table id='edit_style' cellpadding='2'>";
+
+    ### Preview
+    {
+        my $id = $style->{'layer'}->{'theme'} || $style->{'layer'}->{'layout'};
+        my $img = %layerinfo->{$id}->{'redist_uniq'};
+        my $url = FB::url_user($u);
+        if ($preview_urls->{$img} ne "") {
+            $img = $preview_urls->{$img};
+            $body .= "<tr valign='top'><th>Preview:</th>";
+            $body .= "<td><img src='/img/preview/$img' class='preview_image' alt='' /></td></tr>";
+        }
+    }
+
+    ### Name
+    $body .= "<tr><th>Name:</th><td>";
+    $body .= FB::html_text({ 'name' => 'name', 'value' => $style->{'name'},
+                             'size' => 30, 'maxlength' => 100 });
+    $body .= "</td></tr>";
+    
+    ### Language
+    $body .= "<tr valign='top'><th>Language:</th><td>";
+    $body .= FB::html_select({ 'name' => 'i18nc_id', 
+                               'selected' => $style->{'layer'}->{'i18nc'}, },
+                             map { $_, $layerinfo{$_}->{'name'}, }
+                             grep { $layerinfo{$_}->{'type'} eq "i18nc" }
+                             @{$corelayer->{'children'}});
+    $body .= "</td></tr>";
+
+    ### Layout
+    $body .= "<tr valign='top'><th>Layout:</th><td>";
+
+    # Filter against explicitly ignored layers
+    foreach ( @{$corelayer->{'children'}} ) {
+        delete $layerinfo{$_} if $FB::IGNORE_S2_LAYER{$layerinfo{$_}->{'redist_uniq'}};
+    }
+
+    my @drop_layouts = (map { $_, $layerinfo{$_}->{'name'}, }
+                        sort { $layerinfo{$a}->{'name'} cmp $layerinfo{$b}->{'name'} }
+                        grep { $layerinfo{$_}->{'type'} eq "layout" }
+                        @{$corelayer->{'children'}});
+    my @user_layouts = (map { $_, $layerinfo{$_}->{'name'} || "Custom Layer (#$_)", }
+                        sort { $layerinfo{$a}->{'name'} cmp $layerinfo{$b}->{'name'} }
+                        grep { $ulay{$_}->{'type'} eq "layout" }
+                        keys %ulay);
+
+    # if they're using someone else's layer
+    my $cur_layout = $style->{'layer'}->{'layout'};
+    my @other_layouts = ($cur_layout, "Other (#$cur_layout)")
+        unless grep { $_ == $cur_layout } @drop_layouts, @user_layouts;
+
+    if (@user_layouts || @other_layouts) {
+        push @drop_layouts, "", "", @user_layouts, @other_layouts;
+    }
+
+    $body .= FB::html_select({ 'name' => 'layout_id', 'selected' => $cur_layout, }, @drop_layouts);
+    $body .= "</td></tr>";
+
+    ### Theme
+    my $layout_id = $style->{'layer'}->{'layout'};
+    my @themes;
+    if ($layout_id) {
+        FB::load_layer_info(\%layerinfo, $publay->{$layout_id}->{'children'});
+        @themes = (map { $_, $layerinfo{$_}->{'name'}, }
+                   sort { $layerinfo{$a}->{'name'} cmp $layerinfo{$b}->{'name'} }
+                   grep { $layerinfo{$_}->{'type'} eq "theme" }
+                   @{$publay->{$layout_id}->{'children'}});
+
+        my @u_themes = (map { $_, $layerinfo{$_}->{'name'} }
+                        sort { $layerinfo{$a}->{'name'} cmp $layerinfo{$b}->{'name'} }
+                        grep { $ulay{$_}->{'type'} eq "theme" && $ulay{$_}->{'b2lid'} == $layout_id }
+                        keys %ulay);
+        if (@u_themes) {
+            push @themes, "", "" if @themes;
+            push @themes, @u_themes;
+        }
+    }
+    if (@themes)
+    {
+        my $name = $layerinfo{$layout_id}->{'name'};
+        $body .= "<tr valign='top'><th>Theme:</th><td>";
+        $body .= FB::html_select({ 'name' => 'theme_id', 'onchange' => "change_theme_selection(this.id);",
+                                   'selected' => $style->{'layer'}->{'theme'}, 'id' => "theme_id" },
+                                 0, "(Layout Default)",
+                                 @themes
+                                 );
+        $body .= "</td></tr>";
+
+        # Check against $FB::USE_THUMBS or something
+        if ($preview_urls) {
+            if (my $img = $preview_urls->{%layerinfo->{$layout_id}->{'redist_uniq'}}) {
+                my $selected = $style->{'layer'}->{'theme'} == 0 ? 1 : 0;
+                $previews .= "<div class='theme_preview'><label>";
+                $previews .= "<img src='/img/preview/$img' class='preview_image' alt='' /><br />";
+                $previews .= FB::html_check({type => 'radio', 'name' => "preview_theme_id", 
+                                             'id' => "preview_theme_id_0", 'value' => 0, 
+                                             'selected' => $selected, 'onchange' => "change_theme_selection(this.id);"});
+                $previews .= " Layout Default</label></div>";
+            }
+            while (my ($id, $name) = splice(@themes, 0, 2)) {
+                my $selected = $style->{'layer'}->{'theme'} == $id ? 1 : 0;
+                my $img = %layerinfo->{$id}->{'redist_uniq'};
+                if ($preview_urls->{$img} ne "") {
+                    $img = $preview_urls->{$img};
+                    $previews .= "<div class='theme_preview'><label>";
+                    $previews .= "<img src='/img/preview/$img' class='preview_image' alt='' /><br />";
+                    $previews .= FB::html_check({type => 'radio', 'name' => "preview_theme_id", 
+                                                 'id' => "preview_theme_id_$id", 'value' => $id, 
+                                                 'selected' => $selected, 'onchange' => "change_theme_selection(this.id);" });
+                    $previews .= " $name</label></div>";
+                }
+            }
+        }
+    }
+
+    $body .= "</table><div style='text-align: center'>" . FB::html_submit('action:save', "Save Style") . "</div></td>";
+
+    unless ($previews eq "") {
+        $previews .= "<div style='text-align: center; clear: both'>";
+        $previews .= FB::html_submit('action:save', "Save Selection");
+        $previews .= "</div>";
+    }
+
+    my $instructions = <<"INST";
+<?p <strong>Instructions:</strong><br />A style is composed of a few different parts, each of which you can customize: p?><ol>
+<li>You start by choosing a <i>name</i> for your style.</li>
+<li>Next you pick your style's <i>language</i> and <i>layout</i></li>
+<li>Depending on the layout you choose, different <i>themes</i> are available.</li>
+<li>After you select your layout, click "Save Style" to see a preview and <a href='#customize'>further customization options</a> for that style.</li></ol>
+INST
+
+    my $des = $layerinfo{$style->{'layer'}->{'layout'}}->{'des'};
+    $instructions .= "<p><strong>Layout Description:</strong><br />" . FB::ehtml($des) . "</p>" if $des ne "";
+
+    $body .= "<td>$instructions $previews</td>";
+    $body .= "</tr></table></fieldset>";
+
+    if ($layout_id) {
+        $body .= "<fieldset><legend><a name='customize'></a>Customize Further?</legend>";
+        $body .= "<?p Tweak any details that you don't like in your selected layout & theme. p?>";
+        $body .= "<blockquote>";
+        if ($style->{'layer'}->{'user'}) {
+            $body .= "<strong>Customizations:</strong> ";
+            $body .= FB::html_submit('action:edituser', "Edit") . "\n";
+            $body .= FB::html_submit('action:deleteuser', "Delete");
+        } else {
+            $body .= FB::html_submit('action:edituser', "Customize");
+        }
+        $body .= "</blockquote></fieldset>";
+    }
+    
+    $body .= "</form>";
+
+    return;
+
+}
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+head<=
+<style type='text/css'>
+#edit_style { padding: 5px; }
+#edit_style th {
+    text-align: right;
+    white-space: nowrap;
+}
+.theme_preview {
+    width: 180px; 
+    padding: 5px; 
+    margin: 0; 
+    height: 145px; 
+    float: left;
+}
+.preview_image {
+    border: 1px solid #cccccc;
+    padding: 3px;
+}
+</style>
+<script type='text/javascript' language='JavaScript'>
+function change_theme_selection(selection) {
+    if (!document.getElementById) { return false; }
+    if (!document.getElementById('preview_theme_id_0')) { return false; }
+    var themeid;
+    if (selection == "theme_id") {
+        themeid = document.getElementById(selection).options[document.getElementById(selection).selectedIndex].value;
+        document.getElementById("preview_theme_id_" + themeid).checked = 1;
+    } else {
+        themeid = document.getElementById(selection).value;
+        var options = document.getElementById("theme_id").options;
+        for (var i = 0; i < options.length; i++) {
+            if (options[i].value == themeid) { options[i].selected = 1; }
+        }
+    }
+}
+</script>
+<=head
+page?>

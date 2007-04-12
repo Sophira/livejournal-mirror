@@ -1,0 +1,277 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%FORM $title $body $loadhook);
+
+    my $err = sub {
+        ($title, $body) = ('Error', shift);
+        return undef;
+    };
+
+    $title = "Post Photos to Journal";
+
+    my $u = FB::get_remote();
+    return $err->('You must be logged in to access this page.')
+        unless $u;
+
+    my @ids = map { $_+0 } split(':', $FORM{upicids});
+
+    # if it's a post, they're coming from /manage/pics so we need to check the pic_check_* fields
+    # and grep out unnecessary ids
+    if (FB::did_post) {
+        @ids = grep { $FORM{"pic_check_$_"} } @ids;
+    }
+
+    return $err->('You did not provide any pictures to post.') unless @ids;
+
+    my ($g, @pics);
+    my $gallid = $FORM{gallid}+0;
+    if ($gallid) {
+        $g = FB::load_gallery_id($u, $gallid)
+            or return $err->("No such gallery or you're not authorized to view it.");
+
+        # posts to this page come from /manage/pics, so we need to grep gallery pictures
+        # on the ones they had selected on the form
+        @pics = grep { $FORM{"pic_check_$_->{upicid}"} } FB::get_gallery_pictures($u, $g);
+    } else {
+        @pics = values %{ FB::load_upic_multi($u, \@ids, { props => ['pictitle'] }) || {} };
+    }
+    return $err->("No such pictures or you're not authorized to view them.") unless @pics;
+
+    my $count = 0;
+    my (
+        @idorder, @rows, @picsecs,
+        $id,
+        $img, $w, $h,
+        $himg, $hw, $hh,
+        $timg, $tw, $th,
+        $url, $des, $exstyle, $widattr,
+        $hiddenfields,
+       );
+
+    foreach my $p (@pics) {
+        # precompute things we need below
+        $id = $p->{upicid};
+
+        push @idorder, $id;
+        push @picsecs, $p->{picsec};
+
+        # Calculate the urls for the picture sizes we'll be offering
+        ($img, $w, $h) = FB::scaled_url($u, $p, 640, 480);
+        ($himg, $hw, $hh) = FB::scaled_url($u, $p, 320, 240);
+        ($timg, $tw, $th) = FB::url_thumbnail($u, $p, [100, 100, 'c']);
+
+        $url = FB::url_picture_page($u, $p, $g);
+        $p->{userid} = $u->{userid}; # dumb
+        $des = FB::ehtml(FB::get_des($u, $p));
+
+        # style stuff
+        my $exstyle = $count & 1 ? " style='border: 2px solid black; background: <?barcolor_light?>;'" : '';
+        my $widattr = $tw <= 100 ? " style='width: 100px;'" : '';
+
+        $count++;
+        $hiddenfields = FB::html_hidden(
+            "url$id"    => $url,
+            "fimg$id"   => $img,
+            "fw$id"     => $w,
+            "fh$id"     => $h,
+            "simg$id"   => $himg,
+            "sw$id"     => $hw,
+            "sh$id"     => $hh,
+            "timg$id"   => $timg,
+            "tw$id"     => $tw,
+            "th$id"     => $th
+          );
+
+        push @rows, qq{
+            <table$exstyle>
+		  <tr>
+			<td$widattr><img src="$timg" width="$tw" height="$th" alt="" /></td>
+			<td>
+              $hiddenfields
+			  <b>Image #$count</b><br /><br />
+			  Title: <input type="text" value="$p->{pictitle}" size="35" name="subj$id" /><br />
+			  Description:<br />
+			  <textarea cols="40" rows="5" name="desc$id">$des</textarea>
+			</td>
+		  </tr>
+            </table>
+        };
+
+    }
+
+    # now construct the posting form
+    my $idorder = FB::html_hidden('ids', join(':', @idorder));
+
+    my $btn_text = 'Continue (change entry options)';
+    my $warning = '';
+    if ($g && $g->{secid} != 255 || grep { $_ != 255 } @picsecs) {
+        $warning .= "<b>Warning</b>: Some pictures that you selected " .
+                 "have non-public security, and won't be viewable by all users.<br />";
+        $btn_text .= ' anyway';
+    }
+
+    $body = <<EOF;
+    <!-- Content -->
+    <h2>Photos to Post</h2>
+
+	<form method="post" action="$LJ::SITEROOT/update.bml">
+	  <fieldset>
+		<legend>Posting Style</legend>
+
+		<table id="post-wizard-table">
+		  <tbody>
+			<tr>
+			  <td>
+
+				<!--
+				  Event handlers for the controls are set up by the
+				  wizard_init() body onload handler. If you for some reason
+				  change the ids of the form controls, you'll have to change
+				  the scripting to match.
+				-->
+				<table>
+				  <tbody>
+					<tr>
+					  <td><label accesskey="c" for="wizard-columns">Columns</label></td>
+					  <td>
+						<select id="wizard-columns" name="wizard-columns">
+						  <option value="1">1</option>
+						  <option value="2" selected="selected">2</option>
+						  <option value="3" disabled="disabled">3</option>
+						  <option value="4" disabled="disabled">4</option>
+						</select>
+					  </td>
+					</tr>
+
+					<tr>
+					  <td><label accesskey="p" for="wizard-picsize">Picture Size</label></td>
+					  <td>
+						<select id="wizard-picsize" name="wizard-picsize">
+						  <option value="t">Thumbnail/s</option>
+						  <option value="s" selected="selected">Medium</option>
+						  <option value="f">Large</option>
+						</select>
+					  </td>
+					</tr>
+
+					<tr>
+					  <td><label accesskey="o" for="wizard-caporient">Caption Orientation</label></td>
+					  <td>
+						<select id="wizard-caporient" name="wizard-caporient">
+						  <option value="a">Above</option>
+						  <option value="r" selected="selected">Right</option>
+						  <option value="b">Below</option>
+						  <option value="l">Left</option>
+						  <option value="0">None</option>
+						</select>
+					  </td>
+					</tr>
+
+					<tr>
+					  <td><label accesskey="b" for="wizard-border">Border: </label></td>
+					  <td>
+						<input id="wizard-border" name="wizard-border" type="checkbox" checked="checked" />
+					  </td>
+					</tr>
+
+					<tr>
+					  <td id="wizard-status" colspan="2" style="text-align: center">
+                      </td>
+					</tr>
+
+				  </tbody>
+				</table>
+			  </td>
+
+			  <td>
+
+				<!-- Layout Preview Widget -->
+				<div id="preview-page" style="display: none;">
+
+				  <table id="page-layout-table">
+					<caption>Page Layout</caption>
+					<tbody>
+					  <tr id="page-layout-row"><td></td></tr>
+					</tbody>
+				  </table>
+
+				</div>
+
+			  </td>
+			</tr>
+		  </tbody>
+		</table>
+	  </fieldset>
+
+	  <fieldset>
+		<legend>Pictures</legend>
+		<table id="pic-table" style='margin-top: 10px;'><tr><td>
+          @rows
+		</td></tr></table>
+	  </fieldset>
+
+	  <fieldset class="noborder">
+        $idorder
+        $warning
+
+        <input type="hidden" name="transform" value="postpics" />
+        <input type='submit' value="$btn_text" />
+	  </fieldset>
+	</form>
+EOF
+
+    my $r = Apache->request;
+    if ( $r->header_in('user-agent') =~ /(gecko|khtml)/i ) {
+        $loadhook = qq{onload="wizard_init();"};
+    } else {
+        $loadhook = '';
+    }
+
+    return;
+
+}
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+bodyopts=><?_code return $loadhook; _code?>
+head<=
+  <style type="text/css">
+	<!--
+	caption { font-size: smaller; text-align: center; }
+
+	.noborder { border: none }
+
+	table#page-layout-table {
+		border-collapse: collapse;
+		background: #ccc;
+		padding: 5px;
+		margin: 10px;
+	}
+
+	table#page-layout-table td {
+		background: #efefef;
+		padding: 2px;
+		border: 1px solid black;
+	}
+
+	div#preview-page {
+		background: #efefef;
+		border: 2px solid #333;
+		padding: 1em;
+		width: 250;
+	}
+
+	#wizard-status {
+		font-size: smaller;
+		text-align: center;
+	}
+	-->
+  </style>
+
+  <script type="text/javascript" src="/js/xbDOM.js"></script>
+  <script type="text/javascript" src="/js/xbDebug.js"></script>
+  <script type="text/javascript" src="/js/postwizard.js"></script>
+<=head
+page?>
+

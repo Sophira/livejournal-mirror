@@ -1,0 +1,219 @@
+<?_code
+{
+    use strict;
+
+    use vars qw(%GET %POST %FORM $body $title $head);
+
+    my $remote = FB::User->remote
+        or return BML::redirect("/login?to=manage/gals2.bml");
+
+    my $uid = $remote->id;
+
+    $head .= FB::Manage->standard_head;
+
+    # prepopulate the gals info
+    my $js_gal_info = "null";
+    my $usergals = $remote->galleries();
+    if ($usergals) {
+        my $galinfo = [];
+
+        foreach my $gal (values %$usergals) {
+            next unless $gal->valid;
+            push @$galinfo, $gal->gal_info;
+        }
+
+        $js_gal_info = JSON::objToJson($galinfo);
+    }
+
+    # perl -> js stuff
+    $head .= qq {
+        <script language="JavaScript">
+        FB.galInfo = ${js_gal_info};
+        </script>
+    };
+
+    # set up gal manage page
+    $head .= q {
+      <script language="JavaScript" src='/js/manage/gallistview.js'></script>
+      <script language="JavaScript" src='/js/manage/galthumbview.js'></script>
+      <script language="JavaScript" src='/js/manage/galmanageview.js'></script>
+
+        <script language="JavaScript">
+        // create the datasources
+        var galDataSource = new GalleryDataSource();
+
+        // globally accessable datasource to keep track of selected galleries
+        FB.galSelected = new DataSource();
+
+        // create the views
+        var galList   = new GalleryListView();
+        var galThumb = new GalleryThumbView();
+        var galManage  = new GalleryManageView();
+        var manageView = new MultiView();
+        var browseView = new View();
+        var goTagView = new View();
+        var manageTabsView = new TabGroupView();
+        var paginationView = new PaginationView();
+
+        // create the gallery management controller
+        var galManageController = new GalleryManageController();
+
+        // create the diskfree widget
+        var diskFreeWidget = new DiskFree_Widget();
+        FB.diskFreeWidget = diskFreeWidget;
+
+        function setup () {
+          // initialize selected galleries
+          FB.galSelected.init([]);
+
+          // initialize gallery datasource
+          galDataSource.init({"noFetch": 1});
+          // make the datasource paginated
+          galDataSource.makePaginated();
+          // sort gals by name
+          galDataSource.sortDataBy("name", "string");
+
+          // create some view divs
+          var galListDiv = document.createElement("div");
+          DOM.addClassName(galListDiv, "FBGalleryView");
+
+          var galThumbDiv = document.createElement("div");
+          DOM.addClassName(galThumbDiv, "FBGalleryView");
+
+          var goTagDiv = document.createElement("div");
+          goTagDiv.innerHTML = "<iframe src='/manage/annotate' style='width: 100%; height: 600px;' />";
+
+          browseView.init({'view': $("browseView")});
+          goTagView.init({'view': goTagDiv});
+          paginationView.init({
+            'view': $("paginationView"),
+              'datasource': galDataSource,
+              'linkClass': 'PlainLink'});
+
+          galManageController.init(galDataSource);
+
+          galList.init({
+              'view':       galListDiv,
+              'datasource': galDataSource,
+              'controller': galManageController
+          });
+
+          galThumb.init({
+              'view':       galThumbDiv,
+              'datasource': galDataSource,
+              'controller': galManageController
+          });
+
+          manageView.init({
+              'view':  $("browseView"),
+              'views': {
+                "tag":   goTagView,
+                "thumb": galThumb,
+                "list":  galList
+                  },
+                'defaultView': 'list'
+           });
+
+          galManage.init({
+              'view':       $("galManage"),
+              'datasource': galDataSource,
+              'controller': galManageController
+          });
+
+          galManageController.addGalView(galList);
+
+          diskFreeWidget.init($("diskfree_widget"));
+
+          DOM.addEventListener($("gallistbtn"), "click", galListClicked);
+          DOM.addEventListener($("galthumbbtn"), "click", galThumbClicked);
+
+          // set up the tabs
+          var galTabContentRenderer = function () { return "Galleries (" + galDataSource.totalLength() + ")" };
+          var galTab = {
+            "contentRenderer": galTabContentRenderer,
+            "datasource": galDataSource,
+            "selected": true,
+            "clickHandler": function () {
+              $("galManage").style.display = "";
+              $("paginationView").style.display = "";
+              $("FBManageGalleryViewButtons").style.display = "";
+              manageView.setView("list");
+            }
+          };
+
+           var goTagTab = {
+            "content": "Go Tag",
+            "clickHandler": function () {
+              $("galManage").style.display = "none";
+              $("paginationView").style.display = "none";
+              $("FBManageGalleryViewButtons").style.display = "none";
+              manageView.setView("tag");
+            }
+          };
+
+          /*manageTabsView.init($("manageTabsView"),
+                              [ galTab, goTagTab ], { "tabClass": "FBManageTab",
+                                                        "tabSelectedClass": "FBManageTabSelected" });
+          */
+
+           // prepopulate gallery data
+           galDataSource.setGalInfo(FB.galInfo);
+        }
+
+      function galListClicked() {
+        manageView.setView("list");
+      }
+
+      function galThumbClicked() {
+        manageView.setView("thumb");
+      }
+
+      DOM.addEventListener(window, "load", setup);
+
+      </script>
+    };
+
+    my $diskfree_widget = $remote->diskfree_widget;
+
+    $body .= q {
+      <div id="pageHeader">
+        <h1 id="pageTitle">Manage Galleries</h1>
+      </div>
+      <div style="clear: both;">
+          <div id="manageTabsView"></div>
+
+      </div>
+      <div id="manageview">
+
+          <div id="FBManageGalleryViewButtons">
+            <input type='button' value='Create a New Gallery' id='CreateNewGalleryBtn' />
+            <input type='button' value='Upload Pictures' id='UploadPicturesBtn' />
+          </div>
+
+          <div class="clr"></div>
+            <div id="galManage">Loading Galllery Manage View...</div>
+          <div id="browseViewContainer">
+            <div id="browseView"></div>
+            <div id="FBManageViewMode">
+                <img src="/img/listview.gif" id="gallistbtn" width="16" height="16" title="View as list" />
+                <img src="/img/thumbview.gif" id="galthumbbtn" width="16" height="16" title="View as thumbnails" />
+            </div>
+            <div id="paginationView"></div>
+             <div id="diskfree_widget"></div>
+          </div>
+
+      </div>
+    };
+
+    return;
+}
+
+_code?>
+
+<?page
+title=><?_code return $title _code?>
+body=><?_code return $body _code?>
+head<=
+<?_code return $head _code?>
+<=head
+page?>

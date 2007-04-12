@@ -1,0 +1,37 @@
+<?page emacs=> -*-bml-*-
+title=>Dev: Fix Counts
+body<=
+<?_code
+{
+    my $u = FB::get_remote();
+    return BML::redirect("/login") unless $u;
+
+    my $udbh = FB::get_user_db_writer($u);
+    my $sth = $udbh->prepare("select p.upicid from upic p left outer join gallerypics g on p.upicid=g.upicid and g.userid=p.userid where p.userid=$u->{'userid'} and g.gallid is null");
+    $sth->execute;
+
+    my $g = FB::load_gallery_incoming($u);
+    my $ct = 0;
+    while ($picid = $sth->fetchrow_array) {
+        $ct++;
+
+        $udbh->do("INSERT INTO gallerypics (userid, gallid, upicid, ".
+                  "dateins, secid, sortorder) VALUES (?,?,?,UNIX_TIMESTAMP(),?,?)", 
+                  undef, $u->{'userid'}, $g->{'gallid'}, $picid,
+                  0, $g->{'nextsortorder'}++);
+
+        FB::change_gal_size($u, $g, 0, +1);
+    }
+
+    if ($ct) {
+        $udbh->do("UPDATE gallery SET timeupdate=UNIX_TIMESTAMP(), ".
+                  "nextsortorder=$g->{'nextsortorder'} ".
+                  "WHERE gallid=$g->{'gallid'}");
+        return "$ct pictures recovered.";
+    }
+    
+    return "No pictures were missing.";
+}    
+_code?>
+<=body
+page?>

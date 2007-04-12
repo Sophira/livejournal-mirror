@@ -1,0 +1,193 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%GET %POST $title $body);
+
+    my $u = FB::get_remote();
+    my $upicid = $GET{'id'}+0;
+
+    return BML::redirect("/login?to=" .
+                         FB::eurl("manage/pic.bml?id=$upicid")) unless $u;
+
+    my $upicid = $GET{'id'}+0;
+    my $up    = FB::Upic->new($u, $upicid);
+
+    return BML::redirect("/manage/media/gals.bml") unless $up && $up->valid;
+
+    $up->autorotate;
+
+    $body = "";
+    $title = FB::ehtml($up->prop('pictitle')) ||
+        "Picture $upicid";
+
+    my $err = sub {
+        $title = "Error";
+        $body = $_[0];
+        return;
+    };
+
+    my @gals = $up->galleries;
+
+    if (FB::did_post()) {
+        $up->set_text_prop("pictitle", $POST{'title'});
+        $up->set_des($POST{'des'});
+        $up->set_secid($POST{'picsec'});
+
+        # remove picture from galleries
+        my $still_in = 0;
+        foreach my $g (@gals) {
+            $still_in++;
+            my $id = $g->id;
+            next unless $POST{"wasin_$id"};
+            next if $POST{"in_$id"};
+            $still_in-- if $g->remove_picture($up);
+        }
+
+        # delete picture
+        if ($POST{'action:del'}) {
+            return $err->("Can't delete a picture that's a member of galleries.  Go back, uncheck the gallery checkboxes as a means of confirmation, and click the delete button again.")
+                if $still_in;
+
+            $up->delete;
+            $title = "Deleted";
+            $body = "Picture was deleted.";
+            return;
+        }
+
+        if ($POST{'addtogal'}) {
+            my $g;
+            if ($POST{'addtogal'} eq "new" && $POST{'newgalname'} =~ /\S/) {
+                $g = FB::Gallery->create($u, name => $POST{'newgalname'});
+            } elsif ($POST{'addtogal'} =~ /^\d+$/) {
+                $g = $u->load_gallery_id($POST{'addtogal'});
+            }
+            if ($g && $g->add_picture($up)) {
+                $still_in = 1;  # so it's not added to incoming again
+            }
+        }
+
+        if ($POST{'sn'}) {
+            foreach my $sn (split(/,/, $POST{'sn'})) {
+                my $g = $u->gallery_of_tag($sn);
+                next unless $g;
+                if ($g->add_picture($up)) {
+                    $still_in = 1;
+                }
+            }
+        }
+
+        # if we've remove this pic from all galleries, add it back
+        # to unsorted
+        unless ($still_in) {
+            my $unsorted = $u->incoming_gallery;
+            $unsorted->add_picture($up);
+        }
+
+        # so they have a GET URL again:
+        return BML::redirect("/manage/media/pic.bml?id=$up->{'upicid'}");
+    }
+
+    my $piccode = $up->piccode;
+    my ($url, $w, $h) = $up->scaled_url(320, 320);
+    my $fullurl = $up->url_full;
+    my $picurl  = $up->url_picture_page;
+
+    $body .= "<p>";
+    $body .= "[<b>Properties</b>]\n";
+    $body .= "[<a href=\"picalter.bml?id=$upicid\">Alter Picture</a>]\n";
+    $body .= "[<a href=\"thumbfocus.bml?id=$up->{'upicid'}\">Thumbnail Focus</a>] ";
+    $body .= "[<a href=\"$picurl\">View...</a>]";
+    $body .= "</p>";
+
+    my $urlt;
+    my $modtime = $up->prop("modtime");
+    $urlt = "?t=$modtime" if $modtime > time() - 300; # 5 minutes
+
+
+    $body .= "<p><a href=\"$picurl\"><img border=0 width='$w' height='$h' alt='$piccode' src='$url$urlt' align='absbottom' /></a></p>\n";
+    $body .= "<form id='imgform' method='post' action='pic.bml?id=$up->{'upicid'}'>";
+    $body .= LJ::html_hidden("randauth", $up->randauth);
+    $body .= "<table>";
+    $body .= "<tr><td align='right'><b>Title:</b></td><td>";
+    $body .= LJ::html_text({ name => 'title', size => 30, maxlength => 100,
+                             value => $up->prop('pictitle'), raw => "style='width: 250px'", });
+    $body .= "</td></tr><tr valign='top'><td align='right'><b>Description:</b></td><td>";
+    $body .= "<textarea wrap='virtual' style='width: 250px' name='des' rows='5' cols='30'>";
+    $body .= FB::eall($up->des);
+    $body .= "</textarea>";
+    $body .= "</td></tr>";
+    $body .= "<tr><td align='right'><b>Size:</b></td><td><a href='$fullurl'>" .
+        $up->width . " x " . $up->height . "</a>, " . int($up->bytes / 1024) . " kB</td></tr>\n";
+
+    # security
+    $body .= "<tr><td align='right'><b>Security:</b></td><td>";
+    $body .= FB::html_security($u, "picsec", $up->secid);
+    $body .= "</td></tr>\n";
+
+    # galleries
+    $body .= "<tr valign='top'><td align='right'><b>Galleries:</b></td><td>";
+    foreach my $gi (@gals)
+    {
+        my $name = FB::ehtml($gi->display_name);
+
+        my $incoming = $gi->is_unsorted;
+        $name = "<i>$name</i>" if $incoming;
+
+        $body .= LJ::html_hidden("wasin_$gi->{'gallid'}", 1);
+        $body .= LJ::html_check({ 'name' => "in_$gi->{'gallid'}",
+                                  'selected' => 1 });
+        $body .= " <a href='gal.bml?id=$gi->{'gallid'}'>$name</a>";
+
+        unless ($incoming) {
+            my $viewurl = $gi->tag ? $gi->tag_url : $gi->url;
+            $body .= " <small>[<a href='$viewurl'>view</a>]</small>";
+        }
+
+        $body .= "<br />\n";
+    }
+    $body .= "</td></tr>\n";
+
+    # add to gallery:
+    $body .= "<tr valign='top'><td align='right'><b>Add to:</b></td><td>";
+    $body .= LJ::html_select({ 'name' => 'addtogal',
+                               'raw' => "id='addtogal_select'",  },
+                             '' => "(Select gallery)",
+                             'new' => "[New Gallery...]",
+                             FB::gallery_select_list($u),
+                             );
+    $body .= "<br /><span id='newgalname' style='display:block'>Gallery Name: <input type='text' id='newgalname_text' name='newgalname'></span>";
+    $body .= "</td></tr>";
+
+    # short names
+    $body .= "<tr valign='top'><td align='right'><b>Tags:</b></td><td>";
+    $body .= "<input id='in_tags' name='sn' autocomplete='off' size='30'><br /><font size='-1'>(Comma separated list of tags to add to picture)</font>";
+    $body .= "</td></tr>\n";
+
+    $body .= "<tr><td>&nbsp;</td><td><br />";
+    $body .= LJ::html_submit('', "Save Changes") . " ";
+    $body .= LJ::html_submit('action:del', "Delete Picture");
+    $body .= "</td></tr></table></form>\n";
+    return;
+
+}
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+head<=
+<script src="/js/xbDOM.js"></script>
+<script src='/js/fotobilder.js'></script>
+<script src='/js/core.js'></script>
+<script src='/js/dom.js'></script>
+<script src='/js/inputcomplete.js'></script>
+<script>
+
+    function init () {
+        setupNewGalHidey('addtogal_select', 'newgalname', 'newgalname_text');
+        var compdata = new InputCompleteData(<?_code FB::get_remote()->tags_as_js; _code?>);
+        var foo = new InputComplete($("in_tags"), compdata);
+    }
+
+</script>
+<=head
+bodyopts=>onLoad="init();"
+page?>

@@ -1,0 +1,590 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%GET %POST $title $body $jsinit);
+
+    my $u = FB::User->remote
+        or return BML::redirect("/login.bml");
+
+    my $upicid = $GET{'id'}+0;
+    my $up = FB::Upic->new($u, $upicid);
+    return BML::redirect("/manage/media/gals.bml") unless $up && $up->valid;
+
+    $body = "";
+    $title = "Picture $upicid";
+
+    my $piccode = $up->piccode;
+    my ($url, $w, $h) = $up->scaled_url(640, 640);
+    my $picurl = $up->url_picture_page;
+
+    $w = int($w / 2);
+    $h = int($h / 2);
+
+    $body .= "<p>";
+    $body .= "[<a href=\"pic.bml?id=$upicid\">Properties</a>]\n";
+    $body .= "[<a href=\"picalter.bml?id=$upicid\">Alter Picture</a>]\n";
+    $body .= "[<b>Thumbnail Focus</b>] ";
+    $body .= "[<a href=\"$picurl\">View...</a>]";
+    $body .= "</p>";
+
+    # the "current" value in the database is 6 floating point numbers:
+    # three pairs of percentage coordinates, top-left, bottom-right, and middle
+    # but when we interact with the browser, we always work in absolute pixels.
+    # also, when we interact with the browser, we give 8 points, the first
+    # pair being the absolute size.
+    # also, in database it is comma-separated, to client is semi-colon separated
+
+    my $current = $POST{'region'};
+    if ($current) {
+        $current = join(';', map { int($_) } split(/\;/, $current));
+    }
+
+    unless ($current) {
+        if (my $cf = $up->prop('cropfocus')) {
+            my @existing = split(/\,/, $cf);
+            my $i = 0;
+            $current = join(';', $w, $h,
+                            map { int($w*$existing[$i++]),
+                                  int($h*$existing[$i++]) } (1..3));
+        } else {
+            $current = join(';', $w, $h, 0, 0, $w, $h,
+                            int($w/2), int($h/2));
+        }
+    }
+
+    my $movewhat = $POST{'movewhat'} || "tl";
+
+    my ($w, $h, $tlx, $tly, $brx, $bry, $mix, $miy) =
+        split(/\;/, $current);
+
+    if (FB::did_post()) {
+        # FIXME: auth verifier?
+
+
+        if ($tlx == 0 && $tly == 0 && $brx == $w && $bry == $h &&
+            abs($mix - ($w / 2)) <= 2 && abs($miy - ($h / 2)) <= 2) {
+            # if default, just clear it
+            $up->set_cropfocus(undef);
+        } elsif ($POST{'action:save'}) {
+            my $string = join(',',
+                              sprintf("%.4f", $tlx/$w),
+                              sprintf("%.4f", $tly/$h),
+                              sprintf("%.4f", $brx/$w),
+                              sprintf("%.4f", $bry/$h),
+                              sprintf("%.4f", $mix/$w),
+                              sprintf("%.4f", $miy/$h));
+           $up->set_cropfocus($string);
+        }
+
+        if ($POST{'action:save'}) {
+            return BML::redirect("/manage/media/pic.bml?id=$upicid");
+        }
+    }
+
+    $body .= "<form id='focusForm' method='post'>";
+    $body .= "\n<input type='hidden' name='region' id='hdn_region' value='$current' />";
+
+    my $cellh;
+
+    $body .= "<div class='tip' id='tipbox'></div>";
+
+    # the galleryimg='no' attribute disables IE's on-image toolbar which
+    # interferes with user's operation of this page
+
+    $body .= "<div id='imgdiv' style='display: block; position: relative; width: ${w}px; height: ${h}px;'><img style='position:absolute; top:0px; left: 0px;' id='imgback' galleryimg='no' src='$url' width='$w' height='$h' /><div id='divcover' style='position: absolute; top: 0px; left: 0px; width: ${w}px; height: ${h}px;'></div>";
+
+    my ($tpx, $tpy) = ($mix-7, $miy-7);  # image is 15x15, so -7 -7 makes it centered on crosshair
+    $body .= "<img src=\"/static/img/cropcenter.gif\" id='cropcenter' width='15' height='15' style='position: absolute; top: ${tpy}px; left: ${tpx}px; z-index: 2; '>";
+
+    $body .= "<div id='thumbcrop' class='ants'></div><div id='thumbcrop2' class='ants'></div>";
+
+    $body .= "</div>";
+
+    $body .= "<div id='actionbtns'><input type='submit' id='btnSave' value='Save' name='action:save' /> ";
+    $body .= "<input type='button' id='btnReset' value='Reset Focus' /></div>";
+
+    my ($turl, $tw, $th) = $up->url_thumbnail([125, 125]);
+    warn "turl: :$turl";
+
+    $body .= "<?h1 Low-quality thumbnail previews: h1?>";
+    $body .= "<p>These are quick approximations of the thumbnails the server will generate given your focus specifications above.</p> <div id='previewPane'><img class='regular' src='$turl' width='$tw' height='$th' title='Regular thumbnail:  scaled, but not cropped.' />
+
+<div id='prevCropped'  style='width: 125px; height: 125px' title='Cropped thumbnail.  Uses only cropping region, not focus point.'><img id='imgCrop' src='$url' width='125' height='125'/></div>
+<div id='prevZoomed' style='width: 125px; height: 125px' title='Square zoomed thumbnail.  Uses cropping region and focus point.' ><img id='imgZoom' src='$url' width='100' height='100'/></div>
+<div id='prevZoomed2' style='width: 125px; height: 80px' title='Horizontally zoomed thumbnail.  Uses cropping region and focus point.'><img id='imgZoom2' src='$url' width='100' height='100'/></div>
+<div id='prevZoomed3' style='width: 80px; height: 125px' title='Vertically zoomed thumbnail.  Uses cropping region and focus point.'><img id='imgZoom3' src='$url' width='100' height='100'/></div>
+
+</div>";
+
+    $body .= "</form>";
+
+    return;
+
+}
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+head<=
+<style>
+
+#imgdiv {
+    /* border: 2px solid green; */
+}
+
+#imgback {
+    /*  border: 2px solid blue; */
+}
+
+#previewPane {
+    height: 160px;
+}
+
+#previewPane #prevCropped {
+    position: relative;
+    overflow: hidden;
+}
+
+#previewPane #prevCropped img {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+#prevZoomed {
+    position: relative;
+    overflow: hidden;
+}
+#prevZoomed2 {
+    position: relative;
+    overflow: hidden;
+}
+#prevZoomed3 {
+    position: relative;
+    overflow: hidden;
+}
+
+#previewPane #prevZoomed img {
+    position: absolute;
+}
+#previewPane #prevZoomed2 img {
+    position: absolute;
+}
+#previewPane #prevZoomed3 img {
+    position: absolute;
+}
+
+#previewPane img {
+}
+
+#previewPane img.regular {
+    float: left;
+    border: 1px solid black;
+    margin: 5px;
+}
+
+#previewPane div {
+    float: left;
+    border: 1px solid black;
+    margin: 5px;
+ }
+
+
+#actionbtns {
+ margin-top: 0.5em;
+}
+
+div.ants {
+ position: absolute;
+ left: 0%;
+ width: 100%;
+ top: 0%;
+ height: 100%;
+ padding: 0 3px 3px 0;
+ margin: 0;
+}
+
+#thumbcrop {
+ border: 2px dashed white;
+}
+
+#thumbcrop2 {
+ border: 2px dashed black;
+}
+
+</style>
+<script language="JavaScript"></script>
+<script language="JavaScript" src="/js/xbDOM.js"></script>
+<script language="JavaScript" src="/js/core.js"></script>
+<script language="JavaScript" src="/js/dom.js"></script>
+
+<script language="JavaScript">
+
+log = Function.stub;
+
+var cropData = {};
+
+function relPos (e) {
+    e = Event.prep(e);
+    var loc    = DOM.getAbsoluteCursorPosition(e);
+    var imgdiv = DOM.getAbsoluteDimensions($("imgdiv"));
+    //log([loc.path, loc.x, loc.y, imgdiv.absoluteLeft, imgdiv.absoluteTop].join(", "));
+    return {x:loc.x - imgdiv.absoluteLeft,
+            y:loc.y - imgdiv.absoluteTop};
+}
+
+function onClick (e) {
+    e = Event.prep(e);
+    var pos = relPos(e);
+    setMiddle(pos.x, pos.y);
+    sortPoints();
+    updatePreview();
+}
+
+var trackerPlane = "imgdiv";
+
+function onMouseDown (e) {
+    e = Event.prep(e);
+    var dpos = relPos(e);
+
+    var img = $(trackerPlane);
+
+    var isClose = function (pos) {
+        // this looks stupid, but it's the only way that'll work:  I tried
+        // to just return the expression in the if block, but it wasn't working.
+        // not sure what I'm not understanding here.  --brad
+        if (Math.abs(pos.x - dpos.x) < 10 &&
+            Math.abs(pos.y - dpos.y) < 10) {
+                return true;
+            } else {
+                return false;
+            }
+    };
+
+    var did_topleft = false;
+
+    //log(trackerPlane + ":on mouse down");
+
+    var imgback = $("imgback");
+
+    // IE's onmousemove event comes in from a different place than the mousedown/up.
+    // whatever.
+    imgback.onmousemove = img.onmousemove = function (emove) {
+        emove = Event.prep(emove);
+        var mpos = relPos(emove);
+
+        var isShift = emove.shiftKey;
+        //log(trackerPlane + ":  mouse move");
+
+        if (did_topleft) {
+            setBottomRight(mpos.x, mpos.y, isShift);
+        } else if (! isClose(mpos)) {
+            did_topleft = true;
+            setTopLeft(dpos.x, dpos.y);
+            setBottomRight(mpos.x, mpos.y, isShift);
+        }
+
+        return emove.stop();
+    };
+
+    img.onmouseup = function (eup) {
+        eup = Event.prep(eup);
+        var upos = relPos(eup);
+
+        //log(trackerPlane + ": UP!");
+        img.onmousemove = null;
+        img.onmouseup   = null;
+        imgback.onmousemove = null;
+
+        if (!did_topleft) {
+            onClick(eup);
+            return eup.stop();
+        }
+
+        sortPoints();
+        updatePreview();
+
+        // if focus center is outside the box, let's adjust it
+        if ( (cropData.mix < cropData.tlx || cropData.mix > cropData.brx) ||
+             (cropData.miy < cropData.tly || cropData.miy > cropData.bry) ) {
+            setMiddle(Math.floor((cropData.tlx + cropData.brx)/2),
+                      Math.floor((cropData.tly + cropData.bry)/2));
+        }
+
+        return eup.stop();
+
+    };
+
+    return e.stop();
+}
+
+function sortPoints () {
+    var t;
+    if (cropData.tlx > cropData.brx) {
+        t = cropData.tlx;
+        cropData.tlx = cropData.brx;
+        cropData.brx = t;
+    }
+
+    if (cropData.tly > cropData.bry) {
+        t = cropData.tly;
+        cropData.tly = cropData.bry;
+        cropData.bry = t;
+    }
+}
+
+function setMiddle (x, y) {
+
+    sortPoints();
+    if (x < cropData.tlx) x = cropData.tlx;
+    else if (x > cropData.brx) x = cropData.brx;
+
+    if (y < cropData.tly) y = cropData.tly;
+    else if (y > cropData.bry) y = cropData.bry;
+
+    cropData.mix = x;
+    cropData.miy = y;
+
+    var bullseye = $("cropcenter");
+    bullseye.style.left = (x - 7) + "px";
+    bullseye.style.top = (y - 7) + "px";
+}
+
+function setTopLeft (x, y) {
+    x = min(x, cropData.width);
+    y = min(y, cropData.height);
+    cropData.tlx = x;
+    cropData.tly = y;
+    adjustAnts();
+}
+
+function setBottomRight (x, y, isShift) {
+    x = min(x, cropData.width);
+    y = min(y, cropData.height);
+
+    if (isShift) {
+        var dx = Math.abs(cropData.tlx - x);
+        var dy = Math.abs(cropData.tly - y);
+        var d = max(dx, dy);
+
+        cropData.brx = cropData.tlx + ((x > cropData.tlx) ? 1 : -1) * d;
+        cropData.bry = cropData.tly + ((y > cropData.tly) ? 1 : -1) * d;
+    } else {
+        cropData.brx = x;
+        cropData.bry = y;
+    }
+    adjustAnts();
+}
+
+function adjustAnts () {
+    var minx = min(cropData.tlx, cropData.brx);
+    var miny = min(cropData.tly, cropData.bry);
+    var width = Math.abs(cropData.brx - cropData.tlx);
+    var height = Math.abs(cropData.bry - cropData.tly);
+
+    var ants = $("thumbcrop");
+    ants.style.left = minx + "px";
+    ants.style.top = miny + "px";
+    ants.style.width = width + "px";
+    ants.style.height = height + "px";
+
+    ants = $("thumbcrop2");
+    ants.style.left = (minx + 2) + "px";
+    ants.style.top = (miny + 2) + "px";
+    ants.style.width = (width - 4) + "px";
+    ants.style.height = (height - 4) + "px";
+}
+
+var tips = [
+            "<b>Tip:</b> Select the interesting region, then click the focal point of the image.  You can see the effects of your selections on the thumbnails below.",
+            "<b>Note:</b> With this page, you're not designing a single thumbnail, but rather giving the system information on how it can build any thumbnail well.",
+            "<b>Tip:</b>  Hold down the 'shift' key while selecting to select a square region.",
+            "<b>Tip:</b>  Hover over a thumbnail below to get a description of that thumbnail's type.",
+            "<b>Note:</b>  To actually choose which thumbnail style is used for your pictures, go into '<a href='/manage/styles/'>Manage Styles</a>'."
+            ];
+var tipNum = 0;
+
+var field_names = ["width", "height", "tlx", "tly", "brx", "bry", "mix", "miy"];
+
+DOM.addEventListener(window, "load", function () {
+    var img = $(trackerPlane);
+    img.onmousedown = onMouseDown;
+
+    var imgback = $("imgback");
+
+    imgback.onmousemove = function (e) {
+        e = Event.prep(e);
+        //log("imgback: mousemove");
+        return e.stop();
+    };
+
+    img.onmousemove = function (e) {
+        e = Event.prep(e);
+        //log(trackerPlane + ": mousemove");
+        return e.stop();
+    };
+
+    // populate our initial cropdata, and set the ants and such
+    var reg = $("hdn_region");
+    var list = reg.value.split(";");
+    for (var i=0; i<field_names.length; i++)
+        cropData[field_names[i]] = parseInt(list[i]);
+
+    adjustAnts();
+    setMiddle(cropData.mix, cropData.miy);
+
+    var frm = $("focusForm");
+    frm.onsubmit = onSubmit;
+
+    $("btnReset").onclick = onReset;
+    updatePreview();
+
+    showTip();
+});
+
+function showTip () {
+    $("tipbox").innerHTML = tips[tipNum] + "<div style='text-align: right'>Tip " + (tipNum+1) + "/" + (tips.length) + ", <a href='#' onclick='return nextTip()'>Next Tip &gt;&gt;</a></div>";
+}
+
+function nextTip () {
+    tipNum = (tipNum + 1) % tips.length;
+    showTip();
+return false;
+}
+
+function onSubmit (e) {
+    e = Event.prep(e);
+    updateHidden();
+}
+
+function onReset () {
+    cropData.tlx = 0;
+    cropData.brx = cropData.width;
+    cropData.tly = 0;
+    cropData.bry = cropData.height;
+    setMiddle(Math.floor(cropData.width / 2), Math.floor(cropData.height / 2));
+    adjustAnts();
+    updatePreview();
+}
+
+function updateHidden () {
+    sortPoints();
+
+    var hd = $('hdn_region');
+    var fields = [];
+    for (var i=0; i<field_names.length; i++)
+        fields[i] = cropData[field_names[i]];
+    hd.value = fields.join(";");
+}
+
+function updatePreview () {
+    var sel_w = max(cropData.brx - cropData.tlx, 20);
+    var sel_h = max(cropData.bry - cropData.tly, 20);
+
+    var cf = [cropData.tlx / cropData.width,
+              cropData.tly / cropData.height,
+              cropData.brx / cropData.width,
+              cropData.bry / cropData.height,
+              cropData.mix / cropData.width,
+              cropData.miy / cropData.height
+              ];
+
+    var calc = {
+        sel_w: sel_w,
+        sel_h: sel_h,
+        cf:  cf
+    };
+
+    updateCropPreview(calc);
+    updateZoomPreview(calc, "");
+    updateZoomPreview(calc, "2");
+    updateZoomPreview(calc, "3");
+}
+
+function updateCropPreview (c) {
+    var prevc = $("prevCropped");
+    var imgc = $("imgCrop");
+
+    var prev_w = 125;
+    var prev_h = 125;
+
+    var crop_w;
+    var crop_h;
+
+    if (c.sel_h / prev_h > c.sel_w / prev_w) {
+        // maximize hight
+        crop_w = Math.floor(c.sel_w * prev_h / c.sel_h);
+        crop_h = prev_h;
+    } else {
+        crop_w = prev_w;
+        crop_h = Math.floor(c.sel_h * prev_w / c.sel_w);
+
+    }
+    prevc.style.width = crop_w + "px";
+    prevc.style.height = crop_h + "px";
+
+    imgc.width = crop_w * (cropData.width / c.sel_w);
+    imgc.height = crop_h * (cropData.height / c.sel_h);
+    imgc.style.left = "-" + (imgc.width * c.cf[0]) + "px";
+    imgc.style.top  = "-" + (imgc.height * c.cf[1]) + "px";
+}
+
+function updateZoomPreview (c, n) {
+    var prev = $("prevZoomed"+n);
+    var img = $("imgZoom"+n);
+
+    var prev_w = parseInt(prev.style.width.replace(/px/, ""));
+    var prev_h = parseInt(prev.style.height.replace(/px/, ""));
+
+    var des_ratio = prev_w / prev_h;  // requested thumbnail of prev_w by prev_h
+    var crop_w = (c.cf[2]-c.cf[0]) * cropData.width;
+    var crop_h = (c.cf[3]-c.cf[1]) * cropData.height;
+    var crop_ratio = crop_w / crop_h;
+
+    // adjust crop_ratio to match des_ratio, by making crop region
+    // smaller in either width or height
+    if (crop_ratio > des_ratio) {
+        crop_w *= (crop_h * prev_w) / (prev_h * crop_w);
+    } else if (des_ratio > crop_ratio) {
+        crop_h /= (crop_h * prev_w) / (prev_h * crop_w);
+    }
+
+    // convert crop_w/crop_h from pixels to percentages
+    crop_w /= cropData.width;
+    crop_h /= cropData.height;
+
+    // center region on focus point
+    var mid_x = c.cf[4];
+    var mid_y = c.cf[5];
+
+    var tlx = mid_x - crop_w / 2;
+    var brx = mid_x + crop_w / 2;
+    var tly = mid_y - crop_h / 2;
+    var bry = mid_y + crop_h / 2;
+
+    // but, if we're out of boundaries, shift it back in
+    var slidex = 0, slidey = 0;
+    if (tlx < c.cf[0]) slidex = c.cf[0] - tlx;
+    if (brx > c.cf[2]) slidex = c.cf[2] - brx;
+    if (tly < c.cf[1]) slidey = c.cf[1] - tly;
+    if (bry > c.cf[3]) slidey = c.cf[3] - bry;
+
+    // change our cropping area
+    c.cf[0] = tlx + slidex;
+    c.cf[2] = brx + slidex;
+    c.cf[1] = tly + slidey;
+    c.cf[3] = bry + slidey;
+
+    var xscale = (1 / (c.cf[2] - c.cf[0]));
+    var yscale = (1 / (c.cf[3] - c.cf[1]));
+
+    img.width = Math.floor(prev_w * xscale);
+    img.height = Math.floor(prev_h * yscale);
+
+    img.style.left = "-" + Math.floor(img.width * c.cf[0]) + "px";
+    img.style.top  = "-" + Math.floor(img.height * c.cf[1]) + "px";
+}
+
+</script>
+</script>
+<=head
+page?>

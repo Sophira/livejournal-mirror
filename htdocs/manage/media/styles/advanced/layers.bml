@@ -1,0 +1,213 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%POST $title $body);
+
+    # for error reporting
+    my $err = sub {
+        $title = "Error";
+        $body = shift;
+        return;        
+    };
+
+    # id is optional
+    my $id = $POST{'id'} if $POST{'id'} =~ /^\d+$/;
+
+    # this catches core_hidden if it's set
+    $POST{'parid'} ||= $POST{'parid_hidden'};
+
+    # authenticate user
+    my $u = FB::get_remote()
+        or return BML::redirect("/login?to=manage/styles/advanced/layers");
+
+    # check user cap
+    return $err->("Your account type doesn't permit creating layers.") 
+        unless FB::get_cap($u, 'styles');
+
+    # load user and public layers
+    my $pub = FB::get_public_layers();
+    my $ulay = FB::get_layers_of_user($u);
+
+    # start of output
+    $title = "Your Layers";
+    $body .= "[<a href='./'>&lt;&lt; Advanced Customization</a>]\n";
+    $body .= "[<a href='./'>Your Styles</a>]\n";
+
+
+    ### perform actions ###
+
+    # create
+    if ($POST{'action:create'}) {
+        return $err->("You have reached your maximum number of allowed layers") 
+            if keys %$ulay >= FB::get_cap($u, 'maxlayers');
+
+        my $err_badparid = "No/bogus parent layer ID given (for layouts and core languages, use core parent ID; for themes and layout languages, use layout ID)";
+        my $type = $POST{'type'} or return $err->("No layer type selected.");
+        my $parid = $POST{'parid'}+0 or return $err->($err_badparid);
+        return $err->("Invalid layer type") unless $type =~ /^layout|theme|user|i18nc?$/;
+        my $parent_type = ($type eq "theme" || $type eq "i18n" || $type eq "user") ? "layout" : "core";
+        
+        # parent ID is public layer
+        if ($pub->{$parid}) {
+            # of the wrong type
+            return $err->($err_badparid) if $pub->{$parid}->{'type'} ne $parent_type;
+
+        # parent ID is user layer, or completely invalid
+        } else {
+            return $err->($err_badparid) if 
+                ! $ulay->{$parid} || $ulay->{$parid}->{'type'} != $parent_type;
+        }
+
+        my $id = FB::create_layer($u, $parid, $type);
+        return $err->("Error creating layer") unless $id;
+
+        my $lay = { 
+            'userid' => $u->{'userid'},
+            'type' => $type,
+            'b2lid' => $parid,
+            's2lid' => $id,
+        };
+
+        # help user out a bit, creating the beginning of their layer.
+        my $s2 = "layerinfo \"type\" = \"$type\";\n";
+        $s2 .= "layerinfo \"name\" = \"\";\n\n";
+        my $error;
+        unless (FB::layer_compile($lay, \$error, { 's2ref' => \$s2 })) {
+            return $err->("Error setting up &amp; compiling layer: $error");
+        }
+
+        # redirect so they can't refresh and create a new layer again
+        return BML::redirect("layers");
+    }
+
+    # delete
+    if ($POST{'action:del'}) {
+        my $id = $POST{'id'}+0;
+        my $lay = FB::load_layer($id);
+        return $err->("The specified layer does not exist")
+            unless $lay;
+
+        return $err->("You do not own the specified layer")
+            unless $lay->{'userid'} == $u->{'userid'};
+
+        unless ($POST{'confirm'}) {
+            my $layerinfo = {};
+            FB::load_layer_info($layerinfo, [ $id ]);
+            my $name = $layerinfo->{$id}->{'name'} ? "'$layerinfo->{$id}->{'name'}'" : "#$id";
+            $name = FB::ehtml($name);
+
+            $title = "Deleting layer $name";
+            $body .= "<br /> ";
+            $body .= "<a href='layers'>&lt;&lt; Your Layers</a>\n";
+            $body .= "<form method='post' action='layers'>";
+            $body .= FB::html_hidden('action:del', '1', 'id', $id);
+              
+            $body .= "Are you sure you want to delete $lay->{'type'} layer $name?";
+            $body .= "<p>" . FB::html_submit('confirm', 'Delete') . "</p>\n";;
+            $body .= "</form>\n";
+            return;
+        }
+
+        FB::delete_layer($id);
+        return BML::redirect("layers");
+    }
+
+    # show list of layers
+    $body .= "<?h1 Your Layers h1?>\n";
+    if (%$ulay) {
+        $body .= "<table style='margin-bottom: 10px' cellpadding='3' border='1'>\n";
+        $body .= "<tr><td><b>LayerID</b></td><td><b>Type</b></td><td><b>Name</b></td><td><b>Actions</b></td></tr>\n";
+        my $lastbase = 0;
+        foreach my $lid (sort { $ulay->{$a}->{'b2lid'} <=> $ulay->{$b}->{'b2lid'} || $a <=> $b } 
+                         keys %$ulay) 
+        {
+            my $bid = $ulay->{$lid}->{'b2lid'};
+            if ($bid != $lastbase) {
+                $lastbase = $bid;
+                my $parlay = $ulay->{$bid} || $pub->{$bid};
+                my $pname = FB::ehtml($parlay->{'name'});
+                $body .= "<tr><td colspan='4'><small>Child of <a href='layerbrowse?id=$bid'>layer $bid</a>: $pname</small></td></tr>\n";
+            }
+            my $lay = $ulay->{$lid};
+            my $name = FB::ehtml($lay->{'name'}) || "<i>(none)</i>";
+            $body .= "<tr><td><a href='layerbrowse?id=$lid'>$lid</a></td><td>$lay->{'type'}</td><td>$name</td><td>";
+            $body .= "<form method='post' style='display:inline' action='layeredit?id=$lid'>";
+            $body .= FB::html_submit('action:edit', 'Edit...');
+            $body .= "</form>";
+
+            $body .= "<form method='post' style='display:inline' action='layers'>";
+            $body .= FB::html_hidden('id', $lid);
+            $body .= FB::html_submit('action:del', 'Delete...');
+            $body .= "</form>";
+            $body .= "</td></tr>\n"
+        }
+        $body .= "</table>\n\n";
+    } else {
+        $body .= "<?p <i>None</i> p?>\n\n";
+    }
+
+    # create layer
+    $body .= "<?h1 Create Layer h1?>\n";
+
+    $body .= "<div style='margin-top: 10px;'>\n";
+    $body .= "<?h2 Create top-level layer h2?>\n";
+    $body .= "<form method='post' action='layers'>\n";
+    
+    $body .= "Type: " . FB::html_select({ 'name' => 'type' },
+                                          "" => "",
+                                          "layout" => "Layout",
+                                          "i18nc" => "Language",
+                                        ) . "\n";
+
+    my @corelayers = map { $_, $pub->{$_}->{'majorversion'} }
+                     sort { $pub->{$b}->{'majorversion'} <=> $pub->{$a}->{'majorversion'} }
+                     grep { $pub->{$_}->{'b2lid'} == 0 && $pub->{$_}->{'type'} eq 'core' && /^\d+$/}
+                     keys %$pub;
+    $body .= " Core Version: " . FB::html_select({ 'name' => 'parid', 
+                                                   'selected' => $corelayers[0],
+                                                   'disabled' => @corelayers > 2 ? 0: 1 },
+                                                 @corelayers ) . "\n";
+
+    # store value in hidden to later be copied to 'parid' if necessary
+    # defaults to $corelayers[0] which should be the highest numbered core
+    $body .= FB::html_hidden("parid_hidden", $POST{'parid'} || $corelayers[0]) . "\n";
+    $body .= FB::html_submit("action:create", "Create") . "\n";
+    $body .= "</form>\n";
+    $body .= "</div>\n\n";
+
+    $body .= "<?h2 Create layout-specific layer h2?>\n";
+    $body .= "<form method='post' action='layers'>\n";
+
+    $body .= "Type: " . FB::html_select({ 'name' => 'type' },
+                                        "" => "",
+                                        "theme" => "Theme",
+                                        "i18n" => "Language",
+                                        "user" => "User"
+                                        ) . "\n";
+
+    my @layouts = ('', '');
+    push @layouts, map { $_, $pub->{$_}->{'name'} }
+                   sort { $pub->{$a}->{'name'} cmp $pub->{$b}->{'name'} || $a <=> $b}
+                   grep { $pub->{$_}->{'type'} eq 'layout' && /^\d+$/} 
+                   keys %$pub;
+    if (%$ulay) {
+        my @ulayouts = ();
+        push @ulayouts, map { $_, "$ulay->{$_}->{'name'} (#$_)" } 
+                        sort { $ulay->{$a}->{'name'} cmp $ulay->{$b}->{'name'} || $a <=> $b}
+                        grep { $ulay->{$_}->{'type'} eq 'layout' } 
+                        keys %$ulay;
+        push @layouts, ('', '---', @ulayouts) if @ulayouts;
+    }
+
+    $body .= "Layout: " . FB::html_select({ 'name' => 'parid' }, @layouts) . "\n";
+
+    $body .= FB::html_submit("action:create", "Create") . "\n";
+    $body .= "</form>\n\n";
+
+    return;
+}
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+page?>
+    

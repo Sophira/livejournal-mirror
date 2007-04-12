@@ -1,0 +1,233 @@
+<?_code # -*-perl-*-
+{
+    use strict;
+    use vars qw(%POST %GET $title $body);
+
+    my $u = FB::get_remote();
+    my $styleid = $GET{'id'}+0;
+
+    return BML::redirect("/login?to=" . 
+                         FB::eurl("manage/style?id=$styleid")) unless $u;
+    FB::load_user_props($u, "styleid");
+
+    $body = "";
+    $title = "Edit Style";
+
+    my $err = sub {
+        $title = "Error";
+        $body = shift;
+        return;
+    };
+    my $style = FB::load_style($styleid);
+
+    return BML::redirect("/manage/media/styles/") unless $style;
+    return $err->("Style belongs to another user.") unless $style->{'userid'} == $u->{'userid'};
+
+    my %layerinfo;
+    my $publay = FB::get_public_layers();
+    my $corelayer = $publay->{'core1'};
+    return $err->("Can't find corelayer.") unless $corelayer;
+
+    my %ulay;
+    if ($u) {
+        my $dbr = FB::get_db_reader();
+        my $sth = $dbr->prepare("SELECT s2lid, type, b2lid FROM s2layers WHERE userid=? ".
+                                "AND type IN ('layout', 'i18n', 'i18nc', 'theme')");
+        $sth->execute($u->{'userid'});
+        $ulay{$_->{'s2lid'}} = $_ while $_ = $sth->fetchrow_hashref;
+        FB::load_layer_info(\%layerinfo, [ keys %ulay ]);
+    }
+
+    my $curlays = $style->{'layer'};
+
+    # load the language and layout choices for core.
+    FB::load_layer_info(\%layerinfo, $corelayer->{'children'});
+
+    # load the themes for current layout
+    if ($curlays->{'layout'}) {
+        my $layout = $publay->{$curlays->{'layout'}};
+        FB::load_layer_info(\%layerinfo, $layout->{'children'});
+    }
+
+    # success text
+    my $save;
+
+    # action path
+    if (FB::did_post()) {
+        # prevent spoofing:
+        return BML::redirect("/manage") 
+            unless $POST{'userid'} == $u->{'userid'};
+
+        my %newlay;
+        my $id;
+
+        if ($POST{'action:edituser'}) {
+            my $id = $curlays->{'user'}+0;
+            unless ($id) {
+                # have to make one
+                $id = FB::create_layer($u, $curlays->{'layout'}, "user");
+                return $err->("Couldn't generate user layer") unless $id;
+                FB::set_style_layers($u, $styleid, "user", $id);
+            }
+            return BML::redirect("/manage/layer?id=$id&style=$styleid");
+        }
+        if ($POST{'action:deleteuser'}) {	 
+            $newlay{'user'} = 0;
+            $save = "<strong>Success:</strong><br />Your customizations have been deleted.";
+        }
+        my $check_type = sub {
+            my ($id, $type) = @_;
+            return 1 if $id == 0;
+            return 0 unless $layerinfo{$id};
+            return 0 unless $layerinfo{$id}->{'type'} eq $type;
+            return 1;            
+        };
+        unless ($curlays->{'core'} == $corelayer->{'s2lid'}) {
+            $newlay{'core'} = $corelayer->{'s2lid'};
+        }
+        if ($POST{'action:save'}) {
+            if ($POST{'name'} ne $style->{'name'}) {
+                my $dbh = FB::get_db_writer();
+                unless ($POST{'name'} =~ /\S/) {
+                    $POST{'name'} = "Unnamed";
+                }
+                $dbh->do("UPDATE s2styles SET name=? WHERE styleid=?", undef,
+                         $POST{'name'}, $styleid);
+                return $dbh->errstr if $dbh->err;
+            }
+            $id = $POST{'i18nc_id'};
+            if ($id != $curlays->{'i18nc'}) {
+                $newlay{'i18nc'} = $id;
+                return $err->("Invalid language layer")
+                    unless $check_type->($id, "i18nc");
+            }
+            $id = $POST{'layout_id'};
+            if ($id != $curlays->{'layout'}) {
+                $newlay{'layout'} = $id;
+                $newlay{'theme'} = 0;
+                $newlay{'user'} = 0;
+
+                return $err->("Invalid layout layer")
+                    unless $check_type->($id, "layout");
+            }
+            $id = $POST{'theme_id'};
+            if ($id != $curlays->{'theme'}) {
+                $newlay{'theme'} = $id;
+                $newlay{'user'} = 0;
+
+                return $err->("Invalid theme layer")
+                    unless $check_type->($id, "theme");
+            }
+            $save = "<strong>Success:</strong><br />Your style has been saved.";
+        }
+
+        if (%newlay) {
+            FB::delete_layer($curlays->{'user'}) if $newlay{'user'} == 0;
+            FB::set_style_layers($u, $styleid, %newlay);
+            while (my ($l,$v) = each %newlay) { $style->{'layer'}->{$l} = $v; }
+        }
+    }
+
+    $body .= "<form method='post' action='style?id=$styleid'>";
+    $body .= FB::html_hidden("userid", $u->{'userid'});
+
+    $body .= "<?p A style is composed of a number of layers which you can select, each of which perform different functions.  You start by picking your <i>language</i> and <i>layout</i>.  Depending on the layout you choose, different <i>theme</i> layers are available.  Finally, you can tweak any last detail further in your custom <i>user</i> layer. p?>";
+
+    $body .= "<fieldset><legend>Style Settings:</legend><table style='width: 100%'>";
+    $body .= "<tr valign='top'><td style='width: 50%'><table id='edit_style' cellpadding='2'><tr><th>Name:</th><td>";
+    $body .= FB::html_text({ 'name' => 'name', 'value' => $style->{'name'},
+                             'size' => 30, 'maxlength' => 100 });
+    $body .= "</td></tr>";
+    
+    $body .= "<tr valign='top'><th>Language:</th><td>";
+    $body .= FB::html_select({ 'name' => 'i18nc_id', 
+                               'selected' => $style->{'layer'}->{'i18nc'}, },
+                             map { $_, $layerinfo{$_}->{'name'}, }
+                             grep { $layerinfo{$_}->{'type'} eq "i18nc" }
+                             @{$corelayer->{'children'}});
+    $body .= "</td></tr>";
+
+    $body .= "<tr valign='top'><th>Layout:</th><td>";
+    my @drop_layouts = (map { $_, $layerinfo{$_}->{'name'}, }
+                        sort { $layerinfo{$a}->{'name'} cmp $layerinfo{$b}->{'name'} }
+                        grep { $layerinfo{$_}->{'type'} eq "layout" }
+                        @{$corelayer->{'children'}});
+    my @user_layouts = (map { $_, $layerinfo{$_}->{'name'}, }
+                        sort { $layerinfo{$a}->{'name'} cmp $layerinfo{$b}->{'name'} }
+                        grep { $ulay{$_}->{'type'} eq "layout" }
+                        keys %ulay);
+    if (@user_layouts) {
+        push @drop_layouts, "", "", @user_layouts;
+    }
+
+    $body .= FB::html_select({ 'name' => 'layout_id',
+                               'selected' => $style->{'layer'}->{'layout'}, },
+                             @drop_layouts);
+    $body .= "</td></tr>";
+
+    my $layout_id = $style->{'layer'}->{'layout'};
+    my @themes;
+    if ($layout_id) {
+        FB::load_layer_info(\%layerinfo, $publay->{$layout_id}->{'children'});
+        @themes = (map { $_, $layerinfo{$_}->{'name'}, }
+                   sort { $layerinfo{$a}->{'name'} cmp $layerinfo{$b}->{'name'} }
+                   grep { $layerinfo{$_}->{'type'} eq "theme" }
+                   @{$publay->{$layout_id}->{'children'}});
+
+        my @u_themes = (map { $_, $layerinfo{$_}->{'name'} }
+                        sort { $layerinfo{$a}->{'name'} cmp $layerinfo{$b}->{'name'} }
+                        grep { $ulay{$_}->{'type'} eq "theme" && $ulay{$_}->{'b2lid'} == $layout_id }
+                        keys %ulay);
+        if (@u_themes) {
+            push @themes, "", "" if @themes;
+            push @themes, @u_themes;
+        }
+    }
+        
+    if (@themes)
+    {
+        my $name = $layerinfo{$layout_id}->{'name'};
+        $body .= "<tr valign='top'><th>Theme:</th><td>";
+        $body .= FB::html_select({ 'name' => 'theme_id', 
+                                   'selected' => $style->{'layer'}->{'theme'} },
+                                 0, "(Layout Default)",
+                                 @themes
+                                 );
+        $body .= "</td></tr>";
+    }
+
+    $body .= "</table><?p " . FB::html_submit('action:save', "Save Style");
+    $body .= " <input type='reset' value='Revert Changes' /> p?></td><td>$save</td></tr></table></fieldset>";
+
+    if ($layout_id) {
+        $body .= "<fieldset><legend>Customize Further?</legend><?p You may optionally tweak any last details that you don't like from your selected layout & theme.  Or, you may save these customizations as a theme, for use in other similar styles. p?>";
+        $body .= "<blockquote>";
+        if ($style->{'layer'}->{'user'}) {
+            $body .= "<strong>Customizations:</strong> ";
+            $body .= FB::html_submit('action:edituser', "Edit") . "\n";
+            $body .= FB::html_submit('action:deleteuser', "Delete");
+        } else {
+            $body .= FB::html_submit('action:edituser', "Customize");
+            $body .= " (Currently no customizations)";
+        }
+        $body .= "</blockquote></fieldset>";
+    }
+    
+    $body .= "</form>";
+
+    return;
+
+}
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+head<=
+<style type='text/css'>
+#edit_style { padding: 5px; }
+#edit_style th {
+    text-align: right;
+    white-space: nowrap;
+}
+</style>
+<=head
+page?>

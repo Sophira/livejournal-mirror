@@ -1,0 +1,930 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%FORM $title $body $crumbs $def_filter);
+
+    my $u = FB::get_remote();
+    my $gallid = $FORM{'gal'}+0;
+
+    unless ($u) {
+        return BML::redirect("/login?to=" .
+                             FB::eurl("manage/media/annotate.bml?gal=$gallid"));
+    }
+
+    my $g = $gallid ? $u->load_gallery_id($gallid) : undef;
+    return BML::redirect("/manage/media/letstag.bml") unless $g;
+    my $sth;
+
+    $crumbs = "<a href='/'>Home</a> &gt; <a href='/manage/media/gals.bml'>Manage Galleries</a> &gt; <a href='/manage/media/gal.bml?id=$gallid'>" .
+        FB::ehtml($g->display_name) . "</a> &gt; Annotate";
+
+    $body = "";
+    $title = "Annotate: " . FB::eall($g->display_name);
+    my $is_unsorted = $g->is_unsorted;
+
+    my %just_uploaded = map { $_, 1 } split(/,/, $GET{'ids'});
+
+    my @pics = $g->pictures;
+
+    $def_filter = %just_uploaded ? "justuploaded" : ($GET{filter} || "all");
+
+    $body .= "<div id='thumbs'>";
+    $body .= "<div class='filter'><center>Show: " .
+        FB::html_select({
+            id => 'dropShowFilter',
+            selected => $def_filter,
+        }, "all", "All",
+                        "untagged", "Untagged",
+                        "untitled", "Untitled",
+                        (%just_uploaded ? ("justuploaded", "Just Uploaded") : ()),
+                        ) . "</center><div id='underfilter'></div></div>";
+
+    my $data = {};  # picid -> {...}.  also "picids" => [picid+], and gallid
+    $data->{gallid} = $gallid;
+    my $picids = $data->{picids} = [];
+
+    foreach my $p (@pics) {
+        my ($url, $w, $h) = $p->url_thumbnail([ 125, 125, "" ]);
+
+        my $thumb = [$url, $w, $h];
+
+        my $margin = join('', map { $_ . "px " } (125 - $h, int((125 - $w) / 2), 0, int((125 - $w) / 2)));
+        my $title = FB::ehtml($p->prop("pictitle"));
+        my $id = $p->id;
+        push @$picids, $id;
+
+        my $tags = join(", ", $p->tags);
+        my $title = $p->prop("pictitle");
+
+        $data->{$id} = {
+            thumb => $thumb,
+            smallImg => [ $p->scaled_url(320, 320) ],
+            bigImg   => [ $p->scaled_url(640, 640) ],
+            title => ($title || ""),
+            des  => ($p->des || ""),
+            tags => $tags,
+            justup => $just_uploaded{$id},
+        };
+
+        warn LJ::D($data);
+
+        my $tagged = $tags  ? "tagged" : "";
+        my $titled = $title ? "titled" : "";
+        my $nju = %just_uploaded  && ! $just_uploaded{$id} ? "notjustuploaded" : "";
+
+        $body .= <<END;
+<div class='picthumb $tagged $titled $nju' id='pic$id'><img id='picimg$id' src='$FB::IMGPREFIX/greysolid.gif' width='$thumb->[1]' height='$thumb->[2]' style='margin: $margin' /><br /><img id='saving$id' src="$FB::IMGPREFIX/hourglass.gif" width='17' height='17' class='savingicon' alt='Saving' /><img id='tags$id' src="$FB::IMGPREFIX/tag.gif" width='16' height='16' class='tagicon' alt='Tagged' /> <span id='title$id'>$title</span>
+</div>
+END
+
+}
+
+
+    $body .= "</div>";
+
+    $body .= "<script>var PicData = " . JSON::objToJson($data) . ";</script>";
+
+    return;
+
+}
+_code?><?page
+head<=
+<script src='/js/core.js'></script>
+<script src='/js/dom.js'></script>
+<script src='/js/fotobilder.js'></script>
+<script src='/js/devel.js'></script>
+<script src='/js/inputcomplete.js'></script>
+<script src='/js/httpreq.js'></script>
+<script>
+
+log = Function.stub;
+
+var isSelected = new Object();
+var selCount = 0;
+var lastSelected = 0;
+
+var currentFilter = "<?_code $def_filter _code?>";
+
+function select (num, multi) {
+    if (! ((num+"").match(/^\d+$/))) {
+        return;
+    }
+    if (isSelected[num]) return;
+
+    var de = $("pic" + num);
+    isSelected[num] = 1;
+    DOM.addClassName(de, "selected");
+    lastSelected = num;
+
+    if (! multi) {
+        startScrollAnimation(de);
+    }
+
+    selCount++;
+    postSelChange(selCount - 1, selCount);
+}
+
+function deselect (num) {
+    if (! ((num+"").match(/^\d+$/))) {
+        return;
+    }
+    if (! isSelected[num]) return;
+
+    var de = $("pic" + num);
+    isSelected[num] = 0;
+    DOM.removeClassName(de, "selected");
+
+    selCount--;
+    postSelChange(selCount + 1, selCount);
+}
+
+function postSelChange (oldCt, newCt) {
+    if (newCt == 1) {
+        editPicture(lastSelected);
+    }
+}
+
+function selectOnly (num) {
+    for (var selIdx in isSelected) {
+        if (selIdx != num)
+            deselect(selIdx);
+    }
+    select(num);
+}
+
+function matchCurrentFilter (pic) {
+    if (currentFilter == "all") return true;
+    if (currentFilter == "untagged") return ! pic.tags;
+    if (currentFilter == "untitled") return ! pic.title;
+    if (currentFilter == "justuploaded") return pic.justup;
+    return false;
+}
+
+function firstMatchingPicId () {
+    var length = PicData.picids.length;
+    for (var i=0; i<length; i++) {
+        var picid = PicData.picids[i];
+        if (! matchCurrentFilter(PicData[picid]))
+            continue;
+        return picid;
+    }
+    return null;
+}
+
+// this respects the current filter
+function picIdAfter (num) {
+    var length = PicData.picids.length;
+    var foundSrc = false;
+    for (var i=0; i<length; i++) {
+        if (PicData.picids[i] == num) {
+            foundSrc = true;
+            continue;
+        }
+        if (! foundSrc)
+            continue;
+
+        var picid = PicData.picids[i];
+
+        if (! matchCurrentFilter(PicData[picid]))
+            continue;
+
+        return picid;
+    }
+
+    return firstMatchingPicId();
+}
+
+function getDenseRange (from, to) {
+    var ret = [];
+    var length = PicData.picids.length;
+
+    var pushing = false;
+    for (var i=0; i<length; i++) {
+        if (PicData.picids[i] == to) {
+            ret.push(to);
+            return ret;
+        }
+
+        if (! pushing) {
+            if (PicData.picids[i] == from)
+                pushing = true;
+            else
+                continue;
+        }
+
+        ret.push(PicData.picids[i]);
+    }
+
+    return ret;
+}
+
+var saveQueue = [];
+var saveInProg = false;
+
+function notePicToSave(picid) {
+
+    var pice = $("pic" + picid);
+    if (!pice) {
+        alert("couldn't find thing to save");
+        return;
+    }
+
+    DOM.addClassName(pice, "saving");
+    saveQueue.push(picid);
+    startSaving();
+}
+
+function formUrlEncoded (obj) {
+    var ret = "";
+    for (k in obj) {
+        if (typeof obj[k] != "string") {
+            continue;
+        }
+        if (ret.length) ret += "&";
+        ret += encodeURIComponent(k) + "=";
+        ret += encodeURIComponent(obj[k]);
+    }
+    return ret;
+}
+
+function startSaving () {
+    if (saveInProg)
+        return;
+
+    if (! saveQueue.length)
+        return;
+
+    var picid = saveQueue.shift();
+    saveInProg = true;
+
+    var pice = $("pic" + picid);
+    var picdata = PicData[picid];
+    if (!picdata || !pice) {
+        alert("missing picdata for pic: "+picid);
+        return;
+    }
+
+    var xtr = HTTPReq.create();
+    if (!xtr) {
+        alert("Your browser isn't able to save data from this page.");
+        return;
+    }
+
+    var saving_tags  = picdata.tags;
+    var saving_des   = picdata.des;
+    var saving_title = picdata.title;
+
+    var state_callback = function () {
+        if (xtr.readyState != 4)
+             return;
+
+        saveInProg = false;
+
+        // if there's an error, try again later
+        var tryLater = function () {
+            saveQueue.unshift(picid);
+            setTimeout(startSaving, 2000);
+            return;
+        }
+
+        if (xtr.status != 200)
+            return tryLater();
+
+        var res;
+        var e;
+        try {
+            eval("res = " + xtr.responseText + ";");
+        } catch (e) { alert("catching exception:" + e.toString()); }
+
+        if (res && res.alert) alert(res.alert);
+
+        if (!res || !res.ok)
+           return tryLater();
+
+        DOM.removeClassName(pice, "saving");
+
+        if (saving_tags) {
+            DOM.addClassName(pice, "tagged");
+        } else {
+            DOM.removeClassName(pice, "tagged");
+        }
+
+        if (saving_title) {
+            DOM.addClassName(pice, "titled");
+        } else {
+            DOM.removeClassName(pice, "titled");
+        }
+
+        $("title"+picid).innerHTML = saving_title;  // FIXME: ehtml
+
+        seeIfAllTagged();
+
+        startSaving();
+    };
+
+    // FIXME: add some other validator fields, and group requests
+
+    xtr.onreadystatechange = state_callback;
+    xtr.open("POST", "/manage/annotate_save", true);
+    var postdata = formUrlEncoded({
+        'picid': picid+"",
+        'des': saving_des,
+        'tags': saving_tags,
+        'title': saving_title
+    });
+
+    xtr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xtr.send(postdata);
+}
+
+function onFormSubmit () {
+    var picid = currentPicId;
+    var te = $("rhsTags"+picid);
+    if (!te)
+        return false;
+
+    var pice = $("pic" + picid);
+    var picdata = PicData[picid];
+
+    var tags = te.value;
+    var title = $("rhsTitle").value;
+    var des = $("rhsDes").value;
+
+    var needSave = 0;
+
+    // title changed?
+    if (picdata.title != title) {
+        picdata.title = title;
+        needSave = 1;
+    }
+
+    // tags changed?
+    if (picdata.tags != tags) {
+        picdata.tags = tags;
+        needSave = 1;
+    }
+
+    // description changed?
+    if (picdata.des != des) {
+        picdata.des = des;
+        needSave = 1;
+    }
+
+    // defocus the tags box, so the model learns new words.  on
+    // firefox, the input gets no blur event, where it normally
+    // learns, so let's cause one.
+    $("btnSave").focus();
+
+    if (needSave) {
+        notePicToSave(picid);
+    }
+
+    var next = picIdAfter(lastSelected);
+    if (next)
+        selectOnly(next);
+    return false; // cancel event
+}
+
+function showThumbnail (picid) {
+    if (PicData.loadedAllThumbs)
+        return;
+
+    var picdata = PicData[picid];
+    if (picdata.loadedThumb)
+        return;
+
+    var picimg = $("picimg"+picid);
+    picimg.src = picdata.thumb[0];
+    picdata.loadedThumb = 1;
+
+    if (! PicData.totalThumbsLoaded) {
+        PicData.totalThumbsLoaded = 0;
+    }
+
+    // if we're done, note that, so other functions can skip work
+    if (++PicData.totalThumbsLoaded >= PicData.picids.length) {
+        PicData.loadedAllThumbs = true;
+    }
+}
+
+var currentPicId;
+var currentImage;
+
+function editPicture (picid) {
+    currentPicId = picid;
+    if (animating) {
+        var save_picid = picid;  // Safari closure bug
+        onAnimateComplete = function () { editPicture(save_picid); };
+        return;
+    }
+
+    var picdata = PicData[picid];
+    if (!picdata)
+        return;
+
+    showThumbnail(picid);
+    showVisibleThumbnails();
+
+    var re = $("rightside");
+    var ihtml;
+
+    var img = getSuitableImage();
+    currentImage = img;
+
+    var height = previewHeight(img);
+
+    ihtml = "<center><div id='previewImageDiv' style='width: 100%; height: "+height+"px;'><center><a target='_blank' href='/manage/pic?id="+picid+"'><img id='previewImage' src='" + img[0] + "' width='"+ img[1] + "' height='" + img[2] + "' border='0' /></a></center></div><br /><form id='rhsForm' onsubmit='return onFormSubmit()'>" +
+        "<table class='tagtitle'>" +
+        "<tr><td width='50'>Tags:</td><td colspan='2'><input autocomplete='off' class='text' type='text' size='60' id='rhsTags"+ picid + "' name='tags'></td></tr>"+
+        "<tr><td>Title:</td><td colspan='2'><input autocomplete='off' class='text' type='text' size='60' id='rhsTitle' name='title'></td></tr>" +
+        "<tr valign='top'><td>Des:</td><td valign='bottom'><textarea class='text' cols='60' rows='3' id='rhsDes' name='des'></textarea></td><td width='50'><input type='submit' id='btnSave' value='Save' /></td></tr>" +
+        "</table></form></center>";
+
+    re.innerHTML = ihtml;
+
+    // in some browsers, the nodes are't accessible until javascript yields
+    // to the reflow code and creates the DOM nodes.  so if we can't find it,
+    // schedule a timeout to focus the tags box.
+    var focusPicid = picid;
+    var setupFields = function () {
+        if (currentPicId != focusPicid)
+              return;
+
+        var te = $("rhsTags" + currentPicId);
+        if (!te) {
+            alert("can't find it");
+            return;
+        }
+
+        var picdata = PicData[currentPicId];
+
+        te.value = picdata.tags || "";
+        $("rhsTitle").value = picdata.title || "";
+        $("rhsDes").value = picdata.des || "";
+
+        var ic = new InputComplete(te, compModel);
+
+        centerPreviewImage();
+        te.focus();
+        ic.moveCaretToEnd();
+
+    };
+    setTimeout(setupFields, 75);
+}
+
+// returns suitable image (array of [url, width, height]) given browser size
+function getSuitableImage () {
+    var picdata = PicData[currentPicId];
+    if (!picdata)
+        return;
+
+    var img = picdata.smallImg;
+    if (rhsWidth > 500 && rhsHeight > 400) { // && picdata.bigImg[2] < picdata.bigImg[1]) {
+        // if we have a lot of wide space, and image is landscape, not portrait
+        img = picdata.bigImg;
+    }
+    return img;
+}
+
+function previewHeight (img) {
+    var h = rhsHeight - 125;
+    if (h < 200) h = 200;        // be at least 200 pixels tall.  this works down to 1024x768
+    if (h > img[2]) h = img[2];  // don't be bigger than the image
+    return h;
+}
+
+function updatePictureSize () {
+    var img = getSuitableImage();
+    if (!img)
+        return;
+
+    currentImage = img;
+
+    var de = $("previewImageDiv");
+    var ie = $("previewImage");
+
+    if (!ie) return;
+
+    ie.src = img[0];
+    ie.width = img[1];
+    ie.height = img[2];
+}
+
+var compModel;  //input complete model
+
+// show the visible thumbnails in 100 milliseconds.  can be called a bunch
+// (like from an onscroll handler) without actually running a bunch.
+var prevTimerId = 0;
+function showVisibleThumbsSoon  () {
+    if (PicData.loadedAllThumbs) {
+        return;
+    }
+
+    if (prevTimerId) {
+        window.clearTimeout(prevTimerId);
+    }
+    prevTimerId = window.setTimeout(function () {
+        showVisibleThumbnails();
+        prevTimerId = 0;
+    }, 100);
+};
+
+function showVisibleThumbnails () {
+    if (PicData.loadedAllThumbs)
+        return;
+
+    var length = PicData.picids.length;
+    for (var i=0; i<length; i++) {
+        var picid = PicData.picids[i];
+        var picdata = PicData[picid];
+
+        if (picdata.loadedThumb)
+            continue;
+
+        var ele = $("pic"+picid);
+        var de_dim = DOM.getAbsoluteDimensions(ele);
+
+        var thumbTopY = $("thumbs").scrollTop;
+        var thumbBotY = thumbTopY + thumbsHeight;
+
+        // the pictures middle Y position
+        var picMidY = Math.floor((de_dim.absoluteTop + de_dim.absoluteBottom) / 2);
+
+        if (picMidY > thumbTopY - 140 && picMidY < thumbBotY + 140) {
+            showThumbnail(picid);
+        }
+    }
+}
+
+function onLoad () {
+    setupHandlers();
+
+    // create the right hand side div.  we do it here and not in HTML
+    // so we're sure it's right under body in the DOM, and not in some
+    // relatively positioned table cell or whatever the BML's template
+    // puts us in.
+    var rhs = document.createElement("div");
+    rhs.id = "rightside";
+    document.body.appendChild(rhs);
+
+    setupFilter();
+    resizeWindow();
+
+    compModel = new InputCompleteData(<?_code FB::get_remote()->tags_as_js; _code?>);
+}
+
+var animating = false;
+var onAnimateComplete = null;
+var scrollGeneration = 0;
+
+function startScrollAnimation (ele) {
+    animating = true;
+
+    var myScrollGeneration = ++scrollGeneration;
+    var de_dim = DOM.getAbsoluteDimensions(ele);
+    var scrollTop = $("thumbs").scrollTop;
+    var absTop = de_dim.absoluteTop;
+    var diff = absTop - scrollTop;
+    var wantedDiff = Math.floor((thumbsHeight + 125)  / 2);
+    var needSlide = diff - wantedDiff;  // negative means scrollup, positive scrolldown
+    var destScroll =  $("thumbs").scrollTop + needSlide;
+    // log("absTop=" + absTop + ", scrollTop=" + scrollTop + ", diff = " + diff + " wantedDiff=" + wantedDiff + " needSlide=" + needSlide + "  destScroll=" + destScroll);
+    var lastTop = -1;
+
+    var doneAnimating = function () {
+        animating = false;
+        if (onAnimateComplete)
+            onAnimateComplete();
+        return;
+    };
+
+    var scrollWin = function () {
+        if (destScroll < 0) {
+            destScroll = 0;
+        }
+
+        if (scrollGeneration != myScrollGeneration) {
+            // just return, without calling our finish callback,
+            // since another animation is underway with (presumably)
+            // its own callback.
+            return;
+        }
+
+        animating = true;
+        var cur = $("thumbs").scrollTop;
+
+        if (cur == lastTop)
+              return doneAnimating();
+
+        lastTop = cur;
+        var half = Math.floor((destScroll + cur) / 2);
+
+        $("thumbs").scrollTop = half;
+        if (Math.abs(half - cur) > 2) {
+            setTimeout(scrollWin, 25);
+        } else {
+            return doneAnimating();
+        }
+    };
+
+    setTimeout(scrollWin, 2);
+}
+
+function debug (msg) {
+    var d = $("dbg");
+    if (d) d.innerHTML = msg;
+}
+
+var thumbsHeight;
+
+var rhsHeight;
+var rhsWidth;
+
+function resizeWindow () {
+    var cd = DOM.getClientDimensions();
+    var te = $("thumbs");
+    var tdims = DOM.getAbsoluteDimensions(te);
+
+    thumbsHeight = cd.y - tdims.absoluteTop - 50;
+    te.style.height = thumbsHeight + "px";
+
+    var re = $("rightside");
+    var right = cd.x - 25;
+    var left = tdims.absoluteRight + 5;
+
+    rhsWidth  = right - left;
+    rhsHeight = thumbsHeight;
+
+    re.style.left = left + "px";
+    re.style.right  = right + "px";
+
+    re.style.width  = rhsWidth + "px";
+    re.style.height = rhsHeight + "px";
+
+    re.style.top    = tdims.absoluteTop + "px";
+
+    updatePictureSize();
+
+    var pi = $("previewImageDiv");
+    if (pi) {
+        pi.style.height = previewHeight(currentImage) + "px";
+    }
+
+    setTimeout(centerPreviewImage, 100);
+    showVisibleThumbsSoon();
+}
+
+function centerPreviewImage () {
+    var pi = $("previewImageDiv");
+    if (!currentImage || !pi)
+        return;
+
+    var tp = DOM.getAbsoluteDimensions(pi);
+
+    var needX = Math.floor((currentImage[1] - tp.offsetWidth) / 2);
+    var needY = Math.floor((currentImage[2] - tp.offsetHeight) / 2);
+    if (needY > 0) pi.scrollTop = needY;
+    if (needX > 0) pi.scrollLeft = needX;
+}
+
+function setupHandlers (arg_total) {
+     var n;
+     var firstPicid;
+
+     var dthumbs = $("thumbs");
+     var children = dthumbs.childNodes;
+     for (var i=0; i<children.length; i++) {
+         var ele = children[i];
+         if (ele.id) {
+             var m = ele.id.match(/^pic(\d+)$/);
+             if (m) {
+                 var n = m[1];
+                 setupHandler(ele, n);
+                 if (! firstPicid) firstPicid = n;
+             }
+         }
+     }
+
+     select(firstPicid);
+
+     // setup handlers on the scrolling filmstrip
+     var te = $("thumbs");
+
+     // Mozilla 1.0.x doesn't let you scrollwheel a div, but we can fake it:
+     if (te && te.addEventListener) {
+         te.addEventListener('DOMMouseScroll', function (e) {
+             var delta = 0;
+             if (e.detail == 3) delta = 50;
+             else if (e.detail == -3) delta = -50;
+
+             if (delta)
+                 te.scrollTop += delta;
+
+             // and call our scroll handler
+             if (te.onscroll) te.onscroll();
+
+             Event.stop(e);
+         }, false);
+     }
+
+     // 100 ms after last scroll event, show visible thumbnails.
+     te.onscroll = showVisibleThumbsSoon;
+
+     var df = $("dropShowFilter");
+     df.onchange = function (e) {
+         currentFilter = df.value;
+         setupFilter();
+     };
+
+}
+
+function setupFilter () {
+    var te = $("thumbs");
+
+    DOM.removeClassName(te, "filterUntitled");
+    DOM.removeClassName(te, "filterUntagged");
+    DOM.removeClassName(te, "filterJustUploaded");
+    if (currentFilter == "untagged") {
+        DOM.addClassName(te, "filterUntagged");
+    } else if (currentFilter == "untitled") {
+        DOM.addClassName(te, "filterUntitled");
+    } else if (currentFilter == "justuploaded") {
+        DOM.addClassName(te, "filterJustUploaded");
+    }
+
+    seeIfAllTagged();
+    setTimeout(showVisibleThumbnails, 300);
+
+    var workWith = firstMatchingPicId();
+    if (workWith)
+        selectOnly(workWith);
+}
+
+function seeIfAllTagged() {
+    if (currentFilter == "untagged" && ! firstMatchingPicId()) {
+        $("underfilter").innerHTML = "<b>Congratulations!</b><br />You've completely tagged this gallery.  Now what?<ul><li><a href='/manage/letstag'>Find more stuff to tag</a></li><li><a href='/manage/gal?id=" + PicData.gallid + "'>Manage this gallery</a></li></ul>";
+    } else {
+        $("underfilter").innerHTML = "";
+    }
+}
+
+function setupHandler (ele, picid) {
+     var de = ele;
+     var n = picid;
+
+     de.onclick = function (e) {
+         e = e || window.event;
+
+         if (e.shiftKey) {
+             var i;
+             // FIXME: 1 isn't the first, since we're using upics now
+             var from = (lastSelected || 1);
+
+             // FIXME: from can totally be before to, now that we're using upics.
+             //  we need a function to return a upic's index in the array, and use
+             //  that to switch.
+             var to = n;
+             if (to < from) {
+                 var low = to;
+                 to = from;
+                 from = low;
+             }
+
+             var denseRange = getDenseRange(from, to);
+             denseRange.forEach(function (picid) {
+                 select(picid, 1);
+             });
+
+             return;
+         }
+
+         if (isSelected[n]) {
+             deselect(n);
+         } else {
+             select(n);
+         }
+
+         if (! e.ctrlKey) {
+             for (var selIdx in isSelected) {
+                 if (selIdx != lastSelected)
+                     deselect(selIdx);
+             }
+         }
+     };
+
+     de.onmousedown = function (e) {
+         e = e || window.event;
+         Event.stop(e);
+     };
+}
+
+</script>
+<style>
+
+#thumbs {
+  padding: 0px;
+  margin-top: 5px;
+  background: #fff; overflow: auto;
+  border-width: 2px;
+  border-style: solid;
+  border-color: #666 #eee #eee #666;
+  width: 300px;
+  height: 300px;
+}
+
+#rightside {
+    /*  border: 2px solid green; */
+    position: absolute;
+}
+
+div.picthumb {
+  overflow: hidden;
+ font: normal 11px Verdana,Arial,sans-serif;
+ text-align: center;
+ float: left;
+ width: 125px;
+ height: 140px;
+ margin: 2px;
+}
+
+div.picthumb.selected {
+  background: #900;
+  color: white;
+  font-weight: bold;
+}
+
+
+div.picthumb div.square {
+  width: 125px;
+  height: 125px;
+  overflow: hidden;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+#previewImageDiv {
+  overflow: auto;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+div.ins {
+  display: block;
+ float: left;
+ height: 135px;
+ width: 4px;
+ margin: 0 -2px;
+ background: black;
+}
+
+div.picthumb img.spacer {
+  position:absolute;
+  top:0px;
+  left:0px;
+  width: 125px;
+  height: 140px;
+}
+
+#dbg { display: none }
+
+table.tagtitle {
+    width: 95%;
+}
+
+table.tagtitle .text {
+    width: 100%;
+}
+
+#thumbs div.filter {
+    margin: 0.4em 0 0.4em 0;
+}
+
+div         img.tagicon { display: none; }
+div.tagged  img.tagicon { display: inline; }
+
+div         img.savingicon { display: none; }
+div.saving  img.savingicon { display: inline; }
+
+#thumbs.filterUntitled div.titled { display: none; }
+#thumbs.filterUntagged div.tagged { display: none; }
+#thumbs.filterJustUploaded div.notjustuploaded { display: none; }
+
+#underfilter {
+    margin: 1em;
+}
+
+#underfilter li {
+    margin-top: 0.5em;
+}
+
+</style>
+
+<=head
+title=><?_code $title; _code?>
+body<=
+<?_code return $body; _code?>
+<div id=dbg>debug</div>
+<=body
+bodyopts=>onresize='resizeWindow()' onload='onLoad()'
+crumbs=><?_code return FB::crumbs($crumbs); _code?>
+page?>

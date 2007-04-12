@@ -1,0 +1,49 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%POST);
+
+    my $picid = $POST{'picid'}+0;
+
+    my $err = sub {
+        my $msg = shift;
+        return JSON::objToJson({
+            'alert' => $msg,
+        });
+    };
+
+    my $u = FB::get_remote()
+        or return $err->("Couldn't save.  No longer logged in.");
+
+    my $pic = FB::Upic->new($u, $picid);
+    unless ($pic && $pic->valid) {
+        return $err->("Picture not found");
+    }
+
+    # FIXME: accept before & after states from client and only save
+    # the "diff".  so if parallel edits are going on from another
+    # browser (and future: user), then we don't have mid-air
+    # collisions.  e.g. before title of "", somebody else updates
+    # title to "foo", and they save tags to "bar, baz", setting title
+    # to "".  They didn't really want to update title, just tags, so
+    # we shouldn't blow away the other client's edit in a race.
+
+    my $ok = 1;
+    $ok = 0 unless $pic->set_text_prop("pictitle", $POST{'title'});
+    $ok = 0 unless $pic->set_des($POST{'des'});
+    $ok = 0 unless $pic->set_tags($POST{'tags'});
+
+    my $ret = {
+        'ok' => $ok,
+    };
+
+    if (!$ok) {
+        $ret->{alert} = "Failed to save picture $picid.  Retrying shortly.";
+    }
+
+    # TODO: if bogus tags, were used, set $ret->{alert} which will show to use
+
+    return JSON::objToJson($ret);
+
+}
+_code?>

@@ -1,0 +1,115 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%FORM $title $body);
+
+    # hit up a hook in case we should jump out of here.
+    my $rval = FB::run_hook('picsave_submit', \%POST);
+    return $rval if $rval;
+
+    my $u = FB::get_remote();
+    return BML::redirect("/login")
+        unless $u && $u->{'userid'} == $FORM{'userid'};
+
+    $body = "";
+    $title = "Save Changes";
+
+    my $err = sub {
+        $title = "Error";
+        $body = $_[0];
+        return;
+    };
+
+    $u->writer or return $err->("Database unavailable");
+
+    my $gallid = $FORM{'gallid'}+0;
+    return BML::redirect("/manage/gals") unless FB::did_post();
+
+    my $g = FB::load_gallery_id($u, $gallid);
+    return BML::redirect("/manage/gals") unless $g;
+
+    my @pics = FB::get_gallery_pictures($u, $g, { no_props => 1 });
+
+    foreach my $p (@pics) {
+        my $id = $p->{'upicid'};
+        next unless defined $FORM{"pos_$id"}; # so new pics don't go to beginning
+        my $newpos = $FORM{"pos_$id"}+0;
+        if ($p->{'sortorder'} != $newpos) {
+            $u->do("UPDATE gallerypics SET sortorder=? WHERE ".
+                   "userid=? AND gallid=? AND upicid=?",
+                   $newpos, $u->{'userid'}, $gallid, $id);
+            $p->{'sortorder'} = $newpos;
+        }
+    }
+
+    # re-sort in memory now, so we do future operations in order
+    @pics = sort { $a->{'sortorder'} <=> $b->{'sortorder'} } @pics;
+
+    my $unsorted;
+
+    # add/move to galleries
+    if ($FORM{'action:add'} || $FORM{'action:move'} ||
+        $FORM{'action:remove'} || $FORM{'action:delete'})
+    {
+        # some actions require a dest. gallery
+        my $dgal;
+        my $addcount = 0;
+        if ($FORM{'action:add'} || $FORM{'action:move'}) {
+
+            # creating a new gallery?
+            if ($FORM{'addmove_gallery'} =~ /^(0|new)$/ &&
+                $FORM{'newgalname'} =~ /\S/)
+            {
+                $dgal = FB::load_gallery($u, $FORM{'newgalname'}, { 'createsec' => $g->{'secid'} });
+            } else {
+                $dgal = FB::load_gallery_id($u, $FORM{'addmove_gallery'});
+            }
+            unless ($dgal) {
+                $body .= "Destination gallery not found.\n";
+                return;
+            }
+        }
+
+        # iterate over all pictures currently in the gallery
+        foreach my $p (@pics)
+        {
+            my $id = $p->{'upicid'};
+            next unless $FORM{"pic_check_$id"};
+            last if $g && $dgal && $g->{'gallid'} == $dgal->{'gallid'};
+
+            if ($dgal) {
+                $addcount++ if FB::gal_add_picture($u, $dgal, $p);
+            }
+
+            if ($FORM{'action:move'} || $FORM{'action:remove'}) {
+                FB::gal_remove_picture($u, $g, $p, $p->{'picsec'});
+
+                # add it back to unsorted if no longer referenced
+                if ($FORM{'action:remove'} && ! FB::upic_used($u, $p)) {
+                    $unsorted ||= FB::load_gallery_incoming($u);
+                    FB::gal_add_picture($u, $unsorted, $p);
+                }
+            }
+
+            if ($FORM{'action:delete'}) {
+                FB::gal_remove_picture($u, $g, $p, $p->{'picsec'});
+                FB::upic_delete($u, $p);
+            }
+        }
+
+        # did we move/add pictures to the dest gallery?
+        if ($addcount) {
+            $u->do("UPDATE gallery SET nextsortorder=?, timeupdate=UNIX_TIMESTAMP() WHERE ".
+                   "userid=? AND gallid=?", $dgal->{'nextsortorder'},
+                   $u->{'userid'}, $dgal->{'gallid'});
+        }
+    }
+
+    # for lack of anything exciting to do:
+    return BML::redirect("/manage/pics?gal=$g->{'gallid'}");
+
+}
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+page?>

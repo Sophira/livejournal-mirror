@@ -1,0 +1,646 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%FORM %GET %POST $title $body $crumbs);
+
+    my $u = FB::User->remote
+        or return BML::redirect("/login?to=manage/media/gals.bml");
+
+    my $gallid = $GET{'id'}+0;
+    my $g;
+
+    $body = "";
+    $title = "Create Gallery";
+
+    my $set_title = sub {
+        $title = FB::ehtml($g->display_name);
+    };
+
+    my $err = sub { $title = "Error"; $body = "<?p $_[0] p?>"; };
+    my %err;  # keyed, accumulated errors during save, melded with form
+
+    if ($gallid) {
+        $g = $u->load_gallery_id($gallid);
+        return BML::redirect("/manage/media/gals.bml") unless $g;
+        $set_title->();
+    }
+
+    $crumbs = "<a href='/'>Home</a> &gt; <a href='/manage/media/gals.bml'>Manage Galleries</a> &gt; " . FB::ehtml($g ? $g->display_name : "(New Gallery)");
+
+    my $url = $g ? $g->url : "";
+
+    # three columns:  small left, big middle, small right
+    $body .= "<form method='post' action='/manage/media/gal.bml?id=$gallid'>\n";
+    $body .= "<table border='0' cellpadding='4'><tr valign='top'><td width='150' id='leftbar' align='right'>\n";
+
+    my $preview = "";
+    my $no_pics = 0;  # true if gallery is empty
+
+    if ($g) {
+        $preview = "<table class='galpreview' width='120' border='0'><tr><td align='center'>
+           <b>Gallery Preview</b>
+         ";
+        if (my @pics = $g->get_pictures(limit => 5)) {
+
+            $preview .= "<?p Here are some of the pictures in this gallery. p?>";
+            foreach my $p (@pics) {
+                my $piccode = $p->piccode;
+                my ($url, $w, $h) = $p->scaled_url(100, 100);
+                $preview .= "<div class='ppic'><a href='" . FB::ehtml($p->manage_url) . "'>";
+                $preview .= "<img src='$url' width='$w' height='$h' alt='$piccode' border='0' />";
+                $preview .= "</a></div>";
+            }
+
+        } else {
+            $no_pics = 1;
+            $preview .= "<p>No pictures in this gallery.</p>";
+        }
+        $preview .= "<a class='viewall' href='$url'>View Gallery</a>";
+        $preview .= "</td></tr></table>";
+    }
+
+    if ($gallid) {
+
+        # preview picture
+        my $pvpic = $g ? $g->preview_pic : undef;
+
+        my $preview_pic;
+        $preview_pic .= "<div class='previewpic'><table><tr><td align='center'>";
+
+        my ($url, $w, $h) = $pvpic ? $pvpic->scaled_url(100, 100) :
+            FB::img("nogalpreview_100");
+
+        $preview_pic .= "<a id='prevpicImgLink' href=\"setpreview?gal=$gallid\"><img id='img_galprev' src=\"$url\" width=\"$w\" height=\"$h\" alt='Preview Picture' align='absbottom' border='0' /></a>";
+
+        $preview_pic .= "<a id='prevpicTextLink' href=\"setpreview?gal=$gallid\">Change Preview Pic</a></td></tr></table></div>";
+
+        $body .= $preview_pic unless $g->is_unsorted;
+
+        for my $sideitem (
+                          ($no_pics ? () : (["pics.bml?gal=$gallid", "Pictures"],
+                                            ["annotate.bml?gal=$gallid", "Annotate"])),
+                          ["/manage/media/deletegal.bml?id=$gallid", "Delete Gallery"],
+                          ["/manage/media/upload.bml?gallid=$gallid", "Upload Pictures"])
+        {
+            $body .= "<div class='link'>&#x2022; <a href='$sideitem->[0]'>$sideitem->[1]</a></div>\n";
+        }
+    }
+    $body .= "</td><td align='left'>";
+
+    # save path
+    if (FB::did_post()) {
+        # prevent spoofing:
+        return BML::redirect("/manage/")
+            unless $POST{'userid'} == $u->{'userid'};
+
+        # prevent modifications of the unsorted gallery via post
+        return BML::redirect("/manage/") if $g && $g->is_unsorted;
+
+        if ($POST{'resolve_upics'} && defined $POST{'galsec'}) {
+            return $err->("no gallery") unless $g;
+
+            my @pic_ids = map { $_+0 } split /, /, $POST{'resolve_upics'};
+            my $pics = FB::load_upic_multi($u, \@pic_ids, { force => 1 }) || {};
+            FB::change_upic_secid_multi($u, [ values %$pics ], $POST{galsec});
+
+            # so they have something bookmarkable:
+            return BML::redirect("/manage/media/gal.bml?id=" . $g->id);
+        }
+
+        # creating a new gallery
+        unless ($g) {
+            if (! FB::valid_gallery_name($POST{'galname'})) {
+                $err{name} = "Invalid gallery name.";
+                goto RENDER;
+            }
+
+            $g = FB::Gallery->create($u,
+                                     name => $POST{'galname'},
+                                     secid => $POST{'galsec'},
+                                     );
+            unless ($g) {
+                my $err = FB::last_error();
+                return $err->("Failed to create gallery: $err");
+            }
+            $gallid = $g->id;
+        }
+
+        my $old_tag = $g->tag;
+        my $new_tag = $POST{'galshort'};
+        if ($new_tag ne $old_tag && $POST{'gallerytype'} eq 'tag') {
+            # see if a gallery exists with the new tag first
+            my $eg = $u->gallery_of_existing_tag($new_tag);
+            if ($eg) {
+                $err{"tag_collide"} = {
+                    'tag' => $new_tag,
+                    'existing_gal' => $eg,
+                };
+            } else {
+                $g->set_tag($new_tag);
+            }
+        } elsif ($POST{'gallerytype'} eq 'named') {
+            # if they chose to make it a named gallery, see if it's currently a tag gallery
+            if ($g->tag) {
+                # remove tag
+                $g->set_tag();
+            }
+        }
+
+        $g->set_name($POST{'galname'});
+        $set_title->();
+        $g->set_date($POST{'dategal'});
+        $g->set_prop("styleid", $POST{'styleid'}+0);
+        $g->set_prop("exportable_sec", $POST{'export_gal'}+0);
+        $g->set_des($POST{'des'});
+
+        # relations
+        {
+            my $get_gal = sub {
+                my $formname = shift;
+
+                # top level -- special because it doesn't exist in the database,
+                #              so just return a gallid 0 to be passed to
+                #              FB::gallery_relation_set
+                return 0 if defined $POST{$formname} && $POST{$formname} == 0;
+                my $g = $u->load_gallery_id($POST{$formname})
+                    or die "Can't load galleryid";
+                return $g;
+            };
+
+            # delete unchecked parents
+            my $parents = 0;
+            foreach my $fg ($g->gals_linked_from) {
+                my $id = $fg ? $fg->id : 0;
+                $parents++;
+                next if $POST{"keep_parent_$id"};
+
+                $g->unlink_from($fg || 0) or die "Failed to unlink from $fg\n";
+                $parents--;
+            }
+
+            # add a new parent
+            if (defined $POST{'add_parent_gallid'} && $POST{'add_parent_gallid'} ne '_none') {
+                my $pg = $get_gal->("add_parent_gallid");
+                $g->link_from($pg) or die "failed to add pg=$pg as parent";
+                $parents++;
+            }
+
+            # delete unchecked children
+            foreach my $tg ($g->gals_linked_to) {
+                my $id = $tg->id;
+                next if $POST{"keep_child_$id"};
+                $g->unlink_to($tg);
+            }
+
+            # add a new child
+            if (defined $POST{'add_child_gallid'} && $POST{'add_child_gallid'} ne '_none') {
+                $g->link_to($get_gal->('add_child_gallid'));
+            }
+
+        }
+
+        # modify security level
+        if ($g && $g->secid ne $POST{'galsec'}) {
+
+            # change gal security
+            $g->set_secid($POST{galsec});
+
+            # modify security of all pictures as well
+            #        -- auto-change pics only in this gallery
+            #        -- ask what to do for others
+            my @all_upic_ids =  FB::gal_upics($u, $g->id);
+            my @uniq_upic_ids = FB::gal_unique_upics($u, $g->id, { force => 1 });
+            my $picinfo = FB::load_upic_multi($u, \@all_upic_ids, { force => 1 }) || {};
+
+            # divide all of the upics for this gallery into 2 categories:
+            # - upics we can auto-change security for
+            # - upics we can't auto-change because their secid doesn't match this gallery's
+            my (@auto_change, @diff_sec, @multi_gals, %uniq_upics);
+            foreach (@uniq_upic_ids) {
+                $uniq_upics{$_}++;
+                my $p = $picinfo->{$_};
+
+                # - pic security equals old gallery security, so
+                #   change the pic to the new gallery security.
+                # - pic security is already set to new gallery
+                #   security, so nothing to change.
+                if ($p->{secid} == $g->secid || $p->{secid} == $POST{galsec}) {
+                    push @auto_change, $p;
+                } else {
+                    # upic -> gal security mismatch
+                    push @diff_sec, $_;
+                }
+            }
+
+            # upic is in multiple galleries
+            # (upic row is not in the unique array, but it is in the full array.)
+            foreach (@all_upic_ids) {
+                push @multi_gals, $_ unless exists $uniq_upics{$_};
+            }
+
+            # change the upic secids
+            my $changed =
+                FB::change_upic_secid_multi($u, \@auto_change, $POST{galsec}) || 0;
+
+            # do we need to insert a conflict-resolution step?
+            if (my $left = @multi_gals + @diff_sec) {
+                $body .= "<?h1 Security Changed h1?>";
+
+                $body .= "<?p $changed " .
+                         ($changed == 1 ? "picture's security was ":
+                                          "pictures' securities were ") .
+                         "changed to <b>";
+                $body .= FB::secgroup_name($u, $POST{galsec}) . "</b>, and $left picture"
+                         . ($left == 1 ? ' was' : 's were'). " left ";
+                $body .= "unchanged.  If you would like to change " .
+                         ($left == 1 ? "this picture's security, " : "these pictures' securities, ");
+                $body .= "you will have to do so manually by clicking on the thumbnail, ";
+                $body .= "or simultaneously change all of them at once by clicking the 'Change all' button. p?>";
+
+                my $ups = FB::load_upic_multi($u, [ @multi_gals, @diff_sec ]);
+
+                if (@multi_gals) {
+                    $body .= "<?h1 Multiple Galleries h1?>";
+                    $body .= "<?p The following images are in multiple galleries, so their security has not been changed. p?>";
+
+                    $body .= FB::html_pics($u, [ map { $ups->{$_} } @multi_gals ],
+                                           {
+                                               img_text => sub {
+                                                   my $p = shift;
+                                                   return "<a href='/manage/media/pic.bml?id=$p->{upicid}'>" .
+                                                       FB::secgroup_name($u, $p->{secid}) . "</a>";
+                                               },
+                                           });
+                }
+
+                if (@diff_sec) {
+                    $body .= "<?h1 Different Security h1?>";
+                    $body .= "<?p The following images have security that didn't match that of this gallery. ";
+                    $body .= "We assume that they were intentionally different, so we've left them alone. p?>";
+
+                    $body .= FB::html_pics($u, [ map { $ups->{$_} } @diff_sec ],
+                                           {
+                                               img_text => sub {
+                                                   my $p = shift;
+                                                   return "<a href='/manage/media/pic.bml?id=$p->{upicid}'>" .
+                                                       FB::secgroup_name($u, $p->{secid}) . "</a>";
+                                               },
+                                           });
+                }
+
+                my @resolve_upics = (@diff_sec, @multi_gals);
+                $body .= "<br />";
+                $body .= "<form method='post' action='/manage/media/gal.bml?id=$gallid'>";
+                $body .= "<input type='hidden' name='userid' value='$u->{'userid'}'>";
+                $body .= "<input type='hidden' name='galsec' value='$POST{galsec}'>";
+                $body .= "<input type='hidden' name='resolve_upics' value='".  (join ', ', @resolve_upics) . "'";
+                $body .= "<input type='submit' value=\"" .
+                    FB::ehtml("Change all to \"" .  $u->secgroup_name($POST{galsec}) . "\"") . "\" name='resolve_picsec_conflicts'>";
+                $body .= "</form>";
+
+                return;
+            }
+        }
+
+        # so they have something bookmarkable:
+        return BML::redirect("/manage/media/gal.bml?id=" . $g->id) unless %err;
+    }
+
+  RENDER:
+
+    if ($g && $g->is_unsorted) {
+        $body .= "<?h1 Unsorted Gallery h1?><?p This is your unsorted gallery, containing pictures that you've uploaded but not yet placed anywhere.  There are no options for this gallery. p?>";
+
+    } else {
+
+        my $ename = FB::ehtml($POST{galname} || ($g ? $g->display_name : ""));
+        my $sname = FB::ehtml($g ? $g->tag : "");
+        my $sec_sel = $u->security_widget("galsec", $g ? $g->secid : 255);
+        my $style_sel; # style drop-down
+
+        my @u_sec_html;
+        my $u_grp = $u->{'_secgroups'};
+        push @u_sec_html, $_, $u_grp->{$_}->{'grpname'}
+            foreach (sort { $u_grp->{$a}->{'grpname'} cmp $u_grp->{$b}->{'grpname'} } keys %$u_grp);
+        unshift @u_sec_html, '', "----------" if scalar @u_sec_html;
+        my $export_sel = FB::html_select({ 'name' => 'export_gal',
+                                           'selected' => $g ? $g->prop("exportable_sec")+0 : 0 },
+                                           0   => "No",
+                                           255 => "Yes, to anyone",
+                                           254 => "Yes, to any of my groups",
+                                           @u_sec_html);
+
+        # style drop-down
+        {
+            my $styles = FB::load_user_styles($u);
+            $style_sel = FB::html_select({ 'name' => 'styleid',
+                                           'selected' => $g ? $g->prop("styleid") : 0, },
+                                         0 => "(Default)",
+                                         map { $_ => $styles->{$_} }
+                                         sort { $styles->{$a} cmp $styles->{$b} }
+                                         keys %$styles);
+        }
+
+
+        my ($par_sel, $chil_sel);
+
+        # linked-from galleries ($fg = from gallery)
+        foreach my $fg ($g ? $g->gals_linked_from : ()) {
+            my ($text, $pid);
+            if ($fg) {
+                $pid = $fg->id;
+                $text .= "<a href='gal?id=$pid'>" . FB::ehtml($fg->display_name) . "</a>";
+            } else {
+                $pid = 0;
+                $text = "<label for='parcheck0'>[Top Level]</label>";
+            }
+            $par_sel .= "<input type='checkbox' name='keep_parent_$pid' checked='checked' id='parcheck$pid'> $text <br />\n";
+        }
+
+        $par_sel ||= "<i>No galleries link to this one.</i><br />";
+        $par_sel .= "Add link from: ";
+        $par_sel .= FB::html_select({ 'name' => 'add_parent_gallid',
+                                      'selected' => ($g ? '' : 0), },
+                                    '_none', '',
+                                    0 => "[Top Level]",
+                                    FB::gallery_select_list($u));
+
+        # link galleries ($tg = to gallery)
+        foreach my $tg ($g ? $g->gals_linked_to : ()) {
+            my $cid = $tg->id;
+            my $text = "<a href='gal?id=$cid'>" . FB::ehtml($tg->display_name) . "</a>";
+            $chil_sel .= "<input type='checkbox' name='keep_child_$cid' checked='checked'> $text <br />\n"
+        }
+
+        $chil_sel ||= "<i>This gallery doesn't link to any others.</i><br />";
+        $chil_sel .= "Add link to: " . FB::html_select({ 'name' => 'add_child_gallid',
+                                                 'selected' => '', },
+                                               '_none','',
+                                               FB::gallery_select_list($u));
+
+        my $gdate;
+        {
+            my $date = $g ? $g->date : undef;
+            $gdate .= FB::html_text({ 'maxlength' => 20, 'size' => 20,
+                                      'name' => 'dategal',
+                                      'id' => 'input_dategal',
+                                      'value' => $date, });
+            $gdate .= "<small> (Optional)</small><br /><small><i>Acceptable formats:</i> 2000, 2000-12, 2000-12-31,<br />2002-12-31 14:20</small>";
+        }
+
+        my $tagmessage = "";
+
+        if (my $tcinfo = $err{'tag_collide'}) {
+            my $eg = $tcinfo->{'existing_gal'};
+            my $egid = $eg->id;
+            $tagmessage = "<span class='err'>Error:</span> The tag \"<b>" . FB::ehtml($tcinfo->{tag}) . "</b>\" is already in use by <a href='/manage/media/gal.bml?id=$egid'>another gallery</a>.  Would you like to <a href='/manage/media/mergegals.bml?id1=$egid&amp;id2=$gallid'>merge the two</a>?";
+        }
+
+        # is this a tag gallery?
+        my $namedchecked = '';
+        my $tagchecked = '';
+        my $namedselected = '';
+        my $tagselected = '';
+        my $tagdisabled;
+        if ($sname || $POST{'gallerytype'} eq 'tag') {
+            $tagchecked = "checked";
+            $tagselected = "GalleryTypeSelected";
+            $tagdisabled = '';
+        } else {
+            $namedselected = "GalleryTypeSelected";
+            $namedchecked = "checked";
+            $tagdisabled = 'disabled';
+        }
+
+        my $tagfield = $POST{'galshort'} || $sname;
+
+        my $err_name = $err{name} ? "<span class='err'>$err{name}</span>" : '';
+
+        $body .= <<"ENDFORM"
+
+<input type='hidden' name='userid' value='$u->{'userid'}'>
+
+<fieldset><legend>Gallery Settings</legend>
+
+<table>
+<tr valign="top">
+ <td>Gallery Name: </td><td><input type='text' name='galname' size='40' maxlength='120' value='$ename'> $err_name</td>
+</tr>
+<tr valign="top">
+ <td>Description: </td><td><textarea name='des' cols='40' rows='3' wrap='virtual'>@{[ FB::ehtml($g ? $g->des : "")  ]}</textarea></td>
+</tr>
+<tr valign="top">
+ <td>Show to: </td><td>$sec_sel</td>
+</tr>
+<tr valign='top'>
+ <td>Allow copies?</td>
+ <td>$export_sel</td>
+</tr>
+<tr valign='top' id="gdate">
+ <td>Date: </td>
+ <td>$gdate</td>
+</tr>
+</table>
+
+</fieldset>
+
+<fieldset><legend>Add Pictures</legend>
+<table width="100%" cellpadding="5">
+<tr align="center">
+
+<td class="GalleryType $namedselected" id="GalleryTypeNamedCell" width="30%" valign="top" align="left">
+ <input type="radio" name="gallerytype" value="named" id="gallerytypenamed"  onclick="galtypeselected('named')" $namedchecked />
+ <b><label for="gallerytypenamed">Manually</label></b><br/>
+ <div>I'll add all items myself</div>
+</td>
+
+<td class="GalleryType $tagselected" width="30%" valign="top" align="left" id="GalleryTypeTagCell">
+ <input type="radio" name="gallerytype" value="tag" id="gallerytypetag" onclick="galtypeselected('tag')" $tagchecked />
+ <b><label for="gallerytypetag">Automatically by Tag</label></b><br/>
+ <div>All images with this tag will be added to this gallery</div><br/>
+ <div><input type='text' id='input_galtag' name='galshort' size='30' maxlength='120' value='$tagfield' $tagdisabled></div>
+    <small>$tagmessage</small>
+</td>
+
+</tr>
+</table>
+</fieldset>
+
+<fieldset><legend>Navigation</legend>
+
+<p>How does this gallery fit into your web of galleries?</p>
+
+<table>
+<tr valign='top'>
+  <td width='120' align='right'><em class='widhead'>Linked from:</em></td>
+  <td>$par_sel</td>
+</tr>
+<tr valign='top'>
+  <td align='right'><em class='widhead'>Links to:</em></td>
+  <td>$chil_sel</td>
+</tr>
+</table>
+
+</fieldset>
+
+<fieldset><legend>Advanced</legend>
+
+<p>You may optionally set a customized style for just this gallery.</p>
+
+<table>
+<tr valign='top'>
+    <td width='120' align='right'>
+  <em class='widhead'>Style:</em>
+  </td>
+   <td>$style_sel</td>
+</tr>
+</table>
+
+</fieldset>
+
+
+
+<table width='90%'><tr><td align='center'>
+
+ <input type='submit' value='@{[ ($gallid ? "Save Gallery" : "Create Gallery") ]}' />
+
+</td></tr></table>
+
+ENDFORM
+}
+
+    $body .= "</td>\n<td width='120'>" . ($g && $g->is_unsorted ? "&nbsp;" : $preview) . "</td></tr>\n</table>";
+    $body .= '</form>';
+
+    return;
+}
+_code?><?page
+title=><?_code return $title; _code?>
+head<=
+ <style>
+    table.galpreview {
+      margin-left: 25px;
+      width: 120px;
+      background: #ffe;
+     border: 1px solid #fdd;
+    }
+
+table.galpreview div.ppic { margin-top: 4px; }
+
+table.galpreview a.viewall { margin-top: 10px; font-weight: bold; }
+
+div.topt { margin-top: 0.4em; margin-left: 1em; }
+
+.err { color: #FF0000; font-weight: bold; }
+
+#leftbar div.link { margin-top: 0.4em; }
+
+#leftbar {
+   /* border-right: 1px solid #ccc; */
+   padding-right: 1em;
+}
+
+#leftbar a:visited { color: #666; }
+#leftbar a { color: #666; }
+
+div.previewpic img { display: block; margin-bottom: 3px; }
+
+div.previewpic { margin-bottom: 3em; }
+
+.GalleryType {
+  border: 1px solid #000000;
+}
+
+.GalleryTypeSelected {   background-color: #DDDDDD; }
+
+fieldset { margin-bottom: 0.7em; padding: 0.7em 1em 0.5em 1.3em; border: 1px solid #888; width: 90%; }
+
+fieldset em.widhead { color: #666; font-style: italic; }
+
+   fieldset table { margin-top: 0.2em; }
+
+  fieldset p { font-size: 80%; }
+
+ </style>
+
+<script src='/js/core.js'></script>
+<script src='/js/dom.js'></script>
+<script>
+   function galtypeselected (type) {
+       var tagfield = $("input_galtag");
+       if (!tagfield) return;
+
+       if (type == "named") {
+           tagfield.disabled = true;
+           DOM.addClassName($("GalleryTypeNamedCell"), "GalleryTypeSelected");
+           DOM.removeClassName($("GalleryTypeTagCell"), "GalleryTypeSelected");
+       } else if (type == "tag") {
+           DOM.addClassName($("GalleryTypeTagCell"), "GalleryTypeSelected");
+           DOM.removeClassName($("GalleryTypeNamedCell"), "GalleryTypeSelected");
+           tagfield.disabled = false;
+       }
+   }
+
+var currentPopup;
+var currentPopupWindow;
+
+ function setPreview (e) {
+     if (!e) e = window.event;
+
+     if (currentPopup)
+         return;
+
+    var ife = document.createElement("iframe");
+    ife.id = "if_changepreview";
+    ife.className = 'popup';
+    ife.style.overflow = "hidden";
+    ife.style.position = "absolute";
+    ife.style.left = 50 + "px";
+    ife.style.top = 50 + "px";
+    ife.style.width = 600 + "px";
+    ife.style.height = 500 + "px";
+    ife.style.background = "#fff";
+    ife.style.border = "2px solid black";
+    ife.style.display = "block";
+    document.body.appendChild(ife);
+    ife.src = "/manage/media/pickpreview_popup.bml?gal=<?_code int($GET{id}) _code?>";
+    currentPopup = ife;
+    currentPopupWindow = ife.contentWindow;
+
+     return Event.stop(e);
+}
+
+     function killPopup () {
+         if (!currentPopup) return;
+       document.body.removeChild(currentPopup);
+       currentPopup = null;
+     }
+
+   function onBodyClick (e) {
+       killPopup();
+   }
+
+   function setPreviewPic (inf) {
+       killPopup();
+       var fe = $("img_galprev");
+       fe.src = inf.url;
+       fe.width = inf.w;
+       fe.height = inf.h;
+
+   }
+
+   onload = function () {
+       if ($("prevpicImgLink") && $("prevpicTextLink")) {
+         $("prevpicImgLink").onclick = setPreview;
+         $("prevpicTextLink").onclick = setPreview;
+       }
+       DOM.addEventListener(document.body, "click", onBodyClick);
+   };
+
+
+</script>
+
+<=head
+body=><?_code return $body; _code?>
+crumbs=><?_code return FB::crumbs($crumbs); _code?>
+page?>

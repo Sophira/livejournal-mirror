@@ -1,0 +1,106 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%POST %GET $title $body);
+
+    my $u = FB::get_remote();
+    return BML::redirect("/login?ret=manage/shortnames") unless $u;
+
+    my $sth;
+
+    $body = "";
+    $title = "Short Names";
+
+    my %sname;
+    $sth = $u->prepare("SELECT i.ident, i.did, g.name FROM idents i, gallery g ".
+		       "WHERE i.userid=? AND i.itype='S' AND i.dtype='G' ".
+		       "AND g.userid=i.userid AND g.gallid=i.did",
+		       $u->{userid});
+    $sth->execute;
+    while (my ($ident, $id, $name) = $sth->fetchrow_array) {
+        $sname{$ident} = { 'gallid' => $id, 'name' => $name };
+    }
+
+    # action path
+    if (FB::did_post()) {
+        # prevent spoofing:
+        return BML::redirect("/manage") 
+            unless $POST{'userid'} == $u->{'userid'};
+        
+        my $err = sub {
+            $title = "Error";
+            $body = "<?h1 Error h1?><?p One of more of your additions violated the following rule for the proper formatting of short names: p?><ul><li>$_[0]</li></ul>";
+            return;
+        };
+
+        while (my $k = each %sname) {
+            next unless $POST{"del_$k"};
+            $u->do("DELETE FROM idents WHERE userid=? AND itype='S' AND ident=?",
+		   $u->{'userid'}, $k);
+        }
+
+        for my $i (1..5) {
+            next unless $POST{"sn_$i"};
+            my $name = $POST{"sn_$i"};
+            $name =~ s!^\s+!!; $name =~ s!\s+$!!;
+            return $err->("Browser error: Invalid UTF-8") unless FB::is_utf8($name);
+            return $err->("No commas allowed in short names") if $name =~ /,/;
+            $u->do("REPLACE INTO idents (userid, itype, ident, dtype, did) ".
+		   "VALUES (?,'S',?,'G',?)",
+		   [$u->{'userid'}, "int"], $name, $POST{"gal_$i"}+0);
+            return $u->errstr if $u->err;
+        }
+
+        # give 'em a GET URL
+        return BML::redirect("/manage/shortnames");
+    }
+
+    $body .= "<form method='post' action='shortnames'>";
+    $body .= FB::html_hidden("userid", $u->{'userid'});
+
+    $body .= "<?p From here you can create & edit your \"short names\", little names you give to galleries to let you quickly index your pictures.  Setting up short names for your galleries is entirely optional.  More than likely you'll only setup short names for galleries that you commonly throw pictures into.  p?>";
+
+    if (%sname) {
+        $body .= "<?h1 Current Short Names: h1?><table cellpadding='2' cellspacing='0' class='multicol' style='width: 50%'>\n";
+        $body .= "<tr>\n";
+        $body .= "<th></th><th style='text-align: left'>Shortname</th><th style='text-align: left'>Gallery</th>\n";
+        $body .= "</tr>\n";
+        foreach my $sname (sort keys %sname)
+        {
+            my $ename  = FB::ehtml($sname{$sname}->{'name'});
+            my $esname = FB::ehtml($sname);
+            $body .= "<tr>";
+            $body .= "<td style='text-align: center'><input type='checkbox' name='del_$esname'></td>";
+            $body .= "<td style='text-align: left'><b>$sname</b></td>";
+            $body .= "<td style='text-align: left'><a href='" . FB::url_gallery($u, FB::load_gallery_id($u, $sname{$sname}->{'gallid'})) . "'><b>$ename</b></a></td>";
+            $body .= "</tr>\n";
+        }
+        $body .= "</table>";
+
+        $body .= "<p style='margin-top: 10px'>";
+        $body .= FB::html_submit("action:delsel", "Delete Selected");
+        $body .= "</p>";
+    }
+        
+    $body .= "<?h1 Add Short Names h1?>";
+    $body .= "<table cellspacing='0' cellpadding='5' style='width: 75%'>";
+    for my $i (1..6) {
+        if ($i % 2) { $body .= "<tr>\n"; }
+        $body .= "<td><table><tr><td align='right'>Shortname:</td><td align='left'><input name='sn_$i' size='20' maxlength='30'></td></tr>\n";
+        $body .= "<tr><td align='right'>Gallery:</td><td>" .
+            FB::html_select({ 'name' => "gal_$i" },
+                            '' => "(Select gallery)",
+                            FB::gallery_select_list($u)) . "</td></tr></table></td>";
+        if ($i % 2 == 0) { $body .= "</tr>\n"; }
+    }
+    $body .= "</table>";
+    $body .= "<p style='margin-top: 10px'>" . FB::html_submit("action:new", "Create Short Names") . "</p>";
+    $body .= "</form>";
+
+    return;
+
+}
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+page?>

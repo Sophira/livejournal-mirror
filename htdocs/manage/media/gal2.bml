@@ -1,0 +1,175 @@
+<?_code
+{
+    use strict;
+
+    use vars qw(%GET %POST %FORM $body $title $head);
+
+    my $remote = FB::User->remote
+        or return BML::redirect("/login?to=manage/gals2.bml");
+
+    my $uid = $remote->id;
+
+    $head .= FB::Manage->standard_head;
+    $head .= q {
+        <script>
+        // create the datasources
+        var galDataSource = new GalleryDataSource();
+        var picDataSource = new PictureDataSource();
+        var multiDataSource = new MultiDataSource();
+
+        // globally accessable datasource to keep track of selected galleries
+        FB.galSelected = new DataSource();
+
+        // create the views
+        var galList   = new GalleryListView();
+        var galThumb = new GalleryThumbView();
+        var galManage  = new GalleryManageView();
+        var manageView = new ManageView();
+        var browseView = new View();
+        var goTagView = new View();
+        var manageTabsView = new TabGroupView();
+        var paginationView = new PaginationView();
+
+        // create the gallery management controller
+        var galManageController = new GalleryManageController();
+
+        // create the diskfree widget
+        var diskFreeWidget = new DiskFree_Widget();
+        FB.diskFreeWidget = diskFreeWidget;
+
+        function setup () {
+          // initialize datasources
+          galDataSource.init();
+          picDataSource.init();
+          FB.galSelected.init([]);
+
+          // make the datasources paginated
+          galDataSource.makePaginated();
+
+          multiDataSource = new MultiDataSource();
+          multiDataSource.init({"picSource": picDataSource, "galSource": galDataSource});
+
+          galDataSource.sortDataBy("name", "string");
+
+          // create some view divs
+          var galListDiv = document.createElement("div");
+          DOM.addClassName(galListDiv, "FBGalleryView");
+          galListDiv.id = "galList";
+          var galThumbDiv = document.createElement("div");
+          DOM.addClassName(galThumbDiv, "FBGalleryView");
+          galThumbDiv.id = "galThumb";
+          var goTagDiv = document.createElement("div");
+          goTagDiv.innerHTML = "<iframe src='/manage/annotate' style='width: 100%; height: 600px;' />";
+
+          browseView.init($("browseView"));
+          goTagView.init(goTagDiv);
+          paginationView.init($("paginationView"), galDataSource);
+
+          galManageController.init(galDataSource);
+
+          galList.init(galListDiv, galDataSource, false, galManageController);
+          galThumb.init(galThumbDiv, galDataSource, false, galManageController);
+
+          manageView.init(
+                          $("manageview"),
+                          multiDataSource, {
+            "goTagView"     : goTagView,
+              "galThumbView"  : galThumb,
+              "galListView"   : galList,
+              "browseView"    : browseView,
+              "manageTabsView": manageTabsView},
+                          galManageController);
+
+          galManage.init($("galManage"), galDataSource, galManageController);
+          galManageController.addGalView(galList);
+
+          diskFreeWidget.init($("diskfree_widget"));
+
+          DOM.addEventListener($("gallistbtn"), "click", galListClicked);
+          DOM.addEventListener($("galthumbbtn"), "click", galThumbClicked);
+
+          manageView.galListView();
+
+          // set up the tabs
+          var galTabContentRenderer = function () { return "Galleries (" + multiDataSource.galSource.totalLength() + ")" };
+          var galTab = {
+            "contentRenderer": galTabContentRenderer,
+            "datasource": galDataSource,
+            "selected": true,
+            "clickHandler": function () {
+              $("galManage").style.display = "";
+              $("paginationView").style.display = "";
+              $("FBManageGalleryViewButtons").style.display = "";
+              manageView.galListView();
+            }
+          };
+
+          var goTagTab = {
+            "content": "Go Tag",
+            "clickHandler": function () {
+              $("galManage").style.display = "none";
+              $("paginationView").style.display = "none";
+              $("FBManageGalleryViewButtons").style.display = "none";
+              manageView.goTagView();
+            }
+          };
+
+          /*manageTabsView.init($("manageTabsView"),
+                              [ galTab, goTagTab ], { "tabClass": "FBManageTab",
+                                                        "tabSelectedClass": "FBManageTabSelected" });
+          */
+        }
+
+          function galListClicked() {
+            galManageController.dispatchAction("galList");
+          }
+
+          function galThumbClicked() {
+            galManageController.dispatchAction("galThumb");
+          }
+
+          DOM.addEventListener(window, "load", setup);
+
+        </script>
+    };
+
+    my $diskfree_widget = $remote->diskfree_widget;
+
+    $body .= q {
+      <div id="pageHeader" style="width: 100%;">
+        <h1 id="pageTitle" style="float: left; margin-bottom: auto;">Manage</h1>
+        <div id="diskfree_widget" style="float: right; width: 420px;">Loading Disk Free Widget...<div style="height:50px;"></div></div>
+      </div>
+      <div style="clear: both;">
+          <div id="manageTabsView"></div>
+
+      </div>
+      <div id="manageview">
+
+          <div id="FBManageGalleryViewButtons">
+            <input type="button" id="gallistbtn" value="list view" />
+            <input type="button" id="galthumbbtn" value="thumb view" />
+          </div>
+
+          <div class="clr"></div>
+
+          <div id="browseViewContainer">
+            <div id="browseView"></div>
+            <div id="paginationView"></div>
+          </div>
+          <div style="float: left; width: 28%;" id="galManage">Loading Galllery Manage View...</div>
+      </div>
+    };
+
+    return;
+}
+
+_code?>
+
+<?page
+title=><?_code return $title _code?>
+body=><?_code return $body _code?>
+head<=
+<?_code return $head _code?>
+<=head
+page?>

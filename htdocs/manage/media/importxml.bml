@@ -1,0 +1,226 @@
+<?_code
+{
+    use strict;
+    use FB::Importer::XML;
+    use Gearman::Client;
+    use Gearman::JobStatus;
+    use JSON;
+
+    use vars qw(%POST $title $body $javascript);
+
+    # set to one if you want this page to work without gearman
+    my $WORK_WITHOUT_GEARMAN = $FB::IMPORT_WITHOUT_GEARMAN ? 1 : 0;
+    my $gearman_disabled = $FB::GEARMAN_DISABLED{'importing'};
+
+    my $u = FB::get_remote();
+    return BML::redirect("/login?to=manage/importxml") unless $u;
+
+    my $jsonerr = sub {
+        my $ret = { err => $_[0] };
+        BML::set_content_type('text/plain');
+        BML::finish;
+        return JSON::objToJson($ret);
+    };
+
+    # do they want to just get the status?
+    my $getstatus = $POST{'getstatus'};
+    if ($getstatus) {
+        # did we finish and get a status?
+        if (my $res = $u->cache('import_status')) {
+            $u->set_cache('import_status', '');
+            return $jsonerr->($res);
+        }
+
+        my $client = Gearman::Client->new;
+        $client->job_servers(@FB::GEARMAN_SERVERS);
+        my $status = $client->get_status($getstatus);
+        return undef unless $status;
+
+        my $prog = $status->progress || [0,0];
+        my $running = $status->running;
+        my $percent = $status->percent;
+
+        my $status = {
+            'nu' => $prog->[0],
+            'de' => $prog->[1],
+            'percent' => $percent,
+            'running' => $running,
+        };
+        BML::set_content_type('text/plain');
+        BML::finish;
+        return JSON::objToJson($status);
+    }
+
+    $title = 'Import';
+
+    my $err = sub {
+        my $error = shift;
+        $body .= qq {
+            <div class="FBError" style="margin: 1em; border: 1px #AA0000 solid; padding: 1em;">
+                <b><u>Error:</u></b>
+                <pre>$error</pre>
+            </div>
+        };
+        return '';
+    };
+
+    my $url = $POST{'importurl'};
+    my $start = $POST{'start'};
+    my $recurse = $POST{'recurse'};
+
+    if ($url) {
+        my $importer = FB::Importer::XML->new(( u => $u, url => $url, recurse => $recurse ))
+                                              or return $err->("Could not create XML importer");
+
+        if (!$start && (!@FB::GEARMAN_SERVERS || $gearman_disabled)) {
+            # trying to do without gearman, is this allowed?
+            if ($WORK_WITHOUT_GEARMAN) {
+                # they don't have gearman, they don't get fancy upload status
+                # they just have to sit and wait.
+                my $res = $importer->do_import;
+                if ($res) {
+                    return $err->($res);
+                }
+            } else {
+                # trying to import with importing not enabled
+                return $err->('Sorry, this feature is unavailable right now.');
+            }
+        } elsif ($start && @FB::GEARMAN_SERVERS && !$gearman_disabled) {
+            # IMPORT!
+            my $taskhandle = $importer->do_import;
+            my $ret = {
+                'taskhandle' => $taskhandle,
+            };
+            BML::set_content_type('text/plain');
+            BML::finish;
+            return JSON::objToJson($ret);
+        } else {
+            # show an animated GIF to keep the user happy.
+            $body .= qq {
+                <div style="margin-left: auto; margin-right: auto; margin-top: 2em; margin-bottom: 1em;">
+                    <img src="$FB::IMGPREFIX/pleasewait.gif" />
+                    <div id="status">Please wait for your import to complete. Do not press the refresh button or the back button.</div>
+                </div>
+                };
+
+            $javascript .= qq {
+                var taskhandle;
+                var pbar;
+                var timer;
+                var showErrors = 1;
+
+                function importStarted (data) {
+                  if (!pbar) {
+                    pbar = new FBProgressBar();
+                    pbar.init(\$("pbar"));
+                    pbar.setWidth("100%");
+                    pbar.show();
+                  }
+                  taskhandle = data.taskhandle;
+                  pbar.setIndefinite(true);
+                  timer = setInterval(updateStatus, 3000);
+                }
+
+                function updateStatus () {
+                  var reqOpts = {};
+                  reqOpts.url = "/manage/importxml";
+                  reqOpts.onError = onError;
+                  reqOpts.onData = gotUpdate;
+                  reqOpts.method = "POST";
+
+                  var postdata = {};
+                  postdata["getstatus"] = taskhandle;
+                  postdata["importurl"] = "$url";
+                  postdata["start"] = 1;
+                  reqOpts.data = HTTPReq.formEncoded(postdata);
+                  HTTPReq.getJSON(reqOpts);
+                }
+
+                function gotUpdate (stat) {
+                  if (stat.err) {
+                      return onError(stat.err);
+                  }
+
+                  var running = stat.running;
+                  var nu = stat.nu;
+                  var de = stat.de;
+
+                  //if (!running && timer) clearInterval(timer);
+
+                  if (pbar) {
+                      pbar.setMax(de);
+                      pbar.setValue(nu);
+                  }
+                }
+
+                function onError (err) {
+                  if (!showErrors)
+                    return;
+
+                  \$("Error").style.display = "block";
+                  \$("ErrorText").innerHTML = err;
+
+                  if (pbar)
+                      pbar.hide();
+
+                  if (timer)
+                    clearInterval(timer);
+
+                  showErrors = 0;
+                }
+
+                var reqOpts = {};
+                reqOpts.url = "/manage/importxml";
+                reqOpts.onError = onError;
+                reqOpts.onData = importStarted;
+                reqOpts.method = "POST";
+
+                var postdata = {};
+                postdata["importurl"] = "$url";
+                postdata["start"] = 1;
+                postdata["recurse"] = "$recurse";
+                reqOpts.data = HTTPReq.formEncoded(postdata);
+                HTTPReq.getJSON(reqOpts);
+            };
+        }
+    }
+
+    $body .= qq {
+
+    };
+
+    return;
+}
+_code?><?page
+head<=
+<script language="JavaScript" src="/js/core.js"></script>
+<script language="JavaScript" src="/js/dom.js"></script>
+<script language="JavaScript" src='/js/httpreq.js'></script>
+<script language="JavaScript" src='/js/hourglass.js'></script>
+<script language="JavaScript" src='/js/progressbar.js'></script>
+<script language="JavaScript" src='/js/fbprogressbar.js'></script>
+<title><?_code return $title; _code?></title>
+<script language="JavaScript">
+<?_code return $javascript _code?>
+</script>
+<style>
+#status {
+  font-style: italic;
+}
+</style>
+<=head
+body<=
+<?_code return $body; _code?>
+<div class="FBError" id="Error" style="margin: 1em; border: 1px #AA0000 solid; padding: 1em; display: none;">
+<b><u>Error:</u></b>
+<pre id="ErrorText">$error</pre>
+</div>
+
+<form action="/manage/importxml" method="POST">
+<div>Import Url: <input type="text" size="40" name="importurl" /></div>
+<div>Add linked galleries recursively: <input type="checkbox" name="recurse" /></div>
+<div><input type="submit" value="import" /></div>
+<div id="pbar"></div>
+</form>
+<=body
+page?>

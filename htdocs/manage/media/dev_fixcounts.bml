@@ -1,0 +1,73 @@
+<?page emacs=> -*-bml-*-
+title=>Dev: Fix Counts
+body<=
+<?_code
+{
+    my $u = FB::get_remote();
+    return BML::redirect("/login") unless $u;
+
+    my $udbh = FB::get_user_db_writer($u);
+    my $sth;
+
+    # this mode reports on what errors were found:
+    if ($FORM{'mode:check'}) {
+        my $ret = "<p>Starting check...</p>\n";
+        my $bad = 0;
+
+        my %prev;
+        $sth = $udbh->prepare("SELECT userid, gallid, secid, count FROM gallerysize WHERE userid=$u->{'userid'}");
+        $sth->execute;
+        while (my ($uid,$gid,$sid,$ct) = $sth->fetchrow_array) {
+            $prev{"$uid-$gid-$sid"} = $ct;
+        }
+
+        my $q = qq{
+            SELECT u.userid, g.gallid, u.secid, COUNT(u.secid)
+            FROM gallerypics g, upic u
+            WHERE u.upicid=g.upicid
+                AND u.userid=$u->{'userid'}
+                AND g.userid=u.userid
+            GROUP BY g.gallid, u.secid
+        };
+        $sth = $udbh->prepare($q);
+        $sth->execute;
+        while (my ($uid,$gid,$sid,$ct) = $sth->fetchrow_array) {
+            my $k = "$uid-$gid-$sid";
+            unless ($prev{$k} == $ct) {
+                $bad = 1;
+                $ret .= "<p><b>Error:</b> $k: old=$prev{$k}, correct=$ct<p>";
+            }
+            delete $prev{$k};
+        }
+        foreach my $k (sort keys %prev) {
+            next if $prev{$k} == 0;
+            $bad = 1;
+            $ret .= "<p><b>Error:</b> $k: old=$prev{$k}, correct=0<p>";
+        }
+
+        if ($bad) {
+            $ret .= qq{
+        <form method='post'>
+            Errors found. <input type='submit' name='mode:fix' value="Fix">
+            </form>};
+        } else {
+            $ret .= "<p>Done.  No errors found.</p>\n";
+        }
+        return $ret;
+    }
+
+    # default fast mode:
+    return "Fixed." if $FORM{'mode:fix'} && FB::reset_gal_size($u);
+
+    return qq{
+        <form method='post'>
+            Select repair method:
+            <p><input type='submit' name='mode:check' value="Check"> -- slow check, with reporting of errors found.</p>
+            <p><input type='submit' name='mode:fix' value="Fix"> -- quick fix, without error reporting.</p>
+            </form>
+        };
+
+}    
+_code?>
+<=body
+page?>

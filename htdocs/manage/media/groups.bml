@@ -1,0 +1,387 @@
+<?page emacs=> -*-bml-*-
+title=>Edit Groups
+body<=
+<?_code
+{
+    use strict;
+    use vars qw(%GET %POST);
+
+    my $u = FB::User->remote;
+    return BML::redirect("/login?to=manage/groups") unless $u;
+
+    my $root = FB::user_siteroot($u);
+
+    ### content creators ###
+
+    # edit per-user mode
+    my $edituser = sub {
+        my $user = FB::did_post() ? $POST{'user'} : $GET{'user'};
+        return "<?h1 Error: no user specified h1?>" unless $user;
+
+        # make user into a hashref
+        $user = FB::User->load_user($user, undef, { 'create' => 1 });
+        return "<?h1 Error: invalid user h1?>" unless $user;
+
+        if ($u->{'userid'} == $user->{'userid'}) {
+            return "<?h1 Error: cannot edit your membership to your " .
+                "own groups. h1?>\n";
+        }
+
+        my $groups = $u->secgroups;
+        my @actions = ();
+
+        # perform actions if this is a post request
+        if ($POST{'action:updateuser'}) {
+            my $udbh = FB::get_user_db_writer($u);
+
+            my @want_groups = ();
+            while (my ($secid, $sec) = each %$groups) {
+                push @want_groups, $sec if $POST{"secid:$secid"};
+            }
+
+            my $rv = $u->set_secgroup_membership($user, @want_groups);
+
+            unless ($rv) {
+                push @actions, "Error: unable to save changes.\n";
+            } else {
+                push @actions, "Success: saved changes.\n";
+            }
+        }
+
+        # could mean there was an error, or we simply aren't posting
+        my $toggled = $u->secgroups_with_member($user);
+
+        # now show the user edit form
+        my $ret = '';
+
+        $ret .= "<form method='post' action='/manage/media/groups.bml'>\n" .
+            "<div style='margin-bottom: 1em;'>[&lt;&lt; " .
+            "<a href='$root/manage/groups'>Group Listing" .
+            "</a>]</div>\n";
+
+        if (@actions)
+        { $ret .= "<?h1 Action Results h1?>\n" . join('<br />', @actions); }
+
+        $ret .= "<?h1 Edit Group Membership h1?>" .
+            "<?p You are currently editing group membership for '" .
+            FB::eall($user->{'usercs'}) . "'.  Uncheck the box " .
+            "next to a group name to remove this user from that group. p?>\n";
+
+        my $ct = 0;
+        foreach (sort 
+                 { $groups->{$a}->grpname cmp $groups->{$b}->grpname } 
+                 keys %$groups) {
+            my $sel = (defined $toggled->{$_}) ? 1 : 0;
+            $ret .= "<br />" if $ct;
+            $ret .= FB::html_check({ 'name' => "secid:$_", 'selected' => $sel });
+            $ret .= "<a href='$root/manage/groups?secid=$_'>" . 
+                FB::eall($groups->{$_}->grpname) . "</a>\n";
+            $ct++;
+        }
+
+        if ($ct) {
+            # there is a form to be filled out, make hidden fields and submit
+            $ret .= FB::html_hidden(
+                                    'mode', 'edituser', 'user', $user->{'user'}) . "\n";
+            $ret .= "<?p " . FB::html_submit(
+                                             'action:updateuser', 'Update Group') . " p?>\n";
+
+        } else {
+            $ret .= "<?p <i>no groups defined</i> p?>\n";
+        }
+        $ret .= "</form>\n";
+
+        return $ret;
+    };
+
+
+    my $singlegroup = sub {
+        my $secid = FB::did_post() ? $POST{'secid'} : $GET{'secid'};
+        return "<?h1 Error: no secid specified h1?>" unless $secid;
+
+        my $sec = $u->load_secgroup_id($secid);
+        return "<?h1 Error: no group for secid h1?>" unless $sec;
+
+        my @actions;
+
+        my $udbh = $u->writer if FB::did_post();
+
+        my @actions = ();
+        if ($POST{'action:updatemembers'}) {
+
+            foreach my $u_mem ($sec->members) {
+                my $uid = $u_mem->{userid};
+
+                next if $POST{"userid:$uid"};
+
+                if ($sec->delete_member($u_mem)) {
+                    push @actions, "Success: deleted '" .
+                        FB::eall($u_mem->{'usercs'}) . "'.\n";
+                } else {
+                    push @actions, "Error: unable to delete '" .
+                        FB::eall($u_mem->{'usercs'}) . "'.\n";
+                }
+            }
+            push @actions, "Success: users up-to-date\n" unless @actions;
+        }
+
+        if ($POST{'action:renamegroup'}) {
+            if (! $POST{'newgroupname'}) {
+                push @actions, "Error: you must specify a new group name.\n";
+            } elsif ($sec->grpname eq $POST{'newgroupname'}) {
+                push @actions, "Success: name already up-to-date.\n";
+            } else {
+                my $groups = $u->secgroups || {};
+
+                my $exists = 0;
+                foreach (keys %$groups) {
+                    if(lc($groups->{$_}->grpname) eq lc($POST{'newgroupname'}))
+                    { $exists++; last; }
+                }
+
+                if ($exists) {
+                    push @actions, "Error: '$POST{'newgroupname'}' already exists.\n";
+                } else {
+                    if ($sec->rename($POST{'newgroupname'})) {
+                        push @actions, "Success: renamed to '" . 
+                            FB::eall($POST{'newgroupname'}) . "'.\n";
+
+                    } else {
+                        push @actions, "Error: unable to rename group.\n";
+                    }
+                }
+            }
+        }
+
+        # see if they want to delete the group
+        if ($POST{'action:deletegroup'}) {
+            if ($sec->delete) {
+                # delete was successful, send them to main page
+                return BML::redirect('/manage/groups');
+            } else {
+                push @actions, "Error: unable to delete group\n";
+            }
+        }
+
+        if ($POST{'action:addmembers'}) {
+            my $to_add = 0;
+            map { $to_add++ if $POST{"newmember_$_"} } (1..5);
+            if ($to_add) {
+                # trim down, kill invalid users that they just entered
+                my %users = ();   # userid -> $u
+
+                # look at all 5 entry boxes
+                for (1..5) {
+                    my $member;
+                    next unless $member = $POST{"newmember_$_"};
+
+                    my $um = FB::User->load_user($member, undef, { 'create' => 1 });
+
+                    if (! $um) {
+                        push @actions, "Error: '" . FB::ehtml($member) . "' does not exist.\n";
+                    } elsif ($um->{'userid'} == $u->{'userid'}) {
+                        push @actions, "Error: you cannot add yourself.\n";
+                    } elsif ($sec->is_member($um) || $users{$um->{'userid'}}) {
+                        push @actions, "Duplicate ignored: '" . FB::fbuser_text($um) . "'\n";
+                    } else {
+                        $users{$um->{'userid'}} = $um;
+                    }
+                }  # end 5 boxes
+
+                my $ct = scalar($sec->members);
+
+                foreach my $uid (keys %users) {
+                    # 250 sound reasonable?  that's the group limit, so why not?
+                    if ($ct >= 250) {
+                        push @actions, "Error: member limit reached.\n";
+                        last;
+                    }
+
+                    if ($sec->add_member($users{$uid})) {
+                        push @actions, "Success: added '" .
+                            FB::eall($users{$uid}->{'usercs'} . "'.\n";
+                        $ct++;
+                    } else {
+                        push @actions, "Error: unable to add '" .
+                            FB::eall($users{$uid}->{'usercs'} . "'\n";
+                    }
+                }
+
+            } else {
+                push @actions, "Error: no usernames to add.\n";
+            }
+        } # end if ($POST{'action:addmembers'})
+
+        # show edit form
+        my $ret = '';
+
+        $ret .= "<form method='post' action='$root/manage/groups'>\n";
+        $ret .= FB::html_hidden('mode', 'singlegroup', 'secid', $secid) . "\n";
+
+        $ret .= "<div style='margin-bottom: 1em;'>[&lt;&lt; " .
+            "<a href='$root/manage/groups'>Group Listing" .
+            "</a>]</div>\n";
+
+        if (@actions) { 
+            $ret .= "<?h1 Action Results h1?>\n" . join('<br />', @actions);
+        }
+
+        $ret .= "<?h1 Editing Group h1?>" .  "<?p " . 
+            FB::html_text
+            ({ name => 'newgroupname', value => $sec->grpname,
+               size => '30', maxlength => '100' }) . "\n";
+        $ret .= FB::html_submit('action:renamegroup', 'Rename') . "\n";
+
+        $ret .= "<input type='submit' name='action:deletegroup' value='Delete...' " .
+            "onClick=\"return confirm('Are you sure you wish to delete this group?');\"> p?>";
+
+        $ret .= "<?h1 Current Members h1?>\n" .
+            "<?p To delete a user from this group, uncheck the box next to " .
+            "their username. p?>\n";
+        my $ct = 0;
+
+        foreach my $mem_u (sort { $a->{usercs} cmp $b->{usercs} } $sec->members) {
+
+            $ret .= "<br />" if $ct;
+            $ret .= FB::html_check(
+                                   { 'name' => "userid:$mem_u->{userid}",
+                                     'selected' => 1
+                                     }) .
+                                     " <a href='$root/manage/media/groups.bml?user=" .
+                                     FB::eurl(FB::canonical_username($mem_u->{'usercs'})) . "'>" .
+                                     FB::eall($mem_u->{'usercs'}) . "</a>\n";
+            $ct++;
+        }
+
+        if ($ct == 0) {
+            $ret .= "<i>no members</i>\n";
+        } else {
+            $ret .= "<?p " . FB::html_submit(
+                                             'action:updatemembers',
+                                             'Update Group'
+                                             ) . " p?>";
+        }
+
+
+        $ret .= "<?h1 Add Members h1?>\n";
+        for (1..5) {
+            $ret .= "<br />" if $_ > 1;
+            $ret .= FB::html_text(
+                                  { 'name' => "newmember_$_",
+                                    'size' => '30',
+                                    'maxlength' => '30',
+                                }) . "\n";
+        }
+        $ret .= "<?p " . FB::html_submit('action:addmembers', 'Add Members') . " p?>\n";
+
+        $ret .= "</form>\n";
+
+        return $ret;
+    };
+
+
+    my $allgroups = sub {
+        my $groups = $u->secgroups;
+
+        my @actions;
+
+        # the only way this can happen is if they have entered
+        # nothing for their user to edit, otherwise they get sent
+        # to edituser();
+        if ($POST{'action:edituser'})
+        { push @actions, "You must enter a username to edit\n"; }
+
+        my $udbh = $u->writer if FB::did_post();
+
+        if ($POST{'action:creategroup'}) {
+            if (! $POST{'newgroupname'}) {
+                push @actions, "Error: you must specify a name for your new group\n";
+            } else {
+                # find the lowest available groupid, and while we're already
+                # iterating through it, check for a duplicate groupname
+                my $groupid = 0;
+                foreach (1..125) {
+                    my $grp = $groups->{$_};
+                    if ($grp && $grp->grpname eq $POST{'newgroupname'}) {
+                        push @actions, "Error: '" . FB::eall($POST{'newgroupname'}) .
+                            "' already exists.\n";
+                        $groupid = -1;
+                        last;
+                    }
+                    unless ($grp && $grp->grpname) {
+                        $groupid = $_;
+                        last;
+                    }
+                }
+
+                if ($groupid > 0) {
+                    # create a new group, then artificially insert it into $groups
+                    if (FB::SecGroup->create($u, $groupid, $POST{newgroupname})) {
+                        BML::redirect("/manage/media/groups.bml?secid=$groupid");
+                    } else {
+                        my $err = FB::last_error();
+                        push @actions, "Error: could not create group: $err\n";
+                    }
+                } elsif ($groupid == 0) {
+                    push @actions, "Error: you cannot create more groups\n";
+                }
+            }
+        }
+
+
+        # show form
+        my $ret = '';
+
+        if (@actions)
+        { $ret .= "<?h1 Action Results h1?>\n" . join('<br />', @actions) . "\n"; }
+
+        $ret .= "<form method='post' action='$root/manage/media/groups.bml'>\n";
+
+        $ret .= "<?h1 Existing Groups h1?>\n";
+        my $ct = 0;
+        foreach (sort {$groups->{$a}->grpname cmp $groups->{$b}->grpname}
+                 keys %$groups) {
+            $ret .= "<br>" if $ct;
+            $ret .= "<a href='$root/manage/groups?secid=$_'>" .
+                FB::eall($groups->{$_}->grpname) . "</a>\n";
+            $ct++;
+        }
+        if ($ct == 0) {
+            $ret .= "<p /><i>no groups</i>\n";
+        }
+
+        $ret .= "<p /><?h1 Create Group h1?>\n" .
+            "<p />" . FB::html_text(
+                                    { 'name' => 'newgroupname',
+                                      'size' => '30',
+                                      'maxlength' => '100'
+                                      }) . "\n" .
+                                      FB::html_submit('action:creategroup', 'Create Group') . "\n";
+
+        $ret .= "<p /><?h1 Edit a User's Memberships h1?>\n" .
+            "<p />" . FB::html_text(
+                                    { 'name' => 'user',
+                                      'size' => '30',
+                                      'maxlength' => '35'
+                                      }) . "\n" .
+                                      FB::html_submit('action:edituser', 'Edit User');
+
+        $ret .= "</form>\n";
+        
+        return $ret;
+    };
+
+    # dispatch an action handler
+    if ($POST{'mode'} eq 'edituser' || $GET{'user'} || ($POST{'action:edituser'} && $POST{'user'})) {
+        return $edituser->();
+    } elsif ($POST{'mode'} eq 'singlegroup' || $GET{'secid'} =~ /^\d+$/) {
+        return $singlegroup->();
+    }
+
+    # default to group listing
+    return $allgroups->();
+}
+_code?>
+
+<=body
+page?>

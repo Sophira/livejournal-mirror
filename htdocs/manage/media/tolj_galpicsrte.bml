@@ -1,0 +1,96 @@
+<html>
+<head>
+<style type="text/css">
+body
+{
+ margin: 0px;
+ padding: 10px;
+ background-color: #f7f7f7;
+}
+
+body, td, input, select, textarea
+{
+ font-size: 11px;
+ font-family: 'Microsoft Sans Serif' , Arial, Helvetica, Verdana;
+}
+</style>
+<!--
+<script language="JavaScript" src="/stc/fck/editor/dialog/fck_image/fck_image.js">
+</script>
+-->
+<script language="JavaScript">
+    var LJWin = window.parent.InObFCK;
+
+    // When a user clicks on the gallery they progress to the next page
+    LJWin.hideNext();
+    LJWin.setTitle('Step 2 of 2: Select Image to Insert');
+    LJWin.setPreviousCb(window.parent.InObFCK.fotobilderStepOne);
+</script>
+</script>
+</head>
+<body>
+<?_code
+{
+    use strict;
+    use vars qw(%GET %POST);
+
+    my $err = sub {
+        my $msg = shift;
+        my $ret;
+        $ret .= $msg;
+        return $ret;
+    };
+
+    my $gallid = $GET{'gal'} or
+        return $err->("Must pass a gallery id");
+
+    my $u = FB::User->remote or
+        return $err->("Must be logged in.");
+
+    my $gal = $u->load_gallery_id($gallid) or
+        return $err->("Cannot load specified gallery");
+
+    my @pics = $gal->pictures;
+
+    return $err->("<?h2 No Images Found h2?><?p You have no images in this gallery yet p?>")
+        unless @pics;
+
+    my $ret = "";
+    my $auth = FB::current_domain_plugin();
+    my $retbase = $auth->remote_url("on_upload_rte");
+
+    $ret .= "<table><tr><td width='20%'><?h2 " . FB::ehtml($gal->display_name()) . " h2?></td><td style='vertical-align: bottom'>";
+    $ret .= "<font size='2'>" . FB::ehtml(scalar @pics) . (scalar @pics == 1 ? ' image' : ' images') . "</font>";
+    $ret .= "</td></tr><tr><td colspan='2'>";
+    $ret .= "<?p Select an image you wish to insert into your journal entry.  The image will display as 320 x 240 (medium) and will link to the image in its gallery. p?></td></tr></table><br />";
+
+    foreach my $p (@pics) {
+        my %picret;
+        $picret{'w_1'} = $p->width;
+        $picret{'h_1'} = $p->height;
+        $picret{'u_1'} = $p->url_full;
+        $picret{'upload_count'} = 1;
+
+        # Thumbnail
+        my ($turl, $tw, $th) = $p->scaled_url(100, 100);
+
+        # Scaled for entry
+        my ($surl, $sw, $sh) = $p->scaled_url(320, 240);
+        $picret{'sw_1'} = $sw;
+        $picret{'sh_1'} = $sh;
+        $picret{'su_1'} = $surl;
+
+        # URL to picture page
+        $picret{'pp_1'} = $p->url_picture_page();
+
+        my $retaddr = $retbase;
+        $retaddr .= "?" . join("&", map { FB::eurl($_) . "=" . FB::eurl($picret{$_}) } keys %picret);
+
+        $ret .= "<a href='$retaddr' target='_parent'><img src='$turl' width='$tw' height='$th' alt='Pic' border='0' /></a> ";
+    }
+
+    return $ret;
+}
+_code?>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%FORM %GET %POST $title $body $crumbs);
+
+    my $u = FB::User->remote
+        or return BML::redirect("/login?to=manage/media/gals.bml");
+
+    my $gid1 = $GET{'id1'}+0;
+    my $gid2 = $GET{'id2'}+0;
+
+    my $g1 = FB::Gallery->new($u, $gid1);
+    my $g2 = FB::Gallery->new($u, $gid2);
+
+    return BML::redirect("/login?to=manage/media/gals.bml")
+        unless $g1 && $g2 && $g1->valid && $g2->valid && $g1->id != $g2->id;
+
+    $body = "";
+    $title = "Merge Galleries";
+
+    my $err = sub { $title = "Error"; $body = "<?p $_[0] p?>"; };
+    my %err;  # keyed, accumulated errors during save, melded with form
+
+
+    # save path
+    if (FB::did_post()) {
+        # prevent spoofing:
+        return BML::redirect("/manage/")
+            unless $POST{'userid'} == $u->{'userid'};
+
+        my @errs;
+        my $winner = FB::Gallery->merge(
+                                        galleries => [ $g1, $g2 ],
+                                        errors    => \@errs,
+                                        );
+        if (@errs) {
+            return "Errors: @errs";
+        }
+
+        my $winid = $winner->id;
+        return BML::redirect("/manage/media/gal.bml?id=$winid");
+    }
+
+
+    $crumbs = "<a href='/'>Home</a> &gt; <a href='/manage/media/gals.bml'>Manage Galleries</a> &gt; Merge Galleries";
+
+    my $preview_box = sub {
+        my $g = shift;
+        my $pr;
+        $pr = "<table class='galpreview' width='300' style='border-width: 4px; border-style: groove; margin: 5px;'><tr><td>
+         ";
+        my $tag = $g->tag;
+        my $url = $g->manage_url;
+        my $piccount = $g->count;
+
+        $pr .= "Name: <b><a href='$url'>" . FB::ehtml($g->name) . "</a></b><br />";
+        $pr .= "Tag: <b>" . FB::ehtml($tag) . "</b><br />" if $tag;
+        $pr .= "Pictures: <i>$piccount</i><br />";
+
+        my $date = $g->date;
+        $pr .= "Date: <i>$date</i><br />" if $date;
+
+        $pr .= "</td></tr><tr><td align='center'>";
+
+        if (my @pics = $g->pictures(limit => 10)) {
+            foreach my $p (@pics) {
+                my ($url, $w, $h) = $p->scaled_url(100, 100);
+                $pr .= "<a href='" . FB::ehtml($p->manage_url) . "'>";
+                $pr .= "<img src='$url' width='$w' height='$h' border='0' />";
+                $pr .= "</a> ";
+            }
+        } else {
+            $pr .= "<p>No pictures in this gallery.</p>";
+        }
+        $pr .= "</td></tr></table>";
+        return $pr;
+    };
+
+    my $p1 = $preview_box->($g1);
+    my $p2 = $preview_box->($g2);
+
+    $body = "<?h1 Merge galleries? h1?><?p Please confirm that you'd like to merge the following two galleries. p?>";
+    $body .= "<center>";
+    $body .= "<form method='post'>";
+    $body .= FB::html_hidden("userid", $u->{userid});
+    $body .= "<input type='submit' value='Yes, merge.' /></form>";
+    $body .= "<table><tr valign='top'><td>$p1</td><td>$p2</td></tr></table></center>";
+
+    return;
+}
+_code?><?page
+head<=
+<=head
+body=><?_code return $body; _code?>
+crumbs=><?_code return FB::crumbs($crumbs); _code?>
+page?>

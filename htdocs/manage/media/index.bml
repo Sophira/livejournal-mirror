@@ -1,0 +1,104 @@
+<?page
+title=><?_ml .title _ml?>
+body<=
+<?_code
+{
+    LJ::need_res(qw(
+                    js/fotobilder.js
+                    js/ippu.js
+                    js/lj_ippu.js
+                    js/httpreq.js
+                    js/hourglass.js
+                    js/galcreate.js
+                    js/galselect.js
+                    js/inputcomplete.js
+                    js/galselectmenu.js
+
+                    stc/fotobilder.css
+                    ));
+
+    FB::set_active_crumb('manage');
+
+    $remote = FB::get_remote();
+
+    my $upload .= "<form enctype='multipart/form-data' method='POST' action='/interface/webupload'><fieldset><legend><a href='#'>Pictures</a></legend>";
+    $upload .= "<table class='manage_box'><tr><td valign='top' class='desc'>You may upload more than one picture at a time to a gallery from our <strong><a href='upload'>Web Upload Page</a></strong>, or ";
+    $upload .= "you can <strong><a href='/site/clients'>download a client for your computer</a></strong>.</td><td valign='top'><table class='upload'>";
+    if ($remote) { $upload .= "<tr><th>Gallery:</th><td>";
+                   $upload .= $remote->gallery_select_menu;
+                   $upload .= "</td></tr>";
+               }
+    $upload .= "<tr><th>Filename:</th><td>" . LJ::html_file({ 'name' => "file1", 'size' => '25', 'disabled' => !$remote, }) . "</td></tr>\n";
+    $upload .= "<tr><th>Security:</th><td>" . FB::html_security($remote, 'sec1', 255) . "</td></tr>\n";
+    $upload .= "<tr><th>Title:</th><td>";
+    $upload .= LJ::html_text({ name => "title1", 'size' => 30, 'maxlength' => 100,
+                               raw => "style='width: 250px'", 'disabled' => !$remote, });
+    $upload .= "</td></tr>\n";
+    $upload .= "<tr><th valign='top'>Description:</th><td>";
+    $upload .= LJ::html_textarea({ 'name' => "des1", 'wrap' => "virtual", 'style' => "width: 250px", 'rows' => 5, 'cols' => 30, 'disabled' => !$remote});
+    $upload .= "</td></tr>\n";
+    $upload .= "<tr><td></td><td>" . LJ::html_submit("","Upload a Picture", { 'disabled' => !$remote} ) . "</td></tr>";
+    $upload .= "</table>\n</td></tr></table>";
+    $upload .= "</fieldset></form>";
+
+    my $gals = "<form method='POST' action='/manage/gal'><fieldset><legend><a href='gals'>Galleries</a></legend>";
+    $gals .= "<input type='hidden' name='userid' value='$remote->{'userid'}'>" if $remote;
+    $gals .= "<table class='manage_box'><tr><td valign='top'>";
+    $gals .= "<table><tr><th valign='top'>Name:</th><td valign='top' style='white-space: nowrap'>";
+    $gals .= LJ::html_text({ 'name' => "galname", 'size' => 30, 'disabled' => !$remote, });
+    $gals .= LJ::html_submit('','Create a New Gallery', { 'disabled' => !$remote, });
+    $gals .= "</td></tr></table>";
+    $gals .= "</td><td valign='top' class='desc'>You can manage all of your galleries on the <strong><a href='gals'>Manage Galleries Page</a></strong>. You can also <strong><a href='shortnames'>edit and create short aliases</a></strong> for each of your galleries, and <strong><a href='makecopy'>make copies</a></strong> of other user galleries.";
+    $gals .= "</td></tr></table>";
+    $gals .= "</fieldset></form>";
+
+
+    my $styles;
+    if ($remote) {
+        $styles = FB::load_user_styles($remote, { 'create_default' => 1 });
+        unless ($remote->prop("styleid")) {
+            $remote->set_prop("styleid", scalar each %$styles)
+        }
+    }
+    my $style = "<form method='POST' action='/manage/styles/index.bml'><fieldset><legend><a href='styles'>Styles</a></legend>";
+    $style .= "<input type='hidden' name='userid' value='$remote->{'userid'}'>" if $remote;
+    $style .= "<table class='manage_box'><tr><td valign='top' class='desc'>You can create and edit your gallery styles from the <strong><a href='styles'>Manage Styles Page</a>.</strong></td><td valign='top'>";
+    $style .= "<table><tr><th>Name:</th><td>";
+    $style .= LJ::html_text({ 'name' => 'new_name', 'size' => 30, 'maxlength' => 30, 'disabled' => !$remote, });
+    $style .= "</td></tr><tr><th>Template:</th><td>";
+    $style .= LJ::html_select({ 'name' => 'new_styleid_base', 'disabled' => !$remote, },
+                             0 => "(No base)",
+                             map { $_, $styles->{$_} }
+                             sort { $styles->{$a} cmp $styles->{$b} } keys %$styles);
+    $style .= "</td></tr><tr><td></td><td>";
+    $style .= LJ::html_submit("action:new", "Create a New Style", { 'disabled' => !$remote, });
+    $style .= "</td></tr></table>";
+    $style .= "</table></fieldset></form>";
+
+    my $groups .= "<form method='POST' action='groups'><fieldset><legend><a href='groups'>Groups</a></legend>";
+    $groups .= "<table class='manage_box'><tr><td valign='top'>";
+    $groups .= "<table class='groups'><tr><th>Name:</th><td style='white-space: nowrap'>" . LJ::html_text(
+                            { 'name' => 'newgroupname',
+                              'size' => 30,
+                              'maxlength' => 100,
+                              'disabled' => !$remote,
+                              });
+    $groups .= " " . LJ::html_submit('action:creategroup', 'Create Group', { 'disabled' => !$remote, } );
+    $groups .= "</td></tr><tr><th>Username:</th><td style='white-space: nowrap'>" . LJ::html_text(
+                                                                      { 'name' => 'user',
+                                                                        'size' => 30,
+                                                                        'maxlength' => 35,
+                                                                        'disabled' => !$remote,
+                                                                        });
+    $groups .= " " . LJ::html_submit('action:edituser', 'Edit User', { 'disabled' => !$remote, } );
+    $groups .= "</td></tr></table></td><td valign='top' class='desc'>On the <strong><a href='groups'>Manage Groups Page</a></strong> you can edit, ";
+    $groups .= "view, and manage groups of accounts that have access to your pictures.</td></tr></table>";
+    $groups .= "</fieldset></form>";
+
+    return $welcome . $upload . $gals . $style . $groups;
+}
+_code?>
+<=body
+head<=
+<=head
+page?>

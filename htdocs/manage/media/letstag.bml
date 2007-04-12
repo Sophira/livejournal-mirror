@@ -1,0 +1,132 @@
+<?_code
+{
+    use strict;
+    use vars qw(%GET %POST $body $title $crumbs);
+
+    my $u = FB::get_remote()
+        or return BML::redirect("/login.bml?to=/manage/media/gals.bml");
+
+    $title = "Let's Tag!";
+    $body = "";
+    $crumbs = "<a href='/'>Home</a> &gt; Let's Tag";
+
+    my $mode = $GET{'mode'};
+
+    unless ($mode) {
+        $body .= "<div id='loadingMessage'><h2>Finding stuff to tag<span id='loadingDots'>...</span></h2><p>Looking for galleries with lots of untagged pictures.</p></div>";
+        return;
+    }
+
+    my ($size_freed);
+
+    my $untag_gals = $u->untag_galleries or die("Couldn't load galleries");
+
+    $body .= "<h2>Gimme!</h2><p>Here's some stuff you might want to tag, or you can view <a href='/tools/tagcloud'>your tag cloud</a>....</p><ul>";
+
+    my %untag_count;
+
+    foreach my $gal (values %$untag_gals)
+    {
+        my $gallid = $gal->id;
+
+        my $ct_tagged = 0;
+        my $ct_untagged = 0;
+      PIC:
+        foreach my $pic ($gal->pictures) {
+            foreach my $g ($pic->galleries) {
+                if (! $untag_gals->{$g->id}) {
+                    $ct_tagged++;
+                    next PIC;
+                }
+            }
+            $ct_untagged++;
+        }
+
+        next unless $ct_untagged;
+        $untag_count{$gallid} = $ct_untagged;
+    }
+
+    if (%untag_count) {
+        foreach my $gallid (sort { $untag_count{$b} <=> $untag_count{$a} } keys %untag_count) {
+            my $gal = $untag_gals->{$gallid};
+            my $ct_untagged = $untag_count{$gallid};
+
+            $body .= "<li><b><a href='annotate.bml?gal=$gallid&amp;filter=untagged'>$ct_untagged untagged</a> pictures</b> in <a href='gal.bml?id=$gallid'>" . FB::ehtml($gal->display_name) . "</a></li>\n";
+        }
+        $body .= "</ul>\n";
+    } else {
+        if (%$untag_gals) {
+            $body = "<h2>Whoa</h2><p>You've tagged all your pictures, that's amazing.  Do you want to view your resulting <a href='/tools/tagcloud'>tag cloud</a>?</p>";
+        } else {
+            $body = "<h2>No galleries</h2><p>You have no galleries, so I can't find you pictures you haven't tagged.  Why don't you go <a href='upload'>upload some</a>?</p>";
+        }
+    }
+
+    if ($mode eq "getdata") {
+        BML::finish();
+        sleep 1 if $FB::IS_DEV_SERVER;
+        return JSON::objToJson({
+            html => $body,
+        });
+    }
+
+    return;
+}
+_code?><?page
+body=><?_code $body _code?>
+title=><?_code $title _code?>
+head<=
+<script src="/js/core.js"></script>
+<script src="/js/dom.js"></script>
+<script src="/js/httpreq.js"></script>
+<script language="JavaScript"></script>
+<script>
+
+    var animating = false;
+    var dots = 3;
+
+function startAnimation () {
+    if (animating) return;
+    animating = true;
+    animate();
+}
+
+function stopAnimation () {
+    if (!animating) return;
+    animating = false;
+}
+
+function animate () {
+    if (!animating) return;
+    dots++;
+    dots = dots % 3;
+    var span = $("loadingDots");
+    if (!span) return;
+    span.innerHTML = [".", "..", "..."][dots];
+    setTimeout(animate, 250);
+}
+
+function onData (data) {
+    stopAnimation();
+    $("loadingMessage").innerHTML = data.html;
+}
+
+    DOM.addEventListener(window, "load", function () {
+        startAnimation();
+        if (HTTPReq.create()) {
+            HTTPReq.getJSON({
+                   url: '/manage/media/letstag.bml?mode=getdata',
+                   onData: onData,
+                   onError: function (reason) { alert("Error finding untagged pictures: "+reason); stopAnimation(); }
+            });
+        } else {
+            if (! (window.location+"").match(/mode=nojax/)) {
+                window.location = '/manage/media/letstag.bml?mode=nojax'
+            }
+        }
+    });
+
+</script>
+<=head
+crumbs=><?_code return FB::crumbs($crumbs); _code?>
+page?>

@@ -1,0 +1,160 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%FORM $title $body);
+
+    my $u = FB::get_remote();
+    my $gallid = $FORM{'gal'}+0;
+
+    unless ($u) {
+        return BML::redirect("/login?to=" .
+                             FB::eurl("manage/pics?gal=$gallid"));
+    }
+
+    LJ::need_res(qw(
+                    js/xbDOM.js
+                    js/manage-pics.js
+                    js/fotobilder.js
+                    ));
+
+    my $g = FB::Gallery->new($u, $gallid);
+    return BML::redirect("/manage/media/gals.bml") unless $g;
+    my $sth;
+
+    $body = "";
+    $title = FB::transform_gal_name(BML::eall($g->{'name'}));
+    $title =~ s/\[.+\]//;
+
+    my $is_unsorted = $g->{'name'} eq ":FB_in";
+
+    my @pics = $g->pics;
+
+    $body .= "[<a href='gal.bml?id=$gallid'>Properties</a>]\n";
+    $body .= "[<b>Pictures</b>]\n";
+    $body .= "[<a href='picstext.bml?gal=$gallid'>Text &amp; Security</a>]\n";
+    my $url = $g->url;
+    $body .= "[<a href='$url'>View...</a>]" unless $g->{'name'} eq ":FB_in";
+
+    unless (@pics) {
+        $body .= "<?p There are no pictures in this gallery. To upload new pictures, <a href='/manage/media/upload.bml?gallid=$gallid'>click here</a>. p?>";
+        return;
+    }
+
+    $body .= "<p><form method='post' action='picsave' id='pics_form'>";
+    $body .= FB::html_hidden("gallid", $gallid);
+    $body .= FB::html_hidden("upicids", join(':', map { $_->{upicid}+0 } @pics));
+    $body .= FB::html_hidden("userid", $u->{'userid'});
+
+    $body .= "<input type='button' value='Select All' onClick='changeAllState(true);'>\n";
+    $body .= "<input type='button' value='Select None' onClick='changeAllState(false);'>\n";
+    $body .= "<input type='button' value='Invert Selection' onClick='invertSel();'>\n";
+
+    my $pos;
+    foreach my $p (@pics) {
+        my $picid = $p->{'upicid'};
+        $body .= "<input type='hidden' name='pos_$picid' value='" . (++$pos) . "' id='pic_pos_$picid'>\n";
+    }
+
+    $body .= "<p><table cellpadding='3' border='0' rules='none' frame='void' id='table_pics'>";
+
+    my $ct = 0;
+    my $COLS = 5;
+    foreach my $p (@pics)
+    {
+        my $picid = $p->{'upicid'};
+        if ($ct % $COLS == 0) {
+            if ($ct) {
+                $body .= "</tr>";
+            }
+            $body .= "<tr align='center' valign='bottom'>\n";
+        }
+        $ct++;
+        my $piccode = FB::piccode($p);
+        my ($url, $w, $h) = $p->scaled_url(100, 100);
+
+        $body .= "<td id='pic_cell_$picid' bgcolor='' width='100' nowrap='1'>\n";
+        $body .= "<img id='pic_img_$picid' border='0' width='$w' height='$h' src='$url' /><br />\n";
+        $body .= "<input type='button' value='&lt;' onClick='moveMe(this,-1);'>";
+        $body .= "<input type='button' value='&gt;' onClick='moveMe(this,1);'>\n";
+        $body .= "<input type='checkbox' id='pic_check_$picid' name='pic_check_$picid' onClick='checkClicked(this);' >\n";
+        $body .= " [<a href=\"pic.bml?id=$p->{'upicid'}\">pic</a>]";
+        $body .= "</td>\n";
+    }
+    $body .= "</tr></table>";
+
+    my $disabled;
+
+    my %des = (
+               'savepos' => [ "Save Positions",
+                              "Save re-ordering of pictures, without doing anything else.  (The other actions also save your re-ordering.)", ],
+               'remove' => [ "Remove",
+                             "Remove selected pictures from this gallery, without deleting them.  If this is the only gallery they're in, then they're moved back to your \"Unsorted\" gallery.", ],
+               'delete' => [ "Delete",
+                             "Delete selected pictures entirely, from this gallery and any other gallery you may have put them in.", ],
+               'move' => [ "Move Selected to:",
+                           "Move selected pictures to the gallery you specify below.", ],
+               'add' => [ "Add Selected to:",
+                           "Add selected pictures to the gallery you specify below, while still keeping them in this gallery.", ],
+
+               );
+    $body .= "\n<script>destext = new Array();\n";
+    foreach (keys %des) {
+        my $es = $des{$_}->[1];
+        $es =~ s/\"/\\\"/g;
+        $body .= "destext['$_'] = \"$es\";\n";
+    }
+    $body .= "</script>\n";
+
+    my $actbut = sub {
+        my $key = shift;
+        my $disabled = shift;
+        my $disattr = $disabled ? " disabled='disabled'" : "";
+        my $onclick;
+        if ($key eq "delete") {
+            $onclick = "onClick=\"return countSelected() && confirm('This will permanently delete all copies of selected picture(s).  Are you sure?');\"";
+        }
+        elsif ($key eq "move" && $g->{'dategal'} && ! $is_unsorted) {
+            $onclick = "onClick=\"return countSelected() && confirm('Are you sure you want to move these pictures out of this dated gallery?');\"";
+        }
+        elsif ($key =~ /^(?:add|(?:re)?move)$/) {
+            $onclick = "onClick=\"return countSelected();\"";
+        }
+
+        $body .= "<input type='submit' name='action:$key' value=\"$des{$key}->[0]\" onMouseOver=\"actionText(destext['$key']);\" onFocus=\"actionText(destext['$key']);\" onBlur=\"actionText('');\" onMouseOut=\"actionText('');\"$disattr $onclick>\n";
+    };
+
+    $body .= "<?h1 Actions h1?>";
+    $body .= "<?p Select an action to take on the pictures selected above.  Hover your mouse over a button for more information about its function. p?>";
+
+    # run any authmod / local hooks
+    $body .= FB::run_hook('manage_pics_extra', $u, $g);
+
+    $body .= "<?p ";
+    $actbut->('savepos');
+    $actbut->('remove', $is_unsorted);
+    $actbut->('delete');
+    $body .= " p?><?p ";
+    $actbut->('move');
+    $actbut->('add', $is_unsorted);
+    $body .= " p?><blockquote>\n";
+
+    $body .= FB::html_select({ 'name' => 'addmove_gallery', 
+                               'raw' => "id='addmove_gallery_select'",  },
+                             '' => "(Select gallery)",
+                             'new' => "[New Gallery...]",
+                             FB::gallery_select_list($u),
+                             );
+    $body .= "<br /><span id='newgalname' style='display:block'>Gallery Name: <input type='text' id='newgalname_text' name='newgalname'></span>";
+    $body .= "</blockquote><table border='0'><tr valign='top'><td width=1 height=70></td><td><p style='display:inline; font-style: italic' id='actiondes'>&nbsp;</p></td></tr></table>";
+
+    $body .= "</form>";
+
+    return;
+}
+_code?><?page
+head<=
+<=head
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+bodyopts=>onLoad="managePicsInit('#b1aaff'); setupNewGalHidey('addmove_gallery_select','newgalname','newgalname_text')"
+page?>

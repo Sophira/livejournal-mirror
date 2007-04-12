@@ -1,0 +1,317 @@
+<?page
+title=>Upload
+head<=
+<script language="JavaScript"></script>
+<script language="JavaScript" src='/js/fotobilder.js'></script>
+<script language="JavaScript" src="/js/core.js"></script>
+<script language="JavaScript" src="/js/dom.js"></script>
+<script language="JavaScript" src='/js/ippu.js'></script>
+<script language="JavaScript" src='/js/fb_ippu.js'></script>
+<script language="JavaScript" src='/js/httpreq.js'></script>
+<script language="JavaScript" src='/js/hourglass.js'></script>
+<script language="JavaScript" src='/js/galcreate.js'></script>
+<script language="JavaScript" src='/js/galselect.js'></script>
+<script language="JavaScript" src='/js/inputcomplete.js'></script>
+<script language="JavaScript" src='/js/progressbar.js'></script>
+<script language="JavaScript" src='/js/fbprogressbar.js'></script>
+<script language="JavaScript" src='/js/perlbal-uploadtrack.js'></script>
+<style type="text/css">
+#UploadBar {
+  display: none;
+}
+
+</style>
+<script>
+
+var curFile = 1;
+
+var uptrack; // our Perlbal upload tracker object, if defined
+
+var uploadInProgress = false;
+
+var pbar = new FBProgressBar();
+
+var fileCount = 1;
+
+// called from iframe's content (manage/uploaded) on complete, after
+// uptrackWebUpload.pm redirects the iframe there:
+function onUploadComplete (annotate_url) {
+    if (!uploadInProgress) return; // silly IE, caching the iframe's content
+
+    if (uptrack) uptrack.stopTracking();
+
+    if (pbar)
+      pbar.hide();
+
+    $("UploadStatus").innerHTML = "Upload complete.";
+
+    window.location = annotate_url;
+}
+
+// called by the perlbal upload tracker library:  (we pass it this function below)
+function uploadCallback (data) {
+    if (! (data && data.total)) return;
+    if (pbar) {
+      pbar.setMax(data.total);
+      pbar.setValue(data.done);
+    }
+    var percent = Math.floor(data.done/data.total*100);
+    var status = Math.floor(data.done / 1024) + " kB / " + Math.floor(data.total / 1024) + " kB, " + percent + "% complete";
+    $("UploadStatus").innerHTML = status;
+}
+
+function submitForm () {
+    if (uptrack) uptrack.stopTracking();
+
+    uploadInProgress = true;
+
+    var frm = $("WebUpload");
+    var postgoto = $("postUploadGoto");
+    if (!frm || !postgoto) return;
+
+    // to $POST{'go_to'} value of "jscallup" means our iframe returns a javascript
+    // document that calls up to us to tell us it's done.
+    postgoto.value = "jscallup";
+
+    frm.target = "upiframe";
+    uptrack = new UploadTracker(frm, uploadCallback);
+
+    $("UploadStatus").innerHTML = "Uploading, please wait...";
+    $("UploadBar").style.display = "block";
+    return true;
+}
+
+function gal_changed(evt) {
+  switch ($("gal_select_js").value) {
+  case "new":
+    GalCreate.setCancelledCallback(gal_action_cancelled);
+    GalCreate.setGalleryCreatedCallback(gal_created);
+    GalCreate.showNewGalleryPopup();
+    break;
+  case "sel":
+    var selgal = new GallerySelect();
+    selgal.init();
+    selgal.setCancelledCallback(gal_action_cancelled);
+    selgal.setGallerySelectedCallback(gal_selected);
+    selgal.show();
+    break;
+  default:
+    break;
+  }
+}
+
+function gal_selected (galid, galname) {
+  if (!galid || !galname)
+    return;
+
+  var menu = $("gal_select_js");
+  if (!menu) return;
+
+  var addItem = 1;
+
+  for (var i=0; i<menu.options.length; i++) {
+    var option = menu.options[i];
+    if (option.value == galid) {
+      menu.selectedIndex = i;
+      addItem = 0;
+    }
+  }
+
+  if (!addItem)
+    return;
+
+  // add selected item to the dropdown
+  var galopt = document.createElement("option");
+  galopt.selected = true;
+  galopt.text = galname;
+  galopt.value = galid;
+  menu.add(galopt, null);
+}
+
+function gal_action_cancelled() {
+  var menu = $("gal_select_js");
+  if (!menu) return;
+
+  menu.selectedIndex = 0;
+}
+
+function gal_created(galname, galid) {
+  // add to list and select
+  var menu = $("gal_select_js");
+  if (!menu) return;
+
+  // create new option
+  var galopt = document.createElement("option");
+  galopt.selected = true;
+  galopt.text = galname;
+  galopt.value = galid;
+  menu.add(galopt, null);
+}
+
+function file_added (evt) {
+  var target;
+  evt = Event.prep(evt);
+  target = evt.target;
+
+  if (!target || target.type.toLowerCase() != "file")
+    return;
+
+  if (!target.value)
+    return;
+
+  // add a new file upload box
+  var files = $("files");
+  if (!files)
+    return;
+
+  var newRow = document.createElement("div");
+
+  var newFile = document.createElement("input");
+  newFile.type = "file";
+  newFile.id = "file" + ++curFile;
+  newFile.name = newFile.id;
+  newFile.style.display = "inline";
+
+  var delRow = document.createElement("input");
+  delRow.type = "button";
+  delRow.value = "Remove";
+  delRow.row = newRow;
+  delRow.style.display = "inline";
+
+  newRow.appendChild(newFile);
+  newRow.appendChild(delRow);
+
+  files.appendChild(newRow);
+
+  DOM.addEventListener(delRow, "click", remove_row);
+
+  DOM.addEventListener($("file" + curFile), "change", file_added);
+
+  if ("deleteFirst")
+    $("deleteFirst").style.display = "inline";
+
+  fileCount++;
+}
+
+function remove_row (evt) {
+  Event.prep(evt);
+  Event.stop(evt);
+
+  var target = evt.target;
+  if (!target.row)
+    return;
+
+  $("files").removeChild(target.row);
+
+  fileCount--;
+
+  if (fileCount == 1) {
+    if ($("deleteFirst"))
+      $("deleteFirst").style.display = "none";
+  }
+}
+
+function setupEvents() {
+  DOM.addEventListener($("gal_select_js"), "change", gal_changed);
+  DOM.addEventListener($("file" + curFile), "change", file_added);
+  DOM.addEventListener($("deleteFirst"), "click", remove_row);
+
+  if (pbar)
+    pbar.init($("UploadBar"));
+
+  if ($("deleteFirst"))
+    $("deleteFirst").row = $("deleteFirstRow");
+}
+
+setTimeout(setupEvents, 200);
+
+</script>
+
+<=head
+body<=
+<?_code
+{
+    use strict;
+    use vars qw(%GET %POST $title $body);
+
+    FB::need_res(qw(static/manage.css));
+
+    my $ret;
+    my $u = FB::get_remote();
+    return "<?h1 Error h1?><?p You must be <a href=\"/login\">logged in</a> to upload photos. p?>"
+        unless $u;
+
+    return "<?h1 Error h1?><?p Your current <a href='/manage/accountstatus'>account status</a> does not allow you to upload pictures. p?>"
+        unless FB::get_cap($u, 'can_upload');
+
+    # call hook to check if user has disk space for picture before uploading
+    my $Kibfree = FB::run_hook("disk_remaining", $u);
+    if (defined $Kibfree) {
+        return "<?h1 Error h1?><?p No <a href='/manage/accountstatus'>disk space remaining</a> for your account. p?>"
+            if $Kibfree <= 0;
+    }
+
+    my $gallid = $GET{'gallid'}+0;
+
+    return BML::redirect("/login?to=" .
+                         FB::eurl("manage/upload?gallid=$gallid"))
+        unless $u;
+
+
+    my $opts = "";
+    $opts .= "<center><table><tr valign='top'><td align='right'><b>Upload into:</b></td><td align='left'>" .
+    FB::html_select({ 'name' => 'gallid',
+                      'id' => 'gal_select_js',
+                      'selected' => $gallid,
+                        },
+                      '' => "(Unsorted)",
+                    'sel' => "[Choose Gallery...]",
+                    'new' => "[New Gallery...]",
+                    '' => "----",
+                      FB::gallery_select_list($u),
+                    );
+
+    $opts .= "<div class='note'>You can reorganize later, without breaking links.</div></td></tr>";
+    $opts .= "<tr valign='top'><td align='right'><b>Security:</b></td><td align='left'>" . FB::html_security($u, "all_pic_sec", 255) .
+        "<div class='note'>Security for all pictures below.</div>" .
+        "</td></tr>";
+
+$opts .= qq {
+<tr><td align='right'><b>Files:</b></td><td align='left'>
+<div id="files">
+<div id="deleteFirstRow">
+  <input type="file" name="file1" id="file1" />
+  <input type="button" value="Remove" style="display: none;" id="deleteFirst" />
+</div>
+</div>
+<i><b>Note:</b> You can upload more than one file at a time</i>
+</td></tr>
+};
+
+    $opts .= '<tr><td></td><td align="left"><input type="submit" id="form_submit" value="Upload" /> ';
+    $opts .= '<span id="UploadStatus"></span><div id="UploadBar"></div></td></tr>';
+    $opts .= "</table></center>\n";
+
+    $ret = <<EOC;
+
+<div class='tip'>
+<b>Tip:</b> We recommend that you <a href="/site/clients">download a client</a> to
+upload your pictures more easily.
+</div>
+
+<p id='intropara'>This form lets you upload pictures from your browser.  After uploading you can tag, categorize, annotate, etc.</p>
+
+<form enctype="multipart/form-data" action="/interface/webupload" method='post' id='WebUpload' onsubmit='submitForm();'>
+<input type='hidden' id='postUploadGoto' name='go_to' value='annotate' />
+
+$opts
+
+</form>
+<iframe name='upiframe' width='1' height='1' style='border: none'></iframe>
+EOC
+
+
+}
+_code?>
+<=body
+page?>

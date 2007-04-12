@@ -1,0 +1,325 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%POST %GET $ret);
+
+    my $remote = FB::User->remote;
+    return BML::redirect("/login?to=manage/media/makecopy.bml") unless $remote;
+
+    # initial form
+    my $def_user = $FORM{user};
+    $ret .= "<form method='post' action='/manage/media/makecopy.bml'>";
+    unless ($FORM{type}) {
+        $ret .= <<U_PROMPT;
+<p>
+User:
+<input type="textfield" name="user" value="$def_user">
+<input type='submit' name='show_importable' value='Find galleries'>
+</p>
+U_PROMPT
+    }
+
+    $ret .= show_options($GET{type}) if $GET{id};
+    $ret .= "</form>";
+
+    # picture copy
+    # -----------------------------------------------------
+    if (FB::did_post() && $POST{import_pic}) {
+
+        my $u = FB::User->load_user($POST{'user'});
+        unless ($u) {
+            $ret = "Unknown user.";
+            return;
+        };
+
+        unless ($remote->get_cap("can_upload")) {
+            $ret = "Your account status does not allow the creation of new pictures.";
+            return;
+        }
+
+        my $p = FB::Upic->new($u, $POST{import_pic}+0);
+        unless ($p) {
+            $ret = "Invalid picture id.";
+            return;
+        };
+
+        unless ($p->visible_to($remote)) {
+            $ret = "You don't have permission to copy this picture.";
+            return;
+        }
+
+        # Load/create gallery to import picts into.
+        my %gals;
+        auto_makegals(\%gals);
+
+        my $new_up = FB::Upic->create($remote, $p->{gpicid}, (secid => $POST{security}));
+        unless ($new_up && $new_up->valid) {
+            $ret = "Error creating copy.";
+            return;
+        }
+        my $import_gal = FB::Gallery->new($remote, $gals{'import'}{gallid});
+
+        $import_gal->add_picture($new_up);
+
+        # We're done. Redirect to the pic manage page.
+        return BML::redirect("/manage/media/pic.bml?id=" . $new_up->id);
+    }
+
+    # gallery copy
+    # -----------------------------------------------------
+    if (FB::did_post()) {
+
+        my $bail = sub {
+            $ret .= "<div style='margin-bottom: 30px'>" . shift() . "</div>";
+            $POST{show_importable} = 1;
+            last IMPORT;
+        };
+
+        # Import the requested galleries.
+        # (Using a while() so we can last out of it, and still easily fallthrough
+        # to the importable gallery list below.
+        IMPORT:
+        while ($POST{import}) {
+            $bail->("You didn't select any galleries to import.") unless $POST{import_gal};
+            my @import_ids = split /\000/, $POST{import_gal};
+
+            unless ($remote->get_cap("can_upload")) {
+                $ret = "Your account status does not allow the creation of new pictures.";
+                return;
+            }
+
+            my $u = FB::User->load_user($POST{'user'});
+            my $galinfo = $u->galleries;
+
+            # Get a full list of importable upics.
+            my @upics;
+            foreach my $galid (@import_ids) {
+                my $g = $galinfo->{$galid} or next;
+
+                # Reverify security.
+                $bail->("You don't have permission to import a specified gallery.")
+                    unless $g->visible_to($remote);
+
+                # Get viewable upics.
+                my @pics = $g->get_pictures;
+                foreach my $p (@pics) {
+                    if ($p->visible) {
+                        # remember what gallery this upic was exported from
+                        $p->{from_gallery} = $g->{name};
+                        push @upics, $p;
+                    }
+                }
+            }
+
+            # Check that we have enough diskspace to perform the import.
+            # (Note we do the disk check against the picts we have access to
+            # import, not against the actual gallery size.)
+            my $total_bytes;
+            if (FB::are_hooks("disk_remaining")) {
+                $total_bytes += $_->bytes foreach @upics;
+                $bail->("You don't have enough diskspace to perform this operation.")
+                    if $total_bytes / (1 << 10) >= FB::run_hook("disk_remaining", $remote);
+            }
+
+            # Load/create gallery to import picts into.
+            my %gals;
+            auto_makegals(\%gals);
+
+            # Step through and add the upics, adding child galleries as required.
+            foreach my $p (
+                    sort
+                    {
+                        $a->{from_gallery} cmp $b->{from_gallery}
+                        ||
+                        $a->{upicid} <=> $b->{upicid}
+                    } @upics) {
+
+                unless ($POST{'add_to_gal'}) {
+                    if ($p->{from_gallery} ne $gals{'import'}->{'name'}) {
+
+                        # don't clean because they could be importing a tagged gallery
+                        $gals{'import'} = FB::Gallery->create($remote, ('name'    => $p->{from_gallery},
+                                                                        'secid'   => $POST{security},
+                                                                        'noclean' => 1));
+
+                        $gals{'import'}->link_from($gals{'import_usergal'});
+                        $gals{'import'}->link_from(0);
+                    }
+                }
+                my $new_p = FB::Upic->create($remote,  $p->{gpicid},
+                                             ( secid => $POST{security} ));
+                $gals{'import'}->add_picture($new_p);
+            }
+
+            # We're done. Redirect to the gallery page.
+            return BML::redirect("/manage/media/gals.bml");
+        }
+
+
+        # Show importable galleries of requested user. remote has to have
+        # normal viewing security access to see anything in this list.
+        # -----------------------------------------------------
+        if ($POST{show_importable}) {
+
+            # sanity checks
+            unless ($POST{'user'}) {
+                $ret .= "You didn't specify a user.";
+                return;
+            }
+            if ($POST{'user'} eq $remote->{'usercs'}) {
+                $ret .= "You cannot import your own galleries.";
+                return;
+            }
+            my $u = FB::User->load_user($POST{'user'});
+            unless ($u) {
+                $ret .= "Unknown user.";
+                return;
+            }
+
+            # find importable galleries
+            my $all_gals = $u->galleries;
+            my $gals = {};
+            foreach my $gal (values %$all_gals) {
+                if ($gal->visible_to($remote)) {
+                    my $exp_sec = $gal->prop('exportable_sec');
+                    $gals->{$gal->id} = $gal
+                        if $gal->visible_to_secid($u, $remote, $exp_sec+0);
+                }
+            }
+
+            unless (scalar keys %$gals) {
+                $ret .= "$POST{'user'} has no importable galleries.";
+                return;
+            }
+
+            $ret .= <<IMPORT;
+<form method='post' action='/manage/media/makecopy.bml'>
+<input type='hidden' name='user' value='$POST{user}'>
+<fieldset><legend> Importable galleries for $POST{user}: </legend>
+<table class='multicol' cellspacing="0">
+    <tr>
+    <th style='text-align: left;'>&nbsp;</th>
+    <th style='text-align: left;'>Gallery Name</th>
+    <th style='text-align: left;'>Importable Pics</th>
+    <th style='text-align: left;'>Total Size</th>
+    </tr>
+IMPORT
+
+            foreach my $gallid (
+                    sort { $gals->{$a}->{name} cmp $gals->{$b}->{name} }
+                    keys %$gals) {
+                my $g = $gals->{$gallid};
+
+                my $size;
+                my $pic_count = 0;
+                my @pics = $g->get_pictures;
+                foreach (@pics) {
+                    if ($_->visible_to($remote)) {
+                        $pic_count++;
+                        $size += $_->{bytes};
+                    }
+                }
+                next unless $pic_count;
+
+                $ret .= '<tr>';
+                $ret .= '<td style="text-align: left;">' .
+                        FB::html_check({ name => 'import_gal', value => $gallid  }) . '</td>';
+                $ret .= '<td style="text-align: left;"><strong><a href="' .
+                        FB::url_gallery($u, $g) . "\">$g->{name}</a></strong></td>";
+                $ret .= "<td style='text-align: left;'>$pic_count</td>";
+                $ret .= '<td style="text-align: left;">' .
+                         sprintf("%0.2fMB", $size / 1024**2). '</td>';
+                $ret .= '</tr>';
+            }
+
+            $ret .= <<IMPORT;
+</table>
+<input type='button' onclick='javascript:checkAll(this, this.form);' value='Check All'>
+</fieldset>
+<br />
+IMPORT
+            $ret .= show_options('gal');
+            $ret .= '</form>'
+        }
+    }
+
+    return;
+
+
+    sub show_options
+    {
+        my $type = shift;
+        my $ret;
+        $ret .= "<fieldset><legend>" . ($type eq 'gal' ? "Gallery" : "Picture") .
+                " copy options: </legend>";
+        $ret .= "<table border='0'>";
+        $ret .= "<input type='hidden' name='import_" .
+                 ( $type eq 'pic' ? "pic" : "gal") . "' value='$GET{id}'>"
+                 if $GET{id};
+        $ret .= "<input type='hidden' name='user' value='$def_user'>" if $GET{type};
+        $ret .= "<input type='hidden' name='type' value='pic'>" if $GET{type} eq 'pic';
+        $ret .= '<tr><td>';
+        $ret .= "Add to pre-existing gallery?</td><td>" .
+            FB::html_select({ 'name' => 'add_to_gal', 'selected' => $POST{add_to_gal}, },
+                              '', 'No, organize the copy for me.', FB::gallery_select_list($remote));
+        $ret .= '<tr><td>';
+        $ret .= "Security for pics / new galleries:</td><td>" .
+                 FB::html_security($remote, "security", $POST{security}) . '</td></tr>';
+        $ret .= <<IMPORT;
+</td></tr></table>
+</fieldset>
+<br /><br />
+
+<input type='submit' name='import' value='Make copies'>
+</form>
+IMPORT
+            return $ret;
+    }
+
+
+    sub auto_makegals
+    {
+        my $gals = shift;
+        if ($POST{'add_to_gal'}) {
+            # Put all imported pics into this gallery id.
+            $gals->{'import'} = FB::load_gallery_id($remote, $POST{'add_to_gal'});
+        }
+        else {
+            # We're doing our own gallery organization.
+            # Load/create the top level and the user, and setup their relationship.
+            # End result will look like:
+            # imported
+            #     user1
+            #         gallery1
+            #         gallery2
+            #     user2
+            #         gallery1
+            #         etc
+            $gals->{'imported_toplevel'} = FB::Gallery->create($remote, (
+                                                                         name => FB::transform_gal_name(":FB_copies"),
+                                                                         secid => $POST{security},
+                                                                         noclean => 1 ));
+            $gals->{'import_usergal'} =
+                FB::Gallery->create($remote, (
+                                              name => $POST{user},
+                                              secid => $POST{security},
+                                              noclean => 1 ));
+
+            return if (!$gals->{'imported_toplevel'} || !$gals->{'import_usergal'});
+
+            $gals->{'imported_toplevel'}->link_to($gals->{'import_usergal'});
+            $gals->{'import_usergal'}->link_from(0);
+            $gals->{'import'} = $gals->{'import_usergal'} if $POST{type} eq 'pic';
+        }
+
+        return;
+    }
+
+}
+_code?><?page
+title=>Copy <?_code $FORM{type} eq 'pic' ? 'Picture' : 'Gallery' _code?>
+body=><?_code return $ret; _code?>
+head<=
+<script language="JavaScript" src='/js/fotobilder.js'></script>
+<=head
+page?>

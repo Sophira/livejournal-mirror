@@ -1,0 +1,200 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%GET %POST $title $body);
+
+    my $u = FB::get_remote();
+    my $upicid = $GET{'id'}+0;
+
+    return BML::redirect("/login.bml?to=" .
+                         FB::eurl("manage/media/pic.bml?id=$upicid")) unless $u;
+
+    my $upicid = $GET{'id'}+0;
+    my $up = FB::Upic->new($u, $upicid);
+    return BML::redirect("/manage/media/gals.bml") unless $up;
+
+    ####### DISABLED UNTIL FB::MAGICK IS MOVED TO GEARMAN ####
+    $title = 'Disabled.';
+    $body = "This feature is disabled at the moment.  :(";
+    return;
+
+    FB::get_des($u, $up);
+
+    $body = "";
+    $title = $up->{'pictitle'} ne "" ?
+        FB::ehtml($up->{'pictitle'}) :
+        "Picture $upicid";
+
+    my $err = sub {
+        $title = "Error";
+        $body = $_[0] || FB::last_error();
+        return;
+    };
+
+    if (FB::did_post()) {
+
+        # image rotations
+        return $err->("Validation error.  Refusing to rotate picture without being sure you meant it.")
+            unless $POST{'randauth'} == $up->{'randauth'};
+
+        # load existing gpic for this upic
+        my $g = FB::Gpic->load($up->{'gpicid'});
+
+        # create a new FB::Magick instance and read in the file data
+        my $image = FB::Magick->new($g->data) or return $err->();
+
+        # rotate clockwise/counterclockwise by 90 degrees
+        if ($POST{'action:rotate:90left'} || $POST{'action:rotate:90right'}) {
+
+            my $direction = $POST{'action:rotate:90left'} ? -90 : 90;
+            $image->Rotate('degrees' => $direction)
+                or return $err->("Error rotating image: " . FB::last_error());
+        }
+
+        # mirror
+        if ($POST{'action:flip:t-b'} || $POST{'action:flip:l-r'}) {
+
+            $POST{'action:flip:t-b'} ? $image->Flip : $image->Flop
+                or return $err->("Error flipping image: " . FB::last_error());
+        }
+
+        # scale (down in size)
+        if ($POST{'action:scale'} && $POST{'action:scale:dim'} =~ /^(\d+)x(\d+)$/) {
+            my ($w, $h) = ($1, $2);
+
+            return $err->("Invalid scaling: ${w}x$h")
+                unless FB::valid_scaling($w, $h);
+
+            $image->Scale( width => $w, height => $h )
+                or return $err->("Error scaling image: " . FB::last_error());
+        }
+
+        my $gs;
+        my $mimetype = FB::fmtid_to_mime($g->{fmtid});
+
+        # attempt to load an equal gpicid for this altered image
+        # - don't do it for image/jpeg mimetype since the jpeg
+        #   compression makes the md5 never match up
+        unless ($mimetype eq 'image/jpeg') {
+
+            # wish we didn't have to copy this blob around in memory, but it's
+            # the only way to get an md5 of the data at this point
+            my $md5 = Digest::MD5::md5_hex(${$image->dataref});
+            my $len = $image->Get('filesize');
+
+            # see if there is already a gpic with this now-altered data
+            if (my $gpicid = FB::find_equal_gpicid($md5, $len, $g->{'fmtid'})) {
+                $gs = FB::Gpic->load($gpicid)
+                    or return $err->("Unable to load equal gpic");
+            }
+        }
+
+        # create a new gpic if there was no equal gpicid
+        unless ($gs) {
+            $gs = FB::Gpic->new
+                or return $err->("gpic_new returned undef");
+
+            $gs->{fmtid} = $g->{fmtid};
+
+            # save the modified image
+            $gs->append($image);
+            undef $image; # throw away now if we can
+
+            $gs->save
+                or return $err->("gpic_save returned error: $@");
+        }
+        undef $image; # definitely done with this
+
+        # now that we have a new gpic altered from the old once, swap the
+        # upic reference to point to the new, altered image
+        FB::change_upic_gpic($u, $up, $gs)
+            or return $err->("Failed to change upic's gpic.");
+
+        # so they have a GET URL again:
+        return BML::redirect("/manage/picalter.bml?id=$up->{'upicid'}");
+    }
+
+    my ($url, $w, $h) = $up->scaled_url(320, 320);
+    my $fullurl = $up->url;
+    my $picurl = FB::url_picture_page($u, $up);
+
+    $body .= "<p>";
+    $body .= "[<a href=\"pic.bml?id=$upicid\">Properties</a>]\n";
+    $body .= "[<b>Alter Picture</b>]\n";
+    $body .= "[<a href=\"thumbfocus.bml?id=$up->{'upicid'}\">Thumbnail Focus</a>] ";
+    $body .= "[<a href=\"$picurl\">View...</a>]";
+    $body .= "</p>";
+
+    # add modtime as get argument for 5 minutes to prevent caching
+    my $urlt;
+    FB::load_upic_props($u, $up, 'modtime');
+    $urlt = "?t=$up->{modtime}" if $up->{modtime} > time() - 300; # 5 minutes
+
+    # display image
+    $body .= "<p><a href=\"$picurl\"><img border=0 width='$w' height='$h' src='$url$urlt' align='absbottom' /></a></p>\n";
+    $body .= "<form id='imgform' method='post' action='picalter.bml?id=$up->{'upicid'}'>";
+    $body .= FB::html_hidden("randauth" => $up->{'randauth'});
+
+    # image rotation form
+    $body .= "<?h1 Rotate h1?>";
+    $body .= FB::html_submit('action:rotate:90left' => "90&deg; left",
+                             { onclick => "return confirm('Rotate image 90&deg; to the left?');",
+                               noescape => 1}) . " ";
+    $body .= FB::html_submit('action:rotate:90right' => "90&deg; right",
+                             { onclick => "return confirm('Rotate image 90&deg; to the right?');",
+                               noescape => 1});
+
+    # flip/flop form
+    $body .= "<?h1 Flip h1?>";
+    $body .= FB::html_submit('action:flip:l-r' => "Left &harr; Right",
+                             { onclick => "return confirm('Flip image left-to-right?');",
+                               noescape => 1 }) . " ";
+    $body .= FB::html_submit('action:flip:t-b' => "Top &harr; Bottom",
+                             { onclick => "return confirm('Flip image top-to-bottom?');",
+                               noescape => 1 });
+
+    # image scaling form
+    my @scaling_list = FB::valid_scaling_list($up);
+
+    $body .= "<?h1 Scale h1?>";
+    my $wh = "<b>$up->{width}x$up->{height}</b>";
+    if (@scaling_list) {
+
+        $body .= "From $wh to ";
+        $body .= FB::html_select({ name => 'action:scale:dim', id => 'scale-dims' },
+                                 '', '', @scaling_list) . " ";
+
+        $body .= FB::html_submit('action:scale' => 'Scale',
+                                 { onclick => "return scale_onclick($up->{width}, $up->{height})" });
+    } else {
+        $body .= "No valid scaling options from $wh.";
+    }
+
+    $body .= "</form>";
+
+    return;
+}
+_code?><?page
+head<=
+
+<script type='text/javascript'>
+<!--
+function scale_onclick(sw, sh)
+{
+    if (! document.getElementById) return true;
+
+    var dimstr = sw + "x" + sh;
+    var dimlist = document.getElementById("scale-dims");
+    if (typeof(dimlist) == "undefined") return alert("wtf mate?");
+
+    var confstr = "Scale image from " + dimstr + " to " + dimlist.value + "?";
+    return confirm(confstr);
+}
+
+//-->
+</script>
+
+<=head
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+page?>

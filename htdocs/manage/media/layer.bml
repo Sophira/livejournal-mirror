@@ -1,0 +1,353 @@
+<?_code # -*-perl-*-
+{
+    use strict;
+    use vars qw(%POST %GET $title $body $js);
+
+    my $u = FB::get_remote();
+    return BML::redirect("/login?to=manage/media/styles.bml") unless $u;
+
+    $body = "";
+    $title = "Edit Layer";
+    $js = "";
+
+    my $layerid = $GET{'id'}+0;
+    my $styleid = $GET{'style'}+0;
+
+    my $err = sub {
+        $title = "Error";
+        $body = shift;
+        return;
+    };
+
+    my $dbh = FB::get_db_writer();
+    my $layer = FB::load_layer($dbh, $layerid);
+
+    return BML::redirect("/manage/media/styles/") unless $layer;
+    return $err->("Layer belongs to another user.") unless $layer->{'userid'} == $u->{'userid'};
+    return $err->("Layer isn't of type user or theme.")
+        unless $layer->{'type'} eq "user" || $layer->{'type'} eq "theme";
+    return $err->("Need style argument for user layers.")
+        if $layer->{'type'} eq "user" && $styleid == 0;
+
+    my $lyr_layout = FB::load_layer($dbh, $layer->{'b2lid'});
+    return $err->("Layout layer for this $layer->{'type'} layer not found.")
+        unless $lyr_layout;
+    my $lyr_core = FB::load_layer($dbh, $lyr_layout->{'b2lid'});
+    return $err->("Core layer for layout not found.")
+        unless $lyr_core;
+
+    my ($lid_i18nc, $lid_theme, $lid_i18n);
+
+    my $style;
+    if ($styleid) {
+        $style = FB::load_style($styleid);
+        return $err->("Style for this user layer not found.") unless $style;
+        $lid_i18nc = $style->{'layer'}->{'i18nc'};
+        $lid_theme = $style->{'layer'}->{'theme'};
+        $lid_i18n = $style->{'layer'}->{'i18n'};
+    }
+
+    my @layers;
+    push @layers, ([ 'core' => $lyr_core->{'s2lid'} ],
+                    [ 'i18nc' => $lid_i18nc ],
+                    [ 'layout' => $lyr_layout->{'s2lid'} ],
+                    [ 'i18n' => $lid_i18n ]);
+    if ($layer->{'type'} eq "user" && $lid_theme) {
+        push @layers, [ 'theme' => $lid_theme ];
+    }
+    push @layers, [ $layer->{'type'} => $layer->{'s2lid'} ];
+
+    my @layerids = grep { $_ } map { $_->[1] } @layers;
+    S2::load_layers_from_db($dbh, @layerids);
+    
+    my %layerinfo;
+
+    # load the language and layout choices for core.
+    FB::load_layer_info(\%layerinfo, \@layerids);
+
+    # action path
+    if (FB::did_post()) {
+        # prevent spoofing:
+        return BML::redirect("/manage") 
+            unless $POST{'userid'} == $u->{'userid'};
+
+        my %override;
+        foreach my $prop (S2::get_properties($lyr_layout->{'s2lid'}))
+        {
+            $prop = S2::get_property($lyr_core->{'s2lid'}, $prop)
+                unless ref $prop;
+            next unless ref $prop;
+            next if $prop->{'noui'};
+            my $name = $prop->{'name'};
+            $override{$name} = [ $prop, $POST{"${name}_value"} ];
+        }
+        
+        if (FB::layer_compile_user($layer, \%override)) {
+            $body = "Saved."; BML::redirect("/manage/media/styles/edit.bml?id=$styleid");
+            return;
+        } else {
+            my $error = FB::last_error();
+            $body = "Error saving layer:<pre>$error</pre>";
+        }
+        return;
+    }
+
+    my $styarg = $styleid ? "&style=$styleid" : "";
+    $body .= "<form method='post' action='layer?id=$layerid$styarg'>";
+    $body .= FB::html_hidden("userid", $u->{'userid'});
+
+    my %prop;  # name -> hashref, deleted when added to a category
+    my @propnames;
+    foreach my $prop (S2::get_properties($lyr_layout->{'s2lid'})) {
+        unless (ref $prop) {
+            $prop = S2::get_property($lyr_core->{'s2lid'}, $prop);
+            next unless ref $prop;
+        }
+        $prop{$prop->{'name'}} = $prop;
+        push @propnames, $prop->{'name'};
+    }
+
+    my @groups = S2::get_property_groups($lyr_layout->{'s2lid'});
+    my $misc_group;
+    my %groupprops;  # gname -> [ propname ]
+    my %propgroup;   # pname -> gname;
+
+    foreach my $gname (@groups) {
+        if ($gname eq "misc" || $gname eq "other") { $misc_group = $gname; }
+        foreach my $pname (S2::get_property_group_props($lyr_layout->{'s2lid'}, $gname)) {
+            my $prop = $prop{$pname};
+            next if ! $prop || $propgroup{$pname};
+            $propgroup{$pname} = $gname;
+            push @{$groupprops{$gname}}, $pname;
+        }
+    }
+    # put unsorted props into an existing or new unsorted/misc group
+    if (@groups) {
+        my @unsorted;
+        foreach my $pname (@propnames) {
+            my $prop = $prop{$pname};
+            next if ! $prop || $propgroup{$pname} || $prop->{'noui'};
+            push @unsorted, $pname;
+        }
+        if (@unsorted) {
+            unless ($misc_group) {
+                $misc_group = "misc";
+                push @groups, "misc";
+            }
+            push @{$groupprops{$misc_group}}, @unsorted;
+        }
+    }
+
+    my $group_name = sub {
+        my $gname = shift;
+        foreach my $lid ($lid_i18n, $lyr_layout->{'s2lid'}, $lid_i18nc, $lyr_core->{'s2lid'}) {
+            next unless $lid;
+            my $name = S2::get_property_group_name($lid, $gname);
+            return FB::ehtml($name) if $name;
+        }
+        return "Misc" if $gname eq "misc";
+        return $gname;
+    };
+
+    my $output_prop = sub {
+        my $name = shift;
+        my $prop = $prop{$name};
+        return if ! $prop || $prop->{'noui'};
+
+        my $name = $prop->{'name'};
+        my $type = $prop->{'type'};
+        
+        # figure out existing value (if there was no user/theme layer)
+        my $existing;
+        foreach my $lid (reverse @layerids) {
+            next if $lid == $layerid; 
+            $existing = S2::get_set($lid, $name);
+            last if defined $existing;
+        }
+
+        if (ref $existing eq "HASH") { $existing = $existing->{'as_string'}; }
+
+        if ($type eq "bool") {
+            $prop->{'values'} ||= "1|Yes|0|No";
+        }
+
+        my %values = split(/\|/, $prop->{'values'});
+        my $existing_display = defined $values{$existing} ? 
+            $values{$existing} : $existing;
+
+        $existing_display = FB::eall($existing_display);
+
+        my $override = S2::get_set($layerid, $name);
+        my $had_override = defined $override;
+        $override = $existing unless defined $override;
+
+        if (ref $override eq "HASH") { $override = $override->{'as_string'}; }
+
+        my $help = FB::help_icon("s2prop_$name");
+        $body .= "<tr valign='top'><th>" . FB::eall($prop->{'des'}) . " $help</th><td class='inset'>\n";
+        if ($prop->{'values'}) {
+            $body .= FB::html_select({ 'name' => "${name}_value",
+                                       'selected' => $override },
+                                     split(/\|/, $prop->{'values'}));
+        } elsif ($type eq "int") {
+            $body .= FB::html_text({ 'name' => "${name}_value",
+                                     'value' => $override,
+                                     'maxlength' => 5,
+                                     'size' => 7 });
+        } elsif ($type eq "string") {
+            my ($rows, $cols) = ($prop->{'rows'} + 0,
+                                 $prop->{'cols'} + 0);
+            if ($rows > 0 && $cols > 0) {
+                $body .= FB::html_textarea({ 'name' => "${name}_value",
+                                     'value' => $override,
+                                     'onfocus' => "checkOverride('$name');",
+                                     'rows' => $rows,
+                                     'cols' => $cols });
+            } else {
+                my ($size, $maxlength) = ($prop->{'size'} || 30,
+                                            $prop->{'maxlength'} || 255);
+                $body .= FB::html_text({ 'name' => "${name}_value",
+                                     'value' => $override,
+                                     'maxlength' => $maxlength,
+                                     'size' => $size });
+            }
+        } elsif ($type eq "Color") {
+            $body .= FB::html_color({ 'name' => "${name}_value",
+                                      'default' => $override,
+                                      'des' => $prop->{'des'} });
+        }
+        {
+            my $t = "";
+            $t .= FB::eall($prop->{'note'}) if $prop->{'note'};
+            $body .= "<br /><span style='color: #555'>$t</span>" if $t;
+        }
+        $body .= "</td></tr>\n";
+    };
+
+    if (@groups) {
+        $body .= "<div id='propgroupstab'>";
+        my $num = 0;
+        foreach my $gname (@groups) {
+            my $name = $group_name->($gname);
+            $num++;
+            my $class = $num == 1 ? "propgrouptabsel" : "propgrouptab";
+            $js .= "    propgroups[$num] = \"$gname\";\n";
+            $body .= "<span class='$class' id='pgroup_tab_$gname'><a href='#pgroup$gname' onclick=\"return showPropGroup('$gname')\">$name</a></span>\n";
+        }
+        $body .= "</div>";
+        $body .= "<div id='propgroupsbody'><div id='propgroupsbodystrip'>&nbsp;</div>";
+
+        foreach my $gname (@groups) {
+            $body .= "<a name='pgroup$gname'></a>\n";
+            $body .= "<div id='pgroup_body_$gname'>\n";
+            $body .= "<table class='props' cellspacing='2' cellpadding='3'>";
+            foreach my $pname (@{$groupprops{$gname}}) {
+                $output_prop->($pname);
+            }
+            $body .= "</table></div>";
+        }
+
+        $body .= "</div>\n";
+
+        $body .= "<script language='JavaScript'>showPropGroup('$groups[0]');</script>\n";
+
+    } else {
+        $body .= "<fieldset><legend>Settings:</legend>";
+        $body .= "<table class='props' cellspacing='2' cellpadding='3'>";
+        foreach my $pname (@propnames) {
+            $output_prop->($pname);
+        }
+        $body .= "</table></fieldset>";
+    }
+
+    $body .= "<?p " . FB::html_submit('action:save', "Save Settings") . " p?>";
+    $body .= "</form>";
+    return;
+}
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+head<=
+<script language="JavaScript" type="text/javascript">
+    var propgroups = new Array();
+<?_code return $js; _code?>
+    function showPropGroup (name) {
+        if (! document.getElementById) { return true; }
+        for (var i=1; i<propgroups.length; i++) {
+            var gname = propgroups[i];
+            var tab = document.getElementById("pgroup_tab_" + gname);
+            if (tab && tab.setAttribute) {
+                tab.setAttribute("class", (gname == name) ? "propgrouptabsel" : "propgrouptab");
+            }
+            var div = document.getElementById("pgroup_body_" + gname);
+            if (div) {
+                div.style.display = (gname == name) ? "block" : "none";
+            }
+        }
+        return false;
+    }
+</script>
+<script language="JavaScript" src="/js/colorpicker.js"></script>
+
+<style type='text/css'>
+
+ .props th {
+    text-align: left;
+ }
+
+ #propgroupstab {
+    font-size: 1.0em;
+    font-weight: bold;
+    font-decoration: none;
+    border-bottom: 24px solid black;
+    margin: 0; padding: 0;
+ }
+
+ #propgroupsbody {
+    background-color: #eee;
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+    border-bottom: 1px solid black;
+    margin: 0; padding: 0.5em;
+ }
+ #propgroupsbody a {
+    background-color: #eee;
+ }
+
+ span.propgrouptabsel, span.propgrouptab {
+   margin: 0 0.5em 0 0.5em;
+   padding: 0.25em 0.25em 0 0.25em;
+   border-top: 1px solid black;
+   border-left: 1px solid black;
+   border-right: 1px solid black;
+}
+
+ span.propgrouptab {
+   background: #eee;
+   color: black;
+ }
+ span.propgrouptab a {
+    text-decoration: none;
+    color: black;
+ } 
+
+ span.propgrouptabsel {
+   color: #ddd;
+   background: black;
+ }
+ span.propgrouptabsel a {
+    text-decoration: none;
+    color: #ddd;
+ } 
+ noscript { display: inline; }
+</style>
+<script type='text/javascript' language='JavaScript'>
+    // Only hide if we do the JS-switchy thing
+    if (document.getElementById)
+        document.write("<style type='text/css'>" +
+                       "noscript { display: none; }" +
+                       "</style>");
+</script>
+
+<=head
+page?>

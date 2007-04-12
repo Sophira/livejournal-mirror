@@ -1,0 +1,148 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%GET %POST $title $body);
+
+    my $sth;
+
+    my $u = FB::User->remote;
+    my $gallid = $GET{'gal'}+0;
+    my $showgallid = ($GET{'showgal'} ? $GET{'showgal'} : $gallid)+0;
+    my $page = $GET{'page'}+0 || 1;
+
+    unless ($u) {
+        return BML::redirect("/login?to=" .
+                             FB::eurl("manage/pics?gal=$gallid"));
+    }
+
+    my $g  = FB::Gallery->new($u, $gallid);
+    my $sg = FB::Gallery->new($u, $showgallid);
+    return BML::redirect("/manage/gals") unless $g;
+
+    $body = "";
+    $title = "Select Preview Image";
+
+    if (FB::did_post()) {
+        my $id = $POST{'altpicid'}+0;
+        $id = "none" if $POST{"none.x"};
+        unless ($id) {
+            my ($k, $v);
+            while (! $id && (($k, $v) = each %POST)) {
+                next unless $k =~ /^(\d+)\.x/;
+                $id = $1;
+            }
+        }
+        $id = int($id);
+        $g->set_prop("previewpicid", $id || "none");
+
+        if ($GET{'js'}) {
+            BML::finish();
+              my $up = $id ? FB::Upic->new($u, $id) : undef;
+              my ($url, $nw, $nh) = $up ? $up->scaled_url(100, 100) :
+                  FB::img("nogalpreview_100");
+              my $newpic = JSON::objToJson({
+                  'url' => $url,
+                  'w' => $nw,
+                  'h' => $nh,
+              });
+
+             return "<html><body><script>
+if (window.parent && window.parent.setPreviewPic) {
+   window.parent.setPreviewPic($newpic);
+}
+</script></body></html>\n";
+
+        }
+
+        return BML::redirect("/manage/gal?id=$gallid");
+    }
+
+    my @pics = $sg->pictures;
+
+    push @pics, undef;
+
+    $body .= "<p><form method='post'>";
+    $body .= "<?h1 Select Preview Image h1?>";
+
+    unless (@pics) {
+       $body .= "<?p No pictures in this gallery. p?>";
+    } else {
+        my $name = FB::eall($g->display_name);
+        $body .= "<?p Click a picture to represent the <a href=\"/manage/gal?id=$gallid\">$name</a> gallery.  p?>";
+
+        # Setup the paging bar
+        my $perpage = 25;
+        my $start;
+        my $self_link;
+        my %items = BML::paging(\@pics, $GET{'page'} || 1, $perpage);
+        my $paging_html = FB::paging_bar($items{'page'}, $items{'pages'}, { 'self_link' => $self_link });
+
+        if ($items{'page'} == 1) {
+            $start = 0;
+        } else {
+            $start = ($items{'page'} - 1) * $perpage;
+        }
+        my @show_pics = splice (@pics, $start, $perpage);
+
+        my $COLS = 5;
+        $body .= "<table cellpadding='3' border='0' rules='none' frame='void' id='table_pics'>";
+        $body .= "<tr><td colspan='$COLS' align='middle'>$paging_html</td></tr>" if $paging_html;
+
+        my $ct = 0;
+        foreach my $up (@show_pics)
+        {
+            my ($picid, $url, $w, $h);
+            if ($up) {
+                $picid = $up->id;
+                if ($ct % $COLS == 0) {
+                    if ($ct) {
+                        $body .= "</tr>";
+                    }
+                    $body .= "<tr align='center' valign='center'>\n";
+                }
+                $ct++;
+                ($url, $w, $h) = $up->scaled_url(100, 100);
+            } else {
+                $picid = "none";
+                ($url, $w, $h) = FB::img("nogalpreview_100");
+            }
+
+            $body .= "<td width='100' nowrap='1'>\n";
+            $body .= "<input name='$picid' type='image' border='0' width='$w' height='$h' src='$url' />\n";
+            $body .= "</td>\n";
+        }
+        $body .= "</tr>";
+        $body .= "<tr><td colspan='$COLS' align='middle'>$paging_html</td></tr>" if $paging_html;
+        $body .= "</table>";
+    }
+
+    my @sgal;
+    $sth = $u->prepare("SELECT g.gallid, g.name, r.sortorder ".
+                       "FROM gallery g, galleryrel r ".
+                       "WHERE g.userid=? AND r.userid=g.userid " .
+                       "AND r.gallid=? AND r.type='C' AND r.gallid2=g.gallid",
+                       $u->{'userid'}, $showgallid);
+    $sth->execute;
+    while (my ($gid, $name, $so) = $sth->fetchrow_array) {
+        push @sgal, [ $gid, $name, $so ];
+    }
+    @sgal = sort { $a->[2] <=> $b->[2] }
+            sort { $a->[1] cmp $b->[1] } @sgal;
+
+    if (@sgal) {
+        $body .= "<?h1 Choose other picture h1?><?p Alternatively, you may choose a picture from another gallery by browsing one of the sub-galleries below: p?><ul>\n";
+        foreach (@sgal) {
+            my $name = FB::eall($_->[1]);
+            $body .= "<li><a href='/manage/setpreview?gal=$gallid&showgal=$_->[0]'>$name</a></li>\n";
+        }
+        $body .= "</ul>";
+    }
+
+    $body .= "</form>";
+    return;
+
+}
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+page?>

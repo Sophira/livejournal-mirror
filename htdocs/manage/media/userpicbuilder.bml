@@ -1,0 +1,67 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%GET %POST %FORM $title $body);
+
+    my $u = FB::get_remote();
+    my $upicid = $FORM{'id'}+0;
+
+    return BML::redirect("/login?to=" .
+                         FB::eurl("manage/userpicbuilder?id=$upicid")) unless $u;
+
+    my $upicid = $GET{'id'}+0;
+    my $up    = FB::Upic->new($u, $upicid);
+
+    return BML::redirect("/manage/gals") unless $up && $up->valid;
+
+    $up->autorotate;
+
+    $body = "";
+    $title = 'Userpic Builder';
+
+    my $err = sub {
+        $title = "Error";
+        $body = '<div class="fb_error">$_[0]</div>';
+        return;
+    };
+
+    my $picurl = $up->scaled_url(320, 320);
+    my $prevpicurl = $up->scaled_url(100, 100);
+    $body .= qq {
+        <div>Here you can build userpics for your LiveJournal.</div>
+        <div style="border: 2px #BB0000 solid; padding: 1em;">
+          <span style="vertical-align: top; font-weight: bold;">Original: </span><img src="$picurl" />
+          <span style="vertical-align: top; font-weight: bold;">Preview: </span>
+             <div id="prev" style="border: 1px solid #000000; padding: 1px;"><img src="$prevpicurl" /></div>
+        </div>
+    };
+
+    return;
+}
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+head<=
+<script src='/js/fotobilder.js'></script>
+<script src='/js/core.js'></script>
+<script src='/js/dom.js'></script>
+<script src='/js/httpreq.js'></script>
+
+<script>
+    function doreq (data, callback) {
+        var reqOpts = {};
+        reqOpts.onError = handleError;
+        reqOpts.url = "/manage/userpicbuilder";
+        reqOpts.onData = callback;
+        reqOpts.data = HTTPReq.formEncoded(data);
+        HTTPReq.getJSON(reqOpts);
+    }
+
+function handleError (err) {
+    alert("Error: "+err);
+}
+
+</script>
+</script>
+<=head
+page?>

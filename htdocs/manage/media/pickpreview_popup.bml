@@ -1,0 +1,92 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%GET %POST $title $body);
+
+    my $sth;
+
+    my $gallid = $GET{'gal'}+0;
+    my $showgallid = ($GET{'showgal'} ? $GET{'showgal'} : $gallid)+0;
+    my $page = $GET{'page'}+0 || 1;
+
+    my $u = FB::User->remote or
+        return BML::redirect("/login?to=" .
+                             FB::eurl("manage/pics?gal=$gallid"));
+
+
+    my $g  = FB::Gallery->new($u, $gallid);
+    my $sg = FB::Gallery->new($u, $showgallid);
+    return BML::redirect("/manage/gals") unless $g;
+
+    $body = "";
+    $title = "Select Preview Image";
+
+    my @pics = $sg->pictures;
+    my $pic_count = scalar @pics;
+    push @pics, undef;
+
+    $body .= "<html><head></head><body><form action='setpreview?js=1&gal=$gallid' method='post'>";
+
+    my $name = FB::eall($g->display_name);
+    $body .= "<p>Click a thumbnail to represent the <b>$name</b> gallery.</p>";
+
+    # Setup the paging bar
+    my $perpage = 20;
+    my $start;
+    my $self_link;
+    my %items = BML::paging(\@pics, $GET{'page'} || 1, $perpage);
+    my $paging_html = FB::paging_bar($items{'page'}, $items{'pages'}, { 'self_link' => $self_link });
+
+    if ($items{'page'} == 1) {
+        $start = 0;
+    } else {
+        $start = ($items{'page'} - 1) * $perpage;
+    }
+    my @show_pics = splice (@pics, $start, $perpage);
+
+    my $COLS = 5;
+    $body .= "<table cellpadding='3' border='0' rules='none' frame='void' id='table_pics'>";
+    $body .= "<tr><td colspan='$COLS' align='middle'>$paging_html</td></tr>" if $paging_html;
+
+    my $ct = 0;
+    foreach my $up (@show_pics)
+    {
+        my ($picid, $url, $w, $h);
+        if ($up) {
+            $picid = $up->id;
+            if ($ct % $COLS == 0) {
+                if ($ct) {
+                    $body .= "</tr>";
+                }
+                $body .= "<tr align='center' valign='center'>\n";
+            }
+            $ct++;
+            ($url, $w, $h) = $up->scaled_url(100, 100);
+        } else {
+            $picid = "none";
+            ($url, $w, $h) = FB::img("nogalpreview_100");
+        }
+
+        $body .= "<td width='100' nowrap='1'>\n";
+        $body .= "<input name='$picid' type='image' border='0' width='$w' height='$h' src='$url' />\n";
+        $body .= "</td>\n";
+    }
+    $body .= "</tr>";
+    $body .= "</table>";
+
+    my @gt = $sg->gals_linked_to;
+
+    if ($pic_count == 0 && @gt) {
+        $body .= "<?p Or, select from another gallery: p?><ul>";
+        foreach my $g (@gt) {
+            $body .= "<li><a href='pickpreview_popup?gal=$gallid&amp;showgal=" . $g->id . "'>" . FB::ehtml($g->display_name) . "</a></li>";
+        }
+        $body .= "</ul>";
+    }
+
+    $body .= "</form></body></html>";
+
+    return $body;
+
+}
+_code?>

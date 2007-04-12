@@ -1,0 +1,139 @@
+<html>
+<head>
+<style type="text/css">
+body
+{
+ margin: 0px;
+ padding: 10px;
+ background-color: #f7f7f7;
+}
+
+body, td, input, select, textarea
+{
+ font-size: 11px;
+ font-family: 'Microsoft Sans Serif' , Arial, Helvetica, Verdana;
+}
+</style>
+<!-- 
+<script language="JavaScript" src="/stc/fck/editor/dialog/fck_image/fck_image.js">
+</script>
+-->
+<script language='JavaScript'>
+    var LJWin = window.parent.InObFCK;
+
+    // When a user clicks on the gallery they progress to the next page
+    LJWin.hideNext();
+    LJWin.setTitle('Step 1 of 2: Select Gallery');
+</script>
+</head>
+<body>
+<?_code
+{
+    use strict;
+    use vars qw(%GET %POST $title $body);
+
+    my $err = sub {
+        my $msg = shift;
+        my $ret;
+        $ret .= $msg;
+        return $ret;
+    };
+
+    my $u = FB::User->remote or
+        return $err->("<?h2 Error h2?><?p You are not logged in. p?>");
+
+    my $updated = sub {
+        my $g = shift;
+
+        my $updated = $g->timeupdate_unix();
+
+        my $ret;
+        if ($updated) {
+            $ret = 'Updated ' . FB::date_unix_to_http($updated);
+        } else {
+            $ret = 'Never updated';
+        }
+        return $ret;
+    };
+
+    my @gals;
+    foreach my $g (values %{$u->galleries}) {
+        next unless $g->pic_count() > 0;
+        push @gals, $g;
+    }
+
+    my $ret = '';
+
+    unless (@gals) {
+        return $err->("<?h2 You Have No Galleries h2?><?p Maybe you'd like to upload from a file instead? ?p>");
+    }
+
+    my @recent = sort {
+        ($b->is_unsorted ? 1 : 0)  <=> ($a->is_unsorted ? 1 : 0)  ||
+        $b->timeupdate_unix <=> $a->timeupdate_unix
+    } @gals;
+
+    my @rest;
+    if (@recent > 10) {
+        my @t = @recent[0..9];
+        @rest   = @recent[10..(scalar @recent -1)];
+        @recent = @t;
+    }
+
+    $ret .= "<?p Click on a gallery to find images to add to your journal entry: p?>";
+
+    my $auth = FB::current_domain_plugin();
+    my $authbase = $auth->remote_root();
+    my $domainweb = FB::domainweb();
+
+    $ret .= "<table align='center'><tr>";
+
+    my $c = 0;
+    foreach my $g (@recent) {
+        $ret .= "<td style='padding: 15px;'>";
+
+
+        my $pp = $g->preview_pic();
+        $ret .= "<a href='$authbase/__using/$domainweb/getgalpicsrte?gal=" . $g->id . "'>";
+        if ($pp) {
+            my ($url, $w, $h) = $pp->scaled_url(100, 100);
+            $ret .= "<img src='$url' width='$w' height='$h' alt='Preview Pic' border='0' />";
+        } else {
+            $ret .= "<img src='$FB::IMGPREFIX/nogalpreview.png' width='100' height='100' alt='No Preview Pic' border='0' />";
+        }
+
+        $ret .= "</a></td><td>";
+
+        $ret .= "<a href='$authbase/__using/$domainweb/getgalpicsrte?gal=" . $g->id . "'><b>" . FB::ehtml($g->display_name) . "</b></a>";
+
+        my $num_pics = $g->pic_count();
+        $ret .= "<br />$num_pics image" . ($num_pics != 1 ? 's' : '');
+
+        $ret .= "<br />" . $updated->($g);
+
+        $ret .= "</td></tr>";
+        $c++;
+    }
+
+    if (@rest) {
+        $ret .= "<tr><td>&nbsp;</td></tr>";
+
+        foreach my $g (@rest) {
+            $ret .= "<tr><td>";
+            $ret .= "<a href='$authbase/__using/$domainweb/getgalpicsrte?gal=" . $g->id . "'><b>" . FB::ehtml($g->display_name) . "</b></a>";
+            $ret .= "</td><td>";
+
+            my $num_pics = $g->pic_count();
+            $ret .= "<br />$num_pics image" . ($num_pics != 1 ? 's' : '');
+
+            $ret .= "<br />".$updated->($g);
+            $ret .= "</td></tr>";
+        }
+    }
+    $ret .= "</table>";
+
+    return $ret;
+}
+_code?>
+</body>
+</html>

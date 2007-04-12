@@ -1,0 +1,65 @@
+<?page
+title=>Manage Your Tags
+body<=
+<?_code
+{
+    use strict;
+
+    my $u = FB::get_remote();
+    return BML::redirect("/login?to=manage/tags") unless $u;
+
+    my $gals = $u->tag_galleries();
+    return "You have no tags" unless $gals;
+
+    if (FB::did_post()) {
+        my $aliases = $u->get_aliases();
+        if ($aliases) {
+            foreach my $alias (keys %$aliases) {
+                if ($POST{"del_$alias"}) {
+                    my $gal = FB::Gallery->new($u, $aliases->{$alias}->{'gallid'});
+                    $gal->delete_alias($alias);
+                    last;
+                }
+            }
+        }
+    }
+
+    my $body;
+    $body .= "<?p From here you can start to manage your tags. This page will become more robust over time. p?>";
+
+    $body .= "<?h1 Current Tags: h1?>";
+    $body .= "<form method='POST' action='tags'>";
+    $body .= "<table cellpadding='2' cellspacing='0' class='multicol' style='width: 50%'>\n";
+    $body .= "<tr>\n";
+    $body .= "<th style='text-align: left'>Tag</th><th style='text-align: left'>Gallery</th><th style='text-align: left'>Aliases</th>\n";
+    $body .= "</tr>\n";
+    foreach my $tag (sort keys %$gals)
+    {
+        my $ename  = FB::ehtml($gals->{$tag}->{'name'});
+        my $etag = FB::ehtml($tag);
+
+        my $aliases = $gals->{$tag}->aliases();
+        my $ealiases = undef;
+        if ($aliases) {
+            $ealiases =join(', ',
+                            map {  FB::ehtml($_->[0]) . ' ' . FB::html_submit("del_$_->[0]", 'delete') }
+                            @$aliases);
+        }
+
+        my $gal = FB::Gallery->new($u, $gals->{$tag}->{'gallid'});
+
+        $body .= "<tr>";
+        $body .= "<td style='text-align: left'><a href='";
+        $body .= $gal->tag_url() . "'><b>$etag</b></a></td>";
+        $body .= "<td style='text-align: left'>$ename</td>";
+        $body .= "<td style='text-align: left'>$ealiases</td>";
+        $body .= "</tr>\n";
+    }
+    $body .= "</table>";
+    $body .= "</form>";
+
+    return $body;
+}
+_code?>
+<=body
+page?>

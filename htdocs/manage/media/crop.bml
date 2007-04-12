@@ -1,0 +1,16 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%GET %POST $title $body $jsinit);
+
+    # NOTE: this page has been moved to /manage/thumbfocus as the name was
+    #       counterintuitive, causing users to think it would actually crop
+    #       full sized gpics.  that's what this page will do, but until we
+    #       get to doing that, it's just a placeholder.
+
+    return BML::redirect("/manage/media/thumbfocus.bml?id=$GET{id}");
+}
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+page?>

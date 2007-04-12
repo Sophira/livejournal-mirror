@@ -1,0 +1,112 @@
+<?_code # -*-perl-*-
+{
+    use strict;
+    use vars qw(%POST %GET $title $body);
+
+    my $u = FB::User->remote
+        or return BML::redirect("/login?ret=manage/styles/");
+
+    FB::load_user_props($u, "styleid");
+
+    my $err = sub {
+        $title = "Error";
+        $body = $_[0];
+        return;
+    };
+
+    $body = "";
+    $title = "Gallery Styles";
+
+    my $styles = FB::load_user_styles($u, { 'create_default' => 1 });
+    unless ($u->{'styleid'}) {
+        $u->set_prop("styleid", each %$styles)
+    }
+
+    # action path
+    if (FB::did_post()) {
+        # prevent spoofing:
+        return BML::redirect("/manage/")
+            unless $POST{'userid'} == $u->id;
+
+        if ($POST{'action:delsel'}) {
+            # delete selected
+            foreach my $id (keys %$styles) {
+                if ($POST{"delete_$id"}) {
+                    FB::delete_user_style($u, $id);
+                    delete $styles->{$id};
+                    if ($u->{'styleid'} == $id) {
+                        $u->set_prop("styleid", undef);
+                    }
+                }
+            }
+        } elsif ($POST{'action:new'}) {
+            # create new
+            my $base = $POST{'new_styleid_base'}+0;
+            my $name = $POST{'new_name'} || "Unnamed style";
+
+            return $err->('You have reached your maximum number of styles.')
+                if scalar(keys %$styles) >= FB::get_cap($u, 'maxlayers');
+
+            my $id = FB::create_style($u, $name, $base)
+                or return $err->("Couldn't create new style");;
+
+            return BML::redirect("/manage/styles/?id=$id") if $id;
+        } else {
+            # Change default
+            my $newid = $POST{'default_style'}+0;
+            $u->set_prop("styleid", $newid) unless $newid == $u->{'styleid'};
+        }
+    }
+
+    $body .= "<form method='post' action='./'>";
+    $body .= FB::html_hidden("userid", $u->id);
+
+    $body .= "<?p Select a presentation style for your galleries. You must designate one style to be your default, but you have the option to select a different style for each of your galleries. Click on <a href='/manage/media/styles/advanced/'>Advanced Customization</a> to create and edit your own unique styles. p?>";
+
+    $body .= "<table style='width: 100%'><tr valign='top'><td style='width: 50%'>";
+    $body .= "<fieldset><legend>Current Styles:</legend><table cellpadding='2' style='width: 100%; text-align: left'>\n";
+    $body .= "<tr><th></th><th colspan='2'>Style Name</th>";
+    $body .= "<script type='text/javascript' language='JavaScript'>\n<!--\ndocument.write(\"" . FB::ejs("<th class='text_center'>Default?</th>") . "\");\n//-->\n</script>";
+    $body .= "</tr>\n";
+
+    foreach my $sid (sort { $styles->{$a} cmp $styles->{$b} } keys %$styles)
+    {
+        my $name = FB::ehtml($styles->{$sid});
+        my $chk = $u->{'styleid'} == $sid ? " checked='checked'" : "";
+        $body .= "<tr><td><input type='checkbox' name='delete_$sid'></td>";
+        $body .= "<td><strong><a href='" . FB::url_user($u) . "?styleid=$sid'>$name</a></strong></td>";
+        $body .= "<td><a href='edit?id=$sid' style='font-weight: bold; font-size: 80%'>[Edit]</a></td>";
+        my $default = "<td class='text_center'>" .
+            FB::html_check({ 'type' => 'radio', 'name' => 'default_style', 'value' => $sid,
+                             'raw' => "onkeypress='javascript:this.form.submit()' onclick='javascript:this.form.submit()'",
+                             'selected' => $u->{'styleid'} == $sid }) . "</td>";
+        $body .= "<script type='text/javascript' language='JavaScript'>\n<!--\ndocument.write(\"" . FB::ejs($default) . "\");\n//-->\n</script>";
+        $body .= "</tr>\n";
+    }
+
+    $body .= "<tr><td colspan='2'>" . FB::html_submit("action:delsel", "Delete Selected") . "</td>";
+    $body .= "</tr></table><p>";
+
+    $body .= "</p></td><td style='width: 50%'></fieldset>";
+    $body .= "<fieldset><legend>Create a New Style:</legend>";
+    $body .= "<table><tr><th style='text-align: right'>Name:</th><td>";
+    $body .= FB::html_text({ 'name' => 'new_name' });
+    $body .= "</td></tr><tr><th style='text-align: right'>Template:</th><td>";
+    $body .= FB::html_select({ 'name' => 'new_styleid_base', },
+                             0 => "(No base)",
+                             map { $_, $styles->{$_} }
+                             sort { $styles->{$a} cmp $styles->{$b} } keys %$styles);
+    $body .= "</td></tr><td></td><td>";
+    $body .= FB::html_submit("action:new", "Create Style");
+    $body .= "</td><td><a href='/manage/media/styles/advanced/'><b>Advanced Customization</b></a></td>";
+    $body .= "</tr></table></fieldset></td></tr></table>";
+
+    $body .= "</form>";
+
+    return;
+
+}
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+page?>

@@ -1,0 +1,302 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%GET %POST $title $body);
+
+    my $u = FB::get_remote();
+    my $gallid = $GET{'gal'}+0;
+    my $page = ($POST{'page'} || $GET{'page'})+0;
+
+    unless ($u) {
+        return BML::redirect("/login?to=" .
+                             FB::eurl("manage/picstext?gal=$gallid"));
+    }
+
+    my $mode = $POST{'mode'} || $GET{'mode'};
+    my $tagmode = $mode eq "tag";
+
+    my $sth;
+    my $g = FB::Gallery->new($u, $gallid);
+    return BML::redirect("/manage/gals") unless $g;
+
+    $body = "";
+    $title = FB::transform_gal_name(BML::eall($g->name));
+
+    my $is_unsorted = $g->is_unsorted;
+
+    my @pics = $g->pictures;
+
+    # sort by sortorder in perl-land now
+    @pics = sort { $a->{sortorder} <=> $b->{sortorder} } @pics;
+
+    my $ct = 0;
+    foreach (@pics) {
+        $_->{'pos'} = ++$ct;
+        $_->{'picsec'} = $_->secid;
+    }
+
+    my @allpics = @pics;
+
+    my $pagesize = int($POST{'pagesize'} || $GET{'pagesize'}) || 50;
+    $pagesize = 100 if $pagesize > 100;
+
+    my $picsize = $POST{'picsize'} || $GET{'picsize'};
+    if ($picsize != 100 && $picsize != 150 &&
+        $picsize != 320 && $picsize != 640) { $picsize = 150; }
+
+    my $ir = FB::paging_helper({
+        'page' => $page,
+        'pagesize' => $pagesize,
+        'items' => \@pics,
+        'url_of' => sub { return "/manage/picstext?gal=$gallid&page=$_[0]"; }
+    });
+
+    # load all galleries these pics are in
+    my $ids = join(",", map { $_->{'upicid'} } @pics);
+    my %galmem;
+    $sth = $u->prepare("SELECT gp.upicid, g.gallid, g.name FROM gallery g, gallerypics gp ".
+                       "WHERE g.userid=? AND gp.userid=g.userid AND gp.upicid IN ($ids) ".
+                       "AND gp.gallid=g.gallid", $u->{userid});
+    $sth->execute;
+    while (my ($picid, $gallid, $name) = $sth->fetchrow_array) {
+        $galmem{$picid}->{$gallid} = $name;
+    }
+
+    # load titles
+    my $ps = FB::get_props();
+    $sth = $u->prepare("SELECT p.upicid, p.value ".
+                       "FROM gallery gp, upicprop p ".
+                       "WHERE gp.userid=? AND p.userid=gp.userid ".
+                       "AND gp.gallid=? AND p.propid=?",
+                       $u->{'userid'}, $gallid, $ps->{'pictitle'});
+    $sth->execute;
+    my %pictitle;
+    while (my ($id, $title) = $sth->fetchrow_array) {
+        $pictitle{$id} = $title;
+    }
+
+    # load descriptions
+    $sth = $u->prepare("SELECT d.itemid, d.des ".
+                       "FROM gallerypics gp, des d ".
+                       "WHERE gp.userid=? AND d.userid=gp.userid ".
+                       "AND gp.gallid=? AND d.itemtype='P' ".
+                       "AND d.itemid=gp.upicid",
+                       $u->{'userid'}, $gallid);
+    $sth->execute;
+    my %des;
+    while (my ($id, $des) = $sth->fetchrow_array) {
+        $des{$id} = $des;
+    }
+
+    # save?
+    if (FB::did_post()) {
+        unless ($POST{'userid'} == $u->{'userid'}) {
+            $title = "Error";
+            $body = "Login changed during modifications?";
+            return;
+        }
+
+        # modify position of those which user could've changed
+        foreach (@pics) {
+            $_->{'pos'} = $POST{"pos_$_->{'upicid'}"}+0
+                if $POST{"pos_$_->{'upicid'}"};
+        }
+
+        @allpics = sort { $a->{'pos'} <=> $b->{'pos'} } @allpics;
+
+        my $ct = 0;
+        foreach my $p (@allpics) {
+            $ct++;
+            my $id = $p->{'upicid'};
+
+            if (defined $POST{"edit_$id"}) {
+                my $newsec = $POST{"picsec_$id"} ne "" ? $POST{"picsec_$id"}+0 : $p->{'picsec'};
+                FB::change_upic_secid($u, $p, $newsec);
+            }
+
+            if ($ct != $p->{'sortorder'}) {
+                $u->do("UPDATE gallerypics SET sortorder=? WHERE userid=? ".
+                       "AND gallid=? AND upicid=?",
+                       [$ct, "int"], $u->{'userid'}, $gallid, $id);
+            }
+
+            # edit title and description, if on right page.
+            next unless defined $POST{"edit_$id"};
+
+            $p->set_des($POST{"des_$id"}) if ($des{$id} ne $POST{"des_$id"});
+
+            $p->set_title($POST{"pictitle_$id"})
+                if ($pictitle{$id} ne $POST{"pictitle_$id"} && FB::is_utf8(\$POST{"pictitle_$id"}));
+
+            if ($POST{"sn_$id"}) {
+                foreach my $sn (split(/,/, $POST{"sn_$id"})) {
+                    my $g = $u->gallery_of_tag($sn);
+                    next unless $g;
+                    $g->add_picture($p);
+                }
+            }
+        }
+
+        my $target = "/manage/gal?id=$gallid";
+
+        my $common = "gal=$gallid&picsize=$picsize&pagesize=$pagesize&";
+        if ($POST{'action:fmtchange'}) {
+            $target = "/manage/picstext?${common}page=$ir->{'current_page'}";
+        } elsif ($POST{'savejumpto'} =~ /(\d+)/) {
+            $target = "/manage/picstext?${common}page=$1";
+        } elsif ($POST{'action:save'} && $ir->{'current_page'} < $ir->{'total_pages'}) {
+            $target = "/manage/picstext?${common}page=" . ($ir->{'current_page'} + 1);
+        }
+
+        if ($POST{'mode'} eq "tag") {
+            $target .= "&mode=tag";
+        }
+
+        return BML::redirect($target);
+    }
+
+    $body .= "[<a href='gal?id=$gallid'>Properties</a>]\n";
+    $body .= "[<a href='pics?gal=$gallid'>Pictures</a>]\n";
+    $body .= "[<b>Text &amp; Security</b>]\n";
+    my $url = $g->url;
+    $body .= "[<a href='$url'>View...</a>]" unless $g->{'name'} eq ":FB_in";
+
+    unless (@pics) {
+        $body .= "<?p No pictures in this gallery. p?>";
+        return;
+    }
+
+    $body .= "<p><form method='post' id='pics_form'>";
+    $body .= FB::html_hidden("mode", $mode);
+
+    # don't show
+    my @picsize = (100 => "Small",
+                   150 => "Medium",
+                   320 => "Large");
+
+    # limit sizes to 320 if gallery not enabled
+    push @picsize, 640 => "Huge"
+        if FB::get_cap($u, "gallery_enabled");
+
+    $body .= "<p>Picture size: ";
+    $body .= FB::html_select({ 'name' => 'picsize', 'selected' => $picsize }, @picsize);
+
+    $body .= "\nPage size: ";
+    $body .= FB::html_select({ 'name' => 'pagesize', 'selected' => $pagesize },
+                             10 => 10,
+                             25 => 25,
+                             50 => 50,
+                             100 => 100);
+    $body .= FB::html_submit("action:fmtchange", "Switch");
+    $body .= "</p>";
+
+    unless ($ir->{'all_items_displayed'}) {
+        $body .= "<p>Save and jump to page: ";
+
+        for (1..$ir->{'total_pages'}) {
+            if ($ir->{'current_page'} == $_) {
+                $body .= "&nbsp;<b>$_</b>&nbsp;\n";
+            } else {
+                $body .= "<input type='submit' name='savejumpto' value=' $_ '>\n";
+            }
+        }
+        $body .= "<p>(Showing pictures $ir->{'from_item'}-$ir->{'to_item'} of $ir->{'total_items'})";
+    }
+
+    $body .= FB::html_hidden("userid", $u->{'userid'});
+
+    my $toggle = 0;
+    my $tabindex = 0;
+    foreach my $p (@pics) {
+        my $picid = $p->{'upicid'};
+        my $piccode = FB::piccode($p);
+        my ($url, $w, $h) = FB::scaled_url($u, $p, $picsize, $picsize);
+        $body .= FB::html_hidden("edit_$picid", 1);
+
+        my $exstyle;
+        if ($toggle = ! $toggle) {
+            $exstyle = "; border: 2px solid black; background: <?barcolor_light?>;"
+        }
+
+        $body .= "<table style='margin-top: 10px${exstyle}'><tr valign='top'>\n";
+        my $widattr = $picsize <= 150 ? "width='$picsize'" : "";
+        $body .= "<td $widattr><a href='pic?id=$picid'><img src=\"$url\" width='$w' height='$h' border='0'></a></td>\n";
+        $body .= "<td>";
+
+        $body .= "<table>";
+        unless ($tagmode) {
+            $body .= "<tr><td align='right'><b>Pos:</b></td><td>";
+            $body .= FB::html_text({ name => "pos_$picid", size => 4, value => $p->{'pos'} });
+            $body .= " <b>Security: </b>";
+            $body .= FB::html_security($u, "picsec_$picid", $p ? $p->{'secid'} : 255);
+
+            $body .= "</td></tr>\n";
+            $body .= "<tr><td align='right'><b>Title:</b></td><td>";
+            $body .= FB::html_text({ name => "pictitle_$picid", size => 30, maxlength => 100,
+                                     value => $pictitle{$picid}, raw => "style='width: 250px'", });
+            $body .= "</td></tr><tr valign='top'><td align='right'><b>Des:</b></td><td>";
+            $body .= "<textarea wrap='virtual' style='width: 250px' name='des_$picid' rows='5' cols='30'>";
+            $body .= FB::eall($des{$picid});
+            $body .= "</textarea>";
+            $body .= "</td></tr>";
+        }
+        $body .= "<tr><td align='right' valign='top'><b>Gals:</b></td><td>";
+        foreach my $id (keys %{$galmem{$picid}}) {
+            $body .= "<a href=\"/manage/gal?id=$id\">" . FB::eall(FB::transform_gal_name($galmem{$picid}->{$id})) . "</a><br />\n";
+        }
+        $body .= "</td></tr>\n";
+
+        $tabindex++;
+        my $tabattr = $tagmode ? "tabindex='$tabindex'" : "";
+
+        $body .= "<tr><td align='right' valign='top'><b>Add tags:</b></td><td><input $tabattr id='tag_field_$tabindex' type='text' name='sn_$picid' size='30' style='width: 250px'><br /><small>Comma separated list of tags</small></td></tr>\n";
+
+        $body .= "</table>";
+
+        $body .= "</td>\n";
+        $body .= "</tr></table>\n";
+    }
+
+    my $label = "Save Changes";
+    if ($ir->{'total_pages'} > 1) {
+        $label = "Save Changes, go to Next Page ---&gt;";
+    }
+    $body .= "<center><input type='submit' name='action:save' value=\"$label\"></center>";
+
+    $body .= "</form>";
+    $body .= <<ENDJS;
+<script>
+    if (document.getElementById) {
+        var it = document.getElementById("tag_field_1");
+        if (it) it.focus();
+    }
+</script>
+ENDJS
+
+    return;
+
+}
+_code?><?page
+head<=
+<script src="/js/xbDOM.js"></script>
+<script src="/js/core.js"></script>
+<script src="/js/dom.js"></script>
+<script src="/js/inputcomplete.js"></script>
+<script>
+
+    function init () {
+        var compdata = new InputCompleteData(<?_code FB::get_remote()->tags_as_js; _code?>);
+        for (var i=1; i<=100; i++) {
+            var ele = $("tag_field_" + i);
+            if (ele) {
+                new InputComplete(ele, compdata);
+            }
+        }
+    }
+
+</script>
+<=head
+bodyopts=>onLoad="init();"
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+page?>

@@ -1,0 +1,90 @@
+<?_code # -*-bml-*-
+{
+    use strict;
+    use vars qw(%POST %GET $title $body);
+
+    my $u = FB::get_remote();
+    return BML::redirect("/login?to=manage/media/gals.bml") unless $u;
+
+    my $gallid = $GET{'id'}+0;
+    my $g;
+
+    $body = "";
+    $title = "Delete Gallery";
+
+    my $err = sub {
+        $body .= "<?h1 Error h1?><?p $_[0] p?>";
+        return;
+    };
+
+    $u->writer or return $err->("Database unavailable");
+
+    $g = FB::load_gallery($u, undef, { 'gallid' => $gallid, });
+    return BML::redirect("/manage/media/gals.bml") unless $g;
+
+    my $galname = FB::transform_gal_name(BML::eall($g->{'name'}));
+    $title = "Delete Gallery: $galname";
+
+    my $count = $u->selectrow_array("SELECT COUNT(*) FROM gallerypics WHERE userid=? AND gallid=?",
+                                    $u->{'userid'}, $gallid);
+
+    my $url = FB::url_gallery($u, $g);
+    $body .= "<p>[<a href='gal?id=$gallid'>Properties</a>]\n";
+    $body .= "[<a href='pics?gal=$gallid'>Pictures</a>]\n";
+    $body .= "[<a href='picstext?gal=$gallid'>Text &amp; Security</a>]\n";
+    $body .= "[<a href='$url'>View...</a>]<br />" unless FB::gal_is_unsorted($g);
+    $body .= "</p>";
+
+    # action path
+    if (FB::did_post()) {
+        # prevent spoofing:
+        return BML::redirect("/manage")
+            unless $POST{'userid'} == $u->{'userid'};
+
+        unless ($POST{'dmode'} || $count == 0) {
+            $body .= "<?h1 Error h1?><?p No delete mode specified. p?>";
+            return;
+        }
+
+        if (FB::delete_gallery($u, $g, $POST{'dmode'})) {
+            return BML::redirect("/manage/media/gals.bml");
+        } else {
+            $body .= "<?h1 Error h1?><?p Failed to delete gallery: " . FB::last_error . " p?>";
+            return;
+        }
+    }
+
+    $body .= "<p><form method='post' action='/manage/media/deletegal.bml?id=$gallid'>";
+    $body .= FB::html_hidden('userid', $u->{'userid'});
+
+    $body .= "<?h1 Delete gallery? h1?><?p Are you sure you want to delete the gallery \"<b>$galname</b>\"? p?>";
+
+    if ($count) {
+        $body .= "<?p And, what should be done with the existing <a href='pics?gal=$gallid'><b>$count</b> picture(s)</a>? <blockquote>";
+        $body .= "<dl>";
+
+        unless (FB::gal_is_unsorted($g)) {
+            $body .= "<dt><input type='radio' name='dmode' value='unsorted' id='del_1'> <label for='del_1'><b>Move to unsorted, unless elsewhere</b></label></dt>";
+            $body .= "<dd>All pictures will be moved back to unsorted, unless they already exist in another gallery, in which case they'll stay there and just be removed from this one.</dd>";
+        }
+
+        $body .= "<dt><input type='radio' name='dmode' value='softdel' id='del_2'> <label for='del_2'><b>Delete, unless elsewhere</b></label></dt>";
+        $body .= "<dd>Pictures will be permanently deleted, unless they exist in other galleries already.</dd>";
+
+        $body .= "<dt><input type='radio' name='dmode' value='del' id='del_3'> <label for='del_3'><b>Delete from all galleries</b></label></dt>";
+        $body .= "<dd>Pictures will be permanently deleted from this gallery and from all other galleries they might exist in.</dd>";
+
+        $body .= "</dl>";
+        $body .= "</blockquote> p?>";
+    }
+
+    $body .= "<input type='submit' value='Yes, delete.'>";
+    $body .= "</form>";
+
+    return;
+
+}
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code return $body; _code?>
+page?>

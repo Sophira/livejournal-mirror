@@ -1,0 +1,363 @@
+<?page emacs=> -*-perl-*-
+body<=
+<?_code
+{
+    use strict;
+    use vars qw(%GET %POST $crumbs $title);
+
+    my $u = FB::get_remote()
+        or return BML::redirect("/login?to=manage/media/gals.bml");
+
+    $crumbs = "<a href='/'>Home</a> &gt; Manage Galleries";
+
+    $title = 'Galleries';
+
+    my $ret;
+    my ($size_freed);
+
+    my $gals = $u->galleries or die("Couldn't load galleries");
+
+    my $sort = $GET{'sort'} || $u->prop('gal_sort_method');
+
+    # upload pictures button
+    $ret .= qq {
+        <input type="button" onclick="document.location.href='/manage/media/upload.bml'" value="Upload images" style="float: right;"/>
+        };
+
+    $ret .= "<form method='GET' action='gal'><input type='submit' value='Create a New Gallery' /></form>";
+
+    if (%$gals) {
+
+    } else {
+        $ret .= "<?p You don't currently have any galleries. p?>";
+        return $ret;
+    }
+
+    # show tagged galleries?
+    my $show_tag_gals = ($GET{'show'} eq 'tags');
+
+    if ($show_tag_gals) {
+        $title = 'Tags';
+        $crumbs = "<a href='/'>Home</a> &gt; Manage Tags";
+    }
+
+    # sorted view generator
+    my $sorted = sub {
+        my $sorter = shift;
+        my $init = 0;
+        my @results;
+        return sub {
+            unless ($init) {
+                $init = 1;
+                @results = sort { $sorter->($a, $b) } values %$gals;
+            }
+            shift @results;
+        };
+    };
+
+    # nested view generator
+    my $nest_init = 0;
+    my @nest_results;
+    my $nested;
+    $nested = sub {
+        # once we've populated the generator
+        return shift @nest_results if $nest_init;
+        $nest_init = 1;
+        @nest_results = $u->galleries_with_depth;
+        return shift @nest_results;
+    };
+
+    if (FB::did_post()) {
+        return BML::redirect("/manage/media/") unless $u->{'userid'} == $POST{'userid'};
+
+        my $pargal = int($POST{'pargal'});
+
+        while (my ($id, $gal) = each %$gals) {
+            next unless $POST{"sel_$id"};
+
+            if ($POST{'action'} eq "changesec") {
+                $gal->set_secid($POST{'newsec'});
+                next;
+            }
+
+            if ($POST{'pargal'} ne "" && ($POST{'action'} eq "moveparent" || $POST{'action'} eq "addparent")) {
+                if ($POST{'action'} eq "moveparent") {
+                    # remove existing parents
+                    $gal->unlink_from_all;
+                }
+                # add a new parent
+                $gal->link_from($pargal);
+                next;
+            }
+
+            if ($POST{'delete'} eq "delsoft") {
+
+                my @u_upics = FB::gal_unique_upics($u, $gal->{'gallid'});
+
+                # add up the bytes of the pics only in this gallery
+                $size_freed +=
+                    $u->selectrow_array("SELECT SUM(bytes) FROM upic " .
+                                        "WHERE userid=? AND upicid IN (".
+                                        (join ', ', @u_upics) . ")",
+                                        $u->{'userid'});
+
+                # delete it
+                FB::delete_gallery($u, $gal, "softdel");
+                next;
+            }
+
+            if ($POST{'delete'} eq "delunsorted") {
+                FB::delete_gallery($u, $gal, "unsorted");
+                next;
+            }
+        }
+
+        # redirect back to refresh gallery listing and prevent reload confusion
+        return BML::redirect("/manage/media/gals.bml");
+    }
+
+    my %cols = (
+                # 'col'  => [ name, sort sub, text-align, ],
+                "sel"    => [ ],
+                "nest"   => [ "Nested", $nested ],
+                "name"   => [ "Gallery Name", $sorted->(sub { uc($_[0]->raw_name) cmp uc($_[1]->raw_name) }), 'left', ],
+                "count"  => [ "Images", $sorted->(sub { $_[1]->pic_count <=> $_[0]->pic_count}), "right" ],
+                "size"   => [ "Size", $sorted->(sub { $_[1]->kib <=> $_[0]->kib }) ],
+                "sec"    => [ "Security", $sorted->(sub { $_[0]->secid <=> $_[1]->secid }), "left" ],
+                "create" => [ "Gallery Date", $sorted->(sub { $_[1]->date cmp $_[0]->date }), "left" ],
+                "update" => [ "Update Time", $sorted->(sub { $_[1]->timeupdate_unix <=> $_[0]->timeupdate_unix }), "left" ],
+                );
+
+    if ($show_tag_gals) {
+        delete $cols{create};
+        $cols{name}->[0] = 'Name';
+    }
+
+    $sort = "nest" unless defined $cols{$sort};
+    $u->set_prop('gal_sort_method', $sort) if $GET{'sort'} eq $sort;
+
+    $ret .= "<form method='post'>";
+    $ret .= FB::html_hidden("userid", $u->{'userid'});
+    $ret .= "<table style='width: 97%'><tr valign='top'><td colspan='2'>";
+
+    $ret .= "<fieldset style='width: 100%'><legend>Current $title</legend><table border='0' cellpadding='5' cellspacing='0' class='multicol'>\n";
+    $ret .= "<tr align='left'>\n";
+    my $generator;
+    foreach my $skey (qw(sel name count size sec create update))
+    {
+        next unless defined $cols{$skey};
+
+        my $s = $cols{$skey};
+        my $align = $s->[2] eq "left" ? "left" : "right";
+        my $colspan = $skey eq "name" || $skey eq "sec" ? " colspan='2'" : "";
+        $ret .= "<th style='text-align: $align;' $colspan>";
+        if ($sort eq $skey) {
+            $ret .= "$s->[0]";
+            $generator = $s->[1];
+        } else {
+            $ret .= "<a href='gals?sort=$skey'>$s->[0]</a>";
+        }
+        $ret .= "&nbsp;&nbsp;<small><a href='gals?sort=nest'>[Nested View]</a></small>" if $skey eq "name" && $sort ne "nest";
+        $ret .= "</th>";
+    }
+    $generator = $nested if $sort eq "nest";
+    $ret .= "</tr>\n";
+
+    my $ct = 0;
+
+    while (my $g = $generator->()) {
+        my $depth = 0;
+        if (ref $g eq "ARRAY") {
+            ($g, $depth) = ($g->[0], $g->[1]);
+        }
+
+        if (! $g) {
+            $ret .= "<td colspan=2 style='text-align: left'><b>Unlinked:</b></td>" unless $show_tag_gals;
+            $ret .= "<td>&nbsp;</td>" x ((scalar keys %cols) + 1) unless $show_tag_gals;
+            $ret .= "</tr>\n";
+            next;
+        }
+
+        # if it's a tag gallery
+        if ($g && $g->tag) {
+            next unless $show_tag_gals;
+        } else {
+            next if $show_tag_gals;
+        }
+
+        my $piccount = $g->pic_count;
+        next if $g->is_unsorted && ! $piccount;
+
+        my $name = FB::ehtml($g->display_name);
+        $name = "<i>$name</i>" if $g->is_unsorted;
+
+
+        $ret .= "<tr class='gals-head'>";
+
+        $ret .= "<td style='text-align: left'>" . FB::html_check({ 'name' => "sel_$g->{'gallid'}", }) . "</td>";
+
+        my $indent;
+        if ($depth) {
+            $indent = "&nbsp;"x(($depth)*3) . "<img src='/static/img/nest_right_arrow.gif' /> ";
+        }
+        $ret .= "<td style='text-align: left;'>";
+        $ret .= "$indent<a href='/manage/media/gal.bml?id=$g->{gallid}'><b>$name</b></a>";
+        $ret .= "</td>";
+
+        if ($g->is_unsorted) {
+            $ret .= "<td>&nbsp;</td>";
+        } else {
+            $ret .= "<td><small>&nbsp;&nbsp;<a href='" . $g->url . "'>[<b>View</b>]</a></small></td>";
+
+        }
+
+        $ret .= "<td style='text-align: right;'>$piccount</td>";
+
+        # gallery size
+        # this is a sum of pics for the gal, not the actual size freed if deleted
+        # (pics could be in multiple galleries)
+        {
+            my $MB = sprintf("%0.2f MB", $g->kib / 1024);
+            $ret .= "<td style='text-align: right;'>$MB</td>";
+        }
+
+        my $secname = FB::ehtml(FB::SecGroup->name($u, $g->secid));
+
+        my $secimg = FB::SecGroup->icontag($u, $g->secid);
+
+        $ret .= "<td style='text-align: left;'>$secname</td>";
+        $ret .= "<td>$secimg</td>";
+
+        # date gal
+        unless ($show_tag_gals) {
+            my $show = $g->date || "&nbsp;";
+            $show = substr($show, 0, 10) if length $show > 10;
+            $ret .= "<td>$show</td>";
+        }
+
+        # time update
+        {
+            my $show;
+            if (my $tu = $g->timeupdate_unix) {
+                # TODO: timezone
+                my $ago = time() - $tu;
+                if ($ago < 86400) {
+                    $show = "today";
+                } elsif ($ago < 86400*5) {
+                    my $dayago = int($ago / 86400);
+                    $show = $dayago == 1 ? "yesterday" : "$dayago days ago";
+                } else {
+                    my @gtime = gmtime($g->timeupdate_unix);
+                    $show = sprintf("%04d-%02d-%02d", $gtime[5]+1900, $gtime[4]+1, $gtime[3]);
+                }
+            } else {
+                $show = '&nbsp;';
+            }
+            $ret .= "<td>$show</td>";
+        }
+
+        $ret .= "</tr>\n";
+    }
+
+    $ret .= "</table>\n";
+    $ret .= "<input type='button' onclick='javascript:checkAll(this, this.form);' value='Check All'>";
+    $ret .= "</fieldset>";
+    $ret .= "</td></tr>";
+
+    $ret .= "<tr valign='top'><td style='width: 50%'>";
+    $ret .= "<fieldset style='padding: 5px'><legend>Modify Selected:</legend>";
+    $ret .= FB::html_select({ 'name' => 'action', 'raw' => "id='actsel'" },
+                              '' => '(Select action)',
+                              'changesec' => 'Change security level',
+                              'addparent' => 'Add a link from:',
+                              'moveparent' => 'Only link from: (removing existing links)',
+                            );
+
+    $ret .= "<div id='div_newsec' style='display:block'>New security: ";
+    $ret .= FB::html_security($u, "newsec", undef);
+    $ret .= "</div>";
+    $ret .= "<div id='div_pargal' style='display:block'>Link from: ";
+    $ret .= FB::html_select({ 'name' => 'pargal' },
+                              '' => '(select)',
+                              0 => '[Top level]',
+                              FB::gallery_select_list($u));
+    $ret .= "</div>";
+    $ret .= "<input style='display:block; margin-top: 5px' type='submit' id='btnaction' name='action:submit' value='Proceed'>";
+    $ret .= "</fieldset>";
+    $ret .= "</td><td style='width: 50%'>";
+    $ret .= "<fieldset style='padding: 5px'><legend>Delete Selected:</legend>";
+    $ret .= "<div id='del_warning' style='margin-bottom: 10px; display: block;'
+            <b>Warning:</b> You will be unable to restore these galleries.</div>";
+    $ret .= FB::html_select({ 'name' => 'delete', 'raw' => "id='delsel'" },
+                              '' => '(Select action)',
+                              'delunsorted' => 'Delete selected, but save pictures',
+                              'delsoft' => 'Delete selected and pictures',
+                            );
+    $ret .= " <input style='display:block; margin-top: 5px' type='submit' id='btdelete' name='delete:submit' value='Proceed' />";
+    if (defined $size_freed) {
+        $size_freed = sprintf("%0.2f MB", $size_freed / 1024);
+        $ret .= "<br />Actual diskspace freed: <b>$size_freed</b>";
+    }
+    $ret .= "</fieldset>";
+    $ret .= "</td></tr></table>";
+
+    $ret .= "</form>";
+    return $ret;
+
+}
+_code?>
+<=body
+title=><?_code return $title; _code?>
+head<=
+<script language="JavaScript"></script>
+<script language="JavaScript" src="/js/xbDOM.js"></script>
+<script language="JavaScript" src='/js/fotobilder.js'></script>
+<script language="JavaScript"><!--
+
+function setupActionHider ()
+{
+    var sel_c = xbGetElementById("actsel");
+    var sel_d = xbGetElementById("delsel");
+    if (! sel_c || ! sel_d ) { return true; }
+
+    // modify elements
+    var dnewsec = xbGetElementById("div_newsec");
+    var dpargal = xbGetElementById("div_pargal");
+    var btnact = xbGetElementById("btnaction");
+
+    sel_c.onchange = function (evt) {
+        hideShow(btnact, sel_c.selectedIndex != 0);
+        hideShow(dnewsec, sel_c.selectedIndex == 1);
+        hideShow(dpargal, sel_c.selectedIndex == 2 || sel_c.selectedIndex == 3);
+    };
+    hideShow(dnewsec, false);
+    hideShow(dpargal, false);
+    hideShow(btnact, false);
+
+    // delete elements
+    var dwarning = xbGetElementById("del_warning");
+    var btdelete = xbGetElementById("btdelete");
+
+    sel_d.onchange = function (evt) {
+        hideShow(btdelete, sel_d.selectedIndex != 0);
+        hideShow(dwarning, sel_d.selectedIndex != 0);
+    };
+    hideShow(dwarning, false);
+    hideShow(btdelete, false);
+}
+
+function hideShow (obj, show)
+{
+    if (! obj) return true;
+    if (! document.all) { // TODO: make work in IE
+        obj.style.display = show ? 'block' : 'none';
+    }
+    return true;
+}
+
+// -->
+</script>
+<=head
+bodyopts=>onLoad="setupActionHider()"
+crumbs=><?_code return FB::crumbs($crumbs); _code?>
+page?>

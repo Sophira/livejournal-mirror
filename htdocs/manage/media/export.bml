@@ -1,0 +1,32 @@
+<?_code # -*-perl-*-
+{
+    use strict;
+    use vars qw($body $title);
+    my $r = shift->{'r'};
+    my $u = FB::get_remote();
+    return BML::redirect("/login?to=manage/export") unless $u;
+
+    if (FB::did_post()) {
+        $r->content_type("text/xml");
+        $r->send_http_header();
+        FB::account_export_xml($u, $r);
+        return BML::finish_suppress_all();
+    }
+
+    $title = "Export Data";
+    $body = "<?h1 About h1?>
+<?p
+From here you can export your entire account data as XML.  What you do with it is up to you.  FotoBilder backup tools require this file to do their processing.
+p?>
+<center><form method='post'>
+<input type='submit' value='Generate XML'>
+</form>
+</center>";
+    return;
+
+}
+_code?><?page
+title=><?_code $title _code?>
+body=><?_code $body _code?>
+page?>
+
