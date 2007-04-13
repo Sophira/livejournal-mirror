@@ -6,13 +6,13 @@
     my $u = FB::get_remote();
     my $upicid = $FORM{'id'}+0;
 
-    return BML::redirect("/login?to=" .
-                         FB::eurl("manage/userpicbuilder?id=$upicid")) unless $u;
+    return BML::redirect("/login.bml?to=" .
+                         FB::eurl("manage/media/userpicbuilder.bml?id=$upicid")) unless $u;
 
     my $upicid = $GET{'id'}+0;
     my $up    = FB::Upic->new($u, $upicid);
 
-    return BML::redirect("/manage/gals") unless $up && $up->valid;
+    return BML::redirect("/manage/media/gals.bml") unless $up && $up->valid;
 
     $up->autorotate;
 
@@ -51,7 +51,7 @@ head<=
     function doreq (data, callback) {
         var reqOpts = {};
         reqOpts.onError = handleError;
-        reqOpts.url = "/manage/userpicbuilder";
+        reqOpts.url = "/manage/media/userpicbuilder.bml";
         reqOpts.onData = callback;
         reqOpts.data = HTTPReq.formEncoded(data);
         HTTPReq.getJSON(reqOpts);

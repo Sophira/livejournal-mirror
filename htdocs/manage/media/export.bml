@@ -4,7 +4,7 @@
     use vars qw($body $title);
     my $r = shift->{'r'};
     my $u = FB::get_remote();
-    return BML::redirect("/login?to=manage/export") unless $u;
+    return BML::redirect("/login.bml?to=manage/media/export.bml") unless $u;
 
     if (FB::did_post()) {
         $r->content_type("text/xml");

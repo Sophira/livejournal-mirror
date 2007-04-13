@@ -5,12 +5,12 @@
 
     my $ret;
     my $u = FB::User->remote or
-        return BML::redirect("/login");
+        return BML::redirect("/login.bml");
     my $gallid = $GET{'gallid'} + 0;
 
 
     if ($GET{'jscallup'}) {
-        my $eurl = FB::ejs("/manage/annotate?gal=$gallid&ids=$GET{'ids'}");
+        my $eurl = FB::ejs("/manage/media/annotate.bml?gal=$gallid&ids=$GET{'ids'}");
         BML::finish();
         return "<html><body><script>
 if (window.parent && window.parent.onUploadComplete) {
@@ -38,13 +38,13 @@ if (window.parent && window.parent.onUploadComplete) {
     while (my $p = $sth->fetchrow_hashref) { $p{$p->{'upicid'}} = $p; }
 
     $ret .= "<?p The following <b>$count</b> picture(s) were uploaded. ";
-    $ret .= "You can click on a picture to change its settings, or <a href='/manage/gal?id=$gallid'>manage the uploaded gallery</a>. p?>";
+    $ret .= "You can click on a picture to change its settings, or <a href='/manage/media/gal.bml?id=$gallid'>manage the uploaded gallery</a>. p?>";
     $ret .= "<p>";
 
     foreach my $id (@pics) {
         my $up = $p{$id};
         my ($url, $w, $h) = FB::scaled_url($u, $up, 320, 320);
-        $ret .= "<p><a href='/manage/pic?id=$id'><img src='$url' border='0' width='$w' height='$h'></a>\n";
+        $ret .= "<p><a href='/manage/media/pic.bml?id=$id'><img src='$url' border='0' width='$w' height='$h'></a>\n";
     }
     $body = $ret;
     return;
