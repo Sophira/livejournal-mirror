@@ -40,7 +40,6 @@ use constant FMT_TIFF => 4;
 
 use Carp qw (confess);
 
-require 'htmlcontrols.pl';
 require 'export.pl';
 require "$ENV{'FBHOME'}/etc/fbconfig.pl";
 require "fbdefaults.pl";
