@@ -94,20 +94,6 @@ sub create_user {
     return FB::SecGroup->create($u, $secid, @_);
 }
 
-# create a new authmod security group
-sub create_authmod {
-    my $class = shift;
-    my $uuid  = shift;
-
-    my $u = _u_from_uuid($uuid);
-
-    # FIXME: locking to avoid a race here
-    my $secid = $u->alloc_secid('authmod')
-        or return FB::error("unable to allocate authmod secid");
-
-    return FB::SecGroup->create($u, $secid, @_);
-}
-
 # create a new security group with given secid
 sub create {
     my $class   = shift;
