@@ -925,10 +925,6 @@ sub b28_decode
 
 sub domainweb
 {
-    if (my $authmod = FB::current_domain_plugin()) {
-        return $authmod->domain_web;
-    }
-
     return $FB::DOMAIN_WEB;
 }
 

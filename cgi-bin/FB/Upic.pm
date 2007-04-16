@@ -127,11 +127,6 @@ sub create {
             or die ("Hook 'use_disk' returned false");
     }
 
-    # do authmod quota_push if necessary
-    if (my $authmod = FB::domain_plugin($u->{domainid})) {
-        $authmod->quota_push($u);
-    }
-
     my $up = FB::Upic->new($u, $upicid)
         or return $err->("load_upic returned false");
 
@@ -452,11 +447,6 @@ sub set_gpic {
     FB::gpicid_delete($up->{'gpicid'});
     FB::run_hook("free_disk", $u, $up->bytes);
     FB::run_hook("use_disk",  $u, $gp->{'bytes'});
-
-    # if authmod, need to push new usage
-    if (my $authmod = FB::domain_plugin($u->{domainid})) {
-        $authmod->quota_push($u);
-    }
 
     foreach (qw(width height bytes gpicid)) {
         $up->{$_} = $gp->{$_};
@@ -1254,11 +1244,6 @@ sub delete {
     $u->do("DELETE FROM des WHERE userid=? AND itemtype='P' AND itemid=?",
            $userid, $upicid);
 
-    # if authmod, need to push new usage
-    if (my $authmod = FB::domain_plugin($u->{domainid})) {
-        $authmod->quota_push($u);
-    }
-
     FB::run_hook("free_disk", $u, $up->{'bytes'});
     $up->{_deleted} = 1;
     return 1;
@@ -1642,11 +1627,6 @@ sub change_upic_secid   #DEPRECATED
            $secid, $u->{userid}, $p->{upicid})
         or return $fail->("do failed");
 
-    # if authmod, need to push new usage
-    if (my $authmod = FB::current_domain_plugin()) {
-        $authmod->quota_push($u);
-    }
-
     return 1;
 }
 
@@ -1705,11 +1685,6 @@ sub change_upic_secid_multi   #DEPRECATED
     $udbh->do("UPDATE upic SET secid=? WHERE userid=? AND upicid IN ($ids)",
               undef, $secid, $u->{'userid'})
         or return undef;
-
-    # if authmod, need to push new usage
-    if (my $authmod = FB::current_domain_plugin()) {
-        $authmod->quota_push($u);
-    }
 
     return 1;
 }
@@ -1885,11 +1860,6 @@ sub change_upic_gpic  ## DEPRECATED:  use $up->set_gpic
     FB::run_hook("free_disk", $u, $up->{'bytes'});
     FB::run_hook("use_disk", $u, $gp->{'bytes'});
 
-    # if authmod, need to push new usage
-    if (my $authmod = FB::current_domain_plugin()) {
-        $authmod->quota_push($u);
-    }
-
     foreach (qw(width height bytes gpicid)) {
         $up->{$_} = $gp->{$_};
     }
@@ -1920,10 +1890,6 @@ sub upic_delete  ## DEPRECATED:  use $up->delete
     }
     $u->do("DELETE FROM des WHERE userid=? AND itemtype='P' AND itemid=?",
            $userid, $p->{'upicid'});
-
-    if (my $authmod = FB::current_domain_plugin()) {
-        $authmod->quota_push($u);
-    }
 
     FB::run_hook("free_disk", $u, $p->{'bytes'});
 

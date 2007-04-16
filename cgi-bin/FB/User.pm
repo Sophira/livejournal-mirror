@@ -1425,11 +1425,6 @@ sub make_upic  ## DEPRECATED: use FB::Upic->create
             or die ("Hook 'use_disk' returned false");
     }
 
-    # do authmod quota_push if necessary
-    if (my $authmod = FB::current_domain_plugin()) {
-        $authmod->quota_push($u);
-    }
-
     $p = FB::load_upic($u, $upicid, { force => 1})
         or return $err->("load_upic returned false");
 
