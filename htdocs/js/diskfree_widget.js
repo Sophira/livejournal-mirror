@@ -15,7 +15,7 @@ DiskFree_Widget = new Class(Object, {
     var reqOpts = {};
     var handleErrorFunc = this.handleError.bind(this);
     reqOpts.onError = handleErrorFunc;
-    reqOpts.url = "/tools/endpoints/diskfree_widget";
+    reqOpts.url = "/tools/endpoints/diskfree_widget.bml";
     reqOpts.onData = this.widgetReceived.bind(this);
     HTTPReq.getJSON(reqOpts);
   },
