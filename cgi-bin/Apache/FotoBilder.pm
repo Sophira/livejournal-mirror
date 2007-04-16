@@ -5,7 +5,7 @@ package Apache::FotoBilder;
 
 use strict;
 use Apache::Constants qw(:common REDIRECT HTTP_NOT_MODIFIED
-                         HTTP_MOVED_PERMANENTLY);
+                         HTTP_MOVED_TEMPORARILY HTTP_MOVED_PERMANENTLY);
 use Apache::File ();
 use XMLRPC::Transport::HTTP ();
 use lib "$ENV{'FBHOME'}/cgi-bin";
@@ -103,6 +103,14 @@ sub trans
 
     $FB::IMGPREFIX = $FB::IMGPREFIX_BAK;
 
+    # TODO: make more like LJ redirections (caching etc)
+    if ($uri eq "/__setdomsess") {
+        return redir($r, LJ::Session->setdomsess_handler($r));
+    }
+    my $burl;
+    my $sessobj = LJ::Session->session_from_cookies(redirect_ref => \$burl);
+    return redir($r, $burl, HTTP_MOVED_TEMPORARILY) if $burl;
+
     # let foo.com still work, but redirect to www.foo.com
     if ($FB::DOMAIN_WEB && $r->method eq "GET" &&
         $host eq $FB::DOMAIN && $FB::DOMAIN_WEB ne $FB::DOMAIN) {
@@ -150,8 +158,7 @@ sub trans
 
     # /~user -> /user
     if ($uri =~ m#^/\~([\w-]+)#) {
-        return redir($r, "$siteroot/$1");
-        return DECLINED;
+        return redir($r, "$1.$LJ::SITEROOT/media");
     }
 
     # decide if it's for a BML page or not
@@ -193,7 +200,6 @@ sub trans
         # /dir -> /dir/
         if ($rest eq "" && -d "$FB::HOME/htdocs/$topdir") {
             return redir($r, "/$topdir/");
-            return DECLINED;
         }
 
         return DECLINED;
@@ -201,6 +207,9 @@ sub trans
 
     # probably for user:
     if ($topdir || $single_user) {
+        my ($subdomain) = $host =~ /^([\w\-]{1,15})\.\Q$LJ::USER_DOMAIN\E$/;
+        $FB::ROOT_USER = $subdomain if $subdomain;
+
         if ($rest =~ m!^/pic/.+\.xml$!) {
             # picture XMLInfo page
             $r->handler('perl-script');
@@ -211,6 +220,9 @@ sub trans
             $r->handler('perl-script');
             $r->push_handlers(PerlHandler => \&Apache::FotoBilder::XMLGalleryInfoPage::handler);
             return OK;
+        } elsif ($topdir eq 'media' && ! $rest) {
+            $r->handler("perl-script");
+            $r->push_handlers(PerlHandler => \&Apache::FotoBilder::IndexPage::handler);
         } elsif ($rest =~ m!^/pic!) {
             $r->handler("perl-script");
             $r->push_handlers(PerlHandler => \&Apache::FotoBilder::Pic::handler);
@@ -326,48 +338,6 @@ sub handler {
         -> handle($r);
 
     return OK;
-}
-
-package FB::XMLRPC;
-
-use strict;
-use vars qw($AUTOLOAD);
-
-sub AUTOLOAD {
-    my $method = $AUTOLOAD;
-    $method =~ s/^.*:://;
-
-    shift;                 # get rid of package name that dispatcher includes.
-    my $req = shift || {}; # hashref of request
-
-    my $fail = sub {
-
-        my $res = shift;
-
-        # faultcode: VersionMismatch, MustUnderstand, Client, Server
-        die SOAP::Fault
-            ->faultstring($res->[1])
-            ->faultcode($res->[0]);
-    };
-
-    # generic fotobilder XMLRPC functions trapped here
-    # ...
-    # placeholder
-
-    if (my $authmod = FB::current_domain_plugin()) {
-        my $res = $authmod->xmlrpc_dispatch($method, $req);
-        return $fail->($res) if ref $res eq 'ARRAY'; # error
-        return $res if ref $res eq 'HASH';           # success
-        # otherwise, the dispatch handler didn't know about the method
-    }
-
-    # site-local XMLRPC functions
-    my $res = FB::run_hooks("XMLRPC_dispatch", $method, $req);
-    return $fail->($res) if ref $res eq 'ARRAY'; # it's an error
-    return $res if ref $res eq 'HASH';           # success
-
-    # nobody knows how to handle this method
-    return $fail->([ 'Client', 'Invalid method' ]);
 }
 
 1;
