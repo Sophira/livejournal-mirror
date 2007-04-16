@@ -254,7 +254,7 @@ GalleryManageView = new Class(View, {
     });
 
     if (!this.pbar) {
-      this.pbar = new FBProgressBar();
+      this.pbar = new LJProgressBar();
       this.pbar.init($("GalleryManageProgress"));
       this.pbar.setWidth("100%");
       this.pbar.show();
