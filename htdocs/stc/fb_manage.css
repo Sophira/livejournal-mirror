@@ -1,0 +1,173 @@
+#diskfree_widget {
+    margin: 1em 0 0 0;
+    }
+    
+    .FBDiskFreeWidget {
+        font-size: smaller;
+        }
+        
+    .FBDiskUsedBarContainer {
+        width: 100%;
+        }
+        
+        .FBDiskUsedBar {
+            float: left;
+            }
+    
+#FBManageGalleryViewButtons{
+    text-align: right;
+    margin: 0 0 .3em 0;
+    }
+    
+    #CreateNewGalleryBtn {
+        display: block;
+        float: left;
+        }
+    
+    #gallistbtn, #galthumbbtn {
+        width: 16px;
+        height: 16px;
+        background: #aaa;
+        position: relative;
+        float: right;
+        top: .5em;
+        }
+            
+        #gallistbtn:hover, #galthumbbtn:hover {
+            background: #036;
+            }
+        
+#manageview {
+    
+    }
+
+#galManage {
+    float: right;
+    border-left: 1px solid #ccc;
+    padding: 0 0 1em .8em;
+    width: 18.5em;
+    }
+    
+    #GalleryManageSelectedText {
+        margin: 0 0 1em 0;
+        }
+    
+    #galManage select {
+        font-size: .9em;
+        width: 18em;
+        display: block;
+        margin-left: 2em;
+        }
+        
+    #galManage input {
+        position: relative;
+        top: .2em;
+        }
+        
+    #galManage label {
+        font-size: .9em;
+        }
+        
+    #galManage .advanced {
+        font-size: smaller;
+        margin: 1em 0 0 0;
+        font-weight: bold;
+    }
+        
+    #GalleryManageSaveBtn {
+        display: block;
+        margin: .5em auto 0 auto;
+        }
+    
+#browseViewContainer {
+    margin-right: 20em;
+    }
+    
+    .FBGalleryView table {
+        width: 100%;
+    }
+    
+    .FBGalleryView table table {
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        border-left: 1px solid #ccc;
+        border-left: 1px solid #ccc;
+        border-right: 1px solid #ccc;
+        }
+        
+        .FBGalleryView table td {
+            padding: 0;
+            margin: 0;
+            vertical-align: middle;
+            }
+            
+        .FBManageListTableCell {
+            text-align: left;
+            border-bottom: 1px solid #ccc;
+            cursor: pointer;
+            }
+            
+            .FBManageListTableCell a {
+                font-weight: bold;
+                text-decoration: none;
+            }
+        
+        .FBManageListUnderlay {
+            padding: .3em 0 .2em 0;
+        }
+        
+    .FBManageListTableHeader {
+        font-size: .8em;
+        text-transform: uppercase;
+        font-weight: bold;
+        background: #ddd;
+        border-top: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+        color: #000;
+        }
+        
+    .FBManageListTableHeader a:link {
+        text-decoration: none;
+        color: #464646;
+        }
+        
+        #mantableheader13 {
+            width: 25px;
+            }
+
+.FBManageListGallerySelected {
+        background-color: #eee !important;  /* override hover */
+}
+
+
+tr.FBManageListTableRow .GalleryThumbnail {
+        width: 25px;
+        height: 25px;
+}
+
+tr.FBManageListTableCell div:first-child {
+        height: 40px;
+        vertical-align: middle;
+}
+
+
+a.PlainLink {
+        text-decoration: none;
+        font-weight: bold;
+}
+
+#paginationView {
+    margin-top: 0;
+    padding: .2em 0 .2em 0;
+    text-align: left;
+    }
+    
+    #paginationView div {
+        font-size: smaller;
+    }
+    
+    #paginationView a {
+        padding: 0 0 0 .3em;
+        font-weight: bold;
+        }
