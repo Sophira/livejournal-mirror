@@ -208,13 +208,6 @@ sub start_request
     # run all registered site-specific start_request hooks
     FB::run_hooks("start_request");
 
-    # include standard resources if this is a web request
-    if (eval { Apache->request }) {
-        FB::need_res(qw(
-                        static/default.css
-                        ));
-    }
-
     return 1;
 }
 
@@ -1725,110 +1718,10 @@ sub audio_thumbnail_info {
     return ('img/dynamic/audio_200x200.gif', 100, 100, 'image/gif');
 }
 
-sub res_includes {
-    my $ret = "";
-    my $do_concat = $FB::IS_SSL ? $FB::CONCAT_RES_SSL : $FB::CONCAT_RES;
-
-    my $remote = FB::get_remote();
-    my $hasremote = $remote ? 'true' : 'false';
-
-    # include standard JS info
-    $ret .= qq {
-        <script language="JavaScript" type="text/javascript">
-        var Site = {};
-        Site.imgprefix = "$FB::IMGPREFIX";
-        Site.siteroot = "$FB::SITEROOT";
-        Site.has_remote = $hasremote;
-        </script>
-        };
-
-    my $now = time();
-    my %list;   # type -> [];
-    my %oldest; # type -> $oldest
-    my $add = sub {
-        my ($type, $what, $modtime) = @_;
-
-        # in the concat-res case, we don't directly append the URL w/
-        # the modtime, but rather do one global max modtime at the
-        # end, which is done later in the tags function.
-        $what .= "?v=$modtime" unless $do_concat;
-
-        push @{$list{$type} ||= []}, $what;
-        $oldest{$type} = $modtime if $modtime > $oldest{$type};
-    };
-
-    foreach my $path (@FB::NEEDED_RES) {
-        my $mtime = _file_modtime($path, $now);
-
-        # if we want to also include a local version of this file, include that too
-        if (@FB::USE_LOCAL_RES) {
-            if (grep { lc $_ eq lc $path } @FB::USE_LOCAL_RES) {
-                my $inc = $path;
-                $inc =~ s/(\w+)\.(\w+)$/$1-local.$2/;
-                FB::need_res($inc);
-            }
-        }
-
-        if ($path =~ m!^js/(.+)!) {
-            $add->('js', $1, $mtime);
-        } elsif ($path =~ m!^static/(.+)!) {
-            $add->('static', $1, $mtime);
-        }
-    }
-
-    my $tags = sub {
-        my ($type, $template) = @_;
-        my $list;
-        return unless $list = $list{$type};
-
-        if ($do_concat) {
-            my $csep = join(',', @$list);
-            $csep .= "?v=" . $oldest{$type};
-            $template =~ s/__+/??$csep/;
-            $ret .= $template;
-        } else {
-            foreach my $item (@$list) {
-                my $inc = $template;
-                $inc =~ s/__+/$item/;
-                $ret .= $inc;
-            }
-        }
-    };
-
-    $tags->("js", "<script type=\"text/javascript\" src=\"$FB::SITEROOT/js/___\"></script>\n");
-    $tags->("static", "<link rel=\"stylesheet\" type=\"text/css\" href=\"$FB::SITEROOT/static/___\" />\n");
-    return $ret;
-}
-
-sub need_res {
-    foreach my $reskey (@_) {
-        die "Bogus reskey $reskey" unless $reskey =~ m!^(js|static)/!;
-        unless ($FB::NEEDED_RES{$reskey}++) {
-            push @FB::NEEDED_RES, $reskey;
-        }
-    }
-}
-
-{
-    my %stat_cache = ();  # key -> {lastcheck, modtime}
-    sub _file_modtime {
-        my ($key, $now) = @_;
-        if (my $ci = $stat_cache{$key}) {
-            if ($ci->{lastcheck} > $now - 10) {
-                return $ci->{modtime};
-            }
-        }
-
-        my $set = sub {
-            my $mtime = shift;
-            $stat_cache{$key} = { lastcheck => $now, modtime => $mtime };
-            return $mtime;
-        };
-
-        my $file = "$FB::HOME/htdocs/$key";
-        my $mtime = (stat($file))[9];
-        return $set->($mtime);
-    }
+# map FB::html_* to LJ::html_*
+foreach my $func (qw(hidden submit check text color textarea select datetime datetime_decode file)) {
+    no strict 'refs';
+    *{"FB::html_$func"} = \&{"LJ::html_$func"};
 }
 
 1;
