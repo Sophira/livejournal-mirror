@@ -552,14 +552,14 @@ sub scaled_url {
 
 sub manage_url {
     my $up = shift;
-    return "/manage/pic?id=$up->{upicid}";
+    return "/manage/media/pic.bml?id=$up->{upicid}";
 }
 
 # returns full-sized image URL, without extension.  good form to
 # append onto to make any of the other forms.
 sub url_base {
     my $up = shift;
-    return $up->{u}->url . "pic/" . $up->piccode;
+    return $up->{u}->media_base_url . "/pic/" . $up->piccode;
 }
 
 # URL to full-sized image
@@ -1798,19 +1798,15 @@ sub url_picture  #DEPRECATED
     # piccode can be scalar piccode, hashref with 'piccode', or picture hashref
     my ($u, $piccode, $extra) = @_;
 
-    my $user = want_username($u);
+    $u = want_user($u);
     if (ref $piccode) {
         if ($piccode->{'piccode'}) { $piccode = $piccode->{'piccode'}; }
         else { $piccode = FB::piccode($piccode); }
     }
 
-    die "FB::url_picture(): No username?\n" unless $user;
+    die "FB::url_picture(): No username?\n" unless $u;
 
-    if ($FB::ROOT_USER eq $user) {
-        return "$FB::SITEROOT/pic/$piccode$extra";
-    } else {
-        return FB::siteroot() . "/$user/pic/$piccode$extra";
-    }
+    return $u->media_base_url . "/pic/$piccode$extra";
 }
 
 sub url_picture_page  #DEPRECATED
