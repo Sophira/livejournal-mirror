@@ -552,7 +552,7 @@ sub scaled_url {
 
 sub manage_url {
     my $up = shift;
-    return "/manage/media/pic.bml?id=$up->{upicid}";
+    return "$LJ::SITEROOT/manage/media/pic.bml?id=$up->{upicid}";
 }
 
 # returns full-sized image URL, without extension.  good form to
@@ -1648,7 +1648,7 @@ sub change_upic_secid_multi   #DEPRECATED
     return undef unless scalar @$pics;
 
     # we assume the oldsecid is the same across all picts.
-    # /manage/gal already sanity checks this for us before
+    # /manage/media/gal already sanity checks this for us before
     # we get to this point, however this might not be
     # 'the best thing to do' if there end up being other callers
     # to this function.

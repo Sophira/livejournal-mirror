@@ -730,7 +730,7 @@ sub Gallery
         'numpics' => $o->{'numpics'}+0,
         'url' => $galobj->url,
         'security' => $o->{'secid'},
-        'manage_url' => "/manage/media/gal.bml?id=$o->{gallid}",
+        'manage_url' => "$LJ::SITEROOT/manage/media/gal.bml?id=$o->{gallid}",
     };
     return $gal;
 }
@@ -752,11 +752,11 @@ sub GalleryPage
     #    remote has copy security for this gallery
     my $remote = FB::get_remote();
     FB::load_gallery_props($u, $gal, 'exportable_sec');
-    $pg->{'copy_url'} = "/manage/media/makecopy.bml?user=$u->{usercs}&type=gal&id=$gal->{'gallid'}"
+    $pg->{'copy_url'} = "$LJ::SITEROOT/manage/media/makecopy.bml?user=$u->{usercs}&type=gal&id=$gal->{'gallid'}"
         if $remote && $remote->{user} ne $u->{user} &&
            FB::can_view_secid($u, $remote, $gal->{exportable_sec}+0);
 
-    $pg->{'manage_url'} = "/manage/media/gal.bml?id=$gal->{'gallid'}";
+    $pg->{'manage_url'} = "$LJ::SITEROOT/manage/media/gal.bml?id=$gal->{'gallid'}";
     $pg->{'self_link'} = Link({ 'current_page' => 1,
                                 'dest_view' => 'gallery',
                                 'caption' => $gal->{'name'},
@@ -803,7 +803,7 @@ sub IndexPage
     $pg->{'self_link'} = $link;
     $pg->{'trail'} = [ $link ];
     $pg->{'trails'} = [ $pg->{'trail'} ];
-    $pg->{'manage_url'} = "/manage/media/";
+    $pg->{'manage_url'} = "$LJ::SITEROOT/manage/media/";
 
     # do filtering/sorting/paging
     my %valid = ('top' => 1, 'alpha' => 1, 'recent' => 1, 'date' => 1);
@@ -994,7 +994,7 @@ sub Page
         'manage_account' => FB::S2::Link({ 'current_page' => 0,
                                            'dest_view' => 'manage',
                                            'caption' => "Manage Your Account",
-                                           'url' => "/manage/",
+                                           'url' => "$LJ::SITEROOT/manage/",
                                        }),
         'tags' => $o->{'tags'},
         'head_content' => $o->{'head_content'} ? $o->{'head_content'} : '',
@@ -1079,7 +1079,7 @@ sub PicturePage
     # copy_url appears if remote exists. if the remote user didn't have access
     # to the pict, they wouldn't be able to view it at all.
     my $remote = FB::get_remote();
-    $pg->{'copy_url'} = "/manage/makecopy?user=$u->{usercs}&type=pic&id=" . $up->id
+    $pg->{'copy_url'} = "$LJ::SITEROOT/manage/makecopy?user=$u->{usercs}&type=pic&id=" . $up->id
         if $remote && $remote->{user} ne $u->{user};
 
     $pg->{'manage_url'} = $up->manage_url;
