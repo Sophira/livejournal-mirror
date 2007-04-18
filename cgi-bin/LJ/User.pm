@@ -1483,7 +1483,15 @@ sub get_recent_talkitems {
     my $memkey = [$u->userid, 'rcntalk:' . $u->userid . ':' . $maxshow];
     if ($memcache) {
         my $recv_cached = LJ::MemCache::get($memkey);
-        return @$recv_cached if $recv_cached;
+        if ($recv_cached) {
+            # construct an LJ::Comment singleton
+            foreach my $row (@$recv_cached) {
+                my $comment = LJ::Comment->new($u, jtalkid => $row->{jtalkid});
+                $comment->absorb_row(%$row);
+            }
+
+            return @$recv_cached;
+        }
     }
 
     my $max = $u->selectrow_array("SELECT MAX(jtalkid) FROM talk2 WHERE journalid=?",
@@ -1496,11 +1504,15 @@ sub get_recent_talkitems {
                           "WHERE journalid=? AND jtalkid > ?");
     $sth->execute($u->{'userid'}, $max - $maxshow);
     while (my $r = $sth->fetchrow_hashref) {
+        # construct an LJ::Comment singleton
+        my $comment = LJ::Comment->new($u, jtalkid => $r->{jtalkid});
+        $comment->absorb_row(%$r);
+
         push @recv, $r;
     }
 
-    # memcache results for an hour
-    LJ::MemCache::set($memkey, \@recv, 3600);
+    # memcache results for 5 minutes
+    LJ::MemCache::set($memkey, \@recv, 60*5);
 
     return @recv;
 }
