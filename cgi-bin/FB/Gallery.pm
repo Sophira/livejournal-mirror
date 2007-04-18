@@ -454,7 +454,7 @@ sub url {
     my $u = $self->{u};
 
     my $code = FB::make_code($self->{'gallid'}, $self->{'randauth'});
-    return $u->url_root . "gallery/$code";
+    return $u->media_base_url . "/gallery/$code";
 }
 
 sub tag_url {
@@ -1677,8 +1677,8 @@ sub scaled_url  ## DEPRECATED: use $up->scaled_url
     $u = ref $u ? $u : undef;
 
     my $piccode = $p->{'piccode'} || FB::piccode($p);
-    my $root = $u ? FB::user_siteroot($u) : "";
-    my $url = $FB::ROOT_USER ne $username ? "$root/$username" : $FB::SITEROOT;
+    my $root = $u->media_base_url;
+    my $url = $u->media_base_url;
 
     if (FB::fmtid_is_audio( $p->{'fmtid'} )) {
         # cute audio image (todo)
@@ -1715,13 +1715,7 @@ sub url_gallery  #DEPRECATED
             unless defined $gal->{'gallid'} && defined $gal->{'randauth'};
         $gal = FB::make_code($gal->{'gallid'}, $gal->{'randauth'});
     }
-    my $common = "gallery/$gal";
-    my $root = FB::user_siteroot($u);
-    if ($FB::ROOT_USER eq $u->{'user'}) {
-        return "$FB::SITEROOT/$common";
-    } else {
-        return "$root/$u->{'user'}/$common";
-    }
+    return $u->media_base_url . "/gallery/$gal";
 }
 
 sub transform_gal_name  #DEPRECATED
