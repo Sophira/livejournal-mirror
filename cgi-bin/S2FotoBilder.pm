@@ -730,7 +730,7 @@ sub Gallery
         'numpics' => $o->{'numpics'}+0,
         'url' => $galobj->url,
         'security' => $o->{'secid'},
-        'manage_url' => "/manage/gal?id=$o->{gallid}",
+        'manage_url' => "/manage/media/gal.bml?id=$o->{gallid}",
     };
     return $gal;
 }
@@ -752,11 +752,11 @@ sub GalleryPage
     #    remote has copy security for this gallery
     my $remote = FB::get_remote();
     FB::load_gallery_props($u, $gal, 'exportable_sec');
-    $pg->{'copy_url'} = "/manage/makecopy?user=$u->{usercs}&type=gal&id=$gal->{'gallid'}"
+    $pg->{'copy_url'} = "/manage/media/makecopy.bml?user=$u->{usercs}&type=gal&id=$gal->{'gallid'}"
         if $remote && $remote->{user} ne $u->{user} &&
            FB::can_view_secid($u, $remote, $gal->{exportable_sec}+0);
 
-    $pg->{'manage_url'} = "/manage/gal?id=$gal->{'gallid'}";
+    $pg->{'manage_url'} = "/manage/media/gal.bml?id=$gal->{'gallid'}";
     $pg->{'self_link'} = Link({ 'current_page' => 1,
                                 'dest_view' => 'gallery',
                                 'caption' => $gal->{'name'},
@@ -790,7 +790,7 @@ sub IndexPage
     $pg->{'_type'} = "IndexPage";
 
     my $u = $o->{'u'};
-    my $base_url = $u->url;
+    my $base_url = $u->media_base_url;
 
     $pg->{'galleries'} = [];
     FB::S2::add_child_galleries($pg, $pg->{'galleries'}, 0);
@@ -803,7 +803,7 @@ sub IndexPage
     $pg->{'self_link'} = $link;
     $pg->{'trail'} = [ $link ];
     $pg->{'trails'} = [ $pg->{'trail'} ];
-    $pg->{'manage_url'} = "/manage/";
+    $pg->{'manage_url'} = "/manage/media/";
 
     # do filtering/sorting/paging
     my %valid = ('top' => 1, 'alpha' => 1, 'recent' => 1, 'date' => 1);
@@ -954,7 +954,7 @@ sub Page
     my $o = shift;
 
     my $u = $o->{'u'};
-    my $base_url = $u->url;
+    my $base_url = $u->media_base_url;
     my $styleid = defined $o->{'styleid'} ? $o->{'styleid'} : $u->{'styleid'};
 
     # Set notes for DB logging.
@@ -988,7 +988,7 @@ sub Page
         'args' => \%args,
         'parent_link' => $pl,
         'parent_links' => $o->{'parent_links'} || [],
-        'stylesheeturl' => "${base_url}res/$styleid/stylesheet",
+        'stylesheeturl' => "${base_url}/res/$styleid/stylesheet",
         'user'  => User($u),
         'view' => '',
         'manage_account' => FB::S2::Link({ 'current_page' => 0,
