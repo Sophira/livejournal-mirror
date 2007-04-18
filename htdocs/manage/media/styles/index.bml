@@ -75,7 +75,7 @@
         my $chk = $u->{'styleid'} == $sid ? " checked='checked'" : "";
         $body .= "<tr><td><input type='checkbox' name='delete_$sid'></td>";
         $body .= "<td><strong><a href='" . FB::url_user($u) . "?styleid=$sid'>$name</a></strong></td>";
-        $body .= "<td><a href='edit?id=$sid' style='font-weight: bold; font-size: 80%'>[Edit]</a></td>";
+        $body .= "<td><a href='edit.bml?id=$sid' style='font-weight: bold; font-size: 80%'>[Edit]</a></td>";
         my $default = "<td class='text_center'>" .
             FB::html_check({ 'type' => 'radio', 'name' => 'default_style', 'value' => $sid,
                              'raw' => "onkeypress='javascript:this.form.submit()' onclick='javascript:this.form.submit()'",
