@@ -430,7 +430,7 @@ sub url_root
     die "FB::url_user(): No user\n" unless $u && $u->{'userid'};
 
     my $user = FB::canonical_username($u);
-    return $u->media_base_url;
+    return $u->media_base_url . '/';
 }
 
 sub get_userpic_count {
