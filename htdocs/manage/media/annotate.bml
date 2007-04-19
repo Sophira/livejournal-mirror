@@ -570,7 +570,7 @@ function onLoad () {
     setupFilter();
     resizeWindow();
 
-    compModel = new InputCompleteData(<?_code FB::get_remote()->tags_as_js; _code?>);
+    compModel = new InputCompleteData(<?_code FB::get_remote()->image_tags_as_js; _code?>);
 }
 
 var animating = false;

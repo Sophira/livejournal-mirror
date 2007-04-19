@@ -183,7 +183,7 @@ head<=
 
     function init () {
         setupNewGalHidey('addtogal_select', 'newgalname', 'newgalname_text');
-        var compdata = new InputCompleteData(<?_code FB::get_remote()->tags_as_js; _code?>);
+        var compdata = new InputCompleteData(<?_code FB::get_remote()->image_tags_as_js; _code?>);
         var foo = new InputComplete($("in_tags"), compdata);
     }
 

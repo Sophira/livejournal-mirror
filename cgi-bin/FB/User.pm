@@ -705,7 +705,7 @@ sub untag_galleries {
 }
 
 # returns JavaScript array of user's tags, from most to least popular, in JSON notation
-sub tags_as_js {
+sub image_tags_as_js {
     my $u = shift;
     my $gals = FB::Gallery->load_tag_galleries($u);
     my @tags = sort { $gals->{$b}->pic_count <=> $gals->{$a}->pic_count } keys %$gals;

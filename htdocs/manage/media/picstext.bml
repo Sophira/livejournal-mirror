@@ -285,7 +285,7 @@ head<=
 <script>
 
     function init () {
-        var compdata = new InputCompleteData(<?_code FB::get_remote()->tags_as_js; _code?>);
+        var compdata = new InputCompleteData(<?_code FB::get_remote()->image_tags_as_js; _code?>);
         for (var i=1; i<=100; i++) {
             var ele = $("tag_field_" + i);
             if (ele) {
