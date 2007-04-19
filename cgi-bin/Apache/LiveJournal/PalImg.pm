@@ -18,11 +18,12 @@ sub handler
 {
     my $r = shift;
     my $uri = $r->uri;
-    my ($base, $ext, $extra) = $uri =~ m!^/palimg/(.+)\.(\w+)(.*)$!;
+    my ($pal, $base, $ext, $extra) = $uri =~ m!^/(pal)?img/(.+)\.(\w+)(.*)$!;
     $r->notes("codepath" => "img.palimg");
     return 404 unless $base && $base !~ m!\.\.!;
 
-    my $disk_file = "$LJ::HOME/htdocs/palimg/$base.$ext";
+    $pal ||= '';
+    my $disk_file = "$LJ::HOME/htdocs/${pal}img/$base.$ext";
     return 404 unless -e $disk_file;
 
     my @st = stat(_);
