@@ -267,7 +267,7 @@ sub remove_default_tags {
     my $class = shift;
     my $tag_list = shift;
 
-    $tag_list =~ s/\s*writer's block,?\s*//g;
+    $tag_list =~ s/\s*writer's block,?\s*//g; #'close
 
     return $tag_list;
 }
