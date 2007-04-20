@@ -96,6 +96,11 @@ sub search_no_dispatch {
     # arrayref of sorted uids
     my $uids = LJ::UserSearch::get_results();
 
+    # truncate uids to max we are going to filter
+    if (@$uids > $LJ::MAX_DIR_SEARCH_RESULTS) {
+        @$uids = @{$uids}[0..$LJ::MAX_DIR_SEARCH_RESULTS - 1];
+    }
+
     my $psize = $self->page_size;
     my $page  = $self->page;
 
