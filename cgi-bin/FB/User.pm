@@ -32,8 +32,9 @@ sub user {
 sub new_from_lj_user {
     my ($class, $lju) = @_;
     my $dbr = FB::get_db_reader();
-    my ($fbuid) = $dbr->selectrow_array("SELECT userid FROM useridlookup WHERE ktype='I' AND kval=?",
-                                      undef, $lju->id);
+    my $domainid = $FB::LJ_DOMAINID or die "You must define the domainid for LJ in your config";
+    my ($fbuid) = $dbr->selectrow_array("SELECT userid FROM useridlookup WHERE domainid=? AND ktype='I' AND kval=?",
+                                      undef, $domainid, $lju->id);
     return FB::load_userid($fbuid);
 }
 
@@ -42,8 +43,9 @@ sub lj_u {
     my $fb_u = shift;
 
     my $dbr = FB::get_db_reader();
-    my ($ljuid) = $dbr->selectrow_array("SELECT kval FROM useridlookup WHERE ktype='I' AND userid=?",
-                                      undef, $fb_u->id);
+    my $domainid = $FB::LJ_DOMAINID or die "You must define the domainid for LJ in your config";
+    my ($ljuid) = $dbr->selectrow_array("SELECT kval FROM useridlookup WHERE domainid=? AND ktype='I' AND userid=?",
+                                      undef, $domainid, $fb_u->id);
     return LJ::load_userid($ljuid);
 }
 
@@ -2087,6 +2089,7 @@ sub check_priv  #DEPRECATED
 sub get_user_db_reader  #DEPRECATED
 {
     my $u = shift;
+    $u = $u->fb_u if ref $u && ref $u eq 'LJ::User';
     my $id = ref $u ? $u->{'clusterid'} : $u;
     return FB::get_dbh("user${id}slave", "user$id");
 }
@@ -2094,6 +2097,7 @@ sub get_user_db_reader  #DEPRECATED
 sub get_user_db_writer  #DEPRECATED
 {
     my $u = shift;
+    $u = $u->fb_u if ref $u && ref $u eq 'LJ::User';
     my $id = ref $u ? $u->{'clusterid'} : $u;
     return FB::get_dbh("user$id");
 }

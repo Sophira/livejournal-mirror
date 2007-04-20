@@ -34,6 +34,9 @@ use Class::Autouse qw(
                       LJ::M::FriendsOf
                       );
 
+# add mixins from FB
+use LJ::User_fb;
+
 sub new_from_row {
     my ($class, $row) = @_;
     my $u = bless $row, $class;
@@ -3115,13 +3118,6 @@ sub _friend_friendof_uids {
     LJ::MemCache::add($memkey, pack("N*", $limit, @$uids), 3600) if $uids;
 
     return @$uids;
-}
-
-
-sub fb_push {
-    my $u = shift;
-    return unless $u && $u->get_cap("fb_account");
-    return Apache::LiveJournal::Interface::FotoBilder::push_user_info( $u->id );
 }
 
 sub grant_priv {
