@@ -1738,7 +1738,7 @@ widget.friendupdates.noupdates.setup=Set up your notifications in <a [[aopts]]>M
 
 widget.friendupdates.title=Friend Updates
 
-widget.friendupdates.viewall=View All
+widget.friendupdates.viewall=More
 
 widget.gettingstarted.entry.link=Post an Entry
 
@@ -1766,6 +1766,8 @@ widget.qotd.answer=Answer
 
 widget.qotd.entry.subject=Writer's Block
 
+widget.qotd.title=Writer's Block
+
 widget.recentcomments.anon=Somebody
 
 widget.recentcomments.commentheading=[[poster]] in [[entry]]
@@ -1778,7 +1780,7 @@ widget.recentcomments.nosubject=(no subject)
 
 widget.recentcomments.title=Journal Comments
 
-widget.recentcomments.viewall=View All
+widget.recentcomments.viewall=More
 
 widget.search.aim=AIM
 
