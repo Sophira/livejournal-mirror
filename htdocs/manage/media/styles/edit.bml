@@ -28,7 +28,6 @@
 
     my %layerinfo;
     my $publay = FB::get_public_layers();
-    warn LJ::D($publay);
     my $corelayer = $publay->{'core1'};
     return $err->("Can't find corelayer.") unless $corelayer;
 
