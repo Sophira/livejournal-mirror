@@ -1722,17 +1722,21 @@ widget.commsofuser.title=Communities [[user]] has added
 
 widget.commsofuser.viewprofile=View [[user]]'s profile
 
-widget.friendinterests.intro=You might also like some things your friend [[user]] is interested in:
+widget.friendbirthdays.gift=Gift
 
-widget.friendupdates.morebirthdays=More Birthdays
+widget.friendbirthdays.title=Birthdays
+
+widget.friendbirthdays.userbirthday=[[user]]'s birthday is on [[month]] [[day]]
+
+widget.friendbirthdays.viewall=More
+
+widget.friendinterests.intro=You might also like some things your friend [[user]] is interested in:
 
 widget.friendupdates.noupdates=You have no updates.
 
 widget.friendupdates.noupdates.setup=Set up your notifications in <a [[aopts]]>Manage Settings</a>.
 
 widget.friendupdates.title=Friend Updates
-
-widget.friendupdates.userbirthday=[[user]]'s birthday is on [[month]] [[day]]
 
 widget.friendupdates.viewall=View All
 
