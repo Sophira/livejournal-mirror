@@ -415,7 +415,7 @@ sub selectcol_arrayref {
 sub selectall_hashref {
     my $u = shift;
     my $dbcm = $u->{'_dbcm'} ||= LJ::get_cluster_master($u)
-        or die "Database handle unavailable";
+        or die "Database handle unavailable ($u->{user}, cluster $u->{clusterid})";
 
     my $rv = $dbcm->selectall_hashref(@_);
 
@@ -429,7 +429,7 @@ sub selectall_hashref {
 sub selectrow_hashref {
     my $u = shift;
     my $dbcm = $u->{'_dbcm'} ||= LJ::get_cluster_master($u)
-        or die "Database handle unavailable";
+        or die "Database handle unavailable ($u->{user}, cluster $u->{clusterid})";
 
     my $rv = $dbcm->selectrow_hashref(@_);
 
@@ -1410,7 +1410,16 @@ sub get_friends_birthdays {
     my $months_ahead = $opts{months_ahead} || 3;
     my $full = $opts{full};
 
-    my $userid = $u->userid;
+    my $bday_sort = sub {
+        return sort {
+            ($a->[0] <=> $b->[0]) || # month sort
+            ($a->[1] <=> $b->[1])    # day sort
+        } @_;
+    };
+
+    my $memkey = [$u->userid, 'frbdays:' . $u->userid . ':' . ($full ? 'full' : $months_ahead)];
+    my $cached_bdays = LJ::MemCache::get($memkey);
+    return $bday_sort->(@$cached_bdays) if $cached_bdays;
 
     # what day is it now?  server time... suck, yeah.
     my @time = localtime();
@@ -1419,50 +1428,40 @@ sub get_friends_birthdays {
     my @friends = $u->friends;
     my @bdays;
 
-    my $memkey = [$u->userid, 'frbdays:' . $u->userid . ':' . ($full ? 'full' : $months_ahead)];
-    my $cached_bdays = LJ::MemCache::get($memkey);
-    if ($cached_bdays) {
-        @bdays = @$cached_bdays;
-    } else {
-        foreach my $friend (@friends) {
-            my ($year, $month, $day) = split('-', $friend->{bdate});
-            next unless $month > 0 && $day > 0;
+    foreach my $friend (@friends) {
+        my ($year, $month, $day) = split('-', $friend->{bdate});
+        next unless $month > 0 && $day > 0;
 
-            # skip over unless a few months away (except in full mode)
-            unless ($full) {
-                # the case where months_ahead doesn't wrap around to a new year
-                if ($mnow + $months_ahead <= 12) {
-                    # discard old months
-                    next if $month < $mnow;
-                    # discard months too far in the future
-                    next if $month > $mnow + $months_ahead;
+        # skip over unless a few months away (except in full mode)
+        unless ($full) {
+            # the case where months_ahead doesn't wrap around to a new year
+            if ($mnow + $months_ahead <= 12) {
+                # discard old months
+                next if $month < $mnow;
+                # discard months too far in the future
+                next if $month > $mnow + $months_ahead;
 
-                # the case where we wrap around the end of the year (eg, oct->jan)
-                } else {
-                    # keep months before end-of-year (like november)
-                    next unless $month < $mnow + $months_ahead;
-                    # keep months after start-of-year, within timeframe
-                    next unless $month < ($mnow + $months_ahead) % 12;
-                }
-
-                # month is fine. check the day.
-                next if ($month == $mnow && $day < $dnow);
+            # the case where we wrap around the end of the year (eg, oct->jan)
+            } else {
+                # keep months before end-of-year (like november)
+                next unless $month < $mnow + $months_ahead;
+                # keep months after start-of-year, within timeframe
+                next unless $month < ($mnow + $months_ahead) % 12;
             }
 
-            if ($friend->can_show_bday) {
-                push @bdays, [ $month, $day, $friend->user ];
-            }
+            # month is fine. check the day.
+            next if ($month == $mnow && $day < $dnow);
         }
 
-        LJ::MemCache::set($memkey, \@bdays, 86400);
+        if ($friend->can_show_bday) {
+            push @bdays, [ $month, $day, $friend->user ];
+        }
     }
 
-    return sort {
-        # month sort
-        ($a->[0] <=> $b->[0]) ||
-            # day sort
-            ($a->[1] <=> $b->[1])
-        } @bdays;
+    # set birthdays in memcache for later
+    LJ::MemCache::set($memkey, \@bdays, 86400);
+
+    return $bday_sort->(@bdays);
 }
 
 
@@ -2461,6 +2460,7 @@ sub delete_and_purge_completely {
 
     $dbh->do("DELETE FROM friends WHERE friendid=?", undef, $u->id);
     $dbh->do("DELETE FROM reluser WHERE targetid=?", undef, $u->id);
+    $dbh->do("DELETE FROM email_aliases WHERE alias=?", undef, $u->user . "\@$LJ::USER_DOMAIN");
 
     $dbh->do("DELETE FROM community WHERE userid=?", undef, $u->id)
         if $u->is_community;
@@ -3383,6 +3383,10 @@ sub is_banned {
 
 sub ban_user {
     my ($u, $ban_u) = @_;
+
+    my $remote = LJ::get_remote();
+    $u->log_event('ban_set', { actiontarget => $ban_u->id, remote => $remote });
+
     return LJ::set_rel($u->id, $ban_u->id, 'B');
 }
 
@@ -5540,7 +5544,7 @@ sub get_friends {
     # database and insert those into memcache
     # then return rows that matched the given groupmask
     my $gc = LJ::gearman_client();
-    if (LJ::conf_test($LJ::LOADFRIENDS_USING_GEARMAN) && $gc) {
+    if (LJ::conf_test($LJ::LOADFRIENDS_USING_GEARMAN, $userid) && $gc) {
         my $arg = Storable::nfreeze({ userid => $userid,
                                       mask => $mask });
         my $rv = $gc->do_task('load_friends', \$arg,
@@ -7074,7 +7078,7 @@ sub user_search_display {
         $ret .= "</td></tr><tr>";
 
         if ($u->{name}) {
-            $ret .= "<td width='1%' style='font-size: smaller' valign='top'>Name:</td><td style='font-size: smaller'><a href='$LJ::SITEROOT/userinfo.bml?user=$u->{user}'>";
+            $ret .= "<td width='1%' style='font-size: smaller' valign='top'>Name:</td><td style='font-size: smaller'><a href='" . $u->profile_url . "'>";
             $ret .= LJ::ehtml($u->{name});
             $ret .= "</a>";
             $ret .= "</td></tr><tr>";

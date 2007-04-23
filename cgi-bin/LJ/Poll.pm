@@ -75,7 +75,7 @@ sub create {
         $dbh->do("INSERT INTO pollowner (journalid, pollid) VALUES (?, ?)", undef,
                  $journalid, $pollid);
 
-        die $u->errstr if $u->err;
+        die $dbh->errstr if $dbh->err;
     } else {
         # poll stored on global
         $dbh->do("INSERT INTO poll (pollid, itemid, journalid, posterid, whovote, whoview, name) " .
@@ -730,6 +730,11 @@ sub render {
         if $mode eq 'enter' && !$remote;
 
     my $do_form = $mode eq 'enter' && $can_vote;
+
+    # from here out, if they can't vote, we're going to force
+    # them to just see results.
+    $mode = 'results' unless $can_vote;
+
     my %preval;
 
     if ($do_form) {

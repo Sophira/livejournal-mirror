@@ -196,6 +196,8 @@ sub parse_module_embed {
                                              journal  => $journal,
                                              preview  => $preview,
                                              );
+                # and then start over, in case there are multiple embeds
+                $embedcontents = "";
 
                 $newdata .= "<lj-embed id=\"$embedid\" />";
             } elsif (lc $tag eq 'lj-embed') {
@@ -290,7 +292,6 @@ sub module_iframe_tag {
             if ($tag eq 'object' || $tag eq 'embed') {
                 my $src;
                 next unless $src = $attr->{src};
-                $no_whitelist = 1 if $found_embed;
 
                 # we have an object/embed tag with src, make a fake lj-template object
                 my @tags = (
@@ -308,6 +309,8 @@ sub module_iframe_tag {
 
                 $found_embed = 1 if $embedcodes;
                 $found_embed &&= $embedcodes !~ /Invalid video/i;
+
+                $no_whitelist = !$found_embed;
             } elsif ($tag ne 'param') {
                 $no_whitelist = 1;
             }
@@ -330,7 +333,7 @@ sub module_iframe_tag {
     my $auth_token = LJ::eurl(LJ::Auth->sessionless_auth_token('embedcontent', moduleid => $moduleid, journalid => $journalid));
 
     my $iframe_tag = qq {<iframe src="http://$LJ::EMBED_MODULE_DOMAIN/?journalid=$journalid&moduleid=$moduleid&auth_token=$auth_token" } .
-        qq{width="$width" height="$height" class="lj_embedcontent"></iframe>};
+        qq{width="$width" height="$height" allowtransparency="true" frameborder="0" class="lj_embedcontent"></iframe>};
 
     my $remote = LJ::get_remote();
     return $iframe_tag unless $remote;
@@ -416,7 +419,8 @@ sub module_content {
         return defined $dbid ? $content : "[Invalid lj-embed id $moduleid]";
     }
 
-    return $content || '';
+    # get rid of whitespace around the content
+    return LJ::trim($content) || '';
 }
 
 sub memkey {

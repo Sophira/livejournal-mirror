@@ -44,7 +44,14 @@ sub search {
 
     return LJ::Directory::Results->empty_set unless @{$self->{constraints}};
 
-    if (@LJ::GEARMAN_SERVERS && (my $gc = LJ::gearman_client())) {
+    if (@LJ::GEARMAN_SERVERS) {
+
+        # we'll die if gearman_servers are configured but we can't
+        # get to one... this is likely too heavy of an operation to
+        # run unknowingly in apache
+        my $gc = LJ::gearman_client()
+            or die "unable to instantiate Gearman client for search";
+
         # do with gearman, if avail
         my $resref  = $gc->do_task('directory_search', Storable::nfreeze($self), {%opts});
         my $results = Storable::thaw($$resref);
@@ -95,6 +102,11 @@ sub search_no_dispatch {
 
     # arrayref of sorted uids
     my $uids = LJ::UserSearch::get_results();
+
+    # truncate uids to max we are going to filter
+    if (@$uids > $LJ::MAX_DIR_SEARCH_RESULTS) {
+        @$uids = @{$uids}[0..$LJ::MAX_DIR_SEARCH_RESULTS - 1];
+    }
 
     my $psize = $self->page_size;
     my $page  = $self->page;

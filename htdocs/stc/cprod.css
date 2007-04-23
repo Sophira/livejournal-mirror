@@ -16,6 +16,11 @@
     position: relative;
     width: 25px;
 }
+.cprod .cprod-image {
+    border: none;
+    float: left;
+    margin-right: 10px;
+}
 .cprod .content {
     clear: left;
     margin: -8px 0 8px 0 !important;
@@ -23,9 +28,11 @@
     line-height: 1.4em;
     border: 1px solid #8FC3F7;
     padding: 11px 14px 14px 14px;
+    font-size: 95% !important;
 }
 .cprod .content p {
     margin: 3px 0;
+    font-size: 100% !important;
 }
 .cprod .alllink {
     float: right;

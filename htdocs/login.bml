@@ -150,7 +150,7 @@
             $body .= "<div class='login-create-account'>\n";
             $body .= "<hr class='hr' />\n";
             $body .= "<h4>$ML{'.createaccount.header'}</h4>\n";
-            $body .= "<form><input type='submit' value='$ML{'.createaccount.button'}' class='create-account' /></form>\n";
+            $body .= "<form action='<?siteroot?>/create.bml' method='get'><input type='submit' value='$ML{'.createaccount.button'}' class='create-account' /></form>\n";
             $body .= "<ul>\n";
             $body .= "<li>$ML{'.createaccount.whylogin.benefit1'}</li>";
             $body .= "<li>$ML{'.createaccount.whylogin.benefit2'}</li>";
@@ -163,7 +163,7 @@
             $body .= "</div><!-- end .columns-2-left -->\n";
             $body .= "<div class='columns-2-right'>\n";
             my $ad = LJ::ads( force => 1, type => 'app', orient => 'BML-App-Confirm' );
-            $body .= "$ad";
+            $body .= $ad unless $LJ::IS_SSL;
             $body .= "</div><!-- end .columns-2-right -->\n";
         }
 
@@ -179,7 +179,6 @@
             $body .= $box;
         }
         $body .= "</td></tr></table>";
-        $body .= LJ::ads( type => 'app', orient => 'BML-App-Full-Width' ) unless $remote || $LJ::IS_SSL;
         return $body;
     };
     my $logout_remote = sub {
@@ -315,7 +314,10 @@
                     return;
                 }
 
-                return BML::redirect($POST{'ret'}) if $LJ::REDIRECT_ALLOWED{$redir_host};
+                if ($LJ::REDIRECT_ALLOWED{$redir_host}) {
+                    LJ::run_hook('login_redirect_extra', $redir_host);
+                    return BML::redirect($POST{'ret'}); 
+                }
             }
 
             my $referer = BML::get_client_header('Referer');

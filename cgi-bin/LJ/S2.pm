@@ -980,10 +980,13 @@ sub load_style
     my $memkey = [$id, "s2s:$id"];
     my $style = LJ::MemCache::get($memkey);
     unless ($style) {
-        $db ||= LJ::S2::get_s2_reader();
+        $db ||= LJ::S2::get_s2_reader()
+            or die "Unable to get S2 reader";
         $style = $db->selectrow_hashref("SELECT styleid, userid, name, modtime ".
                                         "FROM s2styles WHERE styleid=?",
                                         undef, $id);
+        die $db->errstr if $db->err;
+
         LJ::MemCache::add($memkey, $style, 3600);
     }
     return undef unless $style;
@@ -3244,6 +3247,8 @@ sub _Entry__get_link
     }
     if ($key eq "tell_friend") {
         return $null_link if $LJ::DISABLED{'tellafriend'};
+        my $entry = LJ::Entry->new($journalu->{'userid'}, ditemid => $this->{'itemid'});
+        return $null_link unless $entry->can_tellafriend($remote);
         return LJ::S2::Link("$LJ::SITEROOT/tools/tellafriend.bml?journal=$journal&amp;itemid=$this->{'itemid'}",
                             $ctx->[S2::PROPS]->{"text_tell_friend"},
                             LJ::S2::Image("$LJ::IMGPREFIX/btn_tellfriend.gif", 22, 20));

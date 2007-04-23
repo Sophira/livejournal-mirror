@@ -2056,15 +2056,20 @@ sub get_next_ad_id {
 }
 
 ##
-## Function LJ::check_page_ad_block. Return answer (true/false) to question: 
+## Function LJ::check_page_ad_block. Return answer (true/false) to question:
 ## Should we show ad of this type on this page.
 ## Args: uri of the page and orient of the ad block (e.g. 'App-Confirm')
 ##
 sub check_page_ad_block {
     my $uri = shift;
     my $orient = shift;
-    
-    my $ad_mapping = LJ::run_hook('get_ad_uri_mapping', $uri) || $LJ::AD_MAPPING{$uri};
+
+    # The AD_MAPPING hash may contain code refs
+    # This allows us to choose an ad based on some logic
+    # Example: If LJ::did_post() show 'App-Confirm' type ad
+    my $ad_mapping = LJ::run_hook('get_ad_uri_mapping', $uri) ||
+                     ref($LJ::AD_MAPPING{$uri}) eq 'CODE' ?
+                     eval{$LJ::AD_MAPPING{$uri}->()} : $LJ::AD_MAPPING{$uri};
     return 1 if $ad_mapping eq $orient;
     return 1 if ref($ad_mapping) eq 'HASH' && $ad_mapping->{$orient};
     return;
@@ -2083,7 +2088,7 @@ sub get_style_for_ads {
     my $custom_layout = "custom_layout";
     my $custom_theme = "custom_theme";
     my $default_theme = "default_theme";
-    my $s1_prefix = "s1-";
+    my $s1_prefix = "s1_";
 
     if ($u->prop('stylesys') == 2) {
         my %style = LJ::S2::get_style($u);
@@ -2292,7 +2297,7 @@ sub ads {
     my $remote = LJ::get_remote();
     if ($remote) {
         # Pass age to targeting engine
-        if (!$remote->underage && $remote->can_show_bday_year) {
+        if (!$remote->underage) {
             my $age = eval {$remote->age || $remote->init_age};
             $adcall{age} = $age if ($age);
         }

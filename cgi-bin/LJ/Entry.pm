@@ -31,6 +31,12 @@ use Carp qw/ croak /;
 #    _loaded_row:    loaded log2 row
 #    _loaded_props:  loaded props
 
+my %singletons = (); # journalid->jitemid->singleton
+
+sub reset_singletons {
+    %singletons = ();
+}
+
 # <LJFUNC>
 # name: LJ::Entry::new
 # class: entry
@@ -82,6 +88,19 @@ sub new
     if ($self->{ditemid}) {
         $self->{anum}    = $self->{ditemid} & 255;
         $self->{jitemid} = $self->{ditemid} >> 8;
+    }
+
+    # do we have a singleton for this entry?
+    {
+        my $journalid = $self->{u}->{userid};
+        my $jitemid   = $self->{jitemid};
+
+        $singletons{$journalid} ||= {};
+        return $singletons{$journalid}->{$jitemid}
+            if $singletons{$journalid}->{$jitemid};
+
+        # save the singleton if it doesn't exist
+        $singletons{$journalid}->{$jitemid} = $self;
     }
 
     return $self;
@@ -157,6 +176,17 @@ sub new_from_url {
     }
 
     return undef;
+}
+
+sub new_from_row {
+    my $class = shift;
+    my %row   = @_;
+
+    my $journalu = LJ::load_userid($row{journalid});
+    my $self = $class->new($journalu, jitemid => $row{jitemid});
+    $self->absorb_row(%row);
+
+    return $self;
 }
 
 # returns true if entry currently exists.  (it's possible for a given
@@ -295,11 +325,17 @@ sub preload_rows {
 
         my $lg = LJ::get_log2_row($en->{u}, $en->{jitemid});
         next unless $lg;
-        for my $f (qw(allowmask posterid eventtime logtime security anum)) {
-            $en->{$f} = $lg->{$f};
-        }
-        $en->{_loaded_row} = 1;
+
+        # absorb row into given LJ::Entry object
+        $en->absorb_row(%$lg);
     }
+}
+
+sub absorb_row {
+    my ($self, %row) = @_;
+
+    $self->{$_} = $row{$_} foreach (qw(allowmask posterid eventtime logtime security anum));
+    $self->{_loaded_row} = 1;
 }
 
 # class method:
@@ -855,6 +891,21 @@ sub userpic {
     return $up->userpic;
 }
 
+# returns true if the user is allowed to share an entry via Tell a Friend
+# $u is the logged-in user
+# $item is a hash containing Entry info
+sub can_tellafriend {
+    my ($entry, $u) = @_;
+
+    return 1 if $entry->security eq 'public';
+    return 0 if $entry->security eq 'private';
+
+    # friends only
+    return 0 unless $entry->journal->is_person;
+    return 0 unless LJ::u_equals($u, $entry->poster);
+    return 1;
+}
+
 package LJ;
 
 use Class::Autouse qw (
@@ -1226,6 +1277,18 @@ sub get_log2_recent_log
     $rows = LJ::MemCache::get($memkey);
     $ret = [];
 
+    my $construct_singleton = sub {
+        foreach my $row (@$ret) {
+            $row->{journalid} = $jid;
+            $row->{logtime}   = $LJ::EndOfTime - $row->{rlogtime};
+
+            # construct singleton for later
+            LJ::Entry->new_from_row(%$row);
+        }
+
+        return $ret;
+    };
+
     my $rows_decode = sub {
         return 0
             unless $rows && substr($rows, 0, 1) eq $DATAVER;
@@ -1256,7 +1319,7 @@ sub get_log2_recent_log
         return 1;
     };
 
-    return $ret
+    return $construct_singleton->()
         if $rows_decode->();
     $rows = "";
 
@@ -1275,7 +1338,7 @@ sub get_log2_recent_log
     $rows = LJ::MemCache::get($memkey);
     if ($rows_decode->()) {
         $db->selectrow_array("SELECT RELEASE_LOCK(?)", undef, $lockkey);
-        return $ret;
+        return $construct_singleton->();
     }
     $rows = "";
 
@@ -1342,7 +1405,7 @@ sub get_log2_recent_log
     LJ::MemCache::set($memkey, $rows) unless $dont_store;
 
     $db->selectrow_array("SELECT RELEASE_LOCK(?)", undef, $lockkey);
-    return $ret;
+    return $construct_singleton->();
 }
 
 sub get_log2_recent_user
