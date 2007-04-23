@@ -220,7 +220,7 @@ sub trans
             $r->handler('perl-script');
             $r->push_handlers(PerlHandler => \&Apache::FotoBilder::XMLGalleryInfoPage::handler);
             return OK;
-        } elsif ($topdir eq 'media' && ! $rest) {
+        } elsif ($topdir =~ /^media/ && (! $rest || $rest eq '/')) {
             $r->handler("perl-script");
             $r->push_handlers(PerlHandler => \&Apache::FotoBilder::IndexPage::handler);
         } elsif ($rest =~ m!^/pic!) {

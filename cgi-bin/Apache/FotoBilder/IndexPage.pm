@@ -12,7 +12,7 @@ sub handler
     my $uri = $r->uri;
 
     my $user;
-    if ($FB::ROOT_USER && ($uri eq "/" || $uri eq '/media')) {
+    if ($FB::ROOT_USER && ($uri eq "/" || $uri =~ /^\/media\/?$/)) {
         $user = $FB::ROOT_USER;
     } else {
         ($user) = $uri =~ m!^/(\w*)/?$!;
