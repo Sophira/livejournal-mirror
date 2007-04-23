@@ -513,7 +513,13 @@ sub trans
         # we have per-user favicons.
         return DECLINED if $uuri eq "/favicon.ico";
 
-         if ($uuri =~ m!^/img/!) {
+        # let js files be referenced from user subdomains
+        # (temporary fix hopefully, for fotobilder S2 styles that use this functionality)
+        if ($uuri =~ m!^/js/(\w+)\.js$!) {
+            return redir($r, "$LJ::SITEROOT/js/$1.js");
+        }
+
+        if ($uuri =~ m!^/img/!) {
             Apache::LiveJournal::PalImg->load;
             $r->handler("perl-script");
             $r->push_handlers(PerlHandler => \&Apache::LiveJournal::PalImg::handler);

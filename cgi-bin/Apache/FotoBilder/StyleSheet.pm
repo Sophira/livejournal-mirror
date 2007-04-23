@@ -12,14 +12,14 @@ sub handler
     my $uri = $r->uri;
 
     my ($user, $styleid) =
-        $uri =~ m!^(?:/(\w+))?/res/(\d+)/stylesheet$!;
+        $uri =~ m!^(?:/(\w+))?/media/res/(\d+)/stylesheet$!;
     $user = $FB::ROOT_USER unless defined $user;
     return 404 unless defined $user;
     my $dmid = FB::current_domain_id();
     my $u = FB::load_user($user, $dmid);
     return 404 if ! $u || $u->{statusvis} =~ /[DX]/;
     return 403 if $u->{statusvis} eq 'S';
-    
+
     my $opts = {
         'use_modtime' => 0,  # *sigh* ... FIXME: don't use MAX(layer comptime), but last time styleid was changed.
         'content_type' => 'text/css',

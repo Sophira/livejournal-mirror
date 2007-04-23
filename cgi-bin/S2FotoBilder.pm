@@ -988,7 +988,7 @@ sub Page
         'args' => \%args,
         'parent_link' => $pl,
         'parent_links' => $o->{'parent_links'} || [],
-        'stylesheeturl' => "${base_url}/res/$styleid/stylesheet",
+        'stylesheeturl' => "/media/res/$styleid/stylesheet",
         'user'  => User($u),
         'view' => '',
         'manage_account' => FB::S2::Link({ 'current_page' => 0,
