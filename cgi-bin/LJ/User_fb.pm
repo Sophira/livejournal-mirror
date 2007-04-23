@@ -510,14 +510,6 @@ sub media_base_url {
     return "http://" . $u->user . ".$LJ::USER_DOMAIN/media";
 }
 
-sub diskusage_bytes {
-    my ($u) = @_;
-
-    # get LJ diskusage
-    my $lj_u = $u->lj_u;
-    return $lj_u->diskusage;
-}
-
 ############ END FB::User METHODS ############
 
 
