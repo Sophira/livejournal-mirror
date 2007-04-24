@@ -327,7 +327,7 @@ sub get_style
     my ($styleid, $u);
     if (ref $arg) {
         $u = $arg;
-        $styleid = $u->{'styleid'} + 0;
+        $styleid = $u->prop('styleid') + 0;
     } else {
         $styleid = $arg + 0;
     }
@@ -955,7 +955,7 @@ sub Page
 
     my $u = $o->{'u'};
     my $base_url = $u->media_base_url;
-    my $styleid = defined $o->{'styleid'} ? $o->{'styleid'} : $u->{'styleid'};
+    my $styleid = defined $o->{'styleid'} ? $o->{'styleid'} : $u->prop('styleid');
 
     # Set notes for DB logging.
     my $remote = FB::get_remote();
