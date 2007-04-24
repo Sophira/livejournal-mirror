@@ -2562,6 +2562,14 @@ sub timecreate {
     return LJ::mysqldate_to_time($when);
 }
 
+# when was last time this account updated?
+# returns unixtime
+sub timeupdate {
+    my $u = shift;
+    my $timeupdate = LJ::get_timeupdate_multi($u->id);
+    return $timeupdate->{$u->id};
+}
+
 # can this user use ESN?
 sub can_use_esn {
     my $u = shift;
