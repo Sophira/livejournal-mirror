@@ -519,6 +519,14 @@ sub trans
             return redir($r, "$LJ::SITEROOT/js/media/$1.js");
         }
 
+        # fix broken FB links that refer to "/username" on user subdomains with a relative url.
+        # this should be "username.$LJ::DOMAIN/media"
+        if ($uuri =~ m!^/$user/?$!) {
+            my $u = LJ::load_user($user)
+                or return 404;
+            return redir($r, $u->media_base_url);
+        }
+
         if ($uuri =~ m!^/img/!) {
             Apache::LiveJournal::PalImg->load;
             $r->handler("perl-script");
