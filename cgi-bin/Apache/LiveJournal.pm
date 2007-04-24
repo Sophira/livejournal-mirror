@@ -516,7 +516,7 @@ sub trans
         # let js files be referenced from user subdomains
         # (temporary fix hopefully, for fotobilder S2 styles that use this functionality)
         if ($uuri =~ m!^/js/(\w+)\.js$!) {
-            return redir($r, "$LJ::SITEROOT/js/$1.js");
+            return redir($r, "$LJ::SITEROOT/js/media/$1.js");
         }
 
         if ($uuri =~ m!^/img/!) {
