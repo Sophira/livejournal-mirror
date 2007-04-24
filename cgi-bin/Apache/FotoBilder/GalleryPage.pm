@@ -21,7 +21,7 @@ sub handler
     $user = $FB::ROOT_USER if $FB::ROOT_USER;
     return 404 unless defined $user;
 
-    my $u = FB::load_user($user, undef, [ "styleid" ]);
+    my $u = FB::load_user($user);
     return 404 if ! $u || $u->{statusvis} =~ /[DX]/;
     return 403 if $u->{statusvis} eq 'S';
 
@@ -70,7 +70,7 @@ sub handler
         return 500;
     };
 
-    my $styleid = ($gal->{'styleid'} || $u->{'styleid'})+0;
+    my $styleid = ($gal->{'styleid'} || $u->prop('styleid'))+0;
     my $ctx = FB::s2_context($r, $styleid);
     return OK unless $ctx;
 

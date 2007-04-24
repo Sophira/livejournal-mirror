@@ -19,7 +19,7 @@ sub handler
     }
 
     return 404 unless defined $user;
-    my $u = FB::load_user($user, undef, [ "styleid" ]);
+    my $u = FB::load_user($user);
 
     return 404 if ! $u || $u->{statusvis} =~ /[DX]/;
     return 403 if $u->{statusvis} eq 'S';
@@ -30,7 +30,7 @@ sub handler
     return 403 if FB::get_cap($u, "gallery_private") &&
         (! $remote || $remote->{'userid'} != $u->{'userid'});
 
-    my $styleid = $u->{'styleid'}+0;
+    my $styleid = $u->prop('styleid')+0;
     my $ctx = FB::s2_context($r, $styleid);
     FB::S2::set_context($ctx);
 
