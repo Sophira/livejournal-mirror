@@ -1219,11 +1219,20 @@ sub media_base_url {
 
 
 sub diskusage_bytes {
-    my ($u) = @_;
+    my $u = shift;
 
     # get LJ diskusage
     my $lj_u = $u->lj_u;
-    return $lj_u->diskusage;
+    return $lj_u->diskusage_bytes;
+}
+
+# overloaded cap accessor
+sub can_upload {
+    my $u = shift;
+
+    my $usage = $u->diskusage_bytes;
+    my $quota = $u->lj_u->get_cap('disk_quota') * (1 << 20); # MB -> bytes
+    return $usage < $quota;
 }
 
 ######## deprecated APIs
@@ -1343,6 +1352,10 @@ sub get_cap
     my ($u, $cname) = @_;
     my $caps = $u->{'caps'};
     my $max = undef;
+
+    if (grep { $_ eq $cname } qw (can_upload)) {
+        return $u->$cname;
+    }
 
     # user caps
     foreach my $bit (keys %FB::CAP) {
