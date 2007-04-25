@@ -662,12 +662,12 @@ sub update_secgroup_multi {   #DEPRECATED
         # these are eligible for deletion, but we'll whitelist ones which are being re-added
         my %to_delete = (); # { secid => { uid } }
         my $secid_in = join(",", map { $_ + 0 } @secids);
-        my $sth = $u->prepare("SELECT m.secid, u.userid FROM secmembers m, user u " .
-                              "WHERE m.userid=? AND m.otherid=u.userid " .
-                              "AND u.domainid=? AND m.secid IN ($secid_in)",
-                              $u->{userid}, $u->{domainid});
+        my $sth = $u->prepare("SELECT secid, userid FROM secmembers " .
+                              "WHERE userid=? AND secid IN ($secid_in)",
+                              $u->{userid});
         $sth->execute;
-        return $unlock->($u) if $u->err;
+        return $unlock->($u->errstr) if $u->err;
+
         while (my ($secid, $uid) = $sth->fetchrow_array) {
             $to_delete{$secid}->{$uid} = 1;
         }
@@ -691,11 +691,11 @@ sub update_secgroup_multi {   #DEPRECATED
 
         # merge in new secmembers we were given
         if (@vals) {
-            $u->do("REPLACE INTO secmembers (userid, secid, otherid) VALUES $bind",@ vals)
+            $u->do("REPLACE INTO secmembers (userid, secid, otherid) VALUES $bind", @vals)
                 or return $unlock->($u->errstr);
         }
 
-        # delete those who need deleted
+        # delete those who need deleting
         my @deletes = ();
         while (my ($secid, $val) = each %to_delete) {
             foreach my $uid (keys %$val) {
