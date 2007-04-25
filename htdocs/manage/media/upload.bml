@@ -232,7 +232,7 @@ body<=
                     js/inputcomplete.js
                     js/progressbar.js
                     js/ljprogressbar.js
-                    js/perbal-uploadtrack.js
+                    js/perlbal-uploadtrack.js
 
                     stc/fotobilder.css
                     ));

@@ -70,9 +70,9 @@
         my ($url, $w, $h) = $pvpic ? $pvpic->scaled_url(100, 100) :
             FB::img("nogalpreview_100");
 
-        $preview_pic .= "<a id='prevpicImgLink' href=\"setpreview?gal=$gallid\"><img id='img_galprev' src=\"$url\" width=\"$w\" height=\"$h\" alt='Preview Picture' align='absbottom' border='0' /></a>";
+        $preview_pic .= "<a id='prevpicImgLink' href=\"setpreview.bml?gal=$gallid\"><img id='img_galprev' src=\"$url\" width=\"$w\" height=\"$h\" alt='Preview Picture' align='absbottom' border='0' /></a>";
 
-        $preview_pic .= "<a id='prevpicTextLink' href=\"setpreview?gal=$gallid\">Change Preview Pic</a></td></tr></table></div>";
+        $preview_pic .= "<a id='prevpicTextLink' href=\"setpreview.bml?gal=$gallid\">Change Preview Pic</a></td></tr></table></div>";
 
         $body .= $preview_pic unless $g->is_unsorted;
 
@@ -349,7 +349,7 @@
             my ($text, $pid);
             if ($fg) {
                 $pid = $fg->id;
-                $text .= "<a href='gal?id=$pid'>" . FB::ehtml($fg->display_name) . "</a>";
+                $text .= "<a href='gal.bml?id=$pid'>" . FB::ehtml($fg->display_name) . "</a>";
             } else {
                 $pid = 0;
                 $text = "<label for='parcheck0'>[Top Level]</label>";
@@ -368,7 +368,7 @@
         # link galleries ($tg = to gallery)
         foreach my $tg ($g ? $g->gals_linked_to : ()) {
             my $cid = $tg->id;
-            my $text = "<a href='gal?id=$cid'>" . FB::ehtml($tg->display_name) . "</a>";
+            my $text = "<a href='gal.bml?id=$cid'>" . FB::ehtml($tg->display_name) . "</a>";
             $chil_sel .= "<input type='checkbox' name='keep_child_$cid' checked='checked'> $text <br />\n"
         }
 
