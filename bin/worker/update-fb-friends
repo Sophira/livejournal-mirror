@@ -13,8 +13,12 @@ schwartz_work();
 
 package LJ::Worker::UpdateFotobilderFriends;
 use base 'TheSchwartz::Worker';
-use RPC::XML;
-use RPC::XML::Client;
+require 'ljlib.pl';
+require 'fotobilder.pl';
+use FB::SecGroup;
+use FB::User;
+
+die "FB::LJ_DOMAINID must be defined." unless defined $FB::LJ_DOMAINID;
 
 sub keep_exit_status_for { 0 }
 sub grab_for { 60 }
@@ -28,10 +32,12 @@ sub retry_delay {
 
 sub work {
     my ($class, $job) = @_;
-    my $uid = $job->arg;
+
+    my $uid = $job->arg + 0
+        or die "No userid";
 
     my $u = LJ::load_userid($uid)
-        or die "no userid";
+        or die "Error loading userid $uid";
 
     # fotobilder won't autovivify communities/shared, so it won't accept
     # friends update pushes.
@@ -40,14 +46,11 @@ sub work {
         return;
     }
 
-    my %req = ( user => RPC::XML::string->new($u->{user}) );
-
-    # find all equivalent jobs BEFORE we do the potentially slow /
-    # blocky XML-RPC request.  this way if new invalidations come in
-    # while we're working, we don't invalidate those.  which is also
-    # why we don't use TheSchwartz's 'unique' feature and do it by
-    # hand like this.... afterwards we'll mark these found jobs as
-    # completed.
+    # find all equivalent jobs BEFORE we do the update.  this way if
+    # new invalidations come in while we're working, we don't
+    # invalidate those.  which is also why we don't use TheSchwartz's
+    # 'unique' feature and do it by hand like this.... afterwards
+    # we'll mark these found jobs as completed.
     my $client = $job->handle->client;
     my @others = $client->list_jobs({
         funcname => $class,
@@ -55,40 +58,54 @@ sub work {
         limit => 100000,  # some journals update their friends a ton, scripted.  find all dups.
     });
 
-    # best interface ever...  (temp duplicated here so we can push this without LJ::User push)
-    $RPC::XML::ENCODING = "utf-8";
+    my $lj_groups = LJ::get_friend_group($u)
+        or die "could not get LJ friend groups for FB userid $uid";
 
-    # fill in groups info
-    LJ::fill_groups_xmlrpc($u, \%req);
+    # 30 possible lj groups + 1 magical group that contains everyone
+    # bits 0-30 => secids 126-157
+    my $get_secid = sub {
+        my $offset = $_[0]+0;
 
-    my $client = RPC::XML::Client
-        ->new("$LJ::FB_SITEROOT/interface/xmlrpc");
+        # - 126 is base secid for authmod group range
+        # - offset is actual bit number of this group on remote LJ site
+        return 126 + $offset;
+    };
 
-    my $req = RPC::XML::request->new('FB.XMLRPC.groups_push',
-                                     RPC::XML::smart_encode(\%req));
+    my %update; # params to update_secgroup_multi
+                # takes { secid => [grpname, [memberid1, memberid2, ...]] }
 
-    if ($ENV{'SHOW_REQUESTS'}) {
-        my $str = $req->as_string;
-        $str =~ s/(<\w+)/\n$1/g;
-        print $str, "\n";
+    # group 126 is all LJ friends
+    my $friends = LJ::get_friends($u);
+    $update{126} = ["LJ:all_friends", [keys %$friends]];
+
+    foreach my $lj_secbit (keys %$lj_groups) {
+        # get group members
+        my $group_members = LJ::get_friends($u, $lj_secbit);
+        my @group_uids = keys %$group_members;
+
+        # convert lj secbit to fb secid
+        my $fb_secid = $get_secid->($lj_secbit);
+
+        my $groupname = 'LJ:' . $lj_groups->{$lj_secbit}->{groupname};
+
+        $update{$fb_secid} = [$groupname, [@group_uids]];
     }
 
-    my $res = $client->send_request($req);
+    # vivify FB user if necessary
+    my $fb_uid;
 
-    # weirdest calling conventions evar.
-    die "No response from client" unless $res;
-    die "Error response (local): $res" unless ref $res;
-    if (UNIVERSAL::isa($res, "RPC::XML::fault")) {
-        my $code = ${$res->{faultCode}};
-        my $str  = ${$res->{faultString}};
-        if ($code eq "Client" && $str eq "Invalid user: $u->{user}") {
-            # treat this as success.  they've never used fotobilder, so they
-            # don't have an account there.  when it's vivified later, that
-            # process will pull in their then-current friends info
-        } else {
-            die "Error response from other party: code=$code string=$str\n";
-        }
+    unless ($u->fb_u) {
+        $fb_uid = FB::User->create({
+            'domainid' => $FB::LJ_DOMAINID,
+            'usercs'   => $u->user,
+            'r_userid' => $u->id, # remote userid
+        }) or die "error in create user: $@";
+    } else {
+        $fb_uid = $u->fb_u->id;
     }
+
+    FB::update_secgroup_multi($u->fb_u, \%update)
+        or die "error in update_secgroup_multi: $@";
 
     # after all that, should have worked, so close this job and all others
     # that existed prior
