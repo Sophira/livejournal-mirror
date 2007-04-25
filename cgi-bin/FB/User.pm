@@ -1226,13 +1226,23 @@ sub diskusage_bytes {
     return $lj_u->diskusage_bytes;
 }
 
-# overloaded cap accessor
+#### overloaded cap accessors ####
 sub can_upload {
     my $u = shift;
 
     my $usage = $u->diskusage_bytes;
     my $quota = $u->lj_u->get_cap('disk_quota') * (1 << 20); # MB -> bytes
-    return $usage < $quota;
+    return $quota && $usage < $quota;
+}
+
+sub gallery_enabled {
+    my $u = shift;
+    return 0;
+}
+
+sub gallery_private {
+    my $u = shift;
+    return 0;
 }
 
 ######## deprecated APIs
@@ -1353,7 +1363,7 @@ sub get_cap
     my $caps = $u->{'caps'};
     my $max = undef;
 
-    if (grep { $_ eq $cname } qw (can_upload)) {
+    if (grep { $_ eq $cname } qw (can_upload gallery_private gallery_enabled)) {
         return $u->$cname;
     }
 
