@@ -1237,7 +1237,7 @@ sub can_upload {
 
 sub gallery_enabled {
     my $u = shift;
-    return 0;
+    return 1;
 }
 
 sub gallery_private {
