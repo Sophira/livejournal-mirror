@@ -1378,17 +1378,6 @@ sub get_cap
     return defined $max ? $max : $FB::CAP_DEF{$cname};
 }
 
-sub update_dcaps {
-    my ($u, $dcaps) = @_;
-    return undef unless ref $u && defined $dcaps;
-
-    return $dcaps if $dcaps == $u->{dcaps};
-
-    FB::update_user($u, {'dcaps' => $dcaps});
-
-    return $dcaps;
-}
-
 sub add_u_user {
     my $u = shift;
     $u->{'user'} = FB::canonical_username($u);
