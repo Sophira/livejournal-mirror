@@ -1785,6 +1785,9 @@ sub start_request
     %LJ::REQ_CACHE_USERTAGS = ();     # uid -> { ... }; populated by get_usertags, so we don't load it twice
     $LJ::ADV_PER_PAGE = 0;            # Counts ads displayed on a page
 
+    %LJ::FB2LJ_UIDMAP = ();           # mapping of LJ->FB and FB->LJ uids
+    %LJ::LJ2FB_UIDMAP = ();
+
     $LJ::CACHE_REMOTE_BOUNCE_URL = undef;
     LJ::Userpic->reset_singletons;
     LJ::Comment->reset_singletons;

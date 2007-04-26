@@ -1267,11 +1267,11 @@ sub get_uid_lookup_map {
     my (@uids, $memkey_prefix, $req_cache);
     if ($lj_uids) {
         @uids = @$lj_uids;
-        $req_cache = \%LJ::FB2LJ_UIDMAP;
+        $req_cache = \%LJ::LJ2FB_UIDMAP;
         $memkey_prefix = "lj2fb";
     } else {
         @uids = @$fb_uids;
-        $req_cache = \%LJ::LJ2FB_UIDMAP;
+        $req_cache = \%LJ::FB2LJ_UIDMAP;
         $memkey_prefix = "fb2lj";
     }
 
@@ -1293,7 +1293,7 @@ sub get_uid_lookup_map {
         my $val = $memc->{"$memkey_prefix:$uid"};
         next unless $val;
 
-        # depending on how we were called, $uid and $val can 
+        # depending on how we were called, $uid and $val can
         # each be an $lj_uid or $fb_uid... we need to resolve
         # this ambiguity before we can set the request cache
         my ($lj_uid, $fb_uid) = $lj_uids ? ($uid, $val) : ($val, $uid);
@@ -1316,7 +1316,8 @@ sub get_uid_lookup_map {
         # FIXME: make sure this hits indexes in *all* cases
         my $sth = $dbr->prepare("SELECT userid, kval FROM useridlookup " .
                                 "WHERE domainid=? AND ktype='I' AND $lookup_col IN ($bind)");
-        $sth->execute($FB::LJ_DOMAINID, @uids);
+        $sth->execute($FB::LJ_DOMAINID, keys %need);
+        die $sth->errstr if $sth->err;
 
         while (my $row = $sth->fetchrow_hashref) {
             my $fb_uid = $row->{userid};
