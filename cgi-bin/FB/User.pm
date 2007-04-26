@@ -1264,78 +1264,75 @@ sub get_uid_lookup_map {
 
     die "FB::LJ_DOMAINID must be defined" unless defined $FB::LJ_DOMAINID;
 
-    my @uids;
-    my %map;
-    my $memkey_prefix;
-
+    my (@uids, $memkey_prefix, $req_cache);
     if ($lj_uids) {
         @uids = @$lj_uids;
-        %map = %LJ::FB2LJ_UIDMAP;
+        $req_cache = \%LJ::FB2LJ_UIDMAP;
         $memkey_prefix = "lj2fb";
     } else {
         @uids = @$fb_uids;
-        %map = %LJ::LJ2FB_UIDMAP;
+        $req_cache = \%LJ::LJ2FB_UIDMAP;
         $memkey_prefix = "fb2lj";
     }
 
-    my $dbr = FB::get_db_reader()
-        or die "no db reader";
-
+    # find keys to retrieve from memcache
+    my @memcache_keys = ();
+    my %need = map { $_ => 1 } @uids;
     foreach my $uid (@uids) {
-        next if $map{$uid};
-        my $memkey = [$uid, "$memkey_prefix:$uid"];
-        my $other_uid = LJ::MemCache::get($memkey);
-
-        # memcache hit
-        if ($other_uid) {
-            $map{$uid} = $other_uid;
+        if ($req_cache->{$uid}) {
+            delete $need{$uid};
             next;
         }
 
-        # do lookup
-        my $bind = join ',', map { '?' } @uids;
+        push @memcache_keys, [$uid, "$memkey_prefix:$uid"];
+    }
+
+    # get them all at once and see what we still need
+    my $memc = LJ::MemCache::get_multi(@memcache_keys);
+    foreach my $uid (keys %need) {
+        my $val = $memc->{"$memkey_prefix:$uid"};
+        next unless $val;
+
+        # depending on how we were called, $uid and $val can 
+        # each be an $lj_uid or $fb_uid... we need to resolve
+        # this ambiguity before we can set the request cache
+        my ($lj_uid, $fb_uid) = $lj_uids ? ($uid, $val) : ($val, $uid);
+
+        $LJ::FB2LJ_UIDMAP{$fb_uid} = $lj_uid;
+        $LJ::LJ2FB_UIDMAP{$lj_uid} = $fb_uid;
+
+        # no longer needed
+        delete $need{$uid};
+    }
+
+    # do lookup
+    if (%need) {
+        my $dbr = FB::get_db_reader()
+            or die "no db reader";
+
+        my $bind = join(',', map { '?' } keys %need);
         my $lookup_col = $lj_uids ? 'kval' : 'userid';
 
-        my $sth = $dbr->prepare("SELECT userid, kval FROM useridlookup WHERE domainid=? AND ktype='I' AND $lookup_col IN ($bind)");
+        # FIXME: make sure this hits indexes in *all* cases
+        my $sth = $dbr->prepare("SELECT userid, kval FROM useridlookup " .
+                                "WHERE domainid=? AND ktype='I' AND $lookup_col IN ($bind)");
         $sth->execute($FB::LJ_DOMAINID, @uids);
 
         while (my $row = $sth->fetchrow_hashref) {
-            my $_fb_uid = $row->{userid};
-            my $_lj_uid = $row->{kval};
-            next unless $_fb_uid && $_lj_uid;
+            my $fb_uid = $row->{userid};
+            my $lj_uid = $row->{kval};
+            next unless $fb_uid && $lj_uid;
 
-            if ($fb_uids) {
-                $map{$_fb_uid} = $_lj_uid;
-            } else {
-                $map{$_lj_uid} = $_fb_uid;
-            }
+            LJ::MemCache::set([$lj_uid, "lj2fb:$lj_uid"], $fb_uid);
+            LJ::MemCache::set([$fb_uid, "fb2lj:$fb_uid"], $lj_uid);
+
+            $LJ::FB2LJ_UIDMAP{$fb_uid} = $lj_uid;
+            $LJ::LJ2FB_UIDMAP{$lj_uid} = $fb_uid;
         }
     }
 
-    # (hopefully) got map, update caches
-    foreach my $k (keys %map) {
-        my ($lj_uid, $fb_uid);
-
-        if ($fb_uids) {
-            $lj_uid = $map{$k};
-            $fb_uid = $k;
-        } else {
-            $fb_uid = $map{$k};
-            $lj_uid = $k;
-        }
-
-        # update fb -> lj map
-        my $memkey = [$fb_uid, "fb2lj:$fb_uid"];
-        LJ::MemCache::set($memkey, $lj_uid);
-        $LJ::FB2LJ_UIDMAP{$fb_uid} = $lj_uid;
-
-        # update lj -> fb map
-        $memkey = [$lj_uid, "lj2fb:$lj_uid"];
-        LJ::MemCache::set($memkey, $fb_uid);
-        $LJ::LJ2FB_UIDMAP{$lj_uid} = $fb_uid;
-    }
-
-    return %map;
+    # return map of { requested_uid => retrieved_uid }
+    return map { $_ => $req_cache->{$_} } @uids;
 }
 
 sub new_user_cluster
