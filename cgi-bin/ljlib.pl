@@ -51,6 +51,8 @@ sub Unicode::MapUTF8::AUTOLOAD {
     goto *{$Unicode::MapUTF8::AUTOLOAD}{CODE};
 }
 
+require 'fotobilder.pl';
+
 do "$ENV{'LJHOME'}/cgi-bin/ljconfig.pl";
 do "$ENV{'LJHOME'}/cgi-bin/ljdefaults.pl";
 
