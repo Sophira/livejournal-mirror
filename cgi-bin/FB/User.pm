@@ -1250,6 +1250,93 @@ sub gallery_private {
 package FB;
 
 use strict;
+use Carp qw (croak);
+
+# returns a mapping of either lj_uid -> fb_uid or vice versa,
+# depending on if lj_uids or fb_uids is passed in
+sub get_uid_lookup_map {
+    my (%opts) = @_;
+
+    my $lj_uids = $opts{lj_uids};
+    my $fb_uids = $opts{fb_uids};
+
+    croak "Must pass lj_uids or fb_uids" unless ($lj_uids xor $fb_uids);
+
+    die "FB::LJ_DOMAINID must be defined" unless defined $FB::LJ_DOMAINID;
+
+    my @uids;
+    my %map;
+    my $memkey_prefix;
+
+    if ($lj_uids) {
+        @uids = @$lj_uids;
+        %map = %LJ::FB2LJ_UIDMAP;
+        $memkey_prefix = "lj2fb";
+    } else {
+        @uids = @$fb_uids;
+        %map = %LJ::LJ2FB_UIDMAP;
+        $memkey_prefix = "fb2lj";
+    }
+
+    my $dbr = FB::get_db_reader()
+        or die "no db reader";
+
+    foreach my $uid (@uids) {
+        next if $map{$uid};
+        my $memkey = [$uid, "$memkey_prefix:$uid"];
+        my $other_uid = LJ::MemCache::get($memkey);
+
+        # memcache hit
+        if ($other_uid) {
+            $map{$uid} = $other_uid;
+            next;
+        }
+
+        # do lookup
+        my $bind = join ',', map { '?' } @uids;
+        my $lookup_col = $lj_uids ? 'kval' : 'userid';
+
+        my $sth = $dbr->prepare("SELECT userid, kval FROM useridlookup WHERE domainid=? AND ktype='I' AND $lookup_col IN ($bind)");
+        $sth->execute($FB::LJ_DOMAINID, @uids);
+
+        while (my $row = $sth->fetchrow_hashref) {
+            my $_fb_uid = $row->{userid};
+            my $_lj_uid = $row->{kval};
+            next unless $_fb_uid && $_lj_uid;
+
+            if ($fb_uids) {
+                $map{$_fb_uid} = $_lj_uid;
+            } else {
+                $map{$_lj_uid} = $_fb_uid;
+            }
+        }
+    }
+
+    # (hopefully) got map, update caches
+    foreach my $k (keys %map) {
+        my ($lj_uid, $fb_uid);
+
+        if ($fb_uids) {
+            $lj_uid = $map{$k};
+            $fb_uid = $k;
+        } else {
+            $fb_uid = $map{$k};
+            $lj_uid = $k;
+        }
+
+        # update fb -> lj map
+        my $memkey = [$fb_uid, "fb2lj:$fb_uid"];
+        LJ::MemCache::set($memkey, $lj_uid);
+        $LJ::FB2LJ_UIDMAP{$fb_uid} = $lj_uid;
+
+        # update lj -> fb map
+        $memkey = [$lj_uid, "lj2fb:$lj_uid"];
+        LJ::MemCache::set($memkey, $fb_uid);
+        $LJ::LJ2FB_UIDMAP{$lj_uid} = $fb_uid;
+    }
+
+    return %map;
+}
 
 sub new_user_cluster
 {
