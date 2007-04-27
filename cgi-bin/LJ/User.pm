@@ -1309,6 +1309,12 @@ sub set_prop {
     $u->{$prop} = $value;
 }
 
+sub clear_prop {
+    my ($u, $prop) = @_;
+    $u->set_prop($prop, undef);
+    return 1;
+}
+
 sub journal_base {
     my $u = shift;
     return LJ::journal_base($u);
