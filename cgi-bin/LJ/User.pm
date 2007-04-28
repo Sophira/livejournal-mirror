@@ -32,6 +32,7 @@ use Class::Autouse qw(
                       Time::Local
                       LJ::Event::Befriended
                       LJ::M::FriendsOf
+                      LJ::BetaFeatures
                       );
 
 sub new_from_row {
@@ -3457,6 +3458,11 @@ sub can_add_friends {
     }
 
     return 1;
+}
+
+sub is_in_beta {
+    my ($u, $key) = @_;
+    return LJ::BetaFeatures->user_in_beta( $u => $key );
 }
 
 package LJ;

@@ -4,6 +4,7 @@ use strict;
 use Carp qw(croak);
 
 use LJ::ModuleLoader;
+require "$ENV{'LJHOME'}/cgi-bin/ljcapabilities.pl";
 
 die "must have 'betafeatures' cap configured"
     unless LJ::class_bit(__PACKAGE__->cap_name);
@@ -46,8 +47,8 @@ sub add_to_beta {
     my ($u, $key) = @_;
 
     my $handler = $class->get_handler($key);
-    die "can't add to inactive beta"
-        unless $handler->is_active;
+    die "no handler for beta" unless $handler;
+    die "can't add to inactive beta" unless $handler->is_active;
 
     # add the cap value if they're adding it
     unless ($u->in_class($class->cap_name)) {
@@ -60,6 +61,36 @@ sub add_to_beta {
 
     push @features, $key;
     my $newval = join(",", @features);
+    $u->set_prop($class->prop_name => $newval);
+    return 1;
+}
+
+sub remove_from_beta {
+    my $class = shift;
+    my ($u, $key) = @_;
+
+    my $handler = $class->get_handler($key);
+    die "no handler for beta" unless $handler;
+
+    # we can just return if they're not beta testing anything
+    return 1 unless $u->in_class($class->cap_name);
+
+    # remove the feature from the prop list
+    my $propval = $u->prop($class->prop_name);
+    my @features = split(/\s*,\s*/, $propval);
+    my @newkeys = ();
+    push @newkeys, $_ unless grep { $_ eq $key } @features;
+
+    # they're a member of no active beta tests?
+    unless (@newkeys) {
+        $u->clear_prop($class->prop_name);
+        $u->remove_from_class($class->cap_name);
+        return 1;
+    }
+
+    # we have something to set
+    my $newval = join(",", @newkeys);
+    # they're already in the cap class
     $u->set_prop($class->prop_name => $newval);
     return 1;
 }
