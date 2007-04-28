@@ -47,8 +47,9 @@ sub add_to_beta {
     my ($u, $key) = @_;
 
     my $handler = $class->get_handler($key);
-    die "no handler for beta" unless $handler;
-    die "can't add to inactive beta" unless $handler->is_active;
+    die "No handler for beta." unless $handler;
+    die "This beta test is inactive." unless $handler->is_active;
+    die "You do not have access to this beta test." unless $handler->user_can_add($u);
 
     # add the cap value if they're adding it
     unless ($u->in_class($class->cap_name)) {
@@ -70,7 +71,7 @@ sub remove_from_beta {
     my ($u, $key) = @_;
 
     my $handler = $class->get_handler($key);
-    die "no handler for beta" unless $handler;
+    die "No handler for beta." unless $handler;
 
     # we can just return if they're not beta testing anything
     return 1 unless $u->in_class($class->cap_name);
