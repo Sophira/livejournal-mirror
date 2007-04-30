@@ -270,6 +270,8 @@ body<=
         "<div class='note'>Security for all pictures below.</div>" .
         "</td></tr>";
 
+    my $diskfree = $u->diskfree_widget;
+
 $opts .= qq {
 <tr><td align='right'><b>Files:</b></td><td align='left'>
 <div id="files">
@@ -294,6 +296,8 @@ upload your pictures more easily.
 </div>
 
 <p id='intropara'>This form lets you upload pictures from your browser.  After uploading you can tag, categorize, annotate, etc.</p>
+
+$diskfree
 
 <form enctype="multipart/form-data" action="/interface/webupload" method='post' id='WebUpload' onsubmit='submitForm();'>
 <input type='hidden' id='postUploadGoto' name='go_to' value='annotate' />

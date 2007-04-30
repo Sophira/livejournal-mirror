@@ -518,6 +518,12 @@ sub diskusage_bytes {
     return $lj_blobusage + $fb_diskusage;
 }
 
+sub diskquota_bytes {
+    my $u = shift;
+
+    return $u->get_cap('disk_quota') * (1 << 20); # MB -> bytes
+}
+
 sub make_login_session {
     my ($u, $exptype, $ipfixed) = @_;
     $exptype ||= 'short';

@@ -469,22 +469,7 @@ sub can_use_sms {
 sub diskfree_widget {
     my $u = shift;
 
-    my $spaceinfo = FB::run_hook("disk_usage_info", $u);
-
-    return '' unless $spaceinfo && $spaceinfo->{quota};
-
-    my $usedtotal = ($spaceinfo->{used} + $spaceinfo->{external});
-    my $pct = sprintf("%0.2f", $usedtotal/$spaceinfo->{quota} * 100);
-    my $free = $spaceinfo->{free};
-    $usedtotal = sprintf("%0.2f", $usedtotal/1024);
-    my $total = $spaceinfo->{quota} / 1024;
-    return qq {
-        <div class = "FBDiskFreeWidget">
-            <span class="FBDiskAvailable">Available storage space</span>
-            <div class="FBDiskUsedBarContainer"><div class="FBDiskUsedBar" style="width: $pct%;"></div></div>
-            <div><div class="FBDiskUsed">$usedtotal MB</div><div class="FBDiskTotal">$total MB</div></div>
-        </div>
-    };
+    return $u->lj_u->diskfree_widget;
 }
 
 sub security_widget

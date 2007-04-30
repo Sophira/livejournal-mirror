@@ -221,6 +221,12 @@ sub fb_mysql_insertid {
     }
 }
 
+##########
+
+sub fb_userid {
+    my $u = shift;
+    return $u->fb_u->id;
+}
 
 
 ############ FROM FB::User ############
@@ -228,6 +234,7 @@ sub fb_mysql_insertid {
 # returns hashref (gallid -> rec) of all user's galleries
 sub galleries {
     my $u = shift;
+    $u = $u->fb_u;
     return {%{ $u->{_galleries} ||= FB::Gallery->load_gals($u) }};
 }
 
@@ -235,39 +242,41 @@ sub incoming_gallery {
     my $u = shift;
     # FIXME: locking?
     my $gr = $u->fb_selectrow_hashref("SELECT * FROM gallery WHERE userid=? AND name=':FB_in'",
-                                      $u->{userid});
-    return FB::Gallery->from_gallery_row($u, $gr) if $gr;
-    return FB::Gallery->create($u, name => ":FB_in");
+                                      $u->fb_userid);
+    return FB::Gallery->from_gallery_row($u->fb_u, $gr) if $gr;
+    return FB::Gallery->create($u->fb_u, name => ":FB_in");
 }
 
 sub load_gallery_id {
     my $u = shift;
     my $gallid = int(shift);
-    my $g = FB::Gallery->new($u, $gallid)
+    my $g = FB::Gallery->new($u->fb_u, $gallid)
         or return undef;
 
     return undef unless $g->valid;
     return $g;
 }
 
-# FIXME: don't use disk_usage_info hook, it's gone
 sub diskfree_widget {
     my $u = shift;
 
-    my $spaceinfo = FB::run_hook("disk_usage_info", $u);
+    my $used = $u->diskusage_bytes;
+    my $quota = $u->diskquota_bytes;
 
-    return '' unless $spaceinfo && $spaceinfo->{quota};
+    my $pct = sprintf("%0.2f", $used / $quota * 100);
 
-    my $usedtotal = ($spaceinfo->{used} + $spaceinfo->{external});
-    my $pct = sprintf("%0.2f", $usedtotal/$spaceinfo->{quota} * 100);
-    my $free = $spaceinfo->{free};
-    $usedtotal = sprintf("%0.2f", $usedtotal/1024);
-    my $total = $spaceinfo->{quota} / 1024;
+    my $free = $quota - $used;
+    $free = 0 if $free < 0;
+
+    my $usedtotal = sprintf("%0.2f", $used / 1024 / 1024);
+    my $total = $quota / 1024 / 1024;
+
     return qq {
         <div class = "FBDiskFreeWidget">
             <span class="FBDiskAvailable">Available storage space</span>
             <div class="FBDiskUsedBarContainer"><div class="FBDiskUsedBar" style="width: $pct%;"></div></div>
             <div><div class="FBDiskUsed">$usedtotal MB</div><div class="FBDiskTotal">$total MB</div></div>
+            <div class="ljclear">&nbsp;</div>
         </div>
     };
 }

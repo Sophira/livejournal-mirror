@@ -50,7 +50,7 @@
             my $id = FB::create_style($u, $name, $base)
                 or return $err->("Couldn't create new style");;
 
-            return BML::redirect("/manage/styles/?id=$id") if $id;
+            return BML::redirect("/manage/media/styles/?id=$id") if $id;
         } else {
             # Change default
             my $newid = $POST{'default_style'}+0;
