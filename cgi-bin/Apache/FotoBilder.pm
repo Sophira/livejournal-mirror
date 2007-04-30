@@ -9,10 +9,6 @@ use Apache::Constants qw(:common REDIRECT HTTP_NOT_MODIFIED
 use Apache::File ();
 use XMLRPC::Transport::HTTP ();
 use lib "$ENV{'FBHOME'}/cgi-bin";
-BEGIN {
-    # in Begin so we pre-load libraries from there, and get constants
-    require "$ENV{'FBHOME'}/cgi-bin/fotobilder.pl";
-}
 
 # protocol v1
 use Apache::FotoBilder::Upload;
