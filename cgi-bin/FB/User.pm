@@ -31,10 +31,7 @@ sub user {
 # construct a fb user from a lj user
 sub new_from_lj_user {
     my ($class, $lju) = @_;
-    my $dbr = FB::get_db_reader();
-    my $domainid = $FB::LJ_DOMAINID or die "You must define the domainid for LJ in your config";
-    my ($fbuid) = $dbr->selectrow_array("SELECT userid FROM useridlookup WHERE domainid=? AND ktype='I' AND kval=?",
-                                      undef, $domainid, $lju->id);
+    my $fbuid = FB::get_fb_uid($lju->id) or return undef;
     return FB::load_userid($fbuid);
 }
 
@@ -42,10 +39,7 @@ sub new_from_lj_user {
 sub lj_u {
     my $fb_u = shift;
 
-    my $dbr = FB::get_db_reader();
-    my $domainid = $FB::LJ_DOMAINID or die "You must define the domainid for LJ in your config";
-    my ($ljuid) = $dbr->selectrow_array("SELECT kval FROM useridlookup WHERE domainid=? AND ktype='I' AND userid=?",
-                                      undef, $domainid, $fb_u->id);
+    my $ljuid = FB::get_lj_uid($fb_u->id) or return undef;
     return LJ::load_userid($ljuid);
 }
 
@@ -1226,12 +1220,19 @@ sub diskusage_bytes {
     return $lj_u->diskusage_bytes;
 }
 
+sub diskquota_bytes {
+    my $u = shift;
+
+    my $lj_u = $u->lj_u;
+    return $lj_u->get_cap('disk_quota') * (1 << 20); # MB -> bytes
+}
+
 #### overloaded cap accessors ####
 sub can_upload {
     my $u = shift;
 
     my $usage = $u->diskusage_bytes;
-    my $quota = $u->lj_u->get_cap('disk_quota') * (1 << 20); # MB -> bytes
+    my $quota = $u->diskquota_bytes;
     return $quota && $usage < $quota;
 }
 
@@ -1251,6 +1252,22 @@ package FB;
 
 use strict;
 use Carp qw (croak);
+
+# returns a LJ userid given a FB userid
+sub get_lj_uid {
+    my $ljuid = shift;
+
+    my %map = get_uid_lookup_map(fb_uids => [$ljuid]);
+    return $map{$ljuid};
+}
+
+# returns a FB userid given a LJ userid
+sub get_fb_uid {
+    my $fbuid = shift;
+
+    my %map = get_uid_lookup_map(lj_uids => [$fbuid]);
+    return $map{$fbuid};
+}
 
 # returns a mapping of either lj_uid -> fb_uid or vice versa,
 # depending on if lj_uids or fb_uids is passed in
