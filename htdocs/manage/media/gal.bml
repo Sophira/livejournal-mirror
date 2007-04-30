@@ -297,6 +297,8 @@
                     FB::ehtml("Change all to \"" .  $u->secgroup_name($POST{galsec}) . "\"") . "\" name='resolve_picsec_conflicts'>";
                 $body .= "</form>";
 
+                # close table this is inside
+                $body .= '</td></tr></table>';
                 return;
             }
         }
