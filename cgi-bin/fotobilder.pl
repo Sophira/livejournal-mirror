@@ -1173,7 +1173,7 @@ sub html_pics
         } else {
             my $piccode = FB::piccode($p);
             my ($url, $w, $h) = FB::scaled_url($u, $p, 100, 100);
-            $ret .= "<a href='/manage/pic?id=$p->{upicid}'>";
+            $ret .= "<a href='/manage/pic.bml?id=$p->{upicid}'>";
             $ret .= "<img src='$url' width=$w height=$h alt='$piccode' align='top' border=0/>";
             $ret .= "</a>";
         }
