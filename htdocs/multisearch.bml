@@ -17,6 +17,9 @@
         if ($q =~ /^faq (\d+)$/) {
             return BML::redirect("$LJ::SITEROOT/support/faqbrowse.bml?faqid=$1&view=full");
         }
+        if ($q =~ /^req(uest)? (\d+)$/) {
+            return BML::redirect("$LJ::SITEROOT/support/see_request.bml?id=$2");
+        }
 
         do "LJ/NavTag.pm";
         my @dests = LJ::NavTag->dests_of_tag($q);
@@ -201,11 +204,9 @@
             return;
         }
 
-        my ($qarg, $sth);
-
-        $qarg = $dbr->quote($parts[-1]);
-        $sth = $dbr->prepare("SELECT code FROM codes WHERE type='country' AND (code=$qarg OR item=$arg) LIMIT 1");
-        $sth->execute;
+        my $ctc = $parts[-1];
+        my $sth = $dbr->prepare("SELECT code FROM codes WHERE type='country' AND (code=? OR item=?) LIMIT 1");
+        $sth->execute($ctc, $ctc);
         my ($country) = $sth->fetchrow_array;
         my ($state, $city);
 

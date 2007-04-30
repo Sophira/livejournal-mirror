@@ -208,11 +208,10 @@ sub make_feed
                 }
             }
 
-            if ($event =~ /<lj-poll-(\d+)>/) {
+            while ($event =~ /<lj-poll-(\d+)>/g) {
                 my $pollid = $1;
-                my $name = $dbr->selectrow_array("SELECT name FROM poll WHERE pollid=?",
-                                                 undef, $pollid);
 
+                my $name = LJ::Poll->new($pollid)->name;
                 if ($name) {
                     LJ::Poll->clean_poll(\$name);
                 } else {
@@ -223,7 +222,7 @@ sub make_feed
             }
 
             $ppid = $1
-                if $event =~ m!<lj-phonepost journalid=[\'\"]\d+[\'\"] dpid=[\'\"](\d+)[\'\"] />!;
+                if $event =~ m!<lj-phonepost journalid=[\'\"]\d+[\'\"] dpid=[\'\"](\d+)[\'\"]( /)?>!;
         }
 
         my $mood;
@@ -372,7 +371,7 @@ sub create_view_atom
 
     # AtomAPI interface path
     my $api = $opts->{'apilinks'} ? "$LJ::SITEROOT/interface/atom" :
-                                    "$LJ::SITEROOT/users/$u->{user}/data/atom";
+                                    $u->journal_base . "/data/atom";
 
     my $make_link = sub {
         my ( $rel, $type, $href, $title ) = @_;
@@ -472,14 +471,13 @@ sub create_view_atom
             )
           ) if $opts->{'apilinks'};
 
+        # NOTE: Atom 0.3 allowed for "issued", where we put the time the
+        # user says it was. There's no equivalent in later versions of
+        # Atom, though. And Atom 0.3 is deprecated. Oh well.
 
-        # Brad wants to keep entry/issued because he's grumpy that it
-        # was removed from 0.3.  Where else do we put the time that
-        # the user says it was?
         my ($year, $mon, $mday, $hour, $min, $sec) = split(/ /, $it->{eventtime});
         my $event_date = sprintf("%04d-%02d-%02dT%02d:%02d:%02d",
                                  $year, $mon, $mday, $hour, $min, $sec);
-        $entry->issued(    $event_date );   # OLD, not 1.0
 
 
         # title can't be blank and can't be absent, so we have to fake some subject

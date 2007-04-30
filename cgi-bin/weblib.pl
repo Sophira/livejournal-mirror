@@ -604,7 +604,7 @@ sub check_form_auth {
 
     my $remote = LJ::get_remote()    or return 0;
     my $sess = $remote->{'_session'} or return 0;
-    
+
 
     # check the attributes are as they should be
     my $attr = LJ::get_challenge_attributes($formauth);
@@ -1420,7 +1420,7 @@ MOODS
 
             my $comment_settings_default = BML::ml('entryform.comment.settings.default5', {'aopts' => $comment_settings_journaldefault->()});
             $out .= LJ::html_select({ 'name' => "comment_settings", 'id' => 'comment_settings', 'class' => 'select', 'selected' => $comment_settings_selected->(),
-                                  'tabindex' => $tabindex->() }, 
+                                  'tabindex' => $tabindex->() },
                                 "", $comment_settings_default, "nocomments", BML::ml('entryform.comment.settings.nocomments',"noemail"), "noemail", BML::ml('entryform.comment.settings.noemail'));
             $out .= LJ::help_icon_html("comment", "", " ");
             $out .= "\n";
@@ -2068,8 +2068,8 @@ sub check_page_ad_block {
     # This allows us to choose an ad based on some logic
     # Example: If LJ::did_post() show 'App-Confirm' type ad
     my $ad_mapping = LJ::run_hook('get_ad_uri_mapping', $uri) ||
-                     ref($LJ::AD_MAPPING{$uri}) eq 'CODE' ?
-                     eval{$LJ::AD_MAPPING{$uri}->()} : $LJ::AD_MAPPING{$uri};
+        LJ::conf_test($LJ::AD_MAPPING{$uri});
+
     return 1 if $ad_mapping eq $orient;
     return 1 if ref($ad_mapping) eq 'HASH' && $ad_mapping->{$orient};
     return;
@@ -2193,7 +2193,7 @@ sub ads {
     ##
     my $pagetype = $orient;
     $pagetype =~ s/^BML-//;
-    
+
     # first 500 words
     $pubtext =~ s/<.+?>//g;
     $pubtext = text_trim($pubtext, 1000);
@@ -2369,7 +2369,7 @@ sub ads {
         'NON';                                         # Not logged in
 
     # incremental Ad ID within this page
-    my $adid = get_next_ad_id(); 
+    my $adid = get_next_ad_id();
 
     # specific params for SixApart adserver
     $adcall{p}  = 'lj';
@@ -2427,7 +2427,7 @@ sub ads {
         $adhtml .= "<div style='width: $adcall{width}px; height: $adcall{height}px; border: 1px solid green; color: #ff0000'>$ehpub</div>\n";
     } else {
         # Iframe with call to ad targeting server
-        my $dim_style = join("; ", 
+        my $dim_style = join("; ",
                              "width: " . LJ::ehtml($adcall{width}) . "px",
                              "height: " . LJ::ehtml($adcall{height}) . "px" );
 
@@ -2916,10 +2916,7 @@ sub subscribe_interface {
             # search for this class in categories
             next if grep { $_ eq $evt_class } map { @$_ } map { values %$_ } @categories;
 
-            if ($showtracking) {
-                # add this class to the tracking category
-                push @$tracking, $subsc;
-            }
+            push @$tracking, $subsc;
         }
     }
 
@@ -2991,18 +2988,6 @@ sub subscribe_interface {
             my $ntypeid = $notify_class->ntypeid or next;
 
             # create the checkall box for this event type.
-
-            # if all the $notify_class are enabled in this category, have
-            # the checkall button be checked by default
-            my $subscribed_count = 0;
-            foreach my $subscr (@pending_subscriptions) {
-                my %subscr_args = $subscr->sub_info;
-                $subscr_args{ntypeid} = $ntypeid;
-                $subscribed_count++ if scalar $u->find_subscriptions(%subscr_args);
-            }
-
-            my $checkall_checked = $subscribed_count == scalar @pending_subscriptions;
-
             my $disabled = ! $notify_class->configured_for_user($u);
 
             if ($notify_class->disabled_url && $disabled) {
@@ -3034,6 +3019,8 @@ sub subscribe_interface {
             my $input_name = $pending_sub->freeze or next;
             my $title      = $pending_sub->as_html or next;
             my $subscribed = ! $pending_sub->pending;
+
+            next if ! $pending_sub->event_class->is_visible && $showtracking;
 
             my $evt_class = $pending_sub->event_class or next;
             unless ($is_tracking_category) {
@@ -3097,17 +3084,22 @@ sub subscribe_interface {
             $cat_html .= "<td>&nbsp;</td>";
             my $hidden = ($pending_sub->default_selected || ($subscribed && $pending_sub->active)) ? '' : 'style="visibility: hidden;"';
 
+            # is there an inbox notification for this?
+            my %sub_args = $pending_sub->sub_info;
+            $sub_args{ntypeid} = LJ::NotificationMethod::Inbox->ntypeid;
+            delete $sub_args{flags};
+            my ($inbox_sub) = $u->find_subscriptions(%sub_args);
+
             foreach my $note_class (@notify_classes) {
                 my $ntypeid = eval { $note_class->ntypeid } or next;
 
-                my %sub_args = $pending_sub->sub_info;
                 $sub_args{ntypeid} = $ntypeid;
-                delete $sub_args{flags};
-
                 my @subs = $u->has_subscription(%sub_args);
 
-                my $note_pending = scalar @subs ? $subs[0] : LJ::Subscription::Pending->new($u, %sub_args);
-                next unless $note_pending;
+                my $note_pending = LJ::Subscription::Pending->new($u, %sub_args);
+                if (@subs) {
+                    $note_pending = $subs[0];
+                }
 
                 if (($is_tracking_category || $pending_sub->is_tracking_category) && $note_pending->pending) {
                     # flag this as a "tracking" subscription
@@ -3118,11 +3110,6 @@ sub subscribe_interface {
 
                 # select email method by default
                 my $note_selected = (scalar @subs) ? 1 : (!$selected && $note_class eq 'LJ::NotificationMethod::Email');
-
-                # is there an inbox notification for this
-                my %inbox_sub_args = %sub_args;
-                $inbox_sub_args{ntypeid} = LJ::NotificationMethod::Inbox->ntypeid;
-                my ($inbox_sub) = $u->find_subscriptions(%inbox_sub_args);
 
                 # check the box if it's marked as being selected by default UNLESS
                 # there exists an inbox subscription and no email subscription
@@ -3342,5 +3329,5 @@ sub final_body_html {
     LJ::run_hooks('insert_html_before_body_close', \$before_body_close);
     return $before_body_close;
 }
-	    
+
 1;
