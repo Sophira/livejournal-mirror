@@ -245,13 +245,6 @@ body<=
     return "<?h1 Error h1?><?p Your current <a href='/manage/media/accountstatus.bml'>account status</a> does not allow you to upload pictures. p?>"
         unless FB::get_cap($u, 'can_upload');
 
-    # call hook to check if user has disk space for picture before uploading
-    my $Kibfree = FB::run_hook("disk_remaining", $u);
-    if (defined $Kibfree) {
-        return "<?h1 Error h1?><?p No <a href='/manage/media/accountstatus.bml'>disk space remaining</a> for your account. p?>"
-            if $Kibfree <= 0;
-    }
-
     my $gallid = $GET{'gallid'}+0;
 
     return BML::redirect("/login?to=" .

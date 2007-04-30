@@ -10,61 +10,15 @@
     $title = "Account Status";
     $body = "";
 
-    ### degradation level reporting
-
-    my $deg = FB::PP::get_deg_level($u);
-    if ($deg) {
-        $body .= "<fieldset style='margin-bottom: 20px'><legend>Degraded Account</legend>";
-
-        my $exptime = $u->prop("deg_start");
-
-        my $date = sub { substr(FB::date_unix_to_mysql($_[0]), 0, 10); };
-
-        # what's currently in effect?
-        $body .= "Your account expired on <i>" . $date->($exptime);
-        $body .= "</i>.  The following restrictions are in effect: <ul>";
-
-        # deg levels:
-        # 1) no uploads
-        # 2) no uploads, galleries for owner only
-        # 3) no uploads, no galleries, small pics (320x320)
-
-        $body .= "<li>You cannot upload new pictures</li>"
-            if $deg >= 1;
-
-        $body .= "<li>Galleries are not publicly visible</li>"
-            if $deg == 2;
-
-        if ($deg >= 3) {
-            $body .= "<li>Galleries are completely disabled</li>";
-            $body .= "<li>Your account has been <b>flagged for deletion</b>.</li>";
-        }
-
-        $body .= "</ul></p>";
-
-        # what happens from here?
-        if ($deg < 3) {
-            $body .= "If you do not renew your account, your data will be permanently deleted: <ul>";
-
-            $body .= "<li><i>" . $date->($exptime+86400*3) . "</i>: Your galleries will no longer be publicly accessible</li>"
-                if $deg < 2;
-
-            $body .= "<li><i>" . $date->($exptime+86400*10) . "</i>: Your account will be flagged for deletion</li>";
-        }
-
-        $body .= "</ul></fieldset>";
-    }
-
     ### disk usage reporting
 
     my $size = sub {
         my $kb = shift;
-        # A lot of people are getting confused because they don't see the difference between KiB and MiB very easily
-        # especially if they're jumbled together in one list.
-        return sprintf("%.2f MiB", $kb / 1024);
+        return sprintf("%.2f MB", $kb / 1024);
     };
 
-    my ($used, $quota, $external) = FB::PP::disk_used_total($u);
+    my $used = $u->diskusage_bytes / 1024; # KB
+    my $quota = $u->diskquota_bytes / 1024; # KB
 
     $body .= "<fieldset><legend>Disk space</legend>";
     $body .= "<table cellpadding='5' cellspacing='0' border='0' class='tblline'>\n";
@@ -73,7 +27,7 @@
     $body .= "</td></tr>\n";
 
     if (defined $quota) {
-        my $free = $quota - ($used + $external);
+        my $free = $quota - $used;
         $free = 0 if $free < 0;
         $body .= "<tr><th>Remaining:</th><td align='right' colspan=2>" . $size->($free) . "</td></tr>\n";
     }
@@ -96,56 +50,34 @@
                                        $u->{userid}, $id);
         $name = '<i>Unsorted</i>' if FB::gal_is_unsorted($name);
 
-        $gsize = sprintf("%0.2f MiB", $gsize / 1024**2);
+        $gsize = sprintf("%0.2f MB", $gsize / 1024**2);
 
-        next unless $gsize ne '0.00 MiB';
+        next unless $gsize ne '0.00 MB';
 
         $galusage .= "<tr><td style='padding-left:10px; border-bottom:0px'>&nbsp;</td>";
         $galusage .= "<td style='padding-left:2em; border-bottom:0px'> ";
-        $galusage .= "<a href='/manage/gal?id=$id'>$name</a></td>";
+        $galusage .= "<a href='/manage/gal.bml?id=$id'>$name</a></td>";
         $galusage .= "<td align='right' style='border-bottom:0px'>$gsize</td>";
         $c++;
     }
 
 
-    if (my $authmod = FB::current_domain_plugin()) {
-        $body .= "<tr><th>Disk used:</th>";
-        $body .= "<td $topstl>" . FB::sitename() . ":</td>";
-        $body .= "<td align='right' $topstl>" . $size->($used) . "</td></tr>\n";
+    $body .= "<tr><th>Disk used:</th><td align='right'>" . $size->($used) . "</td></tr>\n";
+    $body .= $galusage;
 
-        $body .= $galusage;
-
-        $body .= "<tr><th>&nbsp;</th>";
-        $body .= "<td $botstl>" . $authmod->remote_name;
-        my $link_style = 'font_size: .9em;';
-        my $link_url   = $authmod->remote_root . "/manage/files.bml?showtype=";
-        $body .= " (<a style='$link_style' href='$link_url" . "phonepost'>Phone Posts</a>,";
-        $body .= " <a style='$link_style' href='$link_url" . "userpic'>Userpics</a>):</td>";
-        $body .= "<td align='right' $botstl>" . $size->($external) . "</td></tr>\n";
-
-        $body .= "<tr><th>&nbsp;</th>";
-        $body .= "<td>Total used:</td><td align='right'>" . $size->($used+$external) . "</td></tr>\n";
-    } else {
-        $body .= "<tr><th>Disk used:</th><td align='right'>" . $size->($used) . "</td></tr>\n";
-        $body .= $galusage;
-    }
     $body .= "</table>";
     $body .= "</fieldset>\n";
 
     ### account status reporting
 
     # if not degraded, check to see their can_upload cap status
-    my $can_upload = ! $deg ? FB::get_cap($u, 'can_upload') : 1;
+    my $can_upload = FB::get_cap($u, 'can_upload');
 
     if (! $can_upload || ! $u->{statusvis} eq 'V') {
         $body .= "<fieldset style='margin-top: 20px'><legend>Account status</legend><ul>";
 
         unless ($can_upload) {
             $body .= "<li>Your account type does not allow new photos to be uploaded, even if you've already used disk space.";
-            if (my $authmod = FB::current_domain_plugin()) {
-                $body .= "<br /><br />Uploading new photos to ScrapBook is available to all LiveJournal ";
-                $body .= "<a href='" . $authmod->remote_root . "/paidaccounts/'>Paid Accounts</a>.";
-            }
             $body .= "</li>";
         }
 

@@ -290,10 +290,9 @@
 
                 my @resolve_upics = (@diff_sec, @multi_gals);
                 $body .= "<br />";
-                $body .= "<form method='post' action='/manage/media/gal.bml?id=$gallid'>";
                 $body .= "<input type='hidden' name='userid' value='$u->{'userid'}'>";
                 $body .= "<input type='hidden' name='galsec' value='$POST{galsec}'>";
-                $body .= "<input type='hidden' name='resolve_upics' value='".  (join ', ', @resolve_upics) . "'";
+                $body .= "<input type='hidden' name='resolve_upics' value='".  (join ', ', @resolve_upics) . "' />";
                 $body .= "<input type='submit' value=\"" .
                     FB::ehtml("Change all to \"" .  $u->secgroup_name($POST{galsec}) . "\"") . "\" name='resolve_picsec_conflicts'>";
                 $body .= "</form>";

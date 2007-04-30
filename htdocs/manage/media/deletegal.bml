@@ -29,9 +29,9 @@
                                     $u->{'userid'}, $gallid);
 
     my $url = FB::url_gallery($u, $g);
-    $body .= "<p>[<a href='gal?id=$gallid'>Properties</a>]\n";
-    $body .= "[<a href='pics?gal=$gallid'>Pictures</a>]\n";
-    $body .= "[<a href='picstext?gal=$gallid'>Text &amp; Security</a>]\n";
+    $body .= "<p>[<a href='gal.bml?id=$gallid'>Properties</a>]\n";
+    $body .= "[<a href='pics.bml?gal=$gallid'>Pictures</a>]\n";
+    $body .= "[<a href='picstext.bml?gal=$gallid'>Text &amp; Security</a>]\n";
     $body .= "[<a href='$url'>View...</a>]<br />" unless FB::gal_is_unsorted($g);
     $body .= "</p>";
 

@@ -27,7 +27,7 @@
 
     my $is_unsorted = $g->{'name'} eq ":FB_in";
 
-    my @pics = $g->pics;
+    my @pics = $g->pictures;
 
     $body .= "[<a href='gal.bml?id=$gallid'>Properties</a>]\n";
     $body .= "[<b>Pictures</b>]\n";
@@ -40,7 +40,7 @@
         return;
     }
 
-    $body .= "<p><form method='post' action='picsave' id='pics_form'>";
+    $body .= "<p><form method='post' action='picsave.bml' id='pics_form'>";
     $body .= FB::html_hidden("gallid", $gallid);
     $body .= FB::html_hidden("upicids", join(':', map { $_->{upicid}+0 } @pics));
     $body .= FB::html_hidden("userid", $u->{'userid'});

@@ -24,7 +24,7 @@ body<=
         <input type="button" onclick="document.location.href='/manage/media/upload.bml'" value="Upload images" style="float: right;"/>
         };
 
-    $ret .= "<form method='GET' action='gal'><input type='submit' value='Create a New Gallery' /></form>";
+    $ret .= "<form method='GET' action='gal.bml'><input type='submit' value='Create a New Gallery' /></form>";
 
     if (%$gals) {
 
@@ -157,7 +157,7 @@ body<=
         } else {
             $ret .= "<a href='gals?sort=$skey'>$s->[0]</a>";
         }
-        $ret .= "&nbsp;&nbsp;<small><a href='gals?sort=nest'>[Nested View]</a></small>" if $skey eq "name" && $sort ne "nest";
+        $ret .= "&nbsp;&nbsp;<small><a href='gals.bml?sort=nest'>[Nested View]</a></small>" if $skey eq "name" && $sort ne "nest";
         $ret .= "</th>";
     }
     $generator = $nested if $sort eq "nest";

@@ -23,10 +23,10 @@
     $u->writer or return $err->("Database unavailable");
 
     my $gallid = $FORM{'gallid'}+0;
-    return BML::redirect("/manage/gals") unless FB::did_post();
+    return BML::redirect("/manage/media/gals.bml") unless FB::did_post();
 
     my $g = FB::load_gallery_id($u, $gallid);
-    return BML::redirect("/manage/gals") unless $g;
+    return BML::redirect("/manage/media/gals.bml") unless $g;
 
     my @pics = FB::get_gallery_pictures($u, $g, { no_props => 1 });
 
@@ -106,7 +106,7 @@
     }
 
     # for lack of anything exciting to do:
-    return BML::redirect("/manage/pics?gal=$g->{'gallid'}");
+    return BML::redirect("/manage/media/pics.bml?gal=$g->{'gallid'}");
 
 }
 _code?><?page
