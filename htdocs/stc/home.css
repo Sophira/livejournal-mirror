@@ -333,3 +333,25 @@ table.stats-meter {
 .appwidget-recentposts h2 {
     display: none;
 }
+
+.homepage-wrapper-loggedin {
+    background-color: #fff;
+}
+.homepage-wrapper-loggedin h2 {
+    font-size: 14px;
+    font-family: Arial;
+    font-weight: bold;
+    background: #eee url(/img/corner.gif) no-repeat 0 0;
+    padding: 5px 8px;
+    color: #333;
+}
+.homepage-wrapper-loggedin .appwidget-recentcomments h2,
+.homepage-wrapper-loggedin .appwidget-gettingstarted h2 {
+    background-color: #C7E0F6;
+}
+.homepage-wrapper-loggedin .appwidget-gettingstarted {
+    background-color: #ECF6FF;
+}
+.homepage-wrapper-loggedin .getting-started-items {
+    padding: 0 10px;
+}

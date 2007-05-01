@@ -4,7 +4,9 @@ use strict;
 use base qw(LJ::Widget);
 use Carp qw(croak);
 
-sub need_res { }
+sub need_res {
+    return qw( stc/widgets/recentcomments.css );
+}
 
 # args
 #   user: optional $u whose recent received comments we should get (remote is default)
@@ -23,7 +25,7 @@ sub render_body {
     my $ret;
 
     $ret .= "<h2>" . $class->ml('widget.recentcomments.title') . "</h2>";
-    $ret .= "&raquo; <a href='$LJ::SITEROOT/tools/recent_comments.bml'>" . $class->ml('widget.recentcomments.viewall') . "</a>";
+    $ret .= "<a href='$LJ::SITEROOT/tools/recent_comments.bml' class='more-link'>" . $class->ml('widget.recentcomments.viewall') . "</a>";
 
     # return if no comments
     return "<p>" . $class->ml('widget.recentcomments.nocomments', {'aopts' => "href='$LJ::SITEROOT/update.bml'"}) . "</p>"

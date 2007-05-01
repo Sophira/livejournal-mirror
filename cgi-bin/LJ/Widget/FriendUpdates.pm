@@ -28,7 +28,7 @@ sub render_body {
 
     my $ret;
     $ret .= "<h2>" . $class->ml('widget.friendupdates.title') . "</h2>";
-    $ret .= "<p>&raquo; <a href='$LJ::SITEROOT/inbox/'>" . $class->ml('widget.friendupdates.viewall') . "</a></p>";
+    $ret .= "<a href='$LJ::SITEROOT/inbox/' class='more-link'>" . $class->ml('widget.friendupdates.viewall') . "</a>";
 
     unless (@notifications) {
         $ret .= $class->ml('widget.friendupdates.noupdates') . "<br />";
