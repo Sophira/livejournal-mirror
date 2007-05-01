@@ -519,6 +519,30 @@ sub media_base_url {
     return "http://" . $u->user . ".$LJ::USER_DOMAIN/media";
 }
 
+
+
+# returns count of all images for this user
+sub picture_count {
+    my $u = shift;
+
+    my $memkey = [$u->id, "piccnt:" . $u->id];
+    my $total = LJ::MemCache::get($memkey);
+
+    warn "total: $total";
+
+    return $total if defined $total;
+
+    $total = 0;
+
+    foreach my $gal (values %{$u->galleries}) {
+        $total += $gal->pic_count;
+    }
+
+    LJ::MemCache::set($memkey, $total, 3600);
+
+    return $total;
+}
+
 ############ END FB::User METHODS ############
 
 

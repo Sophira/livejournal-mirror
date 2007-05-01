@@ -118,3 +118,4 @@ jabclusterid:<id> == address of server
 <uid> frbdays:<uid>:<timespan> == friends birthdays for timespan, either 'full' or number of months in the future
 
 <uid> rcntalk:<uid>:<maxshow> == recent talkitems cached on user, cache on number of talkitems to get
+<uid> piccnt:<uid> == number of images this user has
