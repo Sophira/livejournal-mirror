@@ -161,6 +161,9 @@ sub handle_post {
         die "Start time must be before end time";
     }
 
+    # Make sure there's text
+    die "No question specified." unless $post->{text};
+
     LJ::QotD->store_question (
          qid        => $post->{qid},
          time_start => $time_start->epoch,
