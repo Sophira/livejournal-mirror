@@ -528,8 +528,6 @@ sub picture_count {
     my $memkey = [$u->id, "piccnt:" . $u->id];
     my $total = LJ::MemCache::get($memkey);
 
-    warn "total: $total";
-
     return $total if defined $total;
 
     $total = 0;
