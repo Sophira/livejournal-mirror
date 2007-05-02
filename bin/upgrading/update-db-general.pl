@@ -3456,6 +3456,12 @@ register_alter(sub {
                  "ALTER TABLE pollsubmission2 DROP PRIMARY KEY, ADD PRIMARY KEY (journalid,pollid,userid)");
     }
 
+    # add a column
+    unless (column_type("qotd", "extra_text")) {
+        do_alter("qotd",
+                 "ALTER TABLE qotd ADD extra_text TEXT DEFAULT NULL");
+    }
+
 });
 
 

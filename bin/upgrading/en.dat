@@ -1732,6 +1732,10 @@ web.postto.btn=Switch
 
 web.postto.label=Post to:
 
+widget.addqotd.extratext=Extra Text (optional):
+
+widget.addqotd.extratext.note=HTML allowed
+
 widget.commsofuser.title=Communities [[user]] has added
 
 widget.commsofuser.viewprofile=View [[user]]'s profile

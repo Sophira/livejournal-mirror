@@ -35,17 +35,28 @@ sub qotd_display {
     my %opts = @_;
 
     my $questions = $opts{questions} || [];
+    my $remote = LJ::get_remote();
 
     my $ret;
     if (@$questions) {
         $ret .= "<div class='qotd'>";
         foreach my $q (@$questions) {
             my $ml_key = $class->ml_key("$q->{qid}.text");
+            my $text = $class->ml($ml_key);
+            LJ::CleanHTML::clean_event(\$text);
+
+            my $extra_text;
+            if ($q->{extra_text} && LJ::run_hook('show_qotd_extra_text', $remote)) {
+                $ml_key = $class->ml_key("$q->{qid}.extra_text");
+                $extra_text = $class->ml($ml_key);
+                LJ::CleanHTML::clean_event(\$extra_text);
+            }
 
             if ($q->{img_url}) {
                 $ret .= "<div><img src='$q->{img_url}' /></div>";
             }
-            $ret .= "<p>" . $class->ml($ml_key) . " " . $class->answer_link($q) . "</p>";
+            $ret .= "<p>$text " . $class->answer_link($q) . "</p>";
+            $ret .= $extra_text ? "<p>$extra_text</p>" : "";
         }
         $ret .= "</div>";
     }
