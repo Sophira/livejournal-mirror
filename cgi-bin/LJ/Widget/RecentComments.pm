@@ -50,13 +50,13 @@ sub render_body {
         my $entry = $comment->entry;
 
         # print the comment
-        $ret .= "<p>";
+        $ret .= "<p class='pkg'>";
         $ret .= $comment->poster_userpic;
         $ret .= $class->ml('widget.recentcomments.commentheading', {'poster' => $poster, 'entry' => "<a href='" . $entry->url . "'>"});
         $ret .= $entry->subject_text ? $entry->subject_text : $class->ml('widget.recentcomments.nosubject');
         $ret .= "</a><br />";
-        $ret .= substr($comment->body_text, 0, 250) . "<br />";
-        $ret .= "(<a href='" . $comment->url . "'>" . $class->ml('widget.recentcomments.link') . "</a>) ";
+        $ret .= substr($comment->body_text, 0, 250) . "&nbsp;";
+        $ret .= "<span class='detail'>(<a href='" . $comment->url . "'>" . $class->ml('widget.recentcomments.link') . ")</span> ";
         $ret .= "</p>";
 
     }
