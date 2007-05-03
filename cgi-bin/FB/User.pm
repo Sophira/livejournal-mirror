@@ -1231,6 +1231,11 @@ sub gallery_private {
     return 0;
 }
 
+sub statusvis {
+    my $u = shift;
+    return $u->lj_u->statusvis;
+}
+
 ######## deprecated APIs
 
 package FB;

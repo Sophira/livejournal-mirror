@@ -70,10 +70,9 @@
 
     ### account status reporting
 
-    # if not degraded, check to see their can_upload cap status
     my $can_upload = FB::get_cap($u, 'can_upload');
 
-    if (! $can_upload || ! $u->{statusvis} eq 'V') {
+    if (! $can_upload || $u->statusvis ne 'V') {
         $body .= "<fieldset style='margin-top: 20px'><legend>Account status</legend><ul>";
 
         unless ($can_upload) {
@@ -81,11 +80,11 @@
             $body .= "</li>";
         }
 
-        if ($u->{statusvis} eq 'S') {
+        if ($u->statusvis eq 'S') {
             $body .= "<li>Your account has been suspended.  Most functionality will remain disabled until the situation is resolved.</li>";
         }
 
-        if ($u->{statusvis} eq 'D') {
+        if ($u->statusvis eq 'D') {
             $body .= "<li>Your account is deleted, but not yet purged.  You still have the opportunity to undelete if you wish.</li>";
         }
 
