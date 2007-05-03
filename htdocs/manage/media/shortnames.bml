@@ -52,10 +52,10 @@
         }
 
         # give 'em a GET URL
-        return BML::redirect("/manage/shortnames");
+        return BML::redirect("/manage/media/shortnames.bml");
     }
 
-    $body .= "<form method='post' action='shortnames'>";
+    $body .= "<form method='post' action='shortnames.bml'>";
     $body .= FB::html_hidden("userid", $u->{'userid'});
 
     $body .= "<?p From here you can create & edit your \"short names\", little names you give to galleries to let you quickly index your pictures.  Setting up short names for your galleries is entirely optional.  More than likely you'll only setup short names for galleries that you commonly throw pictures into.  p?>";
