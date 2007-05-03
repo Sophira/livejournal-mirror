@@ -380,6 +380,9 @@ li.inbox a {
 .homepage-wrapper-loggedin .appwidget {
     margin-bottom: 15px;
 }
+.homepage-wrapper-loggedin .appwidget-promotext {
+    padding-bottom: 30px;
+}
 .homepage-wrapper-loggedin h2 {
     font-size: 14px;
     font-family: Arial;

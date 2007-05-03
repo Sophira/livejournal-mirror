@@ -4,7 +4,9 @@ use strict;
 use base qw(LJ::Widget);
 use Carp qw(croak);
 
-sub need_res { }
+sub need_res {
+    return qw( stc/widgets/friendupdates.css );
+}
 
 # args
 #   user: optional $u whose friend updates we should get (remote is default)
@@ -36,7 +38,7 @@ sub render_body {
         return $ret;
     }
 
-    $ret .= "<ul>";
+    $ret .= "<ul class='nostyle'>";
     foreach my $item (@notifications) {
         $ret .= "<li>" . $item->title . "</li>";
     }
