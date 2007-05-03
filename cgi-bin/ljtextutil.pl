@@ -21,6 +21,48 @@ sub trim
 }
 
 # <LJFUNC>
+# name: LJ::decode_url_string
+# class: web
+# des: Parse URL-style arg/value pairs into a hash.
+# args: buffer, hashref
+# des-buffer: Scalar or scalarref of buffer to parse.
+# des-hashref: Hashref to populate.
+# returns: boolean; true.
+# </LJFUNC>
+sub decode_url_string
+{
+    my $a = shift;
+    my $buffer = ref $a ? $a : \$a;
+    my $hashref = shift;  # output hash
+    my $keyref  = shift;  # array of keys as they were found
+
+    my $pair;
+    my @pairs = split(/&/, $$buffer);
+    @$keyref = @pairs;
+    my ($name, $value);
+    foreach $pair (@pairs)
+    {
+        ($name, $value) = split(/=/, $pair);
+        $value =~ tr/+/ /;
+        $value =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
+        $name =~ tr/+/ /;
+        $name =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
+        $hashref->{$name} .= $hashref->{$name} ? "\0$value" : $value;
+    }
+    return 1;
+}
+
+# args: hashref of key/values
+#       arrayref of keys in order (optional)
+# returns: urlencoded string
+sub encode_url_string {
+    my ($hashref, $keyref) = @_;
+
+    return join('&', map { LJ::eurl($_) . '=' . LJ::eurl($hashref->{$_}) }
+                (ref $keyref ? @$keyref : keys %$hashref));
+}
+
+# <LJFUNC>
 # name: LJ::eurl
 # class: text
 # des: Escapes a value before it can be put in a URL.  See also [func[LJ::durl]].
