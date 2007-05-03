@@ -4,10 +4,6 @@ use strict;
 use Carp qw(croak);
 
 use LJ::ModuleLoader;
-require "$ENV{'LJHOME'}/cgi-bin/ljcapabilities.pl";
-
-die "must have 'betafeatures' cap configured"
-    unless LJ::class_bit(__PACKAGE__->cap_name);
 
 my %HANDLER_OF_KEY = (); # key -> handler object
 my @HANDLER_LIST   = LJ::ModuleLoader->module_subclasses(__PACKAGE__);
