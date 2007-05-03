@@ -36,9 +36,11 @@ sub render_body {
         return $ret;
     }
 
+    $ret .= "<ul>";
     foreach my $item (@notifications) {
-        $ret .= "<p>" . $item->title . "</p>";
+        $ret .= "<li>" . $item->title . "</li>";
     }
+    $ret .= "</ul>";
 
     return $ret;
 }

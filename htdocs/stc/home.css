@@ -335,14 +335,13 @@ li.post a {
     font-weight: bold;
 }
 li.friends a,
-li.inbox a,
 li.myaccount a {
     background: url(/img/journal.gif) no-repeat 0 50%;
     padding-left: 20px;
     font-weight: bold;
 }
 li.inbox a {
-    background: url(/img/journal.gif) no-repeat 0 50%;
+    background: url(/img/email.gif) no-repeat 0 50%;
     padding-left: 20px;
     font-weight: bold;
 }
@@ -352,7 +351,15 @@ li.inbox a {
 }
 .homepage-account {
     margin-bottom: 15px;
-position: relative;
+}
+.homepage-account-left {
+    float: left;
+    position: relative;
+    width: 200px;
+    margin-left: -200px;    
+}
+* html .homepage-account-left {
+    margin-left: -100px; 
 }
 .homepage-account a:visited {
     color: #00C;
@@ -363,13 +370,12 @@ position: relative;
 .homepage-account ul.nostyle {
     padding: 0 !important;
     margin-bottom: 4px;
-    float: left;
 }
 .homepage-account ul.nostyle li {
-    margin: 0 0 3px 10px;
+    margin: 0 0 5px 10px;
 }
 .homepage-wrapper-loggedin {
-    background-color: #fff;
+    background: url(/img/goat-back2.gif) repeat-x bottom;
 }
 .homepage-wrapper-loggedin .appwidget {
     margin-bottom: 15px;
@@ -385,8 +391,14 @@ position: relative;
 }
 .homepage-account h2,
 .homepage-wrapper-loggedin .appwidget-recentcomments h2,
-.homepage-wrapper-loggedin .appwidget-gettingstarted h2 {
+.homepage-wrapper-loggedin .appwidget-friendupdates h2 {
     background-color: #C7E0F6;
+}
+.homepage-wrapper-loggedin .appwidget-gettingstarted h2 {
+    background-color: #EDEDBB;
+}
+.homepage-wrapper-loggedin .appwidget-gettingstarted {
+    background-color: #ffd;
 }
 .appwidget-qotd {
     margin: 0 10px 0 15px;
@@ -395,14 +407,22 @@ padding: 8px 10px;
     border-bottom: 2px solid #C7E0F6;
 }
 .homepage-account .appwidget-qotd h2 {
-background: none !important;
-    padding: 0 !important;
 margin: 0 0 4px 0 !important;
 }
-.homepage-account,
-.homepage-wrapper-loggedin .appwidget-gettingstarted {
+.homepage-account {
     background-color: #ECF6FF;
 }
 .homepage-wrapper-loggedin .getting-started-items {
     padding: 0 10px;
+}
+.homepage-wrapper-loggedin-frank .appwidget-frank {
+    float: right !important;
+    width: 300px;
+    margin: -125px 0 0 0 !important;
+}
+.homepage-wrapper-loggedin-frank .appwidget-frank .appwidget-frank-text {
+display: none;
+}
+#MiniSiteMap {
+    margin-top: 0 !important;
 }
