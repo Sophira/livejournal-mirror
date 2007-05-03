@@ -19,7 +19,7 @@ sub handler {
 
     # is the user allowed to upload?
     return $err->(303)
-        unless FB::get_cap($u, 'can_upload') && $u->{statusvis} eq 'V';
+        unless FB::get_cap($u, 'can_upload') && $u->statusvis eq 'V';
 
     # did they specify an ImageData variable?
     my $img = $vars->{ImageData};

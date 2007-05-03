@@ -265,7 +265,7 @@ sub validate_user {
     # valid user?
     my $dmid = FB::current_domain_id();
     my $u = FB::load_user($user, $dmid, { create => 1, validate => 1 });
-    if (! $u || $u->{statusvis} =~ /[DX]/) {
+    if (! $u || $u->statusvis =~ /[DX]/) {
         $self->add_error(103);
         return undef;
     }
