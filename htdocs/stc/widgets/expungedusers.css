@@ -1,0 +1,19 @@
+.appwidget-expungedusers {
+    clear: left;
+}
+.appwidget-expungeusers-formbar-wrapper {
+    background-color: #eee;
+    clear: both;
+    padding: 5px 10px;
+    margin: 10px 0;
+}
+.appwidget-expungedusers ul {
+    list-style: none;
+    margin: 10px 0;
+    padding: 0;
+}
+.appwidget-expungedusers ul li {
+    float: left;
+    width: 12em;
+    margin: 0 6px 3px 0;
+}
