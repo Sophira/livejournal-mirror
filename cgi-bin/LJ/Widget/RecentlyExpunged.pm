@@ -35,11 +35,7 @@ sub render_body {
             $ret .= "<li>" . $u->display_username . "</li>";
             $ct++;
 
-            if ($ct % 10 == 0) {
-                if ($ct >= 30) {
-                    last;
-                }
-            }
+            last if $ct >= 30;
         }
         $ret .= "</ul>";
     } else {

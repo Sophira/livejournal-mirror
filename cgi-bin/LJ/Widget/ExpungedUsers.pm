@@ -22,8 +22,6 @@ sub render_body {
     croak "invalid arguments: " . join(",", keys %opts)
         if %opts;
 
-    warn "post: " . LJ::D($post);
-
     # reset the sorter bar index, which is used for keeping track
     # of which sorter bar button was clicked, if multiple
     $sorter_bar_idx = 0;
@@ -31,7 +29,7 @@ sub render_body {
     my $ret;
 
     # are they just searching by one user?
-    if ($post->{search}) {
+    if ($class->get_effective_search_user($post)) {
         $ret .= $class->search_by_user($post);
     } else {
         $ret .= $class->random_by_letter($post);
@@ -56,8 +54,9 @@ sub purchase_button {
 sub search_by_user {
     my $class = shift;
     my $post  = shift;
-    my $user = LJ::canonical_username($post->{search_user});
-    warn "$post->{search_user} => $user\n";
+
+    my $user = $class->get_effective_search_user($post);
+    $user = LJ::canonical_username($user);
 
     my ($u, @fuzzy_us);
     if ($user) {
@@ -74,21 +73,25 @@ sub search_by_user {
     if ($u) {
         $ret .= "<ul id='appwidget-expungedusers-search'><li>" . $u->display_username . "</li></ul>";
     } else {
-        $ret .= "Sorry, '$user' is not currently available";
+        $ret .= "<p>Sorry, '$user' is not currently available";
 
         if (@fuzzy_us) {
+            $ret .= ", but we have found some similar usernames you might be interested in:";
+
             $ret .= "<div id='appwidget-expungedusers-fuzzylist-wrapper'>";
             $ret .= "<ul>";
             foreach (@fuzzy_us) {
-                $ret .= "<li>" . $_->display_username . "</li>";
+                $ret .= "<li>" . $_->[0]->display_username . "</li>";
             }
             $ret .= "</ul>";
             $ret .= "</div>";
+        } else {
+            $ret .= "."; # yay punctuation
         }
+        $ret .= "</p>";
     }
     $ret .= "</div>";
 
-    $ret .= $class->sorter_bar( post => $post );
     $ret .= $class->end_form;
 
     return $ret;
@@ -100,11 +103,20 @@ sub get_effective_letter {
 
     foreach my $key (keys %$post) {
         next unless $key =~ /^(?:filter|more)_(\d+)/;
-        warn "[$sorter_bar_idx] effective letter[idx=$1]: " . $post->{"letter_$1"} . "\n";
         return $post->{"letter_$1"};
     }
-    warn "[$sorter_bar_idx] effective letter[idx=$1]: default 0\n";
     return '0';
+}
+
+sub get_effective_search_user {
+    my $class = shift;
+    my $post  = shift;
+
+    foreach my $key (keys %$post) {
+        next unless $key =~ /^(?:search)_(\d+)/;
+        return $post->{"search_user_$1"};
+    }
+    return '';
 }
 
 sub random_by_letter {
@@ -119,7 +131,6 @@ sub random_by_letter {
           );
 
     my $prev_max = (map { $_->[1] } @rows)[-1];
-    warn "prev_max; $prev_max\n";
 
     my $ret = $class->start_form;
 
@@ -135,12 +146,15 @@ sub random_by_letter {
         }
         $ret .= "</ul>";
     } else {
-        $ret .= "<b>Sorry, there are no matches for '" . $class->get_effective_letter($post) . "'</b>";
+        $ret .= "<p>Sorry, there are no matches beginning with '" . $class->get_effective_letter($post) . "'</p>";
     }
     $ret .= "</div>";
 
-    $ret .= $class->sorter_bar( prev_max => $prev_max,
-                                post     => $post );
+    # hide sorter bar if we didn't get rows above
+    if (@rows) {
+        $ret .= $class->sorter_bar( prev_max => $prev_max,
+                                    post     => $post );
+    }
 
     $ret .= $class->end_form;
 
@@ -154,8 +168,6 @@ sub sorter_bar {
     my $post     = delete $opts{post};
     my $prev_max = delete $opts{prev_max} || $post->{prev_max};
 
-    warn "sorter_bar: prev_max=$prev_max\n";
-
     my $ret;
 
     # Show random usernames by letter
@@ -164,7 +176,6 @@ sub sorter_bar {
     $ret .= "<label>Show random usernames beginning with: </label>";
 
     my $selected = $class->get_effective_letter($post);
-    warn "selected: $selected\n";
 
     my %lets = map { chr($_), chr($_-32) } 97..122;
     $ret .= $class->html_select
@@ -180,8 +191,8 @@ sub sorter_bar {
 
     # Seach by a specific username
     $ret .= "<div class='appwidget-expungeusers-searchuser'>";
-    $ret .= $class->html_text( name => 'search_user', size => 15, maxlength => 15 );
-    $ret .= $class->html_submit(search => "Search by username");
+    $ret .= $class->html_text( name => "search_user_$sorter_bar_idx", size => 15, maxlength => 15 );
+    $ret .= $class->html_submit( "search_$sorter_bar_idx" => "Search by username");
     $ret .= "</div>";
 
     $ret .= "</div>"; # /wrapper
