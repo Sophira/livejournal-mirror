@@ -43,7 +43,7 @@ sub render_body {
 sub purchase_button {
     my $class = shift;
 
-    my $ret = "<form method='GET' action='$LJ::SITEROOT/shop/view.bml'>";
+    my $ret = "<form method='GET' action='$LJ::SITEROOT/shop/view.bml' class='purchase-rename-form'>";
     $ret .= LJ::html_hidden('item', 'rename');
     $ret .= $class->html_submit('Purchase a Rename Token');
     $ret .= "</form>";

@@ -7,6 +7,10 @@
     padding: 5px 10px;
     margin: 10px 0;
 }
+.appwidget-expungedusers .purchase-rename-form {
+    clear: left;
+    margin-top: 10px;
+}
 .appwidget-expungedusers ul {
     list-style: none;
     margin: 10px 0;
