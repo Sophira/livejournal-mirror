@@ -6,7 +6,9 @@ use Carp qw(croak);
 
 use Class::Autouse qw(LJ::ExpungedUsers);
 
-sub need_res { }
+sub need_res {
+    return qw( stc/widgets/recentlyexpunged.css );
+}
 
 sub render_body {
     my $class = shift;
@@ -23,7 +25,7 @@ sub render_body {
     return "" unless @rows;
 
     my $ret = "<div id='appwidget-recentlyexpunged-list-wrapper'>";
-
+    $ret .= "<h3>Recently Available</h3>";
     if (@rows) {
         my $ct = 0;
         $ret .= "<ul id='appwidget-recentlyexpunged-list'>";

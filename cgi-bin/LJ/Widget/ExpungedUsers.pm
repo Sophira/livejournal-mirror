@@ -9,7 +9,9 @@ use Class::Autouse qw(LJ::ExpungedUsers);
 # increments with each rendering of the sorter bar
 my $sorter_bar_idx = 0;
 
-sub need_res { }
+sub need_res {
+    return qw( stc/widgets/expungedusers.css );
+}
 
 sub render_body {
     my $class = shift;
