@@ -25,7 +25,7 @@ sub render_body {
     return "" unless @rows;
 
     my $ret = "<div id='appwidget-recentlyexpunged-list-wrapper'>";
-    $ret .= "<h3>Recently Available</h3>";
+    $ret .= "<h3>In the last 24 hours...</h3>";
     if (@rows) {
         my $ct = 0;
         $ret .= "<ul id='appwidget-recentlyexpunged-list'>";
