@@ -17,3 +17,11 @@
     width: 12em;
     margin: 0 6px 3px 0;
 }
+.appwidget-expungeusers-formbar {
+    float: left;
+    margin-bottom: 4px;
+}
+.appwidget-expungeusers-searchuser {
+    float: right;
+    margin-bottom: 4px;
+}

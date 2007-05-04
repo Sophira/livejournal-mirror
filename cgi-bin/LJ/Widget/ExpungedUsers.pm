@@ -158,7 +158,7 @@ sub sorter_bar {
     my $ret;
 
     # Show random usernames by letter
-    $ret .= "<div class='appwidget-expungeusers-formbar-wrapper'>";
+    $ret .= "<div class='appwidget-expungeusers-formbar-wrapper pkg'>";
     $ret .= "<div class='appwidget-expungeusers-formbar'>";
     $ret .= "<label>Show random usernames beginning with: </label>";
 
