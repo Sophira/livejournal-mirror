@@ -541,6 +541,37 @@ sub picture_count {
     return $total;
 }
 
+# takes old and new usernames, fixes useridlookup table and usercs column
+# should be called after renames to keep the usernames in sync 
+sub update_fb_user_mapping {
+    my ($lju, $from, $to) = @_;
+
+    my $fbu = $lju->fb_u or die "Could not get FB::User for LJ::User $lju->{user}";
+
+    my $ljdomainid = $FB::LJ_DOMAINID or die "FB::LJ_DOMAINID must be defined";
+
+    my $dbh = FB::get_db_writer() or die "Could not get FB DB writer";
+
+    # replace and then delete any old values (don't just do an update because the user
+    # might not be in sync)
+    $dbh->do("REPLACE INTO useridlookup (domainid, ktype, kval, userid) " .
+             "VALUES (?, ?, ?, ?)", undef, $ljdomainid, 'N', $to, $fbu->id);
+    die $dbh->errstr if $dbh->err;
+
+    $dbh->do("DELETE FROM useridlookup WHERE ktype='N' AND kval=?",
+             undef, $from);
+    die $dbh->errstr if $dbh->err;
+
+    FB::update_user($fbu, { 'usercs' => $lju->user });
+
+    # update user/usercs in memory
+    $fbu->{'usercs'} = $to;
+    FB::add_u_user($fbu);
+
+    # delete old memcache
+    FB::MemCache::delete([$from, "loc_uid_n:$ljdomainid:$from" ]); # old username => loc userid mapping
+}
+
 ############ END FB::User METHODS ############
 
 
