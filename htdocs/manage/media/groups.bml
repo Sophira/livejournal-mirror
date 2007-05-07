@@ -7,7 +7,7 @@ body<=
     use vars qw(%GET %POST);
 
     my $u = FB::User->remote;
-    return BML::redirect("/login?to=manage/groups") unless $u;
+    return BML::redirect("/login?to=manage/media/groups.bml") unless $u;
 
     my $root = FB::user_siteroot($u);
 
@@ -56,7 +56,7 @@ body<=
 
         $ret .= "<form method='post' action='/manage/media/groups.bml'>\n" .
             "<div style='margin-bottom: 1em;'>[&lt;&lt; " .
-            "<a href='$root/manage/groups'>Group Listing" .
+            "<a href='$root/manage/media/groups.bml'>Group Listing" .
             "</a>]</div>\n";
 
         if (@actions)
@@ -74,7 +74,7 @@ body<=
             my $sel = (defined $toggled->{$_}) ? 1 : 0;
             $ret .= "<br />" if $ct;
             $ret .= FB::html_check({ 'name' => "secid:$_", 'selected' => $sel });
-            $ret .= "<a href='$root/manage/groups?secid=$_'>" . 
+            $ret .= "<a href='$root/manage/media/groups.bml?secid=$_'>" . 
                 FB::eall($groups->{$_}->grpname) . "</a>\n";
             $ct++;
         }
@@ -157,7 +157,7 @@ body<=
         if ($POST{'action:deletegroup'}) {
             if ($sec->delete) {
                 # delete was successful, send them to main page
-                return BML::redirect('/manage/groups');
+                return BML::redirect('/manage/media/groups.bml');
             } else {
                 push @actions, "Error: unable to delete group\n";
             }
@@ -199,11 +199,11 @@ body<=
 
                     if ($sec->add_member($users{$uid})) {
                         push @actions, "Success: added '" .
-                            FB::eall($users{$uid}->{'usercs'} . "'.\n";
+                            FB::eall($users{$uid}->{'usercs'}) . "'.\n";
                         $ct++;
                     } else {
                         push @actions, "Error: unable to add '" .
-                            FB::eall($users{$uid}->{'usercs'} . "'\n";
+                            FB::eall($users{$uid}->{'usercs'}) . "'\n";
                     }
                 }
 
@@ -215,11 +215,11 @@ body<=
         # show edit form
         my $ret = '';
 
-        $ret .= "<form method='post' action='$root/manage/groups'>\n";
+        $ret .= "<form method='post' action='$root/manage/media/groups.bml'>\n";
         $ret .= FB::html_hidden('mode', 'singlegroup', 'secid', $secid) . "\n";
 
         $ret .= "<div style='margin-bottom: 1em;'>[&lt;&lt; " .
-            "<a href='$root/manage/groups'>Group Listing" .
+            "<a href='$root/manage/media/groups.bml'>Group Listing" .
             "</a>]</div>\n";
 
         if (@actions) { 
@@ -339,10 +339,11 @@ body<=
 
         $ret .= "<?h1 Existing Groups h1?>\n";
         my $ct = 0;
+
         foreach (sort {$groups->{$a}->grpname cmp $groups->{$b}->grpname}
                  keys %$groups) {
             $ret .= "<br>" if $ct;
-            $ret .= "<a href='$root/manage/groups?secid=$_'>" .
+            $ret .= "<a href='$root/manage/media/groups.bml?secid=$_'>" .
                 FB::eall($groups->{$_}->grpname) . "</a>\n";
             $ct++;
         }
@@ -367,7 +368,7 @@ body<=
                                       FB::html_submit('action:edituser', 'Edit User');
 
         $ret .= "</form>\n";
-        
+
         return $ret;
     };
 
