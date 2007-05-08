@@ -4,7 +4,9 @@ use strict;
 use base qw(LJ::Widget);
 use Carp qw(croak);
 
-sub need_res { }
+sub need_res {
+    return qw( stc/widgets/friendbirthdays.css );
+}
 
 # args
 #   user: optional $u whose friend birthdays we should get (remote is default)
@@ -25,8 +27,9 @@ sub render_body {
     return "" unless @bdays;
 
     my $ret;
-    $ret .= "<h2>" . $class->ml('widget.friendbirthdays.title') . "</h2>";
-    $ret .= "<p>&raquo; <a href='$LJ::SITEROOT/birthdays.bml'>" . $class->ml('widget.friendbirthdays.viewall') . "</a></p>";
+    $ret .= "<h2><span>" . $class->ml('widget.friendbirthdays.title') . "</span></h2>";
+    $ret .= "<a href='$LJ::SITEROOT/birthdays.bml' class='more-link'>" . $class->ml('widget.friendbirthdays.viewall') . "</a></p>";
+    $ret .= "<ul class='nostyle'>";
 
     foreach my $bday (@bdays) {
         my $u = LJ::load_user($bday->[2]);
@@ -34,13 +37,14 @@ sub render_body {
         my $day = $bday->[1];
         next unless $u && $month && $day;
 
-        $ret .= "<p>";
+        $ret .= "<li>";
         $ret .= $class->ml('widget.friendbirthdays.userbirthday', {user => $u->ljuser_display, month => LJ::Lang::month_short($month) . ".", day => $day});
-        $ret .= " <a href='$LJ::SITEROOT/shop/view.bml?item=paidaccount&gift=1&for=" . $u->user . "'><img src='$LJ::IMGPREFIX/btn_gift.gif' alt='' /> ";
+        $ret .= " <a href='$LJ::SITEROOT/shop/view.bml?item=paidaccount&gift=1&for=" . $u->user . "' class='gift-link'>";
         $ret .= $class->ml('widget.friendbirthdays.gift') . "</a>";
-        $ret .= "</p>";
+        $ret .= "</li>";
     }
 
+    $ret .= "</ul>";
     return $ret;
 }
 

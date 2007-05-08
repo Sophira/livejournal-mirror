@@ -4,7 +4,6 @@ position: relative;
 }
 .appwidget-qotd #prev_questions, .appwidget-qotd #next_questions {
     cursor: pointer;
-    display: none;
 }
 .appwidget-qotd h2 {
     background: url(/img/jabber.gif) no-repeat 0 50%;
@@ -14,7 +13,9 @@ margin: 0 0 5px 0 !important;
 .appwidget-qotd .qotd-controls {
     float: left;
     padding-left: 15px;
-display: none !important;
+position: absolute;
+top: 7px;
+left: 120px;
 }
 .appwidget-qotd .qotd-img {
     float: right;

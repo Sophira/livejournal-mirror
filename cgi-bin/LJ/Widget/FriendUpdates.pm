@@ -29,12 +29,12 @@ sub render_body {
     }
 
     my $ret;
-    $ret .= "<h2>" . $class->ml('widget.friendupdates.title') . "</h2>";
+    $ret .= "<h2><span>" . $class->ml('widget.friendupdates.title') . "</span></h2>";
     $ret .= "<a href='$LJ::SITEROOT/inbox/' class='more-link'>" . $class->ml('widget.friendupdates.viewall') . "</a>";
 
     unless (@notifications) {
-        $ret .= $class->ml('widget.friendupdates.noupdates') . "<br />";
-        $ret .= $class->ml('widget.friendupdates.noupdates.setup', {'aopts' => "href='$LJ::SITEROOT/manage/subscriptions/'"});
+        $ret .= $class->ml('widget.friendupdates.noupdates');
+        $ret .= "<p class='detail'>" . $class->ml('widget.friendupdates.noupdates.setup', {'aopts' => "href='$LJ::SITEROOT/manage/subscriptions/'"}) . "</p>";
         return $ret;
     }
 

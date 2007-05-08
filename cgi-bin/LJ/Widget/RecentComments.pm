@@ -24,7 +24,7 @@ sub render_body {
 
     my $ret;
 
-    $ret .= "<h2>" . $class->ml('widget.recentcomments.title') . "</h2>";
+    $ret .= "<h2><span>" . $class->ml('widget.recentcomments.title') . "</span></h2>";
     $ret .= "<a href='$LJ::SITEROOT/tools/recent_comments.bml' class='more-link'>" . $class->ml('widget.recentcomments.viewall') . "</a>";
 
     # return if no comments
@@ -56,7 +56,7 @@ sub render_body {
         $ret .= $entry->subject_text ? $entry->subject_text : $class->ml('widget.recentcomments.nosubject');
         $ret .= "</a><br />";
         $ret .= substr($comment->body_text, 0, 250) . "&nbsp;";
-        $ret .= "<span class='detail'>(<a href='" . $comment->url . "'>" . $class->ml('widget.recentcomments.link') . ")</span> ";
+        $ret .= "<span class='detail'>(<a href='" . $comment->url . "'>" . $class->ml('widget.recentcomments.link') . "</a>)</span> ";
         $ret .= "</p>";
 
     }
