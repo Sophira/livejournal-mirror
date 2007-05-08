@@ -1,5 +1,6 @@
 /* homepage styles */
 
+/* legacy - delete after new logged-in homepage become permanent */
 #promobox-wrapper {
     width: 548px;
     margin-bottom: 3px;
@@ -20,7 +21,6 @@
 #promobox-wrapper[class] { height: auto; }
 #promobox-wrapper { display: block; }
 /* */
-
 #home_main {
     min-height: 200px;
     padding: 0 2%;
@@ -68,7 +68,6 @@
 #lj-bulletlist li a:hover {
     color: #69C;
 }
-
 table.stats-meter {
     width: 163px;
     border: 1px solid #cbcbcb;
@@ -100,6 +99,7 @@ table.stats-meter {
 .mousearea {
     text-decoration: none;
 }
+/* end legacy */
 
 /* logged out homepage styles */
 
@@ -334,8 +334,7 @@ li.post a {
     padding-left: 20px;
     font-weight: bold;
 }
-li.friends a,
-li.myaccount a {
+li.friends a {
     background: url(/img/journal.gif) no-repeat 0 50%;
     padding-left: 20px;
     font-weight: bold;
@@ -387,16 +386,16 @@ li.news {
 .homepage-account ul.nostyle li {
     margin: 0 0 5px 10px;
 }
-.homepage-wrapper-loggedin {
+.homepage-loggedin {
     background: url(/img/goat-back2.gif) repeat-x bottom;
 }
-.homepage-wrapper-loggedin .appwidget {
+.homepage-loggedin .appwidget {
     margin-bottom: 15px;
 }
-.homepage-wrapper-loggedin .appwidget-promotext {
+.homepage-loggedin .appwidget-promotext {
     padding-bottom: 30px;
 }
-.homepage-wrapper-loggedin h2 {
+.homepage-loggedin h2 {
     font-size: 14px;
     clear: left;
     font-family: Arial;
@@ -407,21 +406,21 @@ li.news {
     color: #333;
 }
 .homepage-account h2,
-.homepage-wrapper-loggedin .appwidget-recentcomments h2,
-.homepage-wrapper-loggedin .appwidget-friendupdates h2,
-.homepage-wrapper-loggedin .appwidget-friendbirthdays h2 {
+.homepage-loggedin .appwidget-recentcomments h2,
+.homepage-loggedin .appwidget-friendupdates h2,
+.homepage-loggedin .appwidget-friendbirthdays h2 {
     background-color: #C7E0F6;
 }
-.homepage-wrapper-loggedin .appwidget-gettingstarted h2 {
+.homepage-loggedin .appwidget-gettingstarted h2 {
     background-color: #EDEDBB;
 }
-.homepage-wrapper-loggedin h2 span {
+.homepage-loggedin h2 span {
     padding-left: 20px;
 }
-.homepage-wrapper-loggedin .appwidget-recentcomments h2 span {
+.homepage-loggedin .appwidget-recentcomments h2 span {
     background: url(/img/icon-track-16x16.gif) no-repeat 0 50%; 
 }
-.homepage-wrapper-loggedin .appwidget-journalspotlight h2 span {
+.homepage-loggedin .appwidget-journalspotlight h2 span {
     background: url(/img/Website.gif) no-repeat 0 50%; 
 }
 .homepage-explore h2 span {
@@ -439,47 +438,46 @@ li.news {
 .appwidget-officialjournals h2 span {
     background: url(/img/newsinfo.gif) no-repeat 0 50%;
 }
-.homepage-wrapper-loggedin .appwidget-gettingstarted {
+.homepage-loggedin .appwidget-gettingstarted {
     background-color: #ffd;
 }
 .appwidget-qotd {
     margin: 0 10px 0 15px;
-padding: 8px 10px;
+    padding: 8px 10px;
     background-color: #fff;
     border-bottom: 2px solid #C7E0F6;
 }
 .homepage-account .appwidget-qotd h2 {
-margin: 0 0 4px 0 !important;
+    margin: 0 0 4px 0 !important;
 }
 .homepage-account {
     background-color: #ECF6FF;
 }
-.homepage-wrapper-loggedin .getting-started-items {
+.homepage-loggedin .getting-started-items {
     padding: 0 10px;
 }
-.homepage-wrapper-loggedin-frank .appwidget-frank {
+.homepage-loggedin-frank .appwidget-frank {
     float: right !important;
     width: 300px;
-clear: right;
+    clear: right;
     margin: -125px 0 0 0 !important;
 }
-.homepage-wrapper-loggedin-frank .appwidget-frank .appwidget-frank-text {
-display: none;
+.homepage-loggedin-frank .appwidget-frank .appwidget-frank-text {
+    display: none;
 }
-#MiniSiteMap {
+homepage-loggedin #MiniSiteMap {
     margin-top: 0 !important;
 }
-.homepage-wrapper-loggedin .cprod {
+.homepage-loggedin .cprod {
     margin-bottom: 20px;
 }
-.homepage-wrapper-loggedin .cprod .alllink a {
+.homepage-loggedin .cprod .alllink a {
     color: #00C !important;
 }
-.homepage-wrapper-loggedin .appwidget-recentposts {
+.homepage-loggedin .appwidget-recentposts {
     float: left;
-    background-color: #ccc;
-width: 58%;
-height: 100px;
+    width: 58%;
+    height: 80px;
 }
 .explore-links {
     float: right;
@@ -490,11 +488,9 @@ height: 100px;
     padding-left: 12px;
 }
 .appwidget-officialjournals {
-    padding-bottom: 150px;
+    padding-bottom: 150px; /* make room for Frank widget */
 }
-.homepage-wrapper-loggedin .warningbar {
-    margin-bottom: 15px;
-}
-.homepage-wrapper-loggedin .ljad {
+.homepage-loggedin .warningbar,
+.homepage-loggedin .ljad {
     margin-bottom: 15px;
 }
