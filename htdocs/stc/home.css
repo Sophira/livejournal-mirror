@@ -356,6 +356,9 @@ li.news {
 .homepage-account {
     margin-bottom: 15px;
 }
+.homepage-account-inner {
+    padding-left: 200px;
+}
 .homepage-account-left {
     float: left;
     position: relative;
@@ -364,6 +367,12 @@ li.news {
 }
 * html .homepage-account-left {
     margin-left: -100px; 
+}
+.homepage-account-right {
+    float: left;
+    position: relative;
+    width: 100%;
+    background: url(/img/qotd-arrow.gif) no-repeat 5px 0;
 }
 .homepage-account a:visited {
     color: #00C;
