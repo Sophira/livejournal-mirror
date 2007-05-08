@@ -814,7 +814,7 @@ sub gpicid_delete
     my $sclient = LJ::theschwartz();
     return 0 unless $sclient;
 
-    my $job = TheSchwartz::Job->new_from_array("LJ::Worker::PurgeGpics", [ @gpicids ]);
+    my $job = TheSchwartz::Job->new_from_array("LJ::Worker::PurgeGpics", \@gpicids);
 
     my $h = $sclient->insert($job);
     return $h;
