@@ -802,17 +802,22 @@ sub mogfs_key
 }
 
 package FB;
+use TheSchwartz;
 
+# mark a list of gpicids to be checked for deletion
+# this inserts a schwartz job
 sub gpicid_delete
 {
     my @gpicids = @_;
     return undef unless @gpicids;
 
-    my $dbh = FB::get_db_writer();
-    return undef unless $dbh;
+    my $sclient = LJ::theschwartz();
+    return 0 unless $sclient;
 
-    my $bind = join(",", map { "(?)" } @gpicids);
-    return $dbh->do("REPLACE INTO gpic_delete VALUES $bind", undef, @gpicids);
+    my $job = TheSchwartz::Job->new_from_array("LJ::Worker::PurgeGpics", [ @gpicids ]);
+
+    my $h = $sclient->insert($job);
+    return $h;
 }
 
 

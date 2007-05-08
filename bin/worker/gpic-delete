@@ -1,0 +1,60 @@
+#!/usr/bin/perl
+use strict;
+use lib "$ENV{LJHOME}/cgi-bin";
+require 'ljlib.pl';
+use LJ::Worker::TheSchwartz;
+
+LJ::Worker::TheSchwartz->set_memory_limit(1024 * 1024 * 100); # 100MB memory limit.
+
+schwartz_decl('LJ::Worker::PurgeGpics');
+schwartz_work();
+
+############################################################################
+
+package LJ::Worker::PurgeGpics;
+use base 'TheSchwartz::Worker';
+require 'ljlib.pl';
+
+sub work {
+    my ($class, $job) = @_;
+
+    my $gpicidsref = $job->arg
+        or die "No gpicids";
+
+    delete_gpics(@$gpicidsref);
+
+    return $job->completed;
+}
+
+sub delete_gpics {
+    my @gpicids = @_;
+
+    my @gpicid_done;
+
+    my $dbh = FB::get_db_writer() or die "Could not get FB DB writer";
+
+    foreach my $gpicid (@gpicids) {
+        my $g = FB::Gpic->load($gpicid) or next;
+        $g->delete;
+        push @gpicid_done;
+    }
+
+    # gpicid_done is a list of gpicids whose data has been deleted
+    if (@gpicid_done) {
+        my $done_bind = join(",", map { "?" } @gpicid_done);
+
+        # need to recursively delete gpics which are scaled from these
+        my @gpic_deriv = @{ $dbh->selectcol_arrayref("SELECT gpicids FROM gpic_scaled WHERE gpicido IN ($done_bind)",
+                                                     undef, @gpicid_done) || []};
+        die $dbh->errstr if $dbh->err;
+
+        delete_gpics(@gpic_deriv) or die "Error: delete_gpics failed\n"
+            if @gpic_deriv;
+
+        $dbh->do("DELETE FROM gpic_scaled WHERE gpicido IN ($done_bind)", undef, @gpicid_done);
+        die $dbh->errstr if $dbh->err;
+
+        $dbh->do("DELETE FROM gpic WHERE gpicid IN ($done_bind)", undef, @gpicid_done);
+        die $dbh->errstr if $dbh->err;
+    }
+}
