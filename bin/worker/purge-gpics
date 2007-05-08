@@ -4,8 +4,6 @@ use lib "$ENV{LJHOME}/cgi-bin";
 require 'ljlib.pl';
 use LJ::Worker::TheSchwartz;
 
-LJ::Worker::TheSchwartz->set_memory_limit(1024 * 1024 * 100); # 100MB memory limit.
-
 schwartz_decl('LJ::Worker::PurgeGpics');
 schwartz_work();
 
@@ -21,13 +19,13 @@ sub work {
     my $gpicidsref = $job->arg
         or die "No gpicids";
 
-    delete_gpics(@$gpicidsref);
+    delete_gpics($gpicidsref);
 
     return $job->completed;
 }
 
 sub delete_gpics {
-    my @gpicids = @_;
+    my @gpicids = @{$_[0]};
 
     my @gpicid_done;
 
@@ -48,7 +46,7 @@ sub delete_gpics {
                                                      undef, @gpicid_done) || []};
         die $dbh->errstr if $dbh->err;
 
-        delete_gpics(@gpic_deriv) or die "Error: delete_gpics failed\n"
+        delete_gpics(\@gpic_deriv) or die "Error: delete_gpics failed\n"
             if @gpic_deriv;
 
         $dbh->do("DELETE FROM gpic_scaled WHERE gpicido IN ($done_bind)", undef, @gpicid_done);
