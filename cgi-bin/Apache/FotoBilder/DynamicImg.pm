@@ -35,29 +35,25 @@ sub handler
     $image = $r->document_root() . "/$path/$image";
     return NOT_FOUND unless -e $image;
 
-    # only doing resizing on jpg right now.
-    # if we extend this later, should make a dispatch table
-    # on $func.
-
-    my $im = FB::Magick->new();
-    my $rv = $im->Read($image);
-
     my ($w, $h) = ($opts[0], $opts[1]);
     $w = $w > 320 ? 320 : $w;
     $h = $h > 320 ? 320 : $h;
 
-    $im->Resize( width => $w, height => $h );
-    
-    return send_image( $r, $im );
+    my $blobref = FB::Job->do
+        ( job_name => 'fbmagick',
+          arg_ref  => [$image, "Resize", width => $w, height => $h],
+          task_ref => \&FB::Upic::_magick_do,
+          );
+
+    return send_image( $r, $blobref );
 }
 
 sub send_image
 {
-    my ($r, $im) = @_;
+    my ($r, $blobref) = @_;
     $r->send_http_header('image/jpeg');
 
-    my @blob = $im->ImageToBlob();
-    $r->print( $blob[0] );
+    $r->print( $$blobref );
     return OK;
 }
 

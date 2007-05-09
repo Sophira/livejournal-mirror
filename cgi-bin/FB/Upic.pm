@@ -869,6 +869,24 @@ sub _thumbnail_gpic_do {
     return \$gt->{gpicid};
 }
 
+# do a FB::Magick function, should be only called from gearman
+sub _fbmagick_do {
+    my $argref = shift
+        or croak "No argument given to _magick_do";
+
+    my ($imagepath, $func, %opts) = @$argref;
+
+    my $im = FB::Magick->new();
+    my $rv = $im->Read($imagepath);
+
+    return undef unless $rv;
+
+    $im->$func(%opts);
+
+    my ($blob) = $im->ImageToBlob();
+    return \$blob;
+}
+
 sub set_title {
     my ($self, $title) = @_;
     $self->set_text_prop('pictitle', $title);

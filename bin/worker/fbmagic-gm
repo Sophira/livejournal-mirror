@@ -21,6 +21,7 @@ use FB::Job;
 
 gearman_decl(scale_image     => \&scale_image);
 gearman_decl(thumbnail_image => \&thumbnail_image);
+gearman_decl(fbmagick        => \&fbmagick);
 gearman_work();
 
 sub scale_image {
@@ -41,4 +42,14 @@ sub thumbnail_image {
           arg_ref  => $job->{argref},
           task_ref => \&FB::Upic::_thumbnail_gpic_do,
           );
+}
+
+sub fbmagick {
+    my $job = shift;
+
+    return FB::Job->do_as_gearman(
+                                  job_name => 'fbmagick',
+                                  arg_ref  => $job->{argref},
+                                  task_ref => \&FB::Upic::_fbmagick_do,
+                                  );
 }
