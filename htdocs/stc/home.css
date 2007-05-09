@@ -474,6 +474,12 @@ homepage-loggedin #MiniSiteMap {
 .homepage-loggedin .cprod {
     margin-bottom: 20px;
 }
+.homepage-loggedin .cprod h3 {
+    color: #777;
+}
+.homepage-loggedin .cprod .content {
+    border: 1px solid #ccc;
+}
 .homepage-loggedin .cprod .alllink a {
     color: #00C !important;
 }
