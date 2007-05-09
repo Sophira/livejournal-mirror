@@ -25,7 +25,7 @@ sub render_body {
         return $exp ? $exp->date() : "";
     };
 
-    my $ret = "<h2>" . $class->ml('.widget.gettingstarted.title') . " " . LJ::help_icon_html('getting_started') . "</h2>";
+    my $ret = "<h2><span>" . $class->ml('.widget.gettingstarted.title') . " " . LJ::help_icon_html('getting_started') . "</span></h2>";
     $ret .= "<div class='getting-started-items'>";
 
     unless ($remote->postreg_completed) {

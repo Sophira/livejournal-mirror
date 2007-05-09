@@ -417,6 +417,9 @@ li.news {
 .homepage-loggedin h2 span {
     padding-left: 20px;
 }
+.homepage-loggedin .appwidget-gettingstarted h2 span {
+    background: url(/img/icon-checkbox-16x16.gif) no-repeat 0 50%; 
+}
 .homepage-loggedin .appwidget-recentcomments h2 span {
     background: url(/img/icon-track-16x16.gif) no-repeat 0 50%; 
 }
