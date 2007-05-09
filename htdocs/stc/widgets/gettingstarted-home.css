@@ -1,35 +1,25 @@
-/*
 .appwidget-gettingstarted {
-    margin-top: 10px;
-    background-color: #C5DFF9;
-    border: 1px solid #8FC3F7;
-    padding: 5px 10px 28px 10px;
-    width: 278px;
+    padding-bottom: 10px;
 }
 * html .appwidget-gettingstarted {
-    padding: 5px 10px 0px !important;
+    padding-bottom: 0px;
 }
-*:first-child+html .appwidget-gettingstarted {
-    padding: 5px 10px 0px !important;
+/* .pkg class wraps enclosing block element around inner floated elements */
+.appwidget-gettingstarted:after {
+    content: " ";
+    display: block;
+    visibility: hidden;
+    clear: both;
+    height: 0.1px;
+    font-size: 0.1em;
+    line-height: 0;
 }
-.getting-started-items {
-    clear: left;
-}
-.appwidget-gettingstarted h2 {
-    font-size: 110%;
-    font-weight: bold;
-    color: #000;
-}
-.getting-started-items p {
-    padding: 0 10px;
-}
-*/
-.appwidget-gettingstarted {
-    padding-bottom: 28px;
-}
-* html .appwidget-gettingstarted {
-    padding-bottom: 5px;
-}
+.appwidget-gettingstarted { display: inline-block; }
+/* no ie mac \*/
+* html .appwidget-gettingstarted { height: 1%; }
+.appwidget-gettingstarted[class] { height: auto; }
+.appwidget-gettingstarted { display: block; }
+/* */
 .account-controls {
     float: left;
     clear: left;
