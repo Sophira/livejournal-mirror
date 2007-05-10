@@ -334,6 +334,10 @@ li.post a {
     padding-left: 20px;
     font-weight: bold;
 }
+li.post span.detail {
+    font-size: 11px !important;
+    display: block;
+}
 li.friends a {
     background: url(/img/journal.gif) no-repeat 0 50%;
     padding-left: 20px;
