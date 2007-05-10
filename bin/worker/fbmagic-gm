@@ -50,6 +50,6 @@ sub fbmagick {
     return FB::Job->do_as_gearman(
                                   job_name => 'fbmagick',
                                   arg_ref  => $job->{argref},
-                                  task_ref => \&FB::Upic::_fbmagick_do,
+                                  task_ref => \&FB::_fbmagick_do,
                                   );
 }

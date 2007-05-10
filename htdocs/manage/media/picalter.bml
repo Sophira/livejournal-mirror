@@ -6,17 +6,14 @@
     my $u = FB::get_remote();
     my $upicid = $GET{'id'}+0;
 
-    return BML::redirect("/login.bml?to=" .
-                         FB::eurl("manage/media/pic.bml?id=$upicid")) unless $u;
+    unless ($u) {
+        $body = "<?needlogin?>";
+        return;
+    }
 
     my $upicid = $GET{'id'}+0;
     my $up = FB::Upic->new($u, $upicid);
     return BML::redirect("/manage/media/gals.bml") unless $up;
-
-    ####### DISABLED UNTIL FB::MAGICK IS MOVED TO GEARMAN ####
-    $title = 'Disabled.';
-    $body = "This feature is disabled at the moment.  :(";
-    return;
 
     FB::get_des($u, $up);
 
@@ -40,21 +37,21 @@
         # load existing gpic for this upic
         my $g = FB::Gpic->load($up->{'gpicid'});
 
-        # create a new FB::Magick instance and read in the file data
-        my $image = FB::Magick->new($g->data) or return $err->();
+        my $image;
 
         # rotate clockwise/counterclockwise by 90 degrees
         if ($POST{'action:rotate:90left'} || $POST{'action:rotate:90right'}) {
 
             my $direction = $POST{'action:rotate:90left'} ? -90 : 90;
-            $image->Rotate('degrees' => $direction)
+
+            $image = FB::fbmagick_do($g, 'Rotate', degrees => $direction)
                 or return $err->("Error rotating image: " . FB::last_error());
         }
 
         # mirror
         if ($POST{'action:flip:t-b'} || $POST{'action:flip:l-r'}) {
-
-            $POST{'action:flip:t-b'} ? $image->Flip : $image->Flop
+            $POST{'action:flip:t-b'} ? $image = FB::fbmagick_do($g, 'Flip')
+                : $image = FB::fbmagick_do($g, 'Flop')
                 or return $err->("Error flipping image: " . FB::last_error());
         }
 
@@ -65,7 +62,7 @@
             return $err->("Invalid scaling: ${w}x$h")
                 unless FB::valid_scaling($w, $h);
 
-            $image->Scale( width => $w, height => $h )
+            $image = FB::fbmagick_do($g, 'Scale', width => $w, height => $h)
                 or return $err->("Error scaling image: " . FB::last_error());
         }
 
@@ -79,8 +76,8 @@
 
             # wish we didn't have to copy this blob around in memory, but it's
             # the only way to get an md5 of the data at this point
-            my $md5 = Digest::MD5::md5_hex(${$image->dataref});
-            my $len = $image->Get('filesize');
+            my $md5 = Digest::MD5::md5_hex($$image);
+            my $len = length $$image;
 
             # see if there is already a gpic with this now-altered data
             if (my $gpicid = FB::find_equal_gpicid($md5, $len, $g->{'fmtid'})) {
@@ -97,7 +94,7 @@
             $gs->{fmtid} = $g->{fmtid};
 
             # save the modified image
-            $gs->append($image);
+            $gs->append($$image);
             undef $image; # throw away now if we can
 
             $gs->save
@@ -111,11 +108,11 @@
             or return $err->("Failed to change upic's gpic.");
 
         # so they have a GET URL again:
-        return BML::redirect("/manage/picalter.bml?id=$up->{'upicid'}");
+        return BML::redirect("/manage/media/picalter.bml?id=$up->{'upicid'}");
     }
 
     my ($url, $w, $h) = $up->scaled_url(320, 320);
-    my $fullurl = $up->url;
+    my $fullurl = $up->url_full;
     my $picurl = FB::url_picture_page($u, $up);
 
     $body .= "<p>";

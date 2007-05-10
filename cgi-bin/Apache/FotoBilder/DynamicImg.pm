@@ -19,7 +19,6 @@ package Apache::FotoBilder::DynamicImg;
 
 use strict;
 use Apache::Constants qw/:common/;
-#use FB::Magick;
 
 my $path = '/img/dynamic';
 
@@ -39,11 +38,7 @@ sub handler
     $w = $w > 320 ? 320 : $w;
     $h = $h > 320 ? 320 : $h;
 
-    my $blobref = FB::Job->do
-        ( job_name => 'fbmagick',
-          arg_ref  => [$image, "Resize", width => $w, height => $h],
-          task_ref => \&FB::Upic::_magick_do,
-          );
+    my $blobref = FB::fbmagick_do($image, "Resize", width => $w, height => $h);
 
     return send_image( $r, $blobref );
 }

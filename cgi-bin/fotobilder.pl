@@ -1724,4 +1724,57 @@ foreach my $func (qw(hidden submit check text color textarea select datetime dat
     *{"FB::html_$func"} = \&{"LJ::html_$func"};
 }
 
+# does a fb magick operation on an image, just a wrapper around
+# gearman which is a wrapper around FB::Magick which is a wrapper
+# around Image::Magick. sigh.
+sub fbmagick_do {
+    my ($img, $func, %opts) = @_;
+
+    return undef unless $img;
+
+    # can pass image path or Gpic
+    if (ref $img) {
+        if (ref $img eq 'FB::Gpic') {
+            $img = $img->id;
+        } else {
+            croak "Must pass either a Gpic or image path to fbmagick_do";
+        }
+    }
+
+    return FB::Job->do
+        ( job_name => 'fbmagick',
+          arg_ref  => [$img, $func, %opts],
+          task_ref => \&FB::_fbmagick_do,
+          );
+}
+
+# do a FB::Magick function, should be only called from gearman
+sub _fbmagick_do {
+    my $argref = shift
+        or croak "No argument given to _magick_do";
+
+    my ($img, $func, %opts) = @$argref;
+
+    my $im;
+
+    my $rv;
+    if ($img =~ /^\d+$/g) {
+        # Gpic ID
+        my $gp = FB::Gpic->load($img) or return undef;
+        my $dataref = $gp->data;
+        $rv = $im = FB::Magick->new($dataref);
+    } else {
+        # image path
+        $im = FB::Magick->new;
+        $rv = $im->Read($img);
+    }
+
+    return undef unless $rv;
+
+    $im->$func(%opts);
+
+    my ($blob) = $im->ImageToBlob();
+    return \$blob;
+}
+
 1;

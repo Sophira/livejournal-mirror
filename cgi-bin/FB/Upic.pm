@@ -519,7 +519,7 @@ sub fmtid {
 # ($url, $actual_width, $actual_height) = $up->scaled_url($req_width, $req_height);
 sub scaled_url {
     my ($up, $w, $h) = @_;
-    $up->valid or die;
+    $up->valid or croak "Invalid upic passed to scaled_url";
 
     my $u = $up->{u};
     my $piccode = $up->piccode;
@@ -867,24 +867,6 @@ sub _thumbnail_gpic_do {
     return undef if $u->err;
 
     return \$gt->{gpicid};
-}
-
-# do a FB::Magick function, should be only called from gearman
-sub _fbmagick_do {
-    my $argref = shift
-        or croak "No argument given to _magick_do";
-
-    my ($imagepath, $func, %opts) = @$argref;
-
-    my $im = FB::Magick->new();
-    my $rv = $im->Read($imagepath);
-
-    return undef unless $rv;
-
-    $im->$func(%opts);
-
-    my ($blob) = $im->ImageToBlob();
-    return \$blob;
 }
 
 sub set_title {
