@@ -1,6 +1,5 @@
 /* homepage styles */
 
-/* legacy - delete after new logged-in homepage become permanent */
 #promobox-wrapper {
     width: 548px;
     margin-bottom: 3px;
@@ -21,6 +20,7 @@
 #promobox-wrapper[class] { height: auto; }
 #promobox-wrapper { display: block; }
 /* */
+
 #home_main {
     min-height: 200px;
     padding: 0 2%;
@@ -68,6 +68,7 @@
 #lj-bulletlist li a:hover {
     color: #69C;
 }
+
 table.stats-meter {
     width: 163px;
     border: 1px solid #cbcbcb;
@@ -99,7 +100,6 @@ table.stats-meter {
 .mousearea {
     text-decoration: none;
 }
-/* end legacy */
 
 /* logged out homepage styles */
 
@@ -280,7 +280,7 @@ table.stats-meter {
 }
 
 /* frank widget  */
-.appwidget-frank {
+.homepage-wrapper .appwidget-frank {
     margin-bottom: 0 !important;
     clear: both;
     position: absolute;
@@ -288,7 +288,7 @@ table.stats-meter {
     bottom: 0;
     width: 400px;
 }
-.appwidget-frank h2 {
+.homepage-wrapper .appwidget-frank h2 {
     margin: 0 0 6px 0;
     border: none;
     padding: 0;
@@ -296,7 +296,7 @@ table.stats-meter {
     text-align: right;
     background: none;
 }
-.appwidget-frank .frank-says {
+.homepage-wrapper .appwidget-frank .frank-says {
     position: absolute;
     right: 130px;
 }
@@ -326,184 +326,4 @@ table.stats-meter {
 #frankpic span {
     font-weight: bold;
     font-size: 14px;
-}
-
-/* recent posts widget */
-li.post a {
-    background: url(/img/pencil.gif) no-repeat 0 50%;
-    padding-left: 20px;
-    font-weight: bold;
-}
-li.post span.detail {
-    font-size: 11px !important;
-    display: block;
-}
-li.friends a {
-    background: url(/img/journal.gif) no-repeat 0 50%;
-    padding-left: 20px;
-    font-weight: bold;
-}
-li.inbox a {
-    background: url(/img/icon-email-16x16.gif) no-repeat 0 50%;
-    padding-left: 20px;
-    font-weight: bold;
-}
-li.news {
-    background: url(/img/newsinfo.gif) no-repeat 0 50%;
-    padding-left: 20px;
-}
-.appwidget-recentposts .detail,
-.appwidget-recentposts h2 {
-    display: none;
-}
-.homepage-account {
-    margin-bottom: 15px;
-}
-.homepage-account-inner {
-    padding-left: 200px;
-}
-.homepage-account-left {
-    float: left;
-    position: relative;
-    width: 200px;
-    margin-left: -200px;    
-}
-* html .homepage-account-left {
-    margin-left: -100px; 
-}
-.homepage-account-right {
-    float: left;
-    position: relative;
-    width: 100%;
-    background: url(/img/qotd-arrow.gif) no-repeat 5px 0;
-}
-.homepage-account a:visited {
-    color: #00C;
-}
-.homepage-account span.detail {
-    margin-left: 20px;
-}
-.homepage-account ul.nostyle {
-    padding: 0 !important;
-    margin-bottom: 8px;
-}
-.homepage-account ul.nostyle li {
-    margin: 0 0 5px 10px;
-}
-.homepage-loggedin {
-    background: url(/img/goat-back2.gif) repeat-x bottom;
-}
-.homepage-loggedin .appwidget {
-    margin-bottom: 15px;
-}
-.homepage-loggedin .appwidget-promotext {
-    padding-bottom: 30px;
-}
-.homepage-loggedin h2 {
-    font-size: 14px;
-    clear: left;
-    font-family: Arial;
-    font-weight: bold;
-    background: #eee url(/img/corner.gif) no-repeat 0 0;
-    margin: 0 0 8px 0;
-    padding: 5px 8px;
-    color: #333;
-}
-.homepage-account h2,
-.homepage-loggedin .appwidget-recentcomments h2,
-.homepage-loggedin .appwidget-friendupdates h2,
-.homepage-loggedin .appwidget-friendbirthdays h2 {
-    background-color: #C7E0F6;
-}
-.homepage-loggedin .appwidget-gettingstarted h2 {
-    background-color: #EDEDBB;
-}
-.homepage-loggedin h2 span {
-    padding-left: 20px;
-}
-.homepage-loggedin .appwidget-gettingstarted h2 span {
-    background: url(/img/icon-checkbox-16x16.gif) no-repeat 0 50%; 
-}
-.homepage-loggedin .appwidget-recentcomments h2 span {
-    background: url(/img/icon-track-16x16.gif) no-repeat 0 50%; 
-}
-.homepage-loggedin .appwidget-journalspotlight h2 span {
-    background: url(/img/Website.gif) no-repeat 0 50%; 
-}
-.homepage-explore h2 span {
-    background: url(/img/search.gif) no-repeat 0 50%;
-}
-.homepage-insidelj h2 span {
-    background: url(/img/interests.gif) no-repeat 0 50%;
-}
-.appwidget-friendbirthdays h2 span {
-    background: url(/img/gift.gif) no-repeat 0 50%;
-}
-.appwidget-friendupdates h2 span {
-    background: url(/img/editinfo.gif) no-repeat 0 50%;
-}
-.appwidget-officialjournals h2 span {
-    background: url(/img/newsinfo.gif) no-repeat 0 50%;
-}
-.homepage-loggedin .appwidget-gettingstarted {
-    background-color: #ffd;
-}
-.appwidget-qotd {
-    margin: 0 10px 0 15px;
-    padding: 8px 10px;
-    background-color: #fff;
-    border-bottom: 2px solid #C7E0F6;
-}
-.homepage-account .appwidget-qotd h2 {
-    margin: 0 0 4px 0 !important;
-}
-.homepage-account {
-    background-color: #ECF6FF;
-}
-.homepage-loggedin .getting-started-items {
-    padding: 0 10px;
-}
-.homepage-loggedin-frank .appwidget-frank {
-    float: right !important;
-    width: 300px;
-    clear: right;
-    margin: -125px 0 0 0 !important;
-}
-.homepage-loggedin-frank .appwidget-frank .appwidget-frank-text {
-    display: none;
-}
-homepage-loggedin #MiniSiteMap {
-    margin-top: 0 !important;
-}
-.homepage-loggedin .cprod {
-    margin-bottom: 20px;
-}
-.homepage-loggedin .cprod h3 {
-    color: #777;
-}
-.homepage-loggedin .cprod .content {
-    border: 1px solid #ccc;
-}
-.homepage-loggedin .cprod .alllink a {
-    color: #00C !important;
-}
-.homepage-loggedin .appwidget-recentposts {
-    float: left;
-    width: 58%;
-    height: 80px;
-}
-.explore-links {
-    float: right;
-    margin-right: 10px !important;
-}
-.explore-links li {
-    background: url(/img/arrow-double-black.gif) no-repeat 0 50%;
-    padding-left: 12px;
-}
-.appwidget-officialjournals {
-    padding-bottom: 150px; /* make room for Frank widget */
-}
-.homepage-loggedin .warningbar,
-.homepage-loggedin .ljad {
-    margin-bottom: 15px;
 }
