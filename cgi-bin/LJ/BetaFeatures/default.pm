@@ -68,10 +68,11 @@ sub is_started {
 
     my $now = time();
     return 1 if ! exists $conf->{start_time};
-    return 1 if $conf->{start_time} > $now;
+    return 1 if $conf->{start_time} <= $now;
     return 0;
 }
 
+# are we after the end time?
 sub is_expired {
     my $self = shift;
 
