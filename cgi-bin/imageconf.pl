@@ -138,6 +138,13 @@ $img{'track_thread_active'} = {
     'alt' => 'img.track_thread_active',
 };
 
+$img{'nogalpreview_100'} = {
+    'src' => "/nogalpreview.png",
+    'width' => 100,
+    'height' => 80,
+    'alt' => "No Gallery Preview/Image",
+};
+
 # load the site-local version, if it's around.
 if (-e "$LJ::HOME/cgi-bin/imageconf-local.pl") {
     require "$LJ::HOME/cgi-bin/imageconf-local.pl";

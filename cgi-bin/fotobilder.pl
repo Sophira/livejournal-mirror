@@ -1642,8 +1642,8 @@ sub img {
     my $attr = shift;
     require "$ENV{FBHOME}/cgi-bin/imageconf.pl";
 
-    my $i = $FB::Img::img{$ic};
-    return ("$FB::IMGPREFIX$i->{src}", $i->{width}, $i->{height}) if wantarray;
+    my $i = $LJ::Img::img{$ic};
+    return ("$LJ::IMGPREFIX$i->{src}", $i->{width}, $i->{height}) if wantarray;
 
     my $attrs;
     if ($attr) {
@@ -1657,12 +1657,12 @@ sub img {
     }
 
     if ($type eq "") {
-        return "<img src=\"$FB::IMGPREFIX$i->{'src'}\" width=\"$i->{'width'}\" ".
+        return "<img src=\"$LJ::IMGPREFIX$i->{'src'}\" width=\"$i->{'width'}\" ".
             "height=\"$i->{'height'}\" alt=\"$i->{'alt'}\" title=\"$i->{'alt'}\" ".
             "border='0'$attrs />";
     }
     if ($type eq "input") {
-        return "<input type=\"image\" src=\"$FB::IMGPREFIX$i->{'src'}\" ".
+        return "<input type=\"image\" src=\"$LJ::IMGPREFIX$i->{'src'}\" ".
             "width=\"$i->{'width'}\" height=\"$i->{'height'}\" title=\"$i->{'alt'}\" ".
             "alt=\"$i->{'alt'}\" border='0'$attrs />";
     }

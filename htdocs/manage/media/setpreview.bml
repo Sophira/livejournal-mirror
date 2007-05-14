@@ -54,7 +54,7 @@ if (window.parent && window.parent.setPreviewPic) {
 
         }
 
-        return BML::redirect("/manage/gal?id=$gallid");
+        return BML::redirect("/manage/media/gal.bml?id=$gallid");
     }
 
     my @pics = $sg->pictures;
@@ -68,7 +68,7 @@ if (window.parent && window.parent.setPreviewPic) {
        $body .= "<?p No pictures in this gallery. p?>";
     } else {
         my $name = FB::eall($g->display_name);
-        $body .= "<?p Click a picture to represent the <a href=\"/manage/gal?id=$gallid\">$name</a> gallery.  p?>";
+        $body .= "<?p Click a picture to represent the <a href=\"/manage/media/gal.bml?id=$gallid\">$name</a> gallery.  p?>";
 
         # Setup the paging bar
         my $perpage = 25;
@@ -133,7 +133,7 @@ if (window.parent && window.parent.setPreviewPic) {
         $body .= "<?h1 Choose other picture h1?><?p Alternatively, you may choose a picture from another gallery by browsing one of the sub-galleries below: p?><ul>\n";
         foreach (@sgal) {
             my $name = FB::eall($_->[1]);
-            $body .= "<li><a href='/manage/setpreview?gal=$gallid&showgal=$_->[0]'>$name</a></li>\n";
+            $body .= "<li><a href='/manage/media/setpreview.bml?gal=$gallid&showgal=$_->[0]'>$name</a></li>\n";
         }
         $body .= "</ul>";
     }
