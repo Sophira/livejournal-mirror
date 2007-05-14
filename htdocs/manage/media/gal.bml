@@ -597,7 +597,7 @@ var currentPopupWindow;
     ife.style.overflow = "hidden";
     ife.style.position = "absolute";
     ife.style.left = 50 + "px";
-    ife.style.top = 50 + "px";
+    ife.style.top = 150 + "px";
     ife.style.width = 600 + "px";
     ife.style.height = 500 + "px";
     ife.style.background = "#fff";
