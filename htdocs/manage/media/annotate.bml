@@ -66,8 +66,6 @@
             justup => $just_uploaded{$id},
         };
 
-        warn LJ::D($data);
-
         my $tagged = $tags  ? "tagged" : "";
         my $titled = $title ? "titled" : "";
         my $nju = %just_uploaded  && ! $just_uploaded{$id} ? "notjustuploaded" : "";
@@ -325,7 +323,7 @@ function startSaving () {
     // FIXME: add some other validator fields, and group requests
 
     xtr.onreadystatechange = state_callback;
-    xtr.open("POST", "/manage/annotate_save", true);
+    xtr.open("POST", "/manage/media/annotate_save.bml", true);
     var postdata = formUrlEncoded({
         'picid': picid+"",
         'des': saving_des,
@@ -433,7 +431,7 @@ function editPicture (picid) {
 
     var height = previewHeight(img);
 
-    ihtml = "<center><div id='previewImageDiv' style='width: 100%; height: "+height+"px;'><center><a target='_blank' href='/manage/pic?id="+picid+"'><img id='previewImage' src='" + img[0] + "' width='"+ img[1] + "' height='" + img[2] + "' border='0' /></a></center></div><br /><form id='rhsForm' onsubmit='return onFormSubmit()'>" +
+    ihtml = "<center><div id='previewImageDiv' style='width: 100%; height: "+height+"px;'><center><a target='_blank' href='/manage/media/pic.bml?id="+picid+"'><img id='previewImage' src='" + img[0] + "' width='"+ img[1] + "' height='" + img[2] + "' border='0' /></a></center></div><br /><form id='rhsForm' onsubmit='return onFormSubmit()'>" +
         "<table class='tagtitle'>" +
         "<tr><td width='50'>Tags:</td><td colspan='2'><input autocomplete='off' class='text' type='text' size='60' id='rhsTags"+ picid + "' name='tags'></td></tr>"+
         "<tr><td>Title:</td><td colspan='2'><input autocomplete='off' class='text' type='text' size='60' id='rhsTitle' name='title'></td></tr>" +
@@ -762,7 +760,7 @@ function setupFilter () {
 
 function seeIfAllTagged() {
     if (currentFilter == "untagged" && ! firstMatchingPicId()) {
-        $("underfilter").innerHTML = "<b>Congratulations!</b><br />You've completely tagged this gallery.  Now what?<ul><li><a href='/manage/letstag'>Find more stuff to tag</a></li><li><a href='/manage/gal?id=" + PicData.gallid + "'>Manage this gallery</a></li></ul>";
+        $("underfilter").innerHTML = "<b>Congratulations!</b><br />You've completely tagged this gallery.  Now what?<ul><li><a href='/manage/media/letstag.bml'>Find more stuff to tag</a></li><li><a href='/manage/media/gal.bml?id=" + PicData.gallid + "'>Manage this gallery</a></li></ul>";
     } else {
         $("underfilter").innerHTML = "";
     }

@@ -359,10 +359,10 @@ sub handler
     my $host = FB::user_siteroot($u);
     my $url;
     if ($POST{'go_to'} eq "annotate") {
-        $url = "$host/manage/annotate?gal=$g->{'gallid'}&ids=" . join(",", @upicids);
+        $url = "$host/manage/media/annotate.bml?gal=$g->{'gallid'}&ids=" . join(",", @upicids);
     } else {
         my $jsarg = $POST{'go_to'} eq "jscallup" ? "&jscallup=1" : "";
-        $url = "$host/manage/uploaded?gallid=$g->{'gallid'}&ids=" . join(",", @upicids) . $jsarg;
+        $url = "$host/manage/media/uploaded.bml?gallid=$g->{'gallid'}&ids=" . join(",", @upicids) . $jsarg;
     }
 
     if ($POST{redir_to_auth_base}) {

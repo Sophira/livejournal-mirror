@@ -35,6 +35,13 @@ use Class::Autouse qw(
                       XMLRPC::Transport::HTTP
                       );
 
+# protocol v1
+use Apache::FotoBilder::Upload;
+use Apache::FotoBilder::WebUpload;
+
+# protocol v2
+use Apache::FotoBilder::Simple;
+
 BEGIN {
     $LJ::OPTMOD_ZLIB = eval "use Compress::Zlib (); 1;";
 
@@ -843,6 +850,40 @@ sub trans
         my $view = $determine_view->($user, $vhost, $rest);
         return $view if defined $view;
     }
+
+
+    # FB interface handlers
+    if ($uri =~ m!^/interface/simple!) {
+        $r->handler("perl-script");
+        $r->push_handlers(PerlHandler => \&Apache::FotoBilder::Simple::handler);
+        return OK;
+    }
+
+    if ($uri =~ m!^/interface/upload!) {
+        $r->handler("perl-script");
+        $r->push_handlers(PerlHandler => \&Apache::FotoBilder::Upload::handler);
+        return OK;
+    }
+
+    if ($uri =~ m!^/interface/webupload!) {
+        warn "webupload";
+        $r->handler("perl-script");
+        $r->push_handlers(PerlHandler => \&Apache::FotoBilder::WebUpload::handler);
+        return OK;
+    }
+
+    if ($uri =~ m!^/interface/xmlrpc!) {
+        $r->handler("perl-script");
+        $r->push_handlers(PerlHandler => \&Apache::FotoBilder::XMLRPC::handler);
+        return OK;
+    }
+
+    if ($uri =~ m!^/img/dynamic!) {
+        $r->handler("perl-script");
+        $r->push_handlers(PerlHandler => \&Apache::FotoBilder::DynamicImg::handler);
+        return OK;
+    }
+
 
     # custom interface handler
     if ($uri =~ m!^/interface/([\w\-]+)$!) {

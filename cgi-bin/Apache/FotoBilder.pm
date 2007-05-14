@@ -10,13 +10,6 @@ use Apache::File ();
 use XMLRPC::Transport::HTTP ();
 use lib "$ENV{'FBHOME'}/cgi-bin";
 
-# protocol v1
-use Apache::FotoBilder::Upload;
-use Apache::FotoBilder::WebUpload;
-
-# protocol v2
-use Apache::FotoBilder::Simple;
-
 # image serving
 use Apache::FotoBilder::Pic;
 use Apache::FotoBilder::DynamicImg;
@@ -111,36 +104,6 @@ sub trans
     if ($FB::DOMAIN_WEB && $r->method eq "GET" &&
         $host eq $FB::DOMAIN && $FB::DOMAIN_WEB ne $FB::DOMAIN) {
         return redir($r, "$siteroot$uri$args_wq");
-    }
-
-    if ($uri =~ m!^/interface/simple!) {
-        $r->handler("perl-script");
-        $r->push_handlers(PerlHandler => \&Apache::FotoBilder::Simple::handler);
-        return OK;
-    }
-
-    if ($uri =~ m!^/interface/upload!) {
-        $r->handler("perl-script");
-        $r->push_handlers(PerlHandler => \&Apache::FotoBilder::Upload::handler);
-        return OK;
-    }
-
-    if ($uri =~ m!^/interface/webupload!) {
-        $r->handler("perl-script");
-        $r->push_handlers(PerlHandler => \&Apache::FotoBilder::WebUpload::handler);
-        return OK;
-    }
-
-    if ($uri =~ m!^/interface/xmlrpc!) {
-        $r->handler("perl-script");
-        $r->push_handlers(PerlHandler => \&Apache::FotoBilder::XMLRPC::handler);
-        return OK;
-    }
-
-    if ($uri =~ m!^/img/dynamic!) {
-        $r->handler("perl-script");
-        $r->push_handlers(PerlHandler => \&Apache::FotoBilder::DynamicImg::handler);
-        return OK;
     }
 
     if (FB::are_hooks("http_extra_trans")) {
