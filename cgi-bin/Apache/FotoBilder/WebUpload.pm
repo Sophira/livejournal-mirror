@@ -297,16 +297,6 @@ sub handler
 
         $open->('upic' => $upicid, $up); # mark this upic as open
 
-        # parse EXIF data from image and store it if necessary
-        if ($up->fmtid == FB::fmtid_from_ext('jpg')) {
-
-            # since Mogile only keeps 1024 bytes of data buffered in memory,
-            # this would fail if we hadn't just printed the entire image to
-            # MogileFS's buffer, making it all still in memory.
-            seek $uplo->{spool_fh}, 0, 0;
-            $up->exif_header($uplo->{spool_fh})
-                or return $server_error->(FB::last_error());
-        }
         $uplo->{spool_fh}->close
             or return $server_error->("unable to close spool filehandle" => $@ => $!);
 

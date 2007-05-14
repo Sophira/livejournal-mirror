@@ -313,12 +313,6 @@ sub handler
         return $server_error->("Couldn't generate upic: $@")
             unless $up;
 
-        # extract exif information if necessary
-        if ($up->fmtid == FB::fmtid_from_ext('jpg')) {
-            # data will be cached from our appends
-            $up->exif_header($gpic->data);
-        }
-
         my $handle_dup_after_rotate = sub {
             my $exist_upicid = shift;
             # delete the one we'd been working with,
