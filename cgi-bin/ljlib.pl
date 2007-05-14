@@ -37,6 +37,7 @@ use Class::Autouse qw(
                       LJ::Userpic
                       LJ::ModuleCheck
                       IO::Socket::INET
+                      LJ::UniqCookie
                       LJ::WorkerResultStorage
                       LJ::EventLogRecord
                       LJ::EventLogRecord::DeleteComment
@@ -1769,6 +1770,8 @@ sub start_request
     LJ::Comment->reset_singletons;
     LJ::Entry->reset_singletons;
 
+    LJ::UniqCookie->clear_request_cache;
+
     # we use this to fake out get_remote's perception of what
     # the client's remote IP is, when we transfer cookies between
     # authentication domains.  see the FotoBilder interface.
@@ -1916,37 +1919,6 @@ sub server_down_html
 {
     return "<b>$LJ::SERVER_DOWN_SUBJECT</b><br />$LJ::SERVER_DOWN_MESSAGE";
 }
-
-# <LJFUNC>
-# name: LJ::decode_url_string
-# class: web
-# des: Parse URL-style arg/value pairs into a hash.
-# args: buffer, hashref
-# des-buffer: Scalar or scalarref of buffer to parse.
-# des-hashref: Hashref to populate.
-# returns: boolean; true.
-# </LJFUNC>
-sub decode_url_string
-{
-    my $a = shift;
-    my $buffer = ref $a ? $a : \$a;
-    my $hashref = shift;  # output hash
-
-    my $pair;
-    my @pairs = split(/&/, $$buffer);
-    my ($name, $value);
-    foreach $pair (@pairs)
-    {
-        ($name, $value) = split(/=/, $pair);
-        $value =~ tr/+/ /;
-        $value =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
-        $name =~ tr/+/ /;
-        $name =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
-        $hashref->{$name} .= $hashref->{$name} ? "\0$value" : $value;
-    }
-    return 1;
-}
-
 
 # <LJFUNC>
 # name: LJ::get_cluster_description

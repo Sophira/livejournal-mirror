@@ -2828,6 +2828,17 @@ CREATE TABLE `expunged_users` (
   KEY expunge_time (expunge_time)
 )
 EOC
+    
+register_tablecreate("uniqmap", <<'EOC');
+CREATE TABLE uniqmap (
+  uniq VARCHAR(15) NOT NULL,
+  userid INT UNSIGNED NOT NULL,
+  modtime INT UNSIGNED NOT NULL,
+  PRIMARY KEY (userid, uniq),
+  INDEX(userid, modtime),
+  INDEX(uniq, modtime)
+)
+EOC
 
 # NOTE: new table declarations go here
 
@@ -3456,10 +3467,11 @@ register_alter(sub {
                  "ALTER TABLE pollsubmission2 DROP PRIMARY KEY, ADD PRIMARY KEY (journalid,pollid,userid)");
     }
 
-    # add a column
-    unless (column_type("qotd", "extra_text")) {
-        do_alter("qotd",
-                 "ALTER TABLE qotd ADD extra_text TEXT DEFAULT NULL");
+    # add an indexed 'userid' column
+    unless (column_type("expunged_users", "userid")) {
+        do_alter("expunged_users",
+                 "ALTER TABLE expunged_users ADD userid INT UNSIGNED NOT NULL FIRST, " .
+                 "ADD INDEX (userid)");
     }
 
 });
