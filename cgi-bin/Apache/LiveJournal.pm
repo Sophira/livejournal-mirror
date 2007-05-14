@@ -872,12 +872,6 @@ sub trans
         return OK;
     }
 
-    if ($uri =~ m!^/interface/xmlrpc!) {
-        $r->handler("perl-script");
-        $r->push_handlers(PerlHandler => \&Apache::FotoBilder::XMLRPC::handler);
-        return OK;
-    }
-
     if ($uri =~ m!^/img/dynamic!) {
         $r->handler("perl-script");
         $r->push_handlers(PerlHandler => \&Apache::FotoBilder::DynamicImg::handler);

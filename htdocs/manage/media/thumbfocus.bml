@@ -104,7 +104,6 @@
     $body .= "<input type='button' id='btnReset' value='Reset Focus' /></div>";
 
     my ($turl, $tw, $th) = $up->url_thumbnail([125, 125]);
-    warn "turl: :$turl";
 
     $body .= "<?h1 Low-quality thumbnail previews: h1?>";
     $body .= "<p>These are quick approximations of the thumbnails the server will generate given your focus specifications above.</p> <div id='previewPane'><img class='regular' src='$turl' width='$tw' height='$th' title='Regular thumbnail:  scaled, but not cropped.' />
