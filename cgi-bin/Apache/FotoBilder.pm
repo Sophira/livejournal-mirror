@@ -32,8 +32,7 @@ sub handler
     my $r = shift;
     $r->set_handlers(PerlTransHandler => [ \&trans ]);
     $r->set_handlers(PerlCleanupHandler => [ sub { %RQ = () },
-                                             "Apache::FotoBilder::cleanup_tempfiles",
-                                             "Apache::FotoBilder::db_logger", ]);
+                                             "Apache::FotoBilder::cleanup_tempfiles" ]);
 
     # if we're behind a lite mod_proxy front-end, we need to trick future handlers
     # into thinking they know the real remote IP address.  problem is, it's complicated
@@ -145,17 +144,7 @@ sub trans
             $r->push_handlers(PerlHandler => \&Apache::FotoBilder::Pic::img_dir);
             return OK;
         }
-        # no extension & file => send to BML processor
-        my $rest_no_query = $rest;
-        $rest_no_query =~ s/\?.*//;
-        if ($rest_no_query !~ m/[^\w\/]/ &&
-            -f "$FB::HOME/htdocs/$topdir$rest_no_query")
-        {
-            $r->handler("perl-script");
-            $r->push_handlers(PerlHandler => \&Apache::BML::handler);
-            $r->filename("$FB::HOME/htdocs/$topdir$rest_no_query");
-            return OK;
-        }
+
         # /dir -> /dir/
         if ($rest eq "" && -d "$FB::HOME/htdocs/$topdir") {
             return redir($r, "/$topdir/");
@@ -213,88 +202,6 @@ sub cleanup_tempfiles
 
     # unlink any tempfiles noted by application as needing deletion
     unlink $_ foreach @$tempfiles;
-
-    return OK;
-}
-
-
-sub db_logger
-{
-    my $r = shift;
-    my $rl = $r->last;
-
-    my $ctype = $rl->content_type;
-    return if $ctype =~ m!^image/! and $FB::DONT_LOG_IMAGES;
-
-    my $dbl = FB::get_dbh("logs");
-    return unless $dbl;
-
-    my @now = localtime();
-    my $table = sprintf("access%04d%02d%02d", $now[5]+1900,
-                        $now[4]+1, $now[3]);
-
-    unless ($FB::CACHED_LOG_CREATE{"$dbl-$table"}) {
-        $dbl->do("CREATE TABLE IF NOT EXISTS $table (".
-                 "whn DATETIME NOT NULL,".
-                 "server VARCHAR(30),".
-                 "addr VARCHAR(15) NOT NULL,".
-                 "userid MEDIUMINT(8) UNSIGNED,".
-                 "ownerid MEDIUMINT(8) UNSIGNED,".
-                 "langpref VARCHAR(5),".
-                 "method VARCHAR(10) NOT NULL,".
-                 "vhost VARCHAR(80) NOT NULL,".
-                 "uri VARCHAR(255) NOT NULL,".
-                 "args VARCHAR(255),".
-                 "status SMALLINT UNSIGNED NOT NULL,".
-                 "ctype VARCHAR(30) NOT NULL,".
-                 "bytes MEDIUMINT UNSIGNED NOT NULL,".
-                 "browser VARCHAR(100) NOT NULL,".
-                 "ref VARCHAR(200))");
-        $FB::CACHED_LOG_CREATE{"$dbl-$table"} = 1;
-    }
-
-    my $ua = $r->header_in("User-Agent");
-    my $ref = $r->header_in("Referer");
-
-    my $sql = "INSERT DELAYED INTO $table VALUES (NOW(),?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-    my @vals = ($FB::SERVER_NAME,
-                $r->connection->remote_ip,
-                $rl->notes('fb_userid'),
-                $rl->notes('fb_ownerid'),
-                $rl->notes('langpref'),
-                $r->method,
-                $r->header_in("Host"),
-                $r->uri,
-                scalar $r->args,
-                $rl->status,
-                $ctype,
-                $rl->bytes_sent,
-                $ua,
-                $ref);
-
-    $dbl->do($sql, undef, @vals);
-}
-
-###############################################################################
-# XMLRPC handler
-#
-
-package Apache::FotoBilder::XMLRPC;
-
-use strict;
-use Apache::Constants qw(:common HTTP_METHOD_NOT_ALLOWED);
-use XMLRPC::Transport::HTTP ();
-
-sub handler {
-    my $r = shift;
-    return HTTP_METHOD_NOT_ALLOWED
-        unless $r->method eq "POST";
-
-    # dispatch XMLRPC handler for requested function and return
-    XMLRPC::Transport::HTTP::Apache
-        -> on_action(sub { die "Access denied\n" if $_[2] =~ /:|\'/ })
-        -> dispatch_to('FB::XMLRPC')
-        -> handle($r);
 
     return OK;
 }
