@@ -95,9 +95,10 @@ sub work {
                   infile_secs => $seconds,
                   # FIXME: lang, country of incoming phone #?
                   );
-          };
+        };
+
         # on error, warn but continue
-        warn "Error in LJ::SpinVox->dispatch_for_transcription: $@" if $@;
+        debug("Error in LJ::SpinVox->dispatch_for_transcription: $@") if $@;
     }
 
     debug("bid = $bid");
