@@ -132,7 +132,7 @@ sub work {
                 return dequeue($errmsg);
             }
 
-            return complete();
+            return completed();
         }
 
         # hook didn't want to handle this email...
