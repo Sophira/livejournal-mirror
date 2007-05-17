@@ -86,7 +86,11 @@ sub work {
     # attempt to encode and send WAV to SpinVox for auto-transcription
     # -- if this dies, we want to be sure to not prevent the insertion
     #    of the PhonePostLJPost job into TheSchwartz
-    if ($security eq 'public' && LJ::SpinVox->should_dispatch($u)) {
+    # -- security will be public if $security eq 'public' and it won't
+    #    later be overridden by newpost_minsecurity
+    if ($security eq 'public' && ! $u->prop('newpost_minsecurity') &&
+        LJ::SpinVox->should_dispatch($u))
+    {
         eval {
             LJ::SpinVox->dispatch_for_transcription
                 ( $u, 
