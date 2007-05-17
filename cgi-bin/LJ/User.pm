@@ -2088,6 +2088,18 @@ sub in_class {
     return LJ::caps_in_group($u->{caps}, $class);
 }
 
+# tests to see if a user is in a specific named class. class
+# names are site-specific.
+sub in_any_class {
+    my ($u, @classes) = @_;
+
+    foreach my $class (@classes) {
+        return 1 if LJ::caps_in_group($u->{caps}, $class);
+    }
+
+    return 0;
+}
+
 sub add_to_class {
     my ($u, $class) = @_;
     my $bit = LJ::class_bit($class);
