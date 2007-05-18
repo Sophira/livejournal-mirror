@@ -1,0 +1,8 @@
+/* recent comments */
+
+.appwidget-recentcomments .userpic-img {
+    width: 60px;
+    float: left;
+    margin-right: 8px;
+    border: none;
+}

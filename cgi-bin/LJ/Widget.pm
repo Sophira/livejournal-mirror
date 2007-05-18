@@ -3,13 +3,17 @@ package LJ::Widget;
 use strict;
 use Carp;
 use LJ::ModuleLoader;
+use LJ::Auth;
 
 # FIXME: don't really need all widgets now
 LJ::ModuleLoader->autouse_subclasses("LJ::Widget");
 
+our $currentId = 1;
+
 sub new {
     my $class = shift;
-    return bless {}, $class;
+    my $id = $currentId++;
+    return bless {id => $currentId}, $class;
 }
 
 sub need_res {
@@ -40,23 +44,33 @@ sub should_render {
 
 sub render {
     my ($class, @opts) = @_;
-    croak "render must be called as a class method"
-        unless $class =~ /^LJ::Widget/;
+
+    my $widget_id = ref $class ? $class->{id} : $currentId++;
 
     my $subclass = $class->subclass;
     my $css_subclass = lc($subclass);
     my %opt_hash = @opts;
-    
+
     return "" unless $class->should_render;
 
-    my $ret = "<div class='appwidget appwidget-$css_subclass'>\n";
+    my $ret = "<div class='appwidget appwidget-$css_subclass' id='LJWidget_$widget_id'>\n";
 
     my $rv = eval {
-        my $widget = "LJ::Widget::$subclass";
+        my $widget = ref $class ? $class : "LJ::Widget::$subclass";
 
         # include any resources that this widget declares
         if ($opt_hash{stylesheet_override}) {
             LJ::need_res($opt_hash{stylesheet_override});
+
+            # include non-CSS files (we used stylesheet_override above)
+            foreach my $file ($widget->need_res) {
+                if ($file =~ m!^[^/]+\.(js|css)$!i) {
+                    next if $1 eq 'css';
+                    LJ::need_res("js/widgets/$subclass/$file");
+                    next;
+                }
+                LJ::need_res($file) unless $file =~ /\.css$/i;
+            }
         } else {
             foreach my $file ($widget->need_res) {
                 if ($file =~ m!^[^/]+\.(js|css)$!i) {
@@ -144,13 +158,13 @@ sub handle_post {
 
     # no errors, return empty list
     return () unless LJ::did_post() && @widgets;
-    
+
     # is this widget disabled?
     return () if $class->is_disabled;
 
     # require form auth for widget submissions
     my @errors = ();
-    unless (LJ::check_form_auth($post->{lj_form_auth})) {
+    unless (LJ::check_form_auth($post->{lj_form_auth}) || $LJ::WIDGET_NO_AUTH_CHECK) {
         push @errors, BML::ml('error.invalidform');
     }
 
@@ -184,6 +198,7 @@ sub is_disabled {
 
 sub subclass {
     my $class = shift;
+    $class = ref $class if ref $class;
     return ($class =~ /::(\w+)$/)[0];
 }
 
@@ -196,6 +211,38 @@ sub decl_params {
 sub form_auth {
     my $class = shift;
     return LJ::form_auth(@_);
+}
+
+# override in subclasses with a string of JS to extend the widget subclass with
+sub js { '' }
+
+# override to return a true value if this widget accept AJAX posts
+sub ajax { 0 }
+
+# instance method to return javascript for this widget
+sub wrapped_js {
+    my $self = shift;
+
+    croak "wrapped_js is an instance method" unless ref $self;
+
+    my $widgetid = $self->{id} or return '';
+    my $widgetclass = $self->subclass;
+    my $js = $self->js or return '';
+
+    my $authtoken = LJ::Auth->ajax_auth_token(LJ::get_remote(), "/_widget");
+    $authtoken = LJ::ejs($authtoken);
+
+    LJ::need_res(qw(js/ljwidget.js));
+
+    my $widgetvar = "LJWidget.widgets[$widgetid]";
+
+    return qq {
+        <script>
+            $widgetvar = new LJWidget($widgetid, "$widgetclass", "$authtoken");
+            $widgetvar.extend({$js});
+            LiveJournal.register_hook("page_load", function () { $widgetvar.initWidget() });
+        </script>
+    };
 }
 
 package LJ::Error::WidgetError;
@@ -235,6 +282,35 @@ sub _html_star {
     my $prefix = $class->input_prefix;
     $opts{name} = "${prefix}_$opts{name}";
     return $func->(\%opts);
+}
+
+sub _html_star_list {
+    my $class  = shift;
+    my $func   = shift;
+    my @params = @_;
+
+    # If there's only one element in @params, then there is
+    # no name for the field and nothing should be changed.
+    unless (@params == 1) {
+        my $prefix = $class->input_prefix;
+
+        my $is_name = 1; # if true, the next element we'll check is a name (not a value)
+        foreach my $el (@params) {
+            if (ref $el) {
+                $el->{name} = "${prefix}_$el->{name}";
+                $is_name = 1;
+                next;
+            }
+            if ($is_name) {
+                $el = "${prefix}_$el";
+                $is_name = 0;
+            } else {
+                $is_name = 1;
+            }
+        }
+    }
+
+    return $func->(@params);
 }
 
 sub html_text {
@@ -288,32 +364,14 @@ sub html_datetime {
 
 sub html_hidden { 
     my $class = shift;
-    return $class->_html_star(\&LJ::html_hidden, @_);
+
+    return $class->_html_star_list(\&LJ::html_hidden, @_);
 }
 
 sub html_submit {
     my $class = shift;
-    my @params = @_;
 
-    # If there's only one element in @params, then there is
-    # no name for the field and nothing should be changed.
-    unless (@params == 1) {
-        my $prefix = $class->input_prefix;
-
-        my $is_name = 1;
-        foreach my $el (@params) {
-            if (ref $el) {
-                $el->{name} = "${prefix}_$el->{name}";
-                $is_name = 1;
-            }
-            if ($is_name) {
-                $el = "${prefix}_$el";
-                $is_name = 0;
-            }
-        }
-    }
-
-    return LJ::html_submit(@params);
+    return $class->_html_star_list(\&LJ::html_submit, @_);
 }
 
 ##################################################
@@ -337,8 +395,9 @@ sub ml_remove_text {
     my $class = shift;
     my $ml_key = shift;
 
-    my $ml_dmid = $class->ml_dmid;
-    return LJ::Lang::remove_text($ml_dmid, $ml_key);
+    my $ml_dmid     = $class->ml_dmid;
+    my $root_lncode = $class->ml_root_lncode;
+    return LJ::Lang::remove_text($ml_dmid, $ml_key, $root_lncode);
 }
 
 sub ml_set_text {

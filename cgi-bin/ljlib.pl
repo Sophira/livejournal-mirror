@@ -37,6 +37,7 @@ use Class::Autouse qw(
                       LJ::Userpic
                       LJ::ModuleCheck
                       IO::Socket::INET
+                      LJ::UniqCookie
                       LJ::WorkerResultStorage
                       LJ::EventLogRecord
                       LJ::EventLogRecord::DeleteComment
@@ -218,16 +219,38 @@ sub get_blob_domainid
     die "Unknown blob domain: $name";
 }
 
+sub _using_blockwatch {
+    if (LJ::conf_test($LJ::DISABLED{blockwatch})) {
+        # Config override to disable blockwatch.
+        return 0;
+    }
+
+    unless (LJ::ModuleCheck->have('LJ::Blockwatch')) {
+        # If we don't have or are unable to load LJ::Blockwatch, then give up too
+        return 0;
+    }
+    return 1;
+}
+
 sub locker {
     return $LJ::LOCKER_OBJ if $LJ::LOCKER_OBJ;
     eval "use DDLockClient ();";
     die "Couldn't load locker client: $@" if $@;
 
-    return $LJ::LOCKER_OBJ =
+    $LJ::LOCKER_OBJ =
         new DDLockClient (
                           servers => [ @LJ::LOCK_SERVERS ],
                           lockdir => $LJ::LOCKDIR || "$LJ::HOME/locks",
                           );
+
+    if (_using_blockwatch()) {
+        eval { LJ::Blockwatch->setup_ddlock_hooks($LJ::LOCKER_OBJ) };
+
+        warn "Unable to add Blockwatch hooks to DDLock client object: $@"
+            if $@;
+    }
+
+    return $LJ::LOCKER_OBJ;
 }
 
 sub gearman_client {
@@ -238,6 +261,14 @@ sub gearman_client {
 
     my $client = Gearman::Client->new;
     $client->job_servers(@LJ::GEARMAN_SERVERS);
+
+    if (_using_blockwatch()) {
+        eval { LJ::Blockwatch->setup_gearman_hooks($client) };
+
+        warn "Unable to add Blockwatch hooks to Gearman client object: $@"
+            if $@;
+    }
+
     return $client;
 }
 
@@ -259,6 +290,13 @@ sub mogclient {
         # set preferred ip list if we have one
         $LJ::MogileFS->set_pref_ip(\%LJ::MOGILEFS_PREF_IP)
             if %LJ::MOGILEFS_PREF_IP;
+
+        if (_using_blockwatch()) {
+            eval { LJ::Blockwatch->setup_mogilefs_hooks($LJ::MogileFS) };
+
+            warn "Unable to add Blockwatch hooks to MogileFS client object: $@"
+                if $@;
+        }
     }
 
     return $LJ::MogileFS;
@@ -1769,6 +1807,8 @@ sub start_request
     LJ::Comment->reset_singletons;
     LJ::Entry->reset_singletons;
 
+    LJ::UniqCookie->clear_request_cache;
+
     # we use this to fake out get_remote's perception of what
     # the client's remote IP is, when we transfer cookies between
     # authentication domains.  see the FotoBilder interface.
@@ -1916,37 +1956,6 @@ sub server_down_html
 {
     return "<b>$LJ::SERVER_DOWN_SUBJECT</b><br />$LJ::SERVER_DOWN_MESSAGE";
 }
-
-# <LJFUNC>
-# name: LJ::decode_url_string
-# class: web
-# des: Parse URL-style arg/value pairs into a hash.
-# args: buffer, hashref
-# des-buffer: Scalar or scalarref of buffer to parse.
-# des-hashref: Hashref to populate.
-# returns: boolean; true.
-# </LJFUNC>
-sub decode_url_string
-{
-    my $a = shift;
-    my $buffer = ref $a ? $a : \$a;
-    my $hashref = shift;  # output hash
-
-    my $pair;
-    my @pairs = split(/&/, $$buffer);
-    my ($name, $value);
-    foreach $pair (@pairs)
-    {
-        ($name, $value) = split(/=/, $pair);
-        $value =~ tr/+/ /;
-        $value =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
-        $name =~ tr/+/ /;
-        $name =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
-        $hashref->{$name} .= $hashref->{$name} ? "\0$value" : $value;
-    }
-    return 1;
-}
-
 
 # <LJFUNC>
 # name: LJ::get_cluster_description

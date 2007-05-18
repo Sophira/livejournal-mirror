@@ -244,13 +244,18 @@ sub fullurl {
 sub imgtag {
     my $self = shift;
     return '<img src="' . $self->url . '" width="' . $self->width . '" height="' . $self->height .
-        '" alt="' . LJ::ehtml(scalar $self->keywords) . '" />';
+        '" alt="' . LJ::ehtml(scalar $self->keywords) . '" class="userpic-img" />';
 }
 
 sub imgtag_lite {
     my $self = shift;
     return '<img src="' . $self->url . '" width="' . $self->width . '" height="' . $self->height .
-        '" />';
+        '" class="userpic-img" />';
+}
+
+sub imgtag_nosize {
+    my $self = shift;
+    return '<img src="' . $self->url . '" class="userpic-img" />';
 }
 
 # in scalar context returns comma-seperated list of keywords or "pic#12345" if no keywords defined
@@ -463,7 +468,7 @@ sub load_user_userpics {
                              "FROM userpic WHERE userid=?");
     }
     $sth->execute($u->{'userid'});
-    die $sth->errstr if $sth->err;
+    die "Error loading userpics: clusterid=$u->{clusterid}, errstr=" . $sth->errstr if $sth->err;
 
     while (my $rec = $sth->fetchrow_hashref) {
         # ignore anything expunged

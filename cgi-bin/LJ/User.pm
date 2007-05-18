@@ -32,6 +32,7 @@ use Class::Autouse qw(
                       Time::Local
                       LJ::Event::Befriended
                       LJ::M::FriendsOf
+                      LJ::BetaFeatures
                       );
 
 sub new_from_row {
@@ -514,6 +515,10 @@ sub make_login_session {
     $sess->update_master_cookie;
 
     LJ::User->set_remote($u);
+
+    # add a uniqmap row if we don't have one already
+    my $uniq = LJ::UniqCookie->current_uniq;
+    LJ::UniqCookie->save_mapping($uniq => $u);
 
     # restore scheme and language
     my $bl = LJ::Lang::get_lang($u->prop('browselang'));
@@ -1302,6 +1307,46 @@ sub init_age {
     return;
 }
 
+# this sets the unix time of their next birthday for notifications
+sub set_next_birthday {
+    my $u = shift;
+    return if $u->is_expunged;
+
+    my ($year, $mon, $day) = split(/-/, $u->{bdate});
+    return unless $mon > 0 && $day > 0;
+
+    my $as_unix = sub {
+        return LJ::mysqldate_to_time(sprintf("%04d-%02d-%02d", @_));
+    };
+
+    my $curyear = (gmtime(time))[5]+1900;
+
+    # their birthdate, this year (may have already passed,
+    # but we'll deal with that case below)
+    my $bday = $as_unix->($curyear, $mon, $day);
+
+    # but if their next birthday turns out to be within the timeframe
+    # when we're sending notifications (or before), then we want to
+    # set it for next year.
+
+    # FIXME: This is racy and runs on the assumption that birthday
+    # reminders will never be backed up. Otherwise, if my birthday
+    # is tomorrow, but the notification hasn't yet been processed,
+    # It'll get re-set for next year and won't get handled this year
+    if ($bday < time() + $LJ::BIRTHDAY_NOTIFS_ADVANCE) {
+        $bday = $as_unix->($curyear+1, $mon, $day);
+    }
+
+    # up to twelve hours drift so we don't get waves
+    $bday += int(rand(12*3600));
+
+    $u->do("REPLACE INTO birthdays VALUES (?, ?)", undef, $u->id, $bday);
+    die $u->errstr if $u->err;
+
+    return $bday;
+}
+
+
 # returns the country specified by the user
 sub country {
     my $u = shift;
@@ -1313,6 +1358,12 @@ sub set_prop {
     my ($u, $prop, $value) = @_;
     return 0 unless LJ::set_userprop($u, $prop, $value);  # FIXME: use exceptions
     $u->{$prop} = $value;
+}
+
+sub clear_prop {
+    my ($u, $prop) = @_;
+    $u->set_prop($prop, undef);
+    return 1;
 }
 
 sub journal_base {
@@ -1470,6 +1521,18 @@ sub get_friends_birthdays {
     return $bday_sort->(@bdays);
 }
 
+# tests to see if a user is in a specific named class. class
+# names are site-specific.
+sub in_any_class {
+    my ($u, @classes) = @_;
+
+    foreach my $class (@classes) {
+        return 1 if LJ::caps_in_group($u->{caps}, $class);
+    }
+
+    return 0;
+}
+
 
 # get recent talkitems posted to this user
 # args: maximum number of comments to retreive
@@ -1488,7 +1551,15 @@ sub get_recent_talkitems {
     my $memkey = [$u->userid, 'rcntalk:' . $u->userid . ':' . $maxshow];
     if ($memcache) {
         my $recv_cached = LJ::MemCache::get($memkey);
-        return @$recv_cached if $recv_cached;
+        if ($recv_cached) {
+            # construct an LJ::Comment singleton
+            foreach my $row (@$recv_cached) {
+                my $comment = LJ::Comment->new($u, jtalkid => $row->{jtalkid});
+                $comment->absorb_row(%$row);
+            }
+
+            return @$recv_cached;
+        }
     }
 
     my $max = $u->selectrow_array("SELECT MAX(jtalkid) FROM talk2 WHERE journalid=?",
@@ -1501,11 +1572,15 @@ sub get_recent_talkitems {
                           "WHERE journalid=? AND jtalkid > ?");
     $sth->execute($u->{'userid'}, $max - $maxshow);
     while (my $r = $sth->fetchrow_hashref) {
+        # construct an LJ::Comment singleton
+        my $comment = LJ::Comment->new($u, jtalkid => $r->{jtalkid});
+        $comment->absorb_row(%$r);
+
         push @recv, $r;
     }
 
-    # memcache results for an hour
-    LJ::MemCache::set($memkey, \@recv, 3600);
+    # memcache results for 5 minutes
+    LJ::MemCache::set($memkey, \@recv, 60*5);
 
     return @recv;
 }
@@ -1611,10 +1686,11 @@ sub is_validated {
 
 sub update_email_alias {
     my $u = shift;
+
     return unless $u && $u->get_cap("useremail");
     return if exists $LJ::FIXED_ALIAS{$u->{'user'}};
-
     return if $u->prop("no_mail_alias");
+    return unless $u->is_validated;
 
     my $dbh = LJ::get_db_writer();
     $dbh->do("REPLACE INTO email_aliases (alias, rcpt) VALUES (?,?)",
@@ -2556,6 +2632,14 @@ sub timecreate {
     return LJ::mysqldate_to_time($when);
 }
 
+# when was last time this account updated?
+# returns unixtime
+sub timeupdate {
+    my $u = shift;
+    my $timeupdate = LJ::get_timeupdate_multi($u->id);
+    return $timeupdate->{$u->id};
+}
+
 # can this user use ESN?
 sub can_use_esn {
     my $u = shift;
@@ -3437,6 +3521,11 @@ sub can_add_friends {
     }
 
     return 1;
+}
+
+sub is_in_beta {
+    my ($u, $key) = @_;
+    return LJ::BetaFeatures->user_in_beta( $u => $key );
 }
 
 package LJ;
@@ -4824,6 +4913,10 @@ sub update_user
             }
         }
     }
+
+    # log this updates
+    LJ::run_hook("update_user", userid => $_, fields => $ref)
+        for @uid;
 
     return 1;
 }
