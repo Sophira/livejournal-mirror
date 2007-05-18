@@ -1479,7 +1479,10 @@ sub get_layout_themes
             my $v = $src->{$_};
             $v->{b2layer} = $src->{$src->{$_}->{b2lid}}; # include layout information
             push @themes, $v if
-                ($v->{'type'} eq "theme" && $layid && $v->{'b2lid'} == $layid);
+                ($v->{type} eq "theme" &&
+                 $layid &&
+                 $v->{b2lid} == $layid &&
+                 ! LJ::conf_test($LJ::DISABLED{s2layer}, $v->{uniq}));
         }
     }
     return @themes;
@@ -2321,6 +2324,12 @@ sub rand
         ($low, $high) = ($aa, $bb);
     }
     return int(rand($high - $low + 1)) + $low;
+}
+
+sub pageview_unique_string {
+    my ($ctx) = @_;
+
+    return LJ::pageview_unique_string();
 }
 
 sub viewer_logged_in

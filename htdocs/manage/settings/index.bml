@@ -49,7 +49,6 @@ _code?>
                                show_control_strip
                                opt_imagelinks
                                opt_stylemine
-                               opt_bdaymail
                                opt_blockrobots
                                opt_weblogscom
                                opt_ctxpopup
@@ -328,16 +327,6 @@ _code?>
         $ret .= " <label for='allow_getljnews'>$ML{'.ljnews'}</label>";
         $ret .= "</td></tr>\n";
 
-        # Birthday reminders
-        unless ($LJ::DISABLED{'birthday_reminders'}) {
-            $ret .= "<tr><td class='field_name'>$ML{'.fn.bdayreminder'}</td>\n<td>";
-            $ret .= LJ::html_check({ 'type' => 'check', 'name' => 'opt_bdaymail', 'id' => 'opt_bdaymail',
-                                     'selected' => $u->{'opt_bdaymail'} });
-            $ret .= " <label for='opt_bdaymail'>$ML{'.bdayreminder'}</label><br />";
-            $ret .= "<span class='helper'>$ML{'.bdayreminder.note'}</span>";
-            $ret .= "</td></tr>\n";
-        }
-
         $ret .= "</table>\n";
 
         # Additional privacy options
@@ -464,7 +453,6 @@ _code?>
             # opts
             $POST{'opt_imagelinks'} = 0 unless $POST{'opt_imagelinks'} =~ m/^(\d+)\|(\d+)$/;
             $POST{'opt_stylemine'} = $POST{'opt_stylemine'} ? 1 : 0;
-            $POST{'opt_bdaymail'} = $POST{'opt_bdaymail'} ? 1 : 0 unless ($LJ::DISABLED{'birthday_reminders'});
             $POST{'opt_blockrobots'} = $POST{'opt_blockrobots'} ? 1 : 0;
             $POST{'opt_weblogscom'} = $POST{'opt_weblogscom'} ? 1 : 0 unless ($LJ::DISABLED{'weblogs_com'});
             $POST{'opt_ctxpopup'} = $POST{'opt_ctxpopup'} ? 'Y' : 'N' if $LJ::CTX_POPUP;
@@ -483,7 +471,7 @@ _code?>
 
             my @uprops = qw(
               view_control_strip show_control_strip
-              opt_imagelinks opt_stylemine opt_bdaymail
+              opt_imagelinks opt_stylemine
               opt_blockrobots opt_ctxpopup opt_showonlinestatus
               opt_getting_started
             );

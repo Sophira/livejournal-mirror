@@ -2467,11 +2467,7 @@ sub ad_display {
     # can specify whether the wrapper div on the ad is used or not
     my $use_wrapper = defined $opts{use_wrapper} ? $opts{use_wrapper} : 1;
 
-    my $ret = LJ::ads(type   => $opts{'type'},
-                      orient => $opts{'orient'},
-                      user   => $opts{'user'},
-                      search_arg => $opts{'search_arg'},
-                      );
+    my $ret = LJ::ads(%opts);
 
     my $extra;
     if ($ret =~ /"ljad ljad(.+?)"/i) {
@@ -3331,6 +3327,18 @@ sub final_body_html {
     my $before_body_close = "";
     LJ::run_hooks('insert_html_before_body_close', \$before_body_close);
     return $before_body_close;
+}
+
+# return a unique per pageview string based on the remote's unique cookie
+sub pageview_unique_string {
+    my $cached_uniq = $LJ::REQ_GLOBAL{pageview_unique_string};
+    return $cached_uniq if $cached_uniq;
+
+    my $uniq = LJ::UniqCookie->current_uniq . time() . LJ::rand_chars(8);
+    $uniq = Digest::SHA1::sha1_hex($uniq);
+
+    $LJ::REQ_GLOBAL{pageview_unique_string} = $uniq;
+    return $uniq;
 }
 
 1;

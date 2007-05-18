@@ -242,6 +242,15 @@ sub thread_url {
     return "$url?thread=$dtalkid";
 }
 
+sub parent_url {
+    my $self    = shift;
+
+    my $parent  = $self->parent;
+
+    return undef unless $parent;
+    return $parent->url;
+}
+
 sub unscreen_url {
     my $self    = shift;
 
@@ -265,6 +274,24 @@ sub delete_url {
     return
         "$LJ::SITEROOT/delcomment.bml" .
         "?journal=$journal&id=$dtalkid";
+}
+
+# return img tag of userpic that the comment poster used
+sub poster_userpic {
+    my $self = shift;
+    my $pic_kw = $self->prop('picture_keyword');
+    my $posteru = $self->poster;
+
+    # anonymous poster, no userpic
+    return "" unless $posteru;
+
+    # new from keyword falls back to the default userpic if
+    # there was no keyword, or if the keyword is no longer used
+    my $pic = LJ::Userpic->new_from_keyword($posteru, $pic_kw);
+    return $pic->imgtag_lite if $pic;
+
+    # no userpic with comment
+    return "";
 }
 
 # return LJ::User of journal comment is in
@@ -383,6 +410,7 @@ sub preload_rows {
         my $u = $obj->journal;
 
         my $row = $row_map{join("-", $u->id, $obj->jtalkid)};
+        next unless $row;
 
         # absorb row into the given LJ::Comment object
         $obj->absorb_row(%$row);
