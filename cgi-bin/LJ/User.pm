@@ -1307,13 +1307,24 @@ sub init_age {
     return;
 }
 
+sub next_birthday {
+    my $u = shift;
+    return if $u->is_expunged;
+
+    return $u->selectrow_array("SELECT nextbirthday FROM birthdays " .
+                               "WHERE userid = ?", undef, $u->id)+0;
+}
+
 # this sets the unix time of their next birthday for notifications
 sub set_next_birthday {
     my $u = shift;
     return if $u->is_expunged;
 
     my ($year, $mon, $day) = split(/-/, $u->{bdate});
-    return unless $mon > 0 && $day > 0;
+    unless ($mon > 0 && $day > 0) {
+        $u->do("DELETE FROM birthdays WHERE userid = ?", undef, $u->id);
+        return;
+    }
 
     my $as_unix = sub {
         return LJ::mysqldate_to_time(sprintf("%04d-%02d-%02d", @_));

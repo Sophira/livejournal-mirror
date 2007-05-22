@@ -8,7 +8,7 @@ use base 'LJ::Worker::Manual';
 use LJ::Event::Birthday;
 
 # send out for notifications up to two days in the future
-my $advance_notify = $LJ::BIRTHDAY_NOTIFY_ADVANCE || 2*86400; # 2 days
+my $advance_notify = $LJ::BIRTHDAY_NOTIFS_ADVANCE || 2*86400; # 2 days
 
 # delay for polling clusters that last had no users
 my $delay_when_none = 15;
@@ -47,8 +47,16 @@ sub work {
     my $us = LJ::load_userids(@uids);
     my $ct = 0;
     foreach my $u (values %$us) {
-        # gotta do this first, or else we never update in some cases
-        $u->set_next_birthday;
+        # gotta do this before we run the setter!
+        my $bday = $u->next_birthday;
+
+        # gotta do this before we 'next' out (or else we risk
+        # getting the same users). however, next out if the
+        # setter failed (due to invalid birthday, most likely)
+        $u->set_next_birthday or next;
+
+        # don't mail if their birthday is over 24h ago (backlogged)
+        next if $bday < time() + 24*60*60;
 
         next unless $u->is_person;
         next unless $u->is_visible;
