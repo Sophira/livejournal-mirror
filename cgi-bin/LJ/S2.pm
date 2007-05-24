@@ -971,6 +971,22 @@ sub delete_user_style
     return 1;
 }
 
+sub rename_user_style
+{
+    my ($u, $styleid, $name) = @_;
+    return 1 unless $styleid;
+    my $dbh = LJ::get_db_writer();
+    return 0 unless $dbh && $u->writer;
+
+    foreach my $t (qw(s2styles s2stylelayers)) {
+        $dbh->do("UPDATE $t SET name=? WHERE styleid=?", undef, $name, $styleid)
+    }
+    $u->do("UPDATE s2stylelayers2 SET name=? WHERE userid=? AND styleid=?", undef,
+           $name, $u->id, $styleid);
+
+    return 1;
+}
+
 sub load_style
 {
     my $db = ref $_[0] ? shift : undef;

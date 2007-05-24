@@ -918,6 +918,14 @@ userproplist.stylesys:
   multihomed: 0
   prettyname: Style System to use
 
+userproplist.theme_preview_styleid:
+  cldversion: 4
+  datatype: num
+  des: Style ID for the style used to preview themes on the customize page. Undefined means no style has been created yet.
+  indexed: 0
+  multihomed: 0
+  prettyname: Style ID for theme preview
+
 userproplist.timezone:
   cldversion: 4
   datatype: char
