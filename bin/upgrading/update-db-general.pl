@@ -3476,6 +3476,26 @@ register_alter(sub {
                  "ALTER TABLE pollsubmission2 DROP PRIMARY KEY, ADD PRIMARY KEY (journalid,pollid,userid)");
     }
 
+    # add an indexed 'userid' column
+    unless (column_type("expunged_users", "userid")) {
+        do_alter("expunged_users",
+                 "ALTER TABLE expunged_users ADD userid INT UNSIGNED NOT NULL FIRST, " .
+                 "ADD INDEX (userid)");
+    }
+
+    # add a column
+    unless (column_type("qotd", "extra_text")) {
+        do_alter("qotd",
+                 "ALTER TABLE qotd ADD extra_text TEXT DEFAULT NULL");
+    }
+
+    # add a column
+    unless (column_type("qotd", "subject")) {
+        do_alter("qotd",
+                 "ALTER TABLE qotd " .
+                 "ADD subject VARCHAR(255) NOT NULL DEFAULT '' AFTER active, " .
+                 "ADD from_user CHAR(15) DEFAULT NULL AFTER tags");
+    }
 });
 
 

@@ -1,4 +1,5 @@
 package LJ::Event::Birthday;
+
 use strict;
 use base 'LJ::Event';
 use Carp qw(croak);
@@ -10,40 +11,61 @@ sub new {
     return $class->SUPER::new($u);
 }
 
+sub bdayuser {
+    my $self = shift;
+    return $self->event_journal;
+}
+
+# formats birthday as "August 1"
+sub bday {
+    my $self = shift;
+    my ($year, $mon, $day) = split(/-/, $self->bdayuser->{bdate});
+
+    my @months = qw(January February March April May June
+                    July August September October November December);
+
+    return "$months[$mon-1] $day";
+}
+
 sub as_string {
     my $self = shift;
-    my $user = $self->event_journal->display_username;
 
-    return "It's $user\'s birthday!";
+    return sprintf("%s's birthday is on %s!",
+                   $self->bdayuser->display_username,
+                   $self->bday);
 }
 
 sub as_html {
     my $self = shift;
 
-    my $user = $self->event_journal->ljuser_display;
-    return "It's $user\'s birthday!";
+    return sprintf("%s's birthday is on %s!",
+                   $self->bdayuser->ljuser_display,
+                   $self->bday);
 }
 
-sub as_sms {
+sub as_email_subject {
     my $self = shift;
-    return $self->as_string;
+
+    return sprintf("%s's birthday is coming up!",
+                   $self->bdayuser->display_username);
 }
 
 sub as_email_string {
     my ($self, $u) = @_;
 
     my $username = $u->user;
-    my $bday = $self->event_journal;
-    my $bdayuser = $bday->user;
+    my $bdayuser = $self->bdayuser->display_username;
+    my $bday = $self->bday;
 
     my $email = qq {Hi $username,
 
-Today is $bdayuser\'s birthday!
+$bdayuser\'s birthday is coming up on $bday!
 
 You can:
-  - Send them a virtual gift
-    $LJ::SITEROOT/shop/view.bml?item=vgift
-    };
+  - Post to wish them a happy birthday
+    $LJ::SITEROOT/update.bml};
+
+    $email .= LJ::run_hook('birthday_notif_extra_plaintext') || "";
 
     return $email;
 }
@@ -52,28 +74,25 @@ sub as_email_html {
     my ($self, $u) = @_;
 
     my $username = $u->ljuser_display;
-    my $bday = $self->event_journal;
-    my $bdayuser = $bday->ljuser_display;
+    my $bdayuser = $self->bdayuser->ljuser_display;
+    my $bday = $self->bday;
 
     my $email = qq {Hi $username,
 
-Today is $bdayuser\'s birthday!
+$bdayuser\'s birthday is coming up on $bday!
 
 You can:<ul>};
 
-    $email .= "<li><a href=\"$LJ::SITEROOT/shop/view.bml?item=vgift\">"
-           . "Send them an additional virtual gift</a></li>";
+    $email .= "<li><a href=\"$LJ::SITEROOT/update.bml\">"
+           . "Post to wish them a happy birthday</a></li>";
+
+    $email .= LJ::run_hook('birthday_notif_extra_html') || "";
+
     $email .= "</ul>";
+
     return $email;
 }
 
-sub content { '' }
-
-sub as_email_subject {
-    my $self = shift;
-    return sprintf "LiveJournal Notices: It's %s's birthday!",
-        $self->event_journal->display_username;
-}
 
 sub zero_journalid_subs_means { "friends" }
 
@@ -82,11 +101,13 @@ sub subscription_as_html {
 
     my $journal = $subscr->journal;
 
-    return "It's one of my friends' birthdays."
+    return "One of my friends has an upcoming birthday"
         unless $journal;
 
     my $ljuser = $journal->ljuser_display;
-    return "It's $ljuser\'s birthday";
+    return "$ljuser\'s birthday is coming up";
 }
+
+sub content { '' }
 
 1;

@@ -12,16 +12,19 @@ sub render_body {
     my %opts = @_;
 
     my $qid = $opts{qid};
-    my ($text, $tags, $img_url);
+    my ($subject, $text, $tags, $from_user, $img_url, $extra_text);
     my ($start_month, $start_day, $start_year);
     my ($end_month, $end_day, $end_year);
     if ($qid) {
         my $question = LJ::QotD->get_single_question($opts{qid})
             or die "Invalid question: $qid";
 
+        $subject = $question->{subject};
         $text = $question->{text};
         $tags = LJ::QotD->remove_default_tags($question->{tags});
+        $from_user = $question->{from_user};
         $img_url = $question->{img_url};
+        $extra_text = $question->{extra_text};
 
         my $start_date = DateTime->from_epoch( epoch => $question->{time_start}, time_zone => 'America/Los_Angeles' );
         my $end_date = DateTime->from_epoch( epoch => $question->{time_end}, time_zone => 'America/Los_Angeles' );
@@ -91,13 +94,19 @@ sub render_body {
           maxlength => 4,
           value => $end_year ) . " @ 11:59 PM</td></tr>";
 
+    $ret .= "<tr><td valign='top'>Subject:</td><td>";
+    $ret .= $class->html_text
+        ( name => 'subject',
+          size => 30,
+          value => $subject ) . "<br /><small>\"Writer's Block\" will be prepended to the given subject; limited HTML allowed<small></td></tr>";
+
     $ret .= "<tr><td valign='top'>Question:</td><td>";
     $ret .= $class->html_textarea
         ( name => 'text',
           raw => 5,
           cols => 30,
           wrap => 'soft',
-          value => $text ) . "</td></tr>";
+          value => $text ) . "<br /><small>HTML allowed</small></td></tr>";
 
     $ret .= "<tr><td valign='top'>Entry Tags (optional):</td><td>";
     $ret .= $class->html_text
@@ -105,15 +114,29 @@ sub render_body {
           size => 30,
           value => $tags ) . "<br /><small>\"writer's block\" will always be included as a tag automatically</small></td></tr>";
 
+    $ret .= "<tr><td valign='top'>Submitted By (optional):</td><td>";
+    $ret .= $class->html_text
+        ( name => 'from_user',
+          size => 15,
+          maxlength => 15,
+          value => $from_user ) . "<br /><small>Enter a $LJ::SITENAMESHORT username<small></td></tr>";
+
     $ret .= "<tr><td>Image URL (optional):</td><td>";
     $ret .= $class->html_text
         ( name => 'img_url',
           size => 30,
           value => $img_url ) . "</td></tr>";
 
+    $ret .= "<tr><td valign='top'>" . $class->ml('widget.addqotd.extratext') . "</td><td>";
+    $ret .= $class->html_textarea
+        ( name => 'extra_text',
+          raw => 5,
+          cols => 30,
+          wrap => 'soft',
+          value => $extra_text ) . "<br /><small>" . $class->ml('widget.addqotd.extratext.note') . "</small></td></tr>";
+
     $ret .= $class->html_hidden
-        ( name => 'qid',
-          value => $qid );
+        ( qid => $qid );
 
     $ret .= "<tr><td colspan='2' align='center'>";
     $ret .= $class->html_submit('Submit') . "</td></tr>";
@@ -152,14 +175,28 @@ sub handle_post {
         die "Start time must be before end time";
     }
 
+    # Make sure there's a subject and text
+    die "No question subject specified." unless $post->{subject};
+    die "No question text specified." unless $post->{text};
+
+    # Make sure the from_user is valid (if given)
+    my $from_user = $post->{from_user};
+    if ($from_user) {
+        my $from_u = LJ::load_user($from_user);
+        die "Invalid user: $from_user" unless LJ::isu($from_u);
+    }
+
     LJ::QotD->store_question (
          qid        => $post->{qid},
          time_start => $time_start->epoch,
          time_end   => $time_end->epoch,
          active     => 'Y',
+         subject    => $post->{subject},
          text       => $post->{text},
+         from_user  => $post->{from_user},
          tags       => LJ::QotD->add_default_tags($post->{tags}),
          img_url    => LJ::CleanHTML::canonical_url($post->{img_url}),
+         extra_text => $post->{extra_text},
     );
 
     return;

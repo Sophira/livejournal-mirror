@@ -129,8 +129,22 @@ div.columns-2-r300 .columns-2-right {
 
 .appwidget {
     margin-bottom: 15px;
+    position: relative;
 }
-
+.appwidget .more-link {
+    position: absolute;
+    right: 7px;
+    top: 6px;
+    font-size: 11px;
+    text-decoration: none;
+    padding-left: 10px;
+    text-transform: lowercase;
+    color: #114577;
+    background: url('/img/arrow-double-blue.gif') no-repeat 0 60%;
+}
+.appwidget .more-link:hover {
+    text-decoration: underline;
+}
 /* add this class to anything to make upgrade icon appear next to it */
 
 .upgrade-account {
@@ -138,6 +152,7 @@ div.columns-2-r300 .columns-2-right {
     background: url('/horizon/upgrade-paid-icon.gif') no-repeat right 50%;
 }
 
+.arrow-link,
 .more-link {
     padding-left: 12px;
     background: url('/img/arrow-double-black.gif') no-repeat 0 50%;

@@ -36,10 +36,10 @@ use Class::Autouse qw(
                       LJ::SpellCheck
                       LJ::TextMessage
                       LJ::ModuleCheck
-                      LJ::UniqCookie
                       LJ::Widget
                       MogileFS::Client
                       DDLockClient
+                      LJ::BetaFeatures
                       );
 
 # force XML::Atom::* to be brought in (if we have it, it's optional),

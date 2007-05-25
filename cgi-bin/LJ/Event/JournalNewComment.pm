@@ -108,11 +108,12 @@ sub as_sms {
 sub content {
     my ($self, $target) = @_;
 
-    my $comment = $self->comment or return "(Invalid comment)";
+    my $comment = $self->comment;
 
-    return "(Comment on a deleted entry)" unless $comment->entry && $comment->entry->valid;
-    return "(You do not have permission to view this comment)" unless $comment->visible_to($target);
-    return "(Deleted comment)" if $comment->is_deleted;
+    return undef unless $comment && $comment->valid;
+    return undef unless $comment->entry && $comment->entry->valid;
+    return undef unless $comment->visible_to($target);
+    return undef if $comment->is_deleted;
 
     LJ::need_res('js/commentmanage.js');
 
@@ -161,10 +162,14 @@ sub as_html {
     my $comment = $self->comment;
     my $journal = $self->u;
 
-    my $entry = $comment->entry or return "(Invalid entry)";
+    return sprintf("(Deleted comment in %s)", $journal->ljuser_display)
+        unless $comment && $comment->valid && !$comment->is_deleted;
 
-    return "(Deleted comment)" if $comment->is_deleted || ! $comment->entry->valid;
-    return "(Not authorized)" unless $comment->visible_to($target);
+    my $entry = $comment->entry;
+    return sprintf("(Comment on a deleted entry in %s)", $journal->ljuser_display)
+        unless $entry && $entry->valid;
+
+    return "(You are not authorized to view this comment)" unless $comment->visible_to($target);
 
     my $ju = LJ::ljuser($journal);
     my $pu = LJ::ljuser($comment->poster);
