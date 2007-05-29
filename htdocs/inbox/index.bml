@@ -39,16 +39,26 @@ body<=
         or return LJ::error_list("Could not retrieve inbox for user $remote->{user}");
 
     # get events sitting in inbox
-    my @notifications = $inbox->items;
+    my @notifications = $inbox->non_usermsg_items;
 
     if (LJ::did_post()) {
+
+        # operate on notices by default but switch if view parameter specified
+        my $nitems = \@notifications;
+        my $name = "notice";
+        if ($POST{view}) {
+            $name = $POST{view};
+            my @items = eval "\$inbox->${name}_items";
+            $nitems = \@items;
+        }
+
         if ($POST{markAllRead}) {
-            $_->mark_read foreach (@notifications);
+            $_->mark_read foreach (@$nitems);
         } else {
             # go through each item and see if it's checked
-            foreach my $item (@notifications) {
+            foreach my $item (@$nitems) {
                 my $qid = eval { $item->qid } or next;
-                my $checked = $POST{"InboxItem_Check-$qid"};
+                my $checked = $POST{"${name}_Check-$qid"};
                 next unless $checked;
 
                 if ($POST{markRead}) {
@@ -61,7 +71,11 @@ body<=
             }
 
             # reload inbox after making changes
-            @notifications = $inbox->items;
+            if ($name eq "notice") {
+                @$nitems = $inbox->non_usermsg_items;
+            } else {
+                @$nitems = eval "\$inbox->${name}_items";
+            }
         }
     }
 
@@ -92,7 +106,7 @@ body<=
 
     # check all checkbox
     my $checkall = LJ::html_check({
-        id      => "InboxItem_CheckAll",
+        id      => "notice_CheckAll",
     });
 
     my $disabled = $unread_count ? '' : 'disabled';
@@ -114,14 +128,14 @@ body<=
 
     # create table of notifications
     my $notificationtable = qq {
-     <div id="NotificationTable">
+     <div id="notice_Table" class="NotificationTable">
         <span class="esnlinks">Message Center | <a href="$LJ::SITEROOT/manage/subscriptions/">Manage Settings</a></span>
         <div class="inbox_newitems">
             <span id="Inbox_NewItems">You have $unread_count new $alert_plural</span>
             <a href="$LJ::SITEROOT/inbox/?page=$page" id="RefreshLink">Refresh</a>
         </div>
 
-        <table id="inbox" cellspacing="0" border="0" cellpadding="0">
+        <table id="notice" class="inbox" cellspacing="0" border="0" cellpadding="0">
             <tr class="header">
                 <thead>
                     <td class="checkbox">$checkall</td>
@@ -132,15 +146,15 @@ body<=
                             <input type="button" id="Page_Next" value="Next" $next_disabled />
                         </span>
 
-                        <input type="submit" name="markRead" value="Read" $disabled id="Inbox_MarkRead" />
-                        <input type="submit" name="markUnread" value="Unread" id="Inbox_MarkUnread" />
-                        <input type="submit" name="delete" value="Delete" id="Inbox_Delete" />
-                        <input type="submit" name="markAllRead" value="Mark All Read" $disabled id="Inbox_MarkAllRead" />
+                        <input type="submit" name="markRead" value="Read" $disabled id="notice_MarkRead" />
+                        <input type="submit" name="markUnread" value="Unread" id="notice_MarkUnread" />
+                        <input type="submit" name="delete" value="Delete" id="notice_Delete" />
+                        <input type="submit" name="markAllRead" value="Mark All Read" $disabled id="notice_MarkAllRead" />
                     </td>
                 </thead>
             </tr>
 
-            <tbody id="NotificationTable_Body">
+            <tbody id="notice_Body">
         };
 
     unless (@notifications) {
@@ -165,7 +179,7 @@ body<=
 
         my $title  = $inbox_item->title;
 
-        my $checkbox_name = "InboxItem_Check-$qid";
+        my $checkbox_name = "notice_Check-$qid";
         my $checkbox = LJ::html_check({
             id    => $checkbox_name,
             class => "InboxItem_Check",
@@ -200,11 +214,11 @@ body<=
         }
 
         $notificationtable .= qq {
-            <tr class="InboxItem_Row $row_class" lj_qid="$qid" id="InboxItem_Row_$qid">
+            <tr class="InboxItem_Row $row_class" lj_qid="$qid" id="notice_Row_$qid">
                 <td class="checkbox">$checkbox</td>
                 <td class="item">
                     $expandbtn
-                    <span class="$read_class" id="InboxItem_Title_$qid">$title</span>
+                    <span class="$read_class" id="notice_Title_$qid">$title</span>
                     $content_div
                     </td>
                     <td class="time">$when</td>
@@ -229,6 +243,167 @@ body<=
 
     $body .= LJ::paging_bar($page, $last_page);
 
+
+
+
+
+
+    sub managetable {
+        my ($name, $opts, @nitems) = @_;
+
+        my $show_reply_btn = $opts->{reply_btn} || 0;
+
+        my $unread_count = 1; #TODO get real number
+        my $disabled = $unread_count ? '' : 'disabled';
+
+        # check all checkbox
+        my $checkall = LJ::html_check({
+            id      => "${name}_CheckAll",
+        });
+
+        # print form
+        my $msgs_body .= qq {
+            <form action="$LJ::SITEROOT/inbox/" method="POST" id="${name}Form" onsubmit="return false;">
+            };
+
+        $msgs_body .= LJ::html_hidden({
+                        name  => "view",
+                        value => "${name}"
+                      });
+
+        # create table of messages
+        my $messagetable = qq {
+         <div id="${name}_Table" class="NotificationTable">
+            <table id="${name}" class="inbox" cellspacing="0" border="0" cellpadding="0">
+                <tr class="header">
+                    <thead>
+                        <td class="checkbox">$checkall</td>
+                        <td class="actions" colspan="2">
+                            <input type="submit" name="markRead" value="Read" $disabled id="${name}_MarkRead" />
+                            <input type="submit" name="markUnread" value="Unread" id="${name}_MarkUnread" />
+                            <input type="submit" name="delete" value="Delete" id="${name}_Delete" />
+                            <input type="submit" name="markAllRead" value="Mark All Read" $disabled id="${name}_MarkAllRead" />
+                        </td>
+                    </thead>
+                </tr>
+
+                <tbody id="${name}_Body">
+            };
+
+        unless (@nitems) {
+            $messagetable .= qq {
+                <tr><td class="NoItems" colspan="3">No Messages</td></tr>
+                };
+        }
+
+        @nitems = sort { $b->when_unixtime <=> $a->when_unixtime } @nitems;
+
+        # print out messages
+        my $rownum = 0;
+        my $page = 1;
+        my $page_limit = 15;
+
+        my $starting_index = ($page - 1) * $page_limit;
+        for (my $i = $starting_index; $i < $starting_index + $page_limit; $i++) {
+            my $inbox_item = $nitems[$i];
+            last unless $inbox_item;
+
+            my $qid  = $inbox_item->qid;
+
+            my $read_class = $inbox_item->read ? "InboxItem_Read" : "InboxItem_Unread";
+
+            my $title  = $inbox_item->title;
+
+            my $checkbox_name = "${name}_Check-$qid";
+            my $checkbox = LJ::html_check({
+                id    => $checkbox_name,
+                class => "InboxItem_Check",
+                name  => $checkbox_name,
+            });
+
+            my $when = LJ::ago_text(time() - $inbox_item->when_unixtime);
+            my $contents = $inbox_item->as_html || ' ';
+
+            my $row_class = ($rownum++ % 2 == 0) ? "InboxItem_Meta" : "InboxItem_Meta alt";
+
+            my $expandbtn = '';
+            my $content_div = '';
+
+            my $msgid = $inbox_item->event->load_message->msgid;
+            my $buttons = qq {
+                              <div style="border: 1px dashed #ddd; background-color: #eee; padding: 2px; float: left;" class="pkg">
+                              <a href="./compose.bml?mode=reply&msgid=$msgid"
+                              style="padding: 2px; background-color: #fff"> REPLY </a></div>
+                              <div style="clear: both"></div>
+                          };
+
+
+            if ($contents) {
+                # TODO check that clean_event will be cool instead of ebml
+                #BML::ebml(\$contents);
+                LJ::CleanHTML::clean_event(\$contents);
+
+                my $expanded = $GET{expand} && $GET{expand} == $qid;
+                $expanded ||= $remote->prop('esn_inbox_default_expand');
+                $expanded = 0 if $inbox_item->read;
+
+                my $img = $expanded ? "expand.gif" : "collapse.gif";
+
+                $expandbtn = qq {
+                    <a href="$LJ::SITEROOT/inbox/?page=$page&expand=$qid"><img src="$LJ::IMGPREFIX/$img" class="InboxItem_Expand" border="0" /></a>
+                    };
+
+                my $display = $expanded ? "block" : "none";
+
+                $content_div = qq {
+                    <div class="InboxItem_Content" style="display: $display;">$buttons $contents</div>
+                    };
+            }
+
+            $messagetable .= qq {
+                <tr class="InboxItem_Row $row_class" lj_qid="$qid" id="${name}_Row_$qid">
+                    <td class="checkbox">$checkbox</td>
+                    <td class="item">
+                        <span class="$read_class" id="${name}_Title_$qid">$title</span>
+                        $expandbtn
+                        $content_div
+                        </td>
+                        <td class="time">$when</td>
+                    </tr>
+            };
+        }
+
+        $messagetable .= '</tbody></table></div>';
+
+
+        $msgs_body .= $messagetable;
+
+        $msgs_body .= LJ::html_hidden({
+            name  => "page",
+            id    => "pageNum",
+            value => $page,
+        });
+
+        $msgs_body .= qq {
+            </form>
+            };
+
+        return $msgs_body;
+    }
+
+    my @msgs_recvd = $inbox->usermsg_recvd_items;
+    $body .= "<h3>Incoming Messages</h3>" .
+             managetable("usermsg_recvd", {reply_btn => 1}, @msgs_recvd );
+
+    my @msgs_sent = $inbox->usermsg_sent_items;
+    $body .= "<h3>Outgoing Messages</h3>" .
+             managetable("usermsg_sent", {}, @msgs_sent);
+
+
+
+
+
+
     return $body;
 }
  _code?>
@@ -247,19 +422,23 @@ DOM.addEventListener(window, "load", setup);
 
 var tableview;
 var checkallButton;
+var folders = ['notice', 'usermsg_recvd', 'usermsg_sent'];
 
 function setup (e) {
     if (! Site.has_remote) return;
 
-    tableview = new View();
-    checkallButton = new CheckallButton();
+    for (var i=0; i<folders.length; i++) {
+        var name = folders[i];
+        tableview = new View();
+        checkallButton = new CheckallButton();
 
-  tableview.init({ "view": $("NotificationTable") });
-checkallButton.init({
-"class": "InboxItem_Check",
-         "button": $("InboxItem_CheckAll"),
-                   "parent": tableview.getView()
-  });
+        tableview.init({ "view": $(name + "_Table") });
+        checkallButton.init({
+              "class": "InboxItem_Check",
+              "button": $(name + "_CheckAll"),
+              "parent": tableview.getView()
+        });
+    }
 
 DOM.addEventListener($("Page_Prev"), "click", Page_Prev);
 DOM.addEventListener($("Page_Next"), "click", Page_Next);
