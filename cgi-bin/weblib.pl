@@ -3246,6 +3246,7 @@ sub lj_replace {
 
 # Replace for lj-replace name="first_post"
 sub lj_replace_first_post {
+    return unless LJ::is_web_context();
     return BML::ml('web.lj-replace.first_post', {
                    'update_link' => "href='$LJ::SITEROOT/update.bml'",
                    });

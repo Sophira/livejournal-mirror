@@ -79,6 +79,45 @@ sub friend_items {
     return grep { $friend_events{$_->event->class} } $self->items;
 }
 
+# returns a list of non user-messaging notificationitems
+sub non_usermsg_items {
+    my $self = shift;
+
+    my @usermsg_events = qw(
+                           UserMessageRecvd
+                           UserMessageSent
+                           );
+
+    @usermsg_events = (@usermsg_events, (LJ::run_hook('usermsg_notification_types') || ()));
+
+    my %usermsg_events = map { "LJ::Event::" . $_ => 1 } @usermsg_events;
+    return grep { !$usermsg_events{$_->event->class} } $self->items;
+}
+
+# returns a list of non user-message recvd notificationitems
+sub usermsg_recvd_items {
+    my $self = shift;
+
+    my @usermsg_events = qw(
+                           UserMessageRecvd
+                           );
+
+    my %usermsg_events = map { "LJ::Event::" . $_ => 1 } @usermsg_events;
+    return grep { $usermsg_events{$_->event->class} } $self->items;
+}
+
+# returns a list of non user-message recvd notificationitems
+sub usermsg_sent_items {
+    my $self = shift;
+
+    my @usermsg_events = qw(
+                           UserMessageSent
+                           );
+
+    my %usermsg_events = map { "LJ::Event::" . $_ => 1 } @usermsg_events;
+    return grep { $usermsg_events{$_->event->class} } $self->items;
+}
+
 sub count {
     my $self = shift;
 
@@ -271,7 +310,7 @@ sub enqueue {
                 etypeid    => $evt->etypeid,
                 arg1       => $evt->arg1,
                 arg2       => $evt->arg2,
-                state      => 'N',
+                state      => $evt->mark_read ? 'R' : 'N',
                 createtime => $evt->eventtime_unix || time());
 
     # insert this event into the notifyqueue table
