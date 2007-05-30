@@ -107,9 +107,9 @@ sub s2_implicit_style_create
     # Create new style if necessary
     my $s2style = LJ::S2::load_style($u->prop('s2_style'));
     if (! ($s2style && $s2style->{'userid'} eq $u->{'userid'}) || $opts->{'force'}) {
-        my $layid = $style{'layout'};
-        my $lay = $pub->{$layid} || $userlay->{$layid};
-        my $uniq = (split("/", $lay->{'uniq'}))[0] || $lay->{'s2lid'};
+        my $themeid = $style{theme};
+        my $layer = $pub->{$themeid} || $userlay->{$themeid};
+        my $uniq = $layer->{uniq} || $layer->{s2lid};
 
         my $s2_style;
         unless ($s2_style = LJ::S2::create_style($u, "wizard-$uniq")) {
