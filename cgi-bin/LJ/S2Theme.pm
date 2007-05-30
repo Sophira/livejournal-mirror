@@ -446,8 +446,9 @@ sub get_preview_styleid {
 ##################################################
 
 sub cats { () } # categories that the theme is in
-sub layouts { qw( 2 ) } # theme layout/sidebar placement options
+sub layouts { qw( 1 ) } # theme layout/sidebar placement options
 sub layout_prop { "" } # property that controls the layout/sidebar placement
+sub show_sidebar_prop { "" } # property that controls whether a sidebar shows or not
 sub designer { "" } # designer of the theme
 sub linklist_support_tab { "" } # themes that don't use the linklist_support prop will have copy pointing them to the correct tab
 
@@ -459,6 +460,17 @@ sub _append_props {
 
     my @defaults = eval "LJ::S2Theme->$method";
     return (@defaults, @props);
+}
+
+# props that shouldn't be shown in the wizard UI
+sub hidden_props {
+    qw(
+        custom_control_strip_colors
+        control_strip_bgcolor
+        control_strip_fgcolor
+        control_strip_bordercolor
+        control_strip_linkcolor
+    )
 }
 
 # props by category heading
