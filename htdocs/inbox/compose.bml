@@ -99,12 +99,21 @@ body<=
 
     $body .= "<div id='metainfo'>";
     $body .= '<p class="pkg"><label class="left">To: </label> ';
-    $body .= LJ::html_text({
-                name      => 'msg_to',
-                size      => '15',
-                value     => "$reply_to",
-                readonly  => $disabled_to,
-             });
+
+    if ($disabled_to) {
+        $body .= "$reply_to";
+        $body .= LJ::html_hidden({
+                    name      => 'msg_to',
+                    value     => "$reply_to",
+                 });
+    } else {
+        $body .= LJ::html_text({
+                    name      => 'msg_to',
+                    size      => '15',
+                    value     => "",
+                 });
+    }
+
     $body .= "</p>\n";
 
     # The drop-down userpic menu
