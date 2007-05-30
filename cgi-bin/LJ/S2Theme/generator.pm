@@ -4,19 +4,22 @@ use base qw(LJ::S2Theme);
 sub layouts { qw( 1 ) }
 sub cats { qw( clean cool ) }
 
-sub _append_props {
-    my $self = shift;
-    my $method = shift;
-    my @props = @_;
-
-    my @defaults = eval "LJ::S2Theme->$method";
-    return (@defaults, @props);
-}
-
 sub display_option_props {
     my $self = shift;
     my @props = qw( comment_userpic_style );
     return $self->_append_props("display_option_props", @props);
+}
+
+sub navigation_props {
+    my $self = shift;
+    my @props = qw( text_navlinks_left text_navlinks_btwn text_navlinks_right );
+    return $self->_append_props("navigation_props", @props);
+}
+
+sub text_props {
+    my $self = shift;
+    my @props = qw( page_link page_vlink page_alink );
+    return $self->_append_props("text_props", @props);
 }
 
 sub entry_props {
@@ -28,12 +31,6 @@ sub entry_props {
     return $self->_append_props("entry_props", @props);
 }
 
-sub text_props {
-    my $self = shift;
-    my @props = qw( page_link page_vlink page_alink );
-    return $self->_append_props("text_props", @props);
-}
-
 sub comment_props {
     my $self = shift;
     my @props = qw(
@@ -42,12 +39,6 @@ sub comment_props {
         text_left_comments text_btwn_comments text_right_comments datetime_comments_format
     );
     return $self->_append_props("comment_props", @props);
-}
-
-sub navigation_props {
-    my $self = shift;
-    my @props = qw( text_navlinks_left text_navlinks_btwn text_navlinks_right );
-    return $self->_append_props("navigation_props", @props);
 }
 
 

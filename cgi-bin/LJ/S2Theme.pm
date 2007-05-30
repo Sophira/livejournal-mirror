@@ -451,6 +451,16 @@ sub layout_prop { "" } # property that controls the layout/sidebar placement
 sub designer { "" } # designer of the theme
 sub linklist_support_tab { "" } # themes that don't use the linklist_support prop will have copy pointing them to the correct tab
 
+# for appending layout-specific props to global props
+sub _append_props {
+    my $self = shift;
+    my $method = shift;
+    my @props = @_;
+
+    my @defaults = eval "LJ::S2Theme->$method";
+    return (@defaults, @props);
+}
+
 # props by category heading
 sub display_option_props {
     qw(
