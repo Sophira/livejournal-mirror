@@ -1,0 +1,392 @@
+#NEWLAYER: cornered/green_monochromatic
+layerinfo "type" = "theme";
+layerinfo "name" = "double buddha advance";
+layerinfo "redist_uniq" = "cornered/green_monochromatic";
+
+set color_scheme_base = "#48C754";
+set color_scheme = "monochromatic";
+
+#NEWLAYER: cornered/green_analogous
+layerinfo "type" = "theme";
+layerinfo "name" = "dipping taoist rebuke";
+layerinfo "redist_uniq" = "cornered/green_analogous";
+
+set color_scheme_base = "#48C754";
+set color_scheme = "analogous";
+
+#NEWLAYER: cornered/green_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "insane mustard-seed essence";
+layerinfo "redist_uniq" = "cornered/green_complementary";
+
+set color_scheme_base = "#48C754";
+set color_scheme = "complementary";
+
+#NEWLAYER: cornered/green_split_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "blind gecko essence";
+layerinfo "redist_uniq" = "cornered/green_split_complementary";
+
+set color_scheme_base = "#48C754";
+set color_scheme = "split_complementary";
+
+#NEWLAYER: cornered/green_double_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "sacred dream elbow";
+layerinfo "redist_uniq" = "cornered/green_double_complementary";
+
+set color_scheme_base = "#48C754";
+set color_scheme = "double_complementary";
+
+#NEWLAYER: cornered/green_triadic
+layerinfo "type" = "theme";
+layerinfo "name" = "golden virgin punch";
+layerinfo "redist_uniq" = "cornered/green_triadic";
+
+set color_scheme_base = "#48C754";
+set color_scheme = "triadic";
+
+#NEWLAYER: cornered/green_tetradic
+layerinfo "type" = "theme";
+layerinfo "name" = "poetic serpent slash";
+layerinfo "redist_uniq" = "cornered/green_tetradic";
+
+set color_scheme_base = "#48C754";
+set color_scheme = "tetradic";
+
+#NEWLAYER: cornered/violet_monochromatic
+layerinfo "type" = "theme";
+layerinfo "name" = "judicious shaolin elbow";
+layerinfo "redist_uniq" = "cornered/violet_monochromatic";
+
+set color_scheme_base = "#9D1EC7";
+set color_scheme = "monochromatic";
+
+#NEWLAYER: cornered/violet_analogous
+layerinfo "type" = "theme";
+layerinfo "name" = "golden mantis bite";
+layerinfo "redist_uniq" = "cornered/violet_analogous";
+
+set color_scheme_base = "#9D1EC7";
+set color_scheme = "analogous";
+
+#NEWLAYER: cornered/violet_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "drunken scholar power";
+layerinfo "redist_uniq" = "cornered/violet_complementary";
+
+set color_scheme_base = "#9D1EC7";
+set color_scheme = "complementary";
+
+#NEWLAYER: cornered/violet_split_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "iron patriarch lunge";
+layerinfo "redist_uniq" = "cornered/violet_split_complementary";
+
+set color_scheme_base = "#9D1EC7";
+set color_scheme = "split_complementary";
+
+#NEWLAYER: cornered/violet_double_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "valorous buddha breath";
+layerinfo "redist_uniq" = "cornered/violet_double_complementary";
+
+set color_scheme_base = "#9D1EC7";
+set color_scheme = "double_complementary";
+
+#NEWLAYER: cornered/violet_triadic
+layerinfo "type" = "theme";
+layerinfo "name" = "blind chopstick justice";
+layerinfo "redist_uniq" = "cornered/violet_triadic";
+
+set color_scheme_base = "#9D1EC7";
+set color_scheme = "triadic";
+
+#NEWLAYER: cornered/violet_tetradic
+layerinfo "type" = "theme";
+layerinfo "name" = "unfathomable virgin kung-fu";
+layerinfo "redist_uniq" = "cornered/violet_tetradic";
+
+set color_scheme_base = "#9D1EC7";
+set color_scheme = "tetradic";
+
+#NEWLAYER: cornered/blue_monochromatic
+layerinfo "type" = "theme";
+layerinfo "name" = "monkey king's snake pounce";
+layerinfo "redist_uniq" = "cornered/blue_monochromatic";
+
+set color_scheme_base = "#1575C7";
+set color_scheme = "monochromatic";
+
+#NEWLAYER: cornered/blue_analogous
+layerinfo "type" = "theme";
+layerinfo "name" = "invisible scorpion slash";
+layerinfo "redist_uniq" = "cornered/blue_analogous";
+
+set color_scheme_base = "#1575C7";
+set color_scheme = "analogous";
+
+#NEWLAYER: cornered/blue_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "drunken spider essence";
+layerinfo "redist_uniq" = "cornered/blue_complementary";
+
+set color_scheme_base = "#1575C7";
+set color_scheme = "complementary";
+
+#NEWLAYER: cornered/blue_split_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "transcendent star chop";
+layerinfo "redist_uniq" = "cornered/blue_split_complementary";
+
+set color_scheme_base = "#1575C7";
+set color_scheme = "split_complementary";
+
+#NEWLAYER: cornered/blue_double_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "mighty eunuch hand";
+layerinfo "redist_uniq" = "cornered/blue_double_complementary";
+
+set color_scheme_base = "#1575C7";
+set color_scheme = "double_complementary";
+
+#NEWLAYER: cornered/blue_triadic
+layerinfo "type" = "theme";
+layerinfo "name" = "lucky scholar antagonism";
+layerinfo "redist_uniq" = "cornered/blue_triadic";
+
+set color_scheme_base = "#1575C7";
+set color_scheme = "triadic";
+
+#NEWLAYER: cornered/blue_tetradic
+layerinfo "type" = "theme";
+layerinfo "name" = "imperial star twist";
+layerinfo "redist_uniq" = "cornered/blue_tetradic";
+
+set color_scheme_base = "#1575C7";
+set color_scheme = "tetradic";
+
+#NEWLAYER: cornered/orange_monochromatic
+layerinfo "type" = "theme";
+layerinfo "name" = "running vampire assault";
+layerinfo "redist_uniq" = "cornered/orange_monochromatic";
+
+set color_scheme_base = "#F3904E";
+set color_scheme = "monochromatic";
+
+#NEWLAYER: cornered/orange_analogous
+layerinfo "type" = "theme";
+layerinfo "name" = "lethal terror punch";
+layerinfo "redist_uniq" = "cornered/orange_analogous";
+
+set color_scheme_base = "#F3904E";
+set color_scheme = "analogous";
+
+#NEWLAYER: cornered/orange_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "lucky vampire kung-fu";
+layerinfo "redist_uniq" = "cornered/orange_complementary";
+
+set color_scheme_base = "#F3904E";
+set color_scheme = "complementary";
+
+#NEWLAYER: cornered/orange_split_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "dreaded lotus style";
+layerinfo "redist_uniq" = "cornered/orange_split_complementary";
+
+set color_scheme_base = "#F3904E";
+set color_scheme = "split_complementary";
+
+#NEWLAYER: cornered/orange_double_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "innocent wolf pounce";
+layerinfo "redist_uniq" = "cornered/orange_double_complementary";
+
+set color_scheme_base = "#F3904E";
+set color_scheme = "double_complementary";
+
+#NEWLAYER: cornered/orange_triadic
+layerinfo "type" = "theme";
+layerinfo "name" = "naughty spider feet";
+layerinfo "redist_uniq" = "cornered/orange_triadic";
+
+set color_scheme_base = "#F3904E";
+set color_scheme = "triadic";
+
+#NEWLAYER: cornered/orange_tetradic
+layerinfo "type" = "theme";
+layerinfo "name" = "explosive fairy armor";
+layerinfo "redist_uniq" = "cornered/orange_tetradic";
+
+set color_scheme_base = "#F3904E";
+set color_scheme = "tetradic";
+
+#NEWLAYER: cornered/red_monochromatic
+layerinfo "type" = "theme";
+layerinfo "name" = "savage hummingbird scratch";
+layerinfo "redist_uniq" = "cornered/red_monochromatic";
+
+set color_scheme_base = "#F35951";
+set color_scheme = "monochromatic";
+
+#NEWLAYER: cornered/red_analogous
+layerinfo "type" = "theme";
+layerinfo "name" = "excellent river slam";
+layerinfo "redist_uniq" = "cornered/red_analogous";
+
+set color_scheme_base = "#F35951";
+set color_scheme = "analogous";
+
+#NEWLAYER: cornered/red_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "glorious spider penetration";
+layerinfo "redist_uniq" = "cornered/red_complementary";
+
+set color_scheme_base = "#F35951";
+set color_scheme = "complementary";
+
+#NEWLAYER: cornered/red_split_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "no bamboo thrust";
+layerinfo "redist_uniq" = "cornered/red_split_complementary";
+
+set color_scheme_base = "#F35951";
+set color_scheme = "split_complementary";
+
+#NEWLAYER: cornered/red_double_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "leaping moon chop";
+layerinfo "redist_uniq" = "cornered/red_double_complementary";
+
+set color_scheme_base = "#F35951";
+set color_scheme = "double_complementary";
+
+#NEWLAYER: cornered/red_triadic
+layerinfo "type" = "theme";
+layerinfo "name" = "supernatural chopstick hammer";
+layerinfo "redist_uniq" = "cornered/red_triadic";
+
+set color_scheme_base = "#F35951";
+set color_scheme = "triadic";
+
+#NEWLAYER: cornered/red_tetradic
+layerinfo "type" = "theme";
+layerinfo "name" = "venerable storm essence";
+layerinfo "redist_uniq" = "cornered/red_tetradic";
+
+set color_scheme_base = "#F35951";
+set color_scheme = "tetradic";
+
+#NEWLAYER: cornered/indigo_monochromatic
+layerinfo "type" = "theme";
+layerinfo "name" = "happy dream strike";
+layerinfo "redist_uniq" = "cornered/indigo_monochromatic";
+
+set color_scheme_base = "#6F60C7";
+set color_scheme = "monochromatic";
+
+#NEWLAYER: cornered/indigo_analogous
+layerinfo "type" = "theme";
+layerinfo "name" = "double flash kung-fu";
+layerinfo "redist_uniq" = "cornered/indigo_analogous";
+
+set color_scheme_base = "#6F60C7";
+set color_scheme = "analogous";
+
+#NEWLAYER: cornered/indigo_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "shining hell defense";
+layerinfo "redist_uniq" = "cornered/indigo_complementary";
+
+set color_scheme_base = "#6F60C7";
+set color_scheme = "complementary";
+
+#NEWLAYER: cornered/indigo_split_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "explosive hell spirit";
+layerinfo "redist_uniq" = "cornered/indigo_split_complementary";
+
+set color_scheme_base = "#6F60C7";
+set color_scheme = "split_complementary";
+
+#NEWLAYER: cornered/indigo_double_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "murderous patriarch penetration";
+layerinfo "redist_uniq" = "cornered/indigo_double_complementary";
+
+set color_scheme_base = "#6F60C7";
+set color_scheme = "double_complementary";
+
+#NEWLAYER: cornered/indigo_triadic
+layerinfo "type" = "theme";
+layerinfo "name" = "vulgar grasshopper knee";
+layerinfo "redist_uniq" = "cornered/indigo_triadic";
+
+set color_scheme_base = "#6F60C7";
+set color_scheme = "triadic";
+
+#NEWLAYER: cornered/indigo_tetradic
+layerinfo "type" = "theme";
+layerinfo "name" = "deadly monkey lunge";
+layerinfo "redist_uniq" = "cornered/indigo_tetradic";
+
+set color_scheme_base = "#6F60C7";
+set color_scheme = "tetradic";
+
+#NEWLAYER: cornered/yellow_monochromatic
+layerinfo "type" = "theme";
+layerinfo "name" = "blind turtle spear";
+layerinfo "redist_uniq" = "cornered/yellow_monochromatic";
+
+set color_scheme_base = "#F3EAA0";
+set color_scheme = "monochromatic";
+
+#NEWLAYER: cornered/yellow_analogous
+layerinfo "type" = "theme";
+layerinfo "name" = "celestial orchid tackle";
+layerinfo "redist_uniq" = "cornered/yellow_analogous";
+
+set color_scheme_base = "#F3EAA0";
+set color_scheme = "analogous";
+
+#NEWLAYER: cornered/yellow_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "heavenly dragon palm";
+layerinfo "redist_uniq" = "cornered/yellow_complementary";
+
+set color_scheme_base = "#F3EAA0";
+set color_scheme = "complementary";
+
+#NEWLAYER: cornered/yellow_split_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "golden bamboo vengeance";
+layerinfo "redist_uniq" = "cornered/yellow_split_complementary";
+
+set color_scheme_base = "#F3EAA0";
+set color_scheme = "split_complementary";
+
+#NEWLAYER: cornered/yellow_double_complementary
+layerinfo "type" = "theme";
+layerinfo "name" = "deadly qi crush";
+layerinfo "redist_uniq" = "cornered/yellow_double_complementary";
+
+set color_scheme_base = "#F3EAA0";
+set color_scheme = "double_complementary";
+
+#NEWLAYER: cornered/yellow_triadic
+layerinfo "type" = "theme";
+layerinfo "name" = "abominable qi defiance";
+layerinfo "redist_uniq" = "cornered/yellow_triadic";
+
+set color_scheme_base = "#F3EAA0";
+set color_scheme = "triadic";
+
+#NEWLAYER: cornered/yellow_tetradic
+layerinfo "type" = "theme";
+layerinfo "name" = "fang of the paradise antagonism";
+layerinfo "redist_uniq" = "cornered/yellow_tetradic";
+
+set color_scheme_base = "#F3EAA0";
+set color_scheme = "tetradic";
+

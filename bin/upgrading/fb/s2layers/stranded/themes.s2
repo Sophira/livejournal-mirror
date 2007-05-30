@@ -1,0 +1,71 @@
+#NEWLAYER: stranded/softpastels
+layerinfo "type" = "theme";
+layerinfo "name" = "Soft Pastels";
+layerinfo "redist_uniq" = "stranded/softpastels";
+
+set background = "#daffd3";
+set border = "#be93ee";
+set toolbar_color = "#4c0999";
+
+#NEWLAYER: stranded/stop
+layerinfo "type" = "theme";
+layerinfo "name" = "Stop";
+layerinfo "redist_uniq" = "stranded/stop";
+
+set background = "#5abfff";
+set border = "#ee7872";
+set toolbar_color = "#9511e9";
+
+#NEWLAYER: stranded/stark
+layerinfo "type" = "theme";
+layerinfo "name" = "Stark";
+layerinfo "redist_uniq" = "stranded/stark";
+
+set background = "#ffffff";
+set border = "#a90d10";
+set toolbar_color = "#000000";
+
+#NEWLAYER: stranded/neongolden
+layerinfo "type" = "theme";
+layerinfo "name" = "Neon Golden";
+layerinfo "redist_uniq" = "stranded/neongolden";
+
+set background = "#ffdbb4";
+set border = "#ebbe23";
+set toolbar_color = "#242860";
+
+#NEWLAYER: stranded/brokensky
+layerinfo "type" = "theme";
+layerinfo "name" = "Broken Sky";
+layerinfo "redist_uniq" = "stranded/brokensky";
+
+set background = "#b2cdff";
+set border = "#ffffff";
+set toolbar_color = "#f6e76b";
+
+#NEWLAYER: stranded/drumsolo
+layerinfo "type" = "theme";
+layerinfo "name" = "Drumo Solo";
+layerinfo "redist_uniq" = "stranded/drumsolo";
+
+set background = "#a90619";
+set border = "#b91662";
+set toolbar_color = "#ffffff";
+
+#NEWLAYER: stranded/leaveme
+layerinfo "type" = "theme";
+layerinfo "name" = "Leave Me";
+layerinfo "redist_uniq" = "stranded/leaveme";
+
+set background = "#eeeeee";
+set border = "#969696";
+set toolbar_color = "#333333";
+
+#NEWLAYER: stranded/paintball
+layerinfo "type" = "theme";
+layerinfo "name" = "Paint Ball";
+layerinfo "redist_uniq" = "stranded/paintball";
+
+set background = "#66d9ee";
+set border = "#469647";
+set toolbar_color = "#8828b5";

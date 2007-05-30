@@ -1,0 +1,840 @@
+# -*-s2-*-
+
+##[ layerinfo ]
+
+layerinfo "type" = "core";
+layerinfo "majorversion" = 1;
+layerinfo "redist_uniq" = "core1";
+layerinfo "name" = "FotoBilder Core, version 1";
+
+##[ classes ]
+
+class int
+{
+  function builtin zeropad(int digits) : string
+  "Return the int as a string with at least \$digits characters long, left-padded with zeroes.";
+}
+
+class string
+{
+  function builtin substr(int start, int length) : string
+  "Returns up to \$length characters from string, skipping \$start characters from the beginning.";
+  
+  function builtin ends_with (string sub) : bool
+  "Returns true if string ends in \$sub";
+
+  function builtin starts_with (string sub) : bool
+  "Returns true if string begins with \$sub";
+
+  function builtin contains (string sub) : bool
+  "Return true if string contains \$sub";
+
+  function builtin lower : string
+  "Returns string in lower case.";
+
+  function builtin upper : string
+  "Returns string in upper case";
+
+  function builtin upperfirst : string
+  "Return string with the first character capitalized.";
+
+  function builtin length() : int
+  "Return the number of characters in the string.";
+
+  function builtin repeat(int n) : string
+  "Returns the string repeated n times";
+
+  function builtin is_printable() : bool
+  "Returns true if string is all printable characters";
+}
+
+class Color
+"Represents a color."
+{
+  var readonly int r "Red value, 0-255.";
+  var readonly int g "Green value, 0-255.";
+  var readonly int b "Blue value, 0-255.";
+  var  string as_string "HTML hex encoded: #rrggbb";
+  function builtin Color(string s) : Color "Constructor for color class.  Lets you make a Color object from a string of form #rrggbb";
+  function builtin set_hsl (int h, int s, int v) "Set the HSL value for a color class.";
+
+  function builtin red(int r) "Set the red value. (0-255)";
+  function builtin green(int g) "Set the green value. (0-255)";
+  function builtin blue(int b) "Set the blue value. (0-255)";
+  function builtin red() : int "Get the red value.";
+  function builtin green() : int "Get the green value.";
+  function builtin blue() : int "Get the blue value.";
+
+  function builtin hue(int h) "Set the hue value. (0-255)";
+  function builtin saturation(int s) "Set the saturation value. (0-255)";
+  function builtin lightness(int v) "Set the lightness value. (0-255)";
+  function builtin hue() : int "Get the hue value. (0-255)";
+  function builtin saturation() : int "Get the saturation value. (0-255)";
+  function builtin lightness() : int "Get the lightness value. (0-255)";
+
+  function builtin clone() : Color "Returns identical color.";
+  function builtin lighter() : Color "Returns a new color with lightness increased by 30.";
+  function builtin lighter(int amt) : Color "Returns a new color with lightness increased by amount given.";
+  function builtin darker() : Color "Returns a new color with lightness decreased by 30.";
+  function builtin darker(int amt) : Color "Returns a new color with lightness decreased by amount given.";
+  function builtin inverse() : Color "Returns inverse of color.";
+  function builtin average(Color other) : Color "Returns color averaged with \$other color.";
+}
+
+class Date
+{
+  var int year "Year; 4 digits.";
+  var int month "Month; 1-12.";
+  var int day "Day; 1-31.";
+  function print_date ()
+    "Prints the date, in the format preferred by the user and user's language.";
+}
+
+class DateTime extends Date
+{
+  var int hour "Hour; 0-23.";
+  var int min "Minute; 0-59.";
+  var int sec "Second; 0-59.";
+  function print_datetime ()
+    "Prints the date & time, in the format preferred by the user and user's language.";
+}
+
+class PalItem
+"A specification for a numbered palette index in a GIF or PNG to be changed to a certain color"
+{
+    var int index "Integer palette index.";
+    var Color color "Color to put at specified index.";
+}
+
+class User
+"Represent a user."
+{
+  var string usercs "Username with case and spacing.  Example: \"Super Bob 343\".";
+  var string user "Canonical username.  Example: \"superbob343\".";
+  var string url "URL to user's galleries root";
+}
+
+class Link
+"Used to represent links between different pages within a user's site."
+{
+  var string url "The URL which the link should point to.";
+  var string caption "The caption for the link";
+  var string dest_view "A string representing the viewtype being linked to (eg 'gallery', 'index', 'picture').";
+  var bool current_page "True if the link is linking to the page the viewer is already on.";
+  function to_string() : string "Return a link to the destination view.";
+}
+
+class ItemRange
+"Represents a range of items which optionally contain items. For example, in a thumbnail gallery 'pages' are items and 'pictures' are subitems."
+{
+  var bool all_subitems_displayed "True if the subitems in this range represent the entire set. In this case, all of the URL members are blank.";
+  var int num_subitems_displayed "The number of subitems in this range.";
+  var int total "The total number of items that are navigable to.";
+  var int current "The currently-active item.";
+  var int from_subitem "The index of the first subitem in this range.";
+  var int to_subitem "The index of the last subitem in this range.";
+  var int total_subitems "The number of subitems.";
+  var string url_next "URL for the 'next' link.  Blank if there isn't a next URL."; 
+  var string url_prev "URL for the 'previous' link.  Blank if there isn't a previous URL.";
+  var string url_first "URL for the 'first' link.  Blank if already on the first page.";
+  var string url_last "URL for the 'last' link.  Blank if already on the last page.";
+  function builtin url_of(int n) : string "Returns the URL to use to link to the nth item";
+
+  function print(string labeltext) "Prints the item range links with the given \$labeltext";
+}
+
+
+class GalleryBasic
+"Minimal information about a gallery.. just its name and URL."
+{
+  var string name "Name of gallery";
+  var string url "URL of gallery";
+  var string manage_url "The URL of the management page for this gallery.  Only valid if remote user is the gallery owner.  See [function[viewer_is_owner()]].";
+
+  function builtin get_preview_image (string style) : Image
+  "Gets the preview thumbnail for this gallery of the given \$*thumbnails style.  This function requires making database calls to get the results, so use [function[load_gallery_previews(Gallery[],bool)]] to pre-fetch the data if you plan on using this on lots of galleries.  In that case, this function returns faster.";
+}
+
+class Gallery extends GalleryBasic
+"More information about a Gallery."
+{
+  var int numpics "Number of pictures in the gallery, that the remote user has access to view.";
+  var DateTime date "The gallery's date.  Could be null, if owner hasn't specified a date for the gallery.";
+  var DateTime dateupdate "When the gallery was last updated.";
+
+  var Gallery[] children "Sub-galleries.  Not always loaded.";
+  var string des "Gallery description.  Not always loaded.";
+  var int security "The current security id of this gallery. (255 public, 0 private, 253 reg users, etc)";
+
+  function desc_pics () : int "Returns number of pictures in descendant galleries.";
+  function desc_gals () : int "Returns number of descendant galleries.";
+}
+
+class Image
+"Represents an image, without any information related to FotoBilder.  The FotoBilder object for a picture related to a user/gallery/etc is [class[Picture]], for lack of a better name."
+{
+  var int width "Width of image";
+  var int height "Height of image";
+  var string url "URL to image";
+  function print ()
+    "Print an HTML tag for this Image";
+  function print (string alt)
+    "Print an HTML tag for this Image, with the given alternate text string.";
+  function print (string alt, string other)
+    "Print an HTML tag for this Image, with the given alternate text string and other attributes.";
+  function print (string{} opts)
+    "Print the HTML for an image, possibly with a link (if 'href' arg is given) and shadows (if 'shadowback' key for shadow background color key is given, of form rrggbb or #rrggbb).  Others supported keys are 'alt' for alttext; 'inline', which if \"1\" adds 'display: inline' CSS to shadowed table; and 'a_attr'. which adds attributes to the anchor tag if a link is to be printed.";
+}
+
+class Trail
+"A \"bread crumb trail\" series of links."
+{
+  var Link[] links "Links in this trail.";
+  function print "Print this link trail.";
+}
+
+class Picture
+{
+  var string title "Optional title of picture";
+  var string des "Description of picture for gallery pages.  Not populated by default.";
+  var string piccode "Internal 8 digit piccode.";
+  var int bytes "Size of picture.";
+  var Image fullimage "The full-sized picture.";
+  var string url "The URL of the PicturePage for this picture";
+  var string manage_url "The URL of the management page for this picture.  Only valid if remote user is the gallery owner.  See [function[viewer_is_owner()]].";
+  var int security "The current security id of this picture. (255 public, 0 private, 253 reg users, etc)";
+  var Image{} thumbnails "Thumbnail images, keyed by contents of \$*thumbnails";
+
+  function builtin get_image(int max_width, int max_height) : Image 
+  "Returns an [class[Image]] scaled to no larger than \$max_width by \$max_height";
+}
+
+class Page
+"This is an abstract class from which all the real page types inherit.  The [method[Page::print()]] method is the main entry point for all FotoBilder pages.  Another entry point is the global function [function[print_stylesheet()]]."
+{ 
+  var User user
+  "The user whose account is being shown";
+
+  var string view
+  "The view type: 'index', 'gallery', 'picture', 'profile', etc...";
+
+  var string stylesheeturl
+  "The URL for the stylesheet that will be rendered by the [function[print_stylesheet()]] function.";
+
+  var string{} args
+  "Arguments from the URL.  S2 pages have access to all arguments starting with periods.  The leading periods are removed before going into this hash.";
+
+  var Link parent_link
+  "Use this link to create an 'Up' link to the current page's parent page.  Null if already at the top.";
+
+  var Link[] parent_links
+  "Links to parent pages.  No items if already at the top.  In most cases, the first element in this array will be the same as parent_link, but a [class[GalleryPage]] can have multiple parents.";
+
+  var Link self_link
+  "Link to the current page.";
+
+  var Trail[] trails
+  "All bread-crumb trails from the top down to this page.";
+
+  var Trail trail
+  "A bread-crumb trail from the top down to this page.  If there are multiple, use the trails array to get at all of them.";
+
+  var Link manage_account
+  "Link to manage the user's account.";
+
+  var readonly string head_content
+  "Server-supplied header content.";
+  
+  function print ()
+    "The main entry point that the FotoBilder calls.  Layouts should override this to produce the HTML that's generic for all view types.";
+
+  function print_body ()
+    "You'll generally call this from [method[Page::print()]] to render the view-specific parts of the page.  Each view ([class[IndexPage]], [class[PicturePage]], etc.) should override it.  Optionally, each class can override only [method[Page::print()]] and produce the entire page, but that's a lot more work.";
+
+  function print_head ()
+    "You'll generally call this from [method[Page::print()]] to print information into the HTML document's head tag.";
+
+  function print_extra_nav ()
+    "Print out any view-specific navigation links.";
+
+  function title () : string
+   "Return the title of thie view.";
+
+}
+
+class IndexPage extends Page
+"The main page that's loaded when viewing a user's account.  This page should probably list all the user's galleries."
+{
+  var Gallery[] galleries "Top-level galleries that remote user has access to see, with child members populated.";
+
+  var Gallery[] sorted_galleries "Galleries the remote user has access to see, sorted by the current sort mode.  Might only be a subset.  Consult \$.gallery_pages.  The children members aren't populated.  If you need the whole tree recursively, use \$.galleries";
+  var ItemRange sorted_pages "Indicates what pages of the current sort mode are being shown.";
+  var string sort_mode "One of 'top' (galleries that are children of the top level, sorted by owner), 'alpha' (all galleries, sorted alphabetically), 'recent' (recently updated), 'date' (galleries with dates, sorted from earliest to latest)";
+  var Link{} sort_link "Hash key is a sort_mode (see \$.sort_mode) and value is either a [class[Link]] to that sort mode, or null, if user has disabled that sort mode.";
+  
+  var string manage_url
+  "URL to manage account.  Only valid if remote user is the gallery owner.  See [function[viewer_is_owner()]].";
+
+  function print_gallerylist(Gallery[] gals, int level);
+  function print_gallerylist(Gallery[] gals);
+  function print_gallerylist(); # defaults to $.galleries
+}
+
+class PicturePage extends Page 
+"Page to view a single picture."
+{
+  var Picture picture "Picture to view";
+
+  var Picture picture_prev "The previous picture in this gallery.  May be null.";
+
+  var Picture picture_next "The next picture in this gallery.  May be null.";
+
+  var string des "Description of picture.";
+
+  var Gallery gallery "The gallery the image was selected from, or null if using the URL of the PicturePage without an associated gallery.";
+
+  var GalleryBasic[] galleries "The galleries in which the picture appears.";
+
+  var Link[] tags "The tags which apply to this picture";
+
+  var ItemRange pictures "Where this picture is within the context of the gallery it was clicked on from.  If [member[PicturePage.gallery]] is null, this is also.";
+
+  var string manage_url
+  "URL to manage picture properties & pictures.  Only valid if remote user is the gallery owner.  See [function[viewer_is_owner()]].";
+
+  var string copy_url
+  "URL to import the picture into another user's account.  Only valid if remote user is not the picture owner.";
+
+  var int security "The current security id of this picture. (255 public, 0 private, 253 reg users, etc)";
+  
+  function print_picture_navigation() 
+  "Prints out where this picture is within the gallery, or does nothing, if not in a gallery.";
+  
+  function picture_location() : string 
+  "Returns text like 'Picture X of Y' where X is \$.pictures.current and Y is \$.pictures.total.  To be overridden by i18n layers.";
+
+  function builtin get_thumbnail(string keyword, int index) : Image
+    "Get a thumbnail from the associated gallery.  \$keyword is a \$*thumbnails parameter; \$index is 1-based.  Returns null if there's no gallery, or \$index is out of bounds.";
+
+  function builtin get_exif_cat_info() : string{}
+  "Rough EXIF tag category keys/tags to allow a way to print common tags in an orderly fashion.";
+
+  function builtin get_exif_cat_order() : string[]
+  "An array of EXIF tag category keys in the order in which they should be displayed.";
+
+  function builtin get_exif_tag_info() : string{}
+  "Hash of raw EXIF key/value information from image.";
+
+  function builtin get_exif_tag_order() : string[]
+  "An array of the recommended order in which common/important EXIF tags should be displayed";
+
+  function builtin get_exif_tag_order(string category) : string[]
+  "An array of the recommended order in which common/important EXIF tags should be displayed, restricted to single tag category";
+
+  function print_exif_cats()
+  "print EXIF tags in all categories";
+
+  function print_exif_cats(string[] cats)
+  "print EXIF tags in listed categories";
+
+  function print_exif_tags()
+  "print all exif_info key/value pairs";
+
+  function print_exif_tags(string[] keys)
+  "print only specified exif_info key/value pairs";
+}
+
+class GalleryPage extends Page
+"Page class for a viewing a user's gallery."
+{
+  var Picture[] pictures
+  "The pictures in this gallery which the remote user has access to see.";
+
+  var int dup_pictures
+  "The number of pictures in [member[GalleryPage.pictures]] which are duplicates from the last page (or current page, if total gallery pictures is small), but included to satisfy the minimum pictures per page property.";
+
+  var Gallery gallery
+  "The gallery being viewed.";
+
+  var string des "Description of gallery.";
+
+  var int security "The current security id of this gallery. (255 public, 0 private, 253 reg users, etc)";
+
+  var string manage_url
+  "URL to manage gallery properties & pictures.  Only valid if remote user is the gallery owner.  See [function[viewer_is_owner()]].";
+
+  var string copy_url
+  "URL to import the entire gallery into another user's account.  Only valid if remote user is not the gallery owner, the owner's gallery is marked as exportable, the the remote viewer has access to copy it.";
+
+  var ItemRange pages
+  "Indicates what page is being viewed, how many pages there are, and what range of pictures (the subitems) are being displayed.";
+
+  function print_page_navigation();
+
+  function page_location() : string
+  "Returns text like 'Page X of Y' where X is \$.pages.current and Y is \$.pages.total";
+
+  function builtin load_pict_descriptions()
+  "Populate picture descriptions on gallery pages.";
+}
+
+class MiscPage extends Page
+"Any new page types that are needed by the system but not yet supported by S2 will use this class, which only gives S2 the page title and content.  Generally layouts will never need to override this, if they have [method[Page::print()]] defined to print the instance's title and body."
+{
+  var string content "Body content.";
+  var string pagetitle "Page title.";
+}
+
+##[ built-in function declarations ]
+
+function builtin rand (int low, int high) : int
+"Returns a random integer between \$low and \$high, inclusive.";
+
+function builtin rand (int high) : int
+"Returns a random integer between 1 and \$high, inclusive.";
+
+function builtin rand (Picture[] pics) : int
+"Returns a random index into the given \$pics array.";
+
+function builtin rand_pic (Picture[] pics) : Picture
+"Returns a random picture from the given \$pics array.";
+
+function builtin get_page () : Page
+"Gets the top-level [class[Page]] instance that FotoBilder ran the [method[Page::print()]] method on.";
+
+function builtin set_content_type(string text)
+"Sets the content type for the page being returned.  Must be called before anything is printed.";
+
+function builtin set_http_status(int num)
+"Sets the HTTP status to be returned.  Must be called before anything is printed.";
+
+function builtin viewer_logged_in() : bool
+"Returns true if the user viewing the page is logged in.  It's recommended that your page links to the site login page if user isn't logged in.";
+
+function builtin viewer_is_owner() : bool
+"Returns true if the user viewing the page is both logged in, and is the owner of the picture/gallery being viewed.  If so, it's recommended you link to the management area for that picture/gallery.";
+
+function builtin string(int i) : string "Returns a string from a integer.";
+function builtin int(string s) : int "Returns an integer from a string.";
+function builtin ehtml(string text) : string "Escapes all tags & quotes from the text.";
+function builtin ejs(string text) : string "Escapes a string so it can be put into a JavaScript variable.";
+
+function builtin PalItem(int index, Color c) : PalItem
+"Convenience constructor to make populating an array of PalItems (like in [function[palimg_modify]]) easy.";
+
+function builtin palimg_create(string spec) : Image
+"Returns an [class[Image]] object representing an image with its palette table modified.  The \$spec is pipe-delimited with joined arguments being: resource name, width, height, and then property names representing the color to replace for each palette index.  The resource name can be either a full URL or a relative one from the site's /img/ directory.  Example spec: \"simplecontrols/up.gif|32|32|fgcolor|bgcolor\" would mean, take \$SITEROOT/img/simplecontrols/up.gif and return a 32x32 image with palette index #0 being color \$*fgcolor and palette index #1 being color \$*bgcolor.  If the palette indexes you want to modify are not contiguous, just leave the field blank for that property name and it won't be modified.";
+
+function builtin palimg_modify(string filename, PalItem[] items) : string
+"Return a URL to the specified filename (relative to the palimg root) with its palette table altered, once for each provided [class[PalItem]].  Restrictions:  only 7 palette entries may be modified, and the PalItem indexes must be 0-15.";
+
+function builtin palimg_tint(string filename, Color bright) : string
+    "Return a URL to the specified filename (relative to the palimg root) with its palette table tinted.  The given 'bright' color will be the new white, and darkest color remains black.";
+
+function builtin palimg_tint(string filename, Color bright, Color dark) : string
+    "Return a URL to the specified filename (relative to the palimg root) with its palette table tinted.  The given 'bright' color will be the new white, and the given 'dark' color is the new black.";
+
+function builtin palimg_gradient(string filename, PalItem start, PalItem end) : string
+    "Return a URL to the specified filename (relative to the palimg root) with its palette table made into a gradient.  All palette entries between the inclusive indexes of \$start and \$end will fade from the colors in \$start and \$end.  The palette indexes for the start and end can be between 0 and 255.";
+
+function builtin load_gallery_previews(Gallery[] gals, bool recurse)
+"Pre-loads the preview image data for the given galleries.  If \$recurse is true, then the previews for gallery children are loaded too.";
+
+function builtin alter_url (string url, string{} newargs) : string
+  "Returns a URL, modifying the given \$url, changing or adding the given arguments.";
+
+function builtin alter_url (string{} newargs) : string
+  "Returns a URL, modifying the URL of the current page, changing or adding the given arguments.";
+
+##[ properties ]
+
+property builtin string PALIMGROOT {
+    noui = 1;
+    doc_flags = "[sys]";
+    des = "The base URL of palimg files, without a trailing slash.  Example: \"http://www.picpix.com/palimg\".";
+}
+
+property string text_range_first {
+  noui = 1;
+}
+property string text_range_prev {
+  noui = 1;
+}
+property string text_range_next {
+  noui = 1;
+}
+property string text_range_last {
+  noui = 1;
+}
+property string text_link_index {
+  noui = 1;
+}
+property string text_link_gallery {
+  noui = 1;
+}
+set text_range_first = "First";
+set text_range_prev = "Previous";
+set text_range_next = "Next";
+set text_range_last = "Last";
+set text_link_index = "Back to Index";
+set text_link_gallery = "Back to Gallery";
+
+property string text_nogalleries {
+  noui = 1;
+}
+set text_nogalleries = "There are no galleries to display.";
+
+property string text_nopictures {
+  noui = 1;
+}
+set text_nopictures = "There are no pictures to display.";
+
+property string[] text_months_short { noui = 1; }
+set text_months_short = [ "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ];
+
+property string thumbnails {
+  noui = 1;
+  des = "Gallery thumbnails request.  FIXME: needs pointer to docs.";
+}
+
+property int gallery_page_min_size {
+  des = "Minimum pictures per page";
+  note = "Minimum pictures to show on a gallery page.  If less pictures are available than this, some will be either pulled from the previous page or duplicated from the current page.  Generally the default value of '1' is acceptable.  Certain layouts doing funky things with thumbnails may require a minimum size.";
+  min = 1;
+}
+set gallery_page_min_size = 1;
+
+property int gallery_page_max_size {
+  des = "Maximum number of pictures to show on a gallery page.";
+  min = 1;
+}
+set gallery_page_max_size = 25;
+
+property int index_page_max_size {
+  des = "Maximum number of galleries to show on the index page.";
+  min = 1;
+}
+set index_page_max_size = 25;
+
+property string font_base {
+  des = "Preferred Font";
+  maxlength = 25;
+  size = 10;
+  example = "Arial";
+  note = "Leave blank if you don't care.";
+}
+set font_base = "";
+
+property string font_fallback {
+    des = "Alternative font style";
+    values = "sans-serif|Display in a sans-serif font|serif|Display in a serif font|cursive|Display in a cursive font|monospace|Display in a monospaced font|none|Use whatever font the user has configured in their browser";
+    note = "This general style will serve as a fallback if your preferred font is unavailable.";
+}  
+set font_fallback = "none"; # Default in core is to let the browser handle it.
+
+property string show_exif {
+    des = "Show EXIF data for jpg images";
+    values = "no|No, show no extra data|raw|show raw (all) EXIF information";
+}
+set show_exif = "no";
+
+property string thumbnail_size {
+    des = "Thumbnail size";
+    note = "Size values are measured in pixels";
+    values = "100x100|100x100|125x125|125x125|150x150|150x150";
+}
+
+property string thumbnail_style {
+    des = "Thumbnail style";
+    values = "|Scaled|,crop|Cropped|,zoom|Zoomed in";
+}
+
+##[ default propgroups ]
+
+propgroup background = "Background";
+propgroup colors = "Colors";
+propgroup fonts  = "Fonts";
+propgroup presentation = "Presentation";
+propgroup text   = "Text";
+
+
+##[ global function implementations ]
+
+function prop_init ()
+  "This function is the first thing called and is the place to set properties based on the values of other properties.  It's called before the style system looks at its builtin properties, so if you need to conditionally setup something like \$*gallery_page_max_size based on your own custom properties, do it here.  You can't print from this function."
+{
+  # do nothing, just exist.
+}
+
+function print_stylesheet ()
+  "Prints a stylesheet, the URL of which can be referenced by [member[Page.stylesheeturl]].  This is another S2 entry point, in addition to [member[Page::print()]]." {
+  set_http_status(404);
+}
+
+function linkif(bool linkcond, string text, string url) : string 
+"Convenience function for optionally making a link to a piece of \$text.  If \$linkcond is true, then an anchor tag to \$url is wrapped around \$text and returned.  Otherwise, \$text is returned."
+{
+  if ($linkcond) {
+    return """<a href="$url">$text</a>""";
+  }
+  return $text;
+}
+function linkif(string text, string url) : string 
+"Returns \$text linked to \$url if \$url is not an empty string."
+{
+  return linkif($url != "", $text, $url);
+}
+
+##[ method implementations ]
+
+function Date::print_date()
+{
+  var string s;
+  $s = string($.year);
+  if ($.month != 0) {
+    $s = $s + "-" + $.month->zeropad(2);
+    if ($.day != 0) {
+      $s = $s + "-" + $.day->zeropad(2);
+    }
+  }
+  print $s;
+}
+
+function DateTime::print_datetime()
+{
+  var string s;
+  $s = string($.year);
+  if ($.month != 0) {
+    $s = $s + "-" + $.month->zeropad(2);
+    if ($.day != 0) {
+      $s = $s + "-" + $.day->zeropad(2);
+      if ($.hour != 0 or $.min != 0 or $.sec != 0) {
+        $s = $s + " " + $.hour->zeropad(2) + ":" + $.min->zeropad(2);
+        if ($.sec) { $s = $s + ":" + $.sec->zeropad(2); }
+      }
+    }
+  }
+  print $s;
+}
+
+function Gallery::desc_pics () : int {
+  var int total = 0;
+  foreach var Gallery c ($.children) {
+    $total = $total + $c.numpics + $c->desc_pics();
+  }
+  return $total;
+}
+
+function Gallery::desc_gals () : int {
+  var int total = 0;
+  foreach var Gallery c ($.children) {
+    $total = $total + 1 + $c->desc_gals();
+  }
+  return $total;
+}
+
+function Image::print (string{} opts)
+{
+  var string tint = $opts{"tint"};
+
+  if ($tint != "") {
+    "<table border='0' cellspacing='0' cellpadding='0'";
+    if ($opts{"inline"} != "") {
+      " style='display: inline'";
+    }
+    "><tr><td>";
+  }
+
+  if ($opts{"href"} != "") { "<a href=\"$opts{"href"}\" $opts{"a_attr"}>"; }
+  "<img src=\"$.url\" border='0' width=\"$.width\" height=\"$.height\" alt=\"$opts{"alt"}\" />";
+  if ($opts{"href"} != "") { "</a>"; }
+
+  if ($tint != "") {
+    "</td><td>";
+    var int h = $.height - 10;
+    var int w = $.width - 10;
+    "<img src='/img/shadow/tr.gif/pt$tint' border='0' width='10' height='10' /><br /><img src='/img/shadow/r.gif/pt$tint' border='0' width='10' height='$h'></td></tr>";
+    "<tr><td colspan='2'><img src='/img/shadow/bl.gif/pt$tint' border='0' width='10' height='10'><img src='/img/shadow/b.gif/pt$tint' border='0' width='$w' height='10'><img src='/img/shadow/br.gif/pt$tint' border='0' width='10' height='10'></td></tr></table>";
+  }
+}
+
+function Image::print (string alt)
+{
+  var string ealt = ehtml($alt);
+  print "<img src=\"$.url\" width=\"$.width\" height=\"$.height\" border=\"0\" alt=\"$ealt\">";
+}
+
+function Image::print (string alt, string other)
+{
+  var string ealt = ehtml($alt);
+  print "<img src=\"$.url\" width=\"$.width\" height=\"$.height\" border=\"0\" alt=\"$ealt\" $other>";
+}
+
+function Image::print
+{
+  print "<img src=\"$.url\" width=\"$.width\" height=\"$.height\" border=\"0\">";
+}
+
+function ItemRange::print(string labeltext) {
+  "<table width=\"100%\" style=\"text-align: center;\"><tr>\n";
+  "<td width=\"12%\">" + linkif($*text_range_first, $.url_first) + "</td>\n";
+  "<td width=\"12%\">" + linkif($*text_range_prev, $.url_prev) + "</td>\n";
+  "<td>$labeltext</td>\n";
+  "<td width=\"12%\">" + linkif($*text_range_next, $.url_next) + "</td>\n";
+  "<td width=\"12%\">" + linkif($*text_range_last, $.url_last) + "</td>\n";
+  "</tr></table>\n";
+}
+
+function Link::to_string() : string {
+  return linkif($.current_page, $.caption, $.url);
+}
+
+function Page::print_extra_nav() {
+     
+}
+
+function MiscPage::print_body() {
+  print $.content;
+}
+
+function MiscPage::title() : string {
+  return $.pagetitle;
+}
+
+function Page::title () : string {
+  return "$.view view";
+}
+
+function Page::print_body ()
+{
+  print "I am a '$.view' page for $.user.usercs!\n";
+}
+
+function Page::print_head ()
+{
+  print $this.head_content;
+}
+
+function Page::print ()
+{
+  "<html><head>";
+  $this->print_head ();
+  "<title>";
+  print $this->title();
+  "</title></head>";
+  "<body>";
+  "<p>";
+  if (viewer_logged_in() == false) {
+    print "[<a href=\"/login\">Login</a>] ";
+  }
+  if (viewer_is_owner()) {
+    print "[<a href=\"/manage/\">Manage Account</a>] ";
+  }
+  $this->print_extra_nav();
+  "</p>";
+
+  $this->print_body();
+  "</body>";
+  "</html>";
+}
+
+function GalleryPage::print_extra_nav() {
+  if (viewer_is_owner()) {
+    print "[" + linkif("Manage Gallery", $.manage_url) + "] ";
+  }
+}
+
+function IndexPage::print_gallerylist(Gallery[] gals, int level) {
+  if ((size $gals) == 0) {
+    if ($level == 0) {
+      "<p>$*text_nogalleries</p>";
+    }
+    return;
+  }
+  "<ul>\n";
+  foreach var Gallery g ($gals) {
+    """<li><a href="$g.url">$g.name</a>""";
+    if ($g.numpics) {
+      " <em>($g.numpics)</em>";
+    }
+   $this->print_gallerylist($g.children, $level + 1);
+    "</li>\n";
+  }
+  "</ul>\n";
+}
+
+function IndexPage::print_gallerylist(Gallery[] rg) {
+  $this->print_gallerylist($rg, 0);
+}
+
+function IndexPage::print_gallerylist() {
+  $this->print_gallerylist($.galleries, 0);
+}
+
+function IndexPage::print_body ()
+{
+  $this->print_gallerylist();
+}
+
+
+function GalleryPage::print_body ()
+{
+  print "Gallery page for $.user.usercs\n";
+}
+
+function PicturePage::print_exif_cats ()
+{
+  var string[] cats = $this->get_exif_cat_order();
+  $this->print_exif_cats($cats);
+}
+
+function PicturePage::print_exif_cats (string[] cats)
+{
+  if ($cats[0]) {
+      "<dl>";
+      var string{} cat_info  = $this->get_exif_cat_info();
+      foreach var string currcat ($cats) {
+          if ($cat_info{$currcat}) {
+              var string[] tag_order = $this->get_exif_tag_order($currcat);
+              "<dt><b>$cat_info{$currcat}</b></dt><dd>";
+              $this->print_exif_tags($tag_order);
+              "</dd>";
+          }
+      }
+      "</dl>";
+  } else {
+      "<i>No categorized EXIF data available</i>";
+  }
+}
+
+function PicturePage::print_exif_tags ()
+{
+  var string{} tag_info = $this->get_exif_tag_info();
+  if ($tag_info) {
+      "<dl>";
+      foreach var string tag ($tag_info) {
+          """<dt>$tag</dt><dd>$tag_info{$tag}</dd>""";
+      }
+      "</dl>";
+  } else {
+      "<i>No EXIF data available</i>";
+  }
+}
+
+function PicturePage::print_exif_tags (string[] tags)
+{
+  var string{} tag_info = $this->get_exif_tag_info();
+  if ($tag_info) {
+      "<dl>";
+      foreach var string tag ($tags) {
+
+          if ($tag_info{$tag}) {
+              """<dt>$tag</dt><dd>$tag_info{$tag}</dd>""";
+          }
+      }
+      "</dl>";
+  } else {
+      "<i>No EXIF data available</i>";
+  }
+}

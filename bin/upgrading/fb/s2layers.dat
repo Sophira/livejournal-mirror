@@ -1,0 +1,38 @@
+################################################################
+# base filename                 layer type      parent
+
+core1                           core            -
+i18nc/en1                       i18nc           core1
+i18nc/de1                       i18nc           core1
+i18nc/es1                       i18nc           core1
+
+supersimple/layout              layout          core1
+supersimple/themes              theme+          supersimple/layout
+
+apache/layout                   layout          core1
+
+colorhover/layout               layout          core1
+
+framed/layout                   layout          core1
+framed/themes                   theme+          framed/layout
+
+stranded/layout                 layout          core1
+stranded/themes                 theme+          stranded/layout
+
+cornered/layout                 layout          core1
+cornered/themes                 theme+          cornered/layout
+
+portfoloroid/layout             layout          core1
+portfoloroid/themes             theme+          portfoloroid/layout
+
+positivecontact/layout          layout          core1
+positivecontact/themes          theme+          positivecontact/layout
+
+vestibule/layout                layout          core1
+vestibule/themes                theme+          vestibule/layout
+
+smoove/layout                   layout          core1
+smoove/themes                   theme+          smoove/layout
+
+ultima/layout                   layout          core1
+ultima/themes                   theme+          ultima/layout

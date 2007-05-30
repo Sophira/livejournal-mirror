@@ -1,0 +1,519 @@
+#-*-s2-*-
+
+layerinfo "type" = "layout";
+layerinfo "name" = "Super Simple";
+layerinfo "redist_uniq" = "supersimple/layout";
+
+propgroup presentation {
+  property bool show_titles {
+    des = "Show titles under thumbnails?";
+  }
+  set show_titles = true;
+  
+  property bool shadows {
+    des = "Show drop-shadows under images?";
+  }
+  set shadows = true;
+  
+  property bool indexsubgals {
+    des = "Show related galleries on the index page?";
+  }
+  set indexsubgals = true;
+
+  property Color shadow_color {
+    des = "Shadow color";
+    note = "Color of drop-shadow.";
+  }
+  set shadow_color = "#000000";
+
+  property int rows {
+    des = "Number of rows of images";
+    min = 1;
+  }
+  set rows = 5;
+  
+  property int cols {
+    des = "Number of cols of images";
+    min = 1;
+  }
+  set cols = 5;
+
+  property use thumbnail_size;
+  set thumbnail_size = "100x100";
+  
+  property string thumbnail_size_sub {
+    des = "Related gallery thumbnail size";
+    values = "|None|50x50|50x50|75x75|75x75|100x100|100x100";
+  }
+  set thumbnail_size_sub = "75x75";
+  
+  property use thumbnail_style;
+  set thumbnail_style = "";
+}
+
+propgroup colors {
+  property Color bgcolor {
+    des = "Background color";
+  }
+  set bgcolor = "#ffffff";
+  
+  property Color fgcolor {
+    des = "Foreground color";
+  }
+  set fgcolor = "#000000";
+  
+  property Color linkcolor {
+    des = "Link color";
+  }
+  set linkcolor = "#0000ee";
+  
+  property Color vlinkcolor {
+    des = "Visisted link color";
+  }
+  set vlinkcolor = "#551a8b"; 
+}
+
+propgroup background
+{
+  property string background_image {
+    des = "Background image";
+    note = "URL to an image to be used for the page background (leave blank for none, or choose from a default below:).";
+  }
+  property string background_repeat {
+    des = "Background image repeat";
+    values = "repeat|Repeat|no-repeat|Don't repeat|repeat-x|Repeat across only|repeat-y|Repeat down only";
+  }
+  property string background_position {
+    des = "Background image position";
+    note = "Does not apply if background image is repeating in both directions.";
+    values = "center|Center|center left|Center-left|center right|Center-right|top|Top|top left|Top-left|top right|Top-right|bottom|Bottom|bottom left|Bottom-left|bottom right|Bottom-right|left|Left|right|Right";
+  }
+  property string background_scrolling {
+    des = "Background image scrolling";
+    note = "Not supported in all browsers, but allows for the background image to be in a fixed position when scrolling.";
+    values = "scroll|Scroll|fixed|Fixed";
+  }
+  property string background { noui = 1; }
+  set background_image      = "";
+  set background_repeat     = "no-repeat";
+  set background_position   = "top right";
+  set background_scrolling  = "fixed";
+  set background            = "";
+}
+
+propgroup fonts {
+  property use font_base;
+  property use font_fallback;
+}
+
+propgroup text {
+  property string title {
+    des = "Main page title";
+    note = "If you lave this blank, we will add a generic title as a default";
+  }
+  set title = "";
+}
+
+## Image resources
+property string up_image { noui = 1; }
+set up_image = "simplecontrols/up.gif|32|32|fgcolor";
+property string first_image { noui = 1; }
+set first_image = "simplecontrols/first.gif|32|32|fgcolor";
+property string last_image { noui = 1; }
+set last_image = "simplecontrols/last.gif|32|32|fgcolor";
+property string prev_image { noui = 1; }
+set prev_image = "simplecontrols/prev.gif|32|32|fgcolor";
+property string next_image { noui = 1; }
+set next_image = "simplecontrols/next.gif|32|32|fgcolor";
+
+
+# shadow tint, computed from above
+property string tint { noui = 1; }
+
+function prop_init ()
+{
+  $*gallery_page_max_size = $*rows * $*cols;
+  $*thumbnails = "pn=100x100" + $*thumbnail_style + "&norm=" + $*thumbnail_size + $*thumbnail_style;
+  if ($*thumbnail_size_sub != "") {
+    $*thumbnails = $*thumbnails + "&subgal=" + $*thumbnail_size_sub + $*thumbnail_style;
+  }
+
+  if ($*shadows) {
+    $*tint = $*bgcolor.as_string->substr(1, 6) +
+      $*shadow_color.as_string->substr(1, 6);
+  }
+  # Background CSS
+  $*background = "background-color: $*bgcolor";
+  if ($*background_image != "") {
+    $*background = $*background + """;\n    background-image: url('$*background_image');\n""" +
+      """    background-repeat: $*background_repeat;\n""" + 
+      """    background-position: $*background_position;\n""" + 
+      """    background-attachment: $*background_scrolling""";
+  }
+}
+
+function print_stylesheet () {
+  print "body {
+   $*background;
+   color: $*fgcolor;
+   font-family: verdana, aerial, serif;
+   font-size: 11pt;
+   line-height: 16pt;
+   margin: 40px;
+   vertical-align: top;
+}
+  a:link { color: $*linkcolor;  }
+  a:visited { color: $*vlinkcolor;  }
+
+";
+}
+
+function Page::print ()
+{
+  "<html><head><title>";
+  print $this->title();
+  "</title>\n";
+  $this->print_head();
+  """<link rel="stylesheet" href="$.stylesheeturl" type="text/css">\n""";
+  "</head>\n<body link=\"$*linkcolor\" vlink=\"$*vlinkcolor\" bgcolor=\"$*bgcolor\" text=\"$*fgcolor\">";
+
+  "<h1 style='margin-bottom: 0px; border-bottom-width: 0px'>";
+  print $this->title();
+  "</h1>";
+
+  "<p>";
+
+  $this->print_body();
+
+  "</body></html>";
+}
+
+function IndexPage::title () : string
+{
+  if ($*title != "") { return $*title; }
+  return "$.user.usercs's index page";
+}
+
+function top_link (IndexPage i, string mode, string text) {
+  if ($i.sort_mode == $mode) {
+    "<b>[$text]</b>\n";
+  } elseif (not isnull $i.sort_link{$mode}) {
+    "[<a href=\"$i.sort_link{$mode}.url\">$text</a>]\n";
+  }
+}
+
+function gal_count_em (Gallery g) : string
+{
+    var int pics = $g.numpics;
+    var int dpics = $g->desc_pics();
+    var int tpics = $pics + $dpics;
+    if ($pics > 0 and $dpics == 0) {
+      return " <em>($pics)</em>";
+    } elseif ($pics > 0 and $dpics > 0) {
+      return " <em>($tpics)</em>";
+    } elseif ($dpics > 0) {
+      return " <em>($tpics)</em>";
+    }
+    return "";
+}
+
+function IndexPage::print_body ()
+{
+  if (viewer_is_owner()) {
+    "<p style='font-size: 8pt; margin: 5px 0em; '>[<a href=\"$.manage_url\">Manage</a>]</p>";
+  }
+  "<p style='font-size: 10pt'>View: ";
+  top_link($this, "top", "Top-Level");
+  top_link($this, "recent", "Recently Updated");
+  top_link($this, "alpha", "Alphabetical");
+  top_link($this, "date", "By Date");
+  "</p>";
+
+  if (size $.sorted_galleries == 0) {
+    "<p>$*text_nogalleries</p>";
+    return;
+  }
+
+  var ItemRange sp = $.sorted_pages;
+  var string sp_text = "<b>Page $sp.current of $sp.total</b><br />Galleries $sp.from_subitem-$sp.to_subitem of $sp.total_subitems";
+  $sp->print($sp_text);
+
+  "<table cellpadding='4'>";
+  foreach var Gallery g ($.sorted_galleries) {
+    "<tr valign='top'>";
+    "<td width='100' align='right'>";
+    var Image i = $g->get_preview_image("norm");
+    if (defined $i) {
+      $i->print({
+        "href" => $g.url,
+        "tint" => $*tint,
+        "alt" => $g.name,
+      });
+    }
+    "</td><td align='left'>";
+    """<font size='+1'><b><a href="$g.url">$g.name</a></b></font>""";
+
+    print gal_count_em($g);
+    "<br />";
+    if ($.sort_mode == "recent") {
+      if (not isnull $g.dateupdate) {
+        "<font size=-1><b>Last Updated:</b> "; $g.dateupdate->print_datetime(); "</font><br />";
+      }
+    } else {
+      if (not isnull $g.date) {
+        "<font size=-1><b>Gallery Date:</b> "; $g.date->print_datetime(); "</font><br />";
+      }
+      
+    }
+    "$g.des";
+    var int numchildren = size $g.children;
+    if ($*indexsubgals and $numchildren > 0) {
+      "<ul style='margin-left: 2px; padding-left: 12px; font-size: 9pt'>";
+      var bool trunc = false;
+      if ($numchildren > 10) { $numchildren = 10; $trunc = true; }
+      foreach var int i (1..$numchildren) {
+        var Gallery c = $g.children[$i-1];
+        "<li><a href=\"$c.url\">$c.name</a>";
+        print gal_count_em($c);
+        "</li>";
+      }
+      if ($trunc) { "<li><a href=\"$g.url\">...</a></li>"; }
+      "</ul>";
+    }
+    "</td></tr>\n";
+  }
+  "</table>";
+
+  # and do a nav bar at the bottom too, unless it'd look stupid
+  if ($sp.num_subitems_displayed > 4) {
+    $sp->print($sp_text);
+  }
+}
+
+
+function GalleryPage::title () : string
+{
+  return $.gallery.name;
+}
+
+function GalleryPage::print_body ()
+{
+  "<p style='font-size: 10pt'>";
+  "[&lt;&lt; <a href=\"$.parent_link.url\">$.parent_link.caption</a>]\n";
+  if (viewer_is_owner()) {
+    "[<a href=\"$.manage_url\">Manage Gallery</a>]\n";
+  }
+  if ($.copy_url != "") {
+    "[<a href=\"$.copy_url\">Copy Gallery</a>]\n";
+  }
+  "</p>";
+
+  if (not isnull $.gallery.date or $.des != "") {
+    "<p>";
+    if (not isnull $.gallery.date) {
+      "<i>["; $.gallery.date->print_date(); "]</i> ";
+    }
+    "$.des</p>";
+  }
+
+  if (size $.gallery.children > 0) {
+    "<b>Related Galleries:</b><table border='0' cellpadding='2' width='100%'><tr valign='top' align='left'><td width='50%'><table>";
+    var int nchild = size $.gallery.children;
+    var int done = 0;
+    var bool col_two = false;
+    foreach var Gallery g ($.gallery.children) {
+      "<tr valign='top'>";
+      "<td align='right'>";
+      var Image i = $g->get_preview_image("subgal");
+      if (not isnull $i) {
+        $i->print({
+          "href" => $g.url,
+          "tint" => $*tint,
+          "alt" => $g.name,
+         });
+      }
+      "</td><td align='left'>";
+      """<b><a href="$g.url">$g.name</a></b>""";
+      print gal_count_em($g);
+      if (not isnull $g.date) {
+        "<br /><font size=-1>"; $g.date->print_date(); "</font>";
+      }
+      "</td></tr>";
+
+      if (not $col_two and ++$done * 2 >= $nchild) { 
+        "</table></td><td width='50%'><table>"; $col_two = true; 
+      }
+    }
+    "</table></td></tr></table>\n";
+  }
+
+  var string ir_caption = "<b>Page $.pages.current of $.pages.total</b><br />Images $.pages.from_subitem-$.pages.to_subitem of $.pages.total_subitems";
+  if (not $.pages.all_subitems_displayed) {
+    "<p>";
+    $.pages->print($ir_caption);
+    "</p>";
+  }
+
+  "<table cellpadding='4' align='center'>";
+  var bool tr = false;
+  var int td = 0;
+  var string desrow;
+  var int rows = 0;
+  foreach var Picture p ($.pictures) {
+    if (not $tr) {
+      "<tr align='center' valign='bottom'>";
+      $rows++;
+      $tr = true;
+    }
+    var Image i = $p.thumbnails{"norm"};
+    "<td>";
+      $i->print({
+        "tint" => $*tint,
+        "href" => $p.url,
+          "alt" => $p.title,
+          });
+    "</td>";
+    $desrow = $desrow + "<td><a href=\"$p.url\">$p.title</a></td>";
+
+    "</a></td>";
+    $td++;
+    if ($td == $*cols) {
+      "</tr>";
+      if ($*show_titles) {
+        "<tr valign='top' align='center'>$desrow</tr>";
+      }
+      $td = 0;
+      $tr = false;
+      $desrow = "";
+    }
+  }
+  if ($tr) {
+    "</tr>";
+    if ($*show_titles) {
+      "<tr valign='top' align='center'>$desrow</tr>";
+    }
+  }
+  "</table>";
+
+  if ($rows >= 3 and not $.pages.all_subitems_displayed) {
+    "<p>";
+    $.pages->print($ir_caption);
+    "</p>";
+  }
+
+}
+
+function PicturePage::title () : string
+{
+  if ($.picture.title != "") {
+    return $.picture.title;
+  }
+  if (not isnull $.gallery) {
+    return "$.gallery.name: $.pictures.current/$.pictures.total";
+  }
+  return "";  # return translated string "Untitled"?
+}
+
+function print_itemrange(ItemRange ir, string labeltext, Image imgleft, Image imgright)
+{
+  if ($ir.all_subitems_displayed) { return; }
+  var Image p;
+  "<table width=\"100%\" height='100'><tr align='center' valign='middle'>";
+
+  "<td width=\"35\">"; if ($ir.url_first != "") {
+    "<a href=\"$ir.url_first\">";
+    $p = palimg_create($*first_image); $p->print("", "align='absmiddle'");
+    "</a>";
+  } "</td>";
+
+  "<td width=\"135\" nowrap>"; if ($ir.url_prev != "") {
+    "<a href=\"$ir.url_prev\">";
+    $p = palimg_create($*prev_image); $p->print("", "align='absmiddle'");
+    if (not isnull $imgleft) { $imgleft->print("", "align='absmiddle'"); }
+    "</a>";
+  } "</td>";
+    
+  "<td>$labeltext</td>";
+
+  "<td width=\"135\" nowrap>"; if ($ir.url_next != "") {
+    "<a href=\"$ir.url_next\">";
+    if (not isnull $imgright) { $imgright->print("", "align='absmiddle'"); }
+    $p = palimg_create($*next_image); $p->print("", "align='absmiddle'");
+    "</a>";
+  } "</td>";
+  "<td width=\"35\">"; if ($ir.url_last != "") {
+    "<a href=\"$ir.url_last\">";
+    $p = palimg_create($*last_image); $p->print("", "align='absmiddle'");
+    "</a>";
+  } "</td>";
+  "</tr></table>\n";
+  
+}
+
+
+function PicturePage::print_body ()
+{
+  var Image pup = palimg_create($*up_image);
+
+  "<center>";
+  
+  var string actions;
+  if (viewer_is_owner()) {
+    $actions = $actions + "[<a href=\"$.manage_url\">Manage Image</a>]\n";
+  }
+  if ($.copy_url != "") {
+    $actions = $actions + "[<a href=\"$.copy_url\">Copy Image</a>]\n";
+  }
+
+  if (not isnull $.pictures) {
+    var string caption = "<a href=\"$.parent_link.url\">" +
+      "<img src=\"$pup.url\" width=\"$pup.width\" height=\"$pup.height\" border=\"0\" alt=\"$.gallery.name\">" +
+      "</a><br />" +
+      "<b>Image $.pictures.current of $.pictures.total</b>";
+
+    if ($actions != "") {
+      $caption = $caption + "<br />$actions";
+    }
+
+    print_itemrange($.pictures, $caption,
+                    $this->get_thumbnail("pn", $.pictures.current - 1),
+                    $this->get_thumbnail("pn", $.pictures.current + 1));
+  } else {
+    "<a href=\"$.parent_link.url\">" +
+      "<img src=\"$pup.url\" width=\"$pup.width\" height=\"$pup.height\" border=\"0\" alt=\"$.parent_link.caption\">" +
+      "</a><br />$actions";
+  }
+
+  "<p>";
+  """<a href="$.picture.fullimage.url">Full Size</a><br />""";
+  var Image inline = $.picture->get_image(640, 480);
+  $inline->print({
+      "alt" => $.picture.piccode,
+      "tint" => $*tint,
+  });
+
+  "<table border='0' width='500'><tr><td>$.des</td></tr></table>";
+  if (size $.tags > 0) {
+    "<table border='0' width='500'' style='font-size: .8em'><tr><td><strong>Tags:</strong> ";
+    foreach var Link k ($.tags) {
+      "<a href=\"$k.url\">$k.caption</a>";
+      if ($k.url != $.tags[size $.tags -1].url) {
+        ", ";
+      }
+    }
+    "</td></tr></table>";
+  }
+
+  "</center>";
+
+  if ($*show_exif == "raw") { $this->print_exif_cats(["image", "media", "gps", "exposure"]); }
+
+  foreach var Link l ($.parent_links) {
+    "<a href=\"$l.url\"><img src=\"$pup.url\" width=\"$pup.width\" height=\"$pup.height\" border=\"0\" align='absmiddle'>$l.caption</a><br />";
+  }
+
+}
+
+function ItemRange::print(string labeltext) {
+    print_itemrange($this, $labeltext, null Image, null Image);
+}

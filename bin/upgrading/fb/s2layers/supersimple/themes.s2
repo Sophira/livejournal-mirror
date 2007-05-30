@@ -1,0 +1,88 @@
+#NEWLAYER: supersimple/bw
+layerinfo "type" = "theme";
+layerinfo "name" = "Black on White";
+layerinfo "redist_uniq" = "supersimple/bw";
+
+set bgcolor = "#ffffff";
+set fgcolor = "#000000";
+
+#NEWLAYER: supersimple/wb
+layerinfo "type" = "theme";
+layerinfo "name" = "White on Black";
+layerinfo "redist_uniq" = "supersimple/wb";
+
+set bgcolor = "#000000";
+set fgcolor = "#ffffff";
+
+set shadow_color = "#ffffff";
+
+set vlinkcolor = "#9477ff";
+set linkcolor = "#6b77ff";
+
+#NEWLAYER: supersimple/forest
+layerinfo "type" = "theme";
+layerinfo "name" = "Forest";
+layerinfo "redist_uniq" = "supersimple/forest";
+
+set bgcolor = "#0d3a22";
+set fgcolor = "#c6ffd3";
+
+set shadow_color = "#edb649";
+
+set vlinkcolor = "#edb649";
+set linkcolor = "#edd149";
+
+#NEWLAYER: supersimple/leather
+layerinfo "type" = "theme";
+layerinfo "name" = "Broken Leather";
+layerinfo "redist_uniq" = "supersimple/leather";
+
+set bgcolor      = "#aee8e0";
+set fgcolor      = "#aa831b";
+set linkcolor    = "#ed9c0f";
+set vlinkcolor   = "#e28313";
+set shadow_color = "#5ac8ed";
+
+#NEWLAYER: supersimple/flesh
+layerinfo "type" = "theme";
+layerinfo "name" = "Pinkish";
+layerinfo "redist_uniq" = "supersimple/flesh";
+
+set bgcolor      = "#e88578";
+set fgcolor      = "#000000";
+set linkcolor    = "#9d93c8";
+set vlinkcolor   = "#9760e2";
+set shadow_color = "#ed461a";
+
+#NEWLAYER: supersimple/brokensky
+layerinfo "type" = "theme";
+layerinfo "name" = "Broken Sky";
+layerinfo "redist_uniq" = "supersimple/brokensky";
+
+set bgcolor      = "#8de8ad";
+set fgcolor      = "#da9827";
+set linkcolor    = "#520ac8";
+set vlinkcolor   = "#9760e2";
+set shadow_color = "#39aed5";
+
+#NEWLAYER: supersimple/graded
+layerinfo "type" = "theme";
+layerinfo "name" = "Graded";
+layerinfo "redist_uniq" = "supersimple/graded";
+
+set bgcolor      = "#ffffff";
+set fgcolor      = "#000000";
+set linkcolor    = "#f20f03";
+set vlinkcolor   = "#c42119";
+set shadow_color = "#a6a6a6";
+
+#NEWLAYER: supersimple/bruised
+layerinfo "type" = "theme";
+layerinfo "name" = "Bruised";
+layerinfo "redist_uniq" = "supersimple/bruised";
+
+set bgcolor      = "#010101";
+set fgcolor      = "#3240a9";
+set linkcolor    = "#f28882";
+set vlinkcolor   = "#c42119";
+set shadow_color = "#a6a6a6";

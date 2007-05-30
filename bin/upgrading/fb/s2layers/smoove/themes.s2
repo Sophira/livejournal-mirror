@@ -1,0 +1,120 @@
+#NEWLAYER: smoove/operator
+layerinfo "type" = "theme";
+layerinfo "name" = "Operator";
+layerinfo "redist_uniq" = "smoove/operator";
+set bgcolor = "#f6f6f6";
+set desc_color = "#000";
+set header_title_color = "#fff";
+set nav_area_bg_color = "#fff";
+set dotted_color = "#fff";
+set link_hilight_color = "#ffff00";
+set link_color = "#5c689c";
+set gallery_page_max_size = 16;
+set index_page_max_size = 8;
+set font_base = "georgia,book antiqua";
+set font_size = 12;
+set header_font_size = 36;
+set title_size = 16;
+set desc_size = 12;
+set label_size = 12;
+set use_shadows = false;
+set show_desc = false;
+set imgpadding = 45;
+set thumb_size = "100x80";
+
+#NEWLAYER: smoove/move
+layerinfo "type" = "theme";
+layerinfo "name" = "Move";
+layerinfo "redist_uniq" = "smoove/move";
+set bgcolor = "#607293";
+set desc_color = "#fff";
+set header_title_color = "#294578";
+set header_font_color = "#fff";
+set nav_area_bg_color = "#4e6eaa";
+set dotted_color = "#000";
+set link_hilight_color = "#acb7ca";
+set link_color = "#fff";
+set gallery_page_max_size = 9;
+set index_page_max_size = 9;
+set header_font_size = 18;
+set title_size = 10;
+set label_size = 12;
+set thumb_size = "200x180";
+
+#NEWLAYER: smoove/silk
+layerinfo "type" = "theme";
+layerinfo "name" = "Silk";
+layerinfo "redist_uniq" = "smoove/silk";
+set bgcolor = "#777";
+set text_color = "#000";
+set desc_color = "#000";
+set img_padding_color = "#aaa";
+set header_title_color = "#ddd";
+set nav_area_bg_color = "#aaa";
+set dotted_color = "#bbb";
+set link_hilight_color = "#d5e0ea";
+
+#NEWLAYER: smoove/jazz
+layerinfo "type" = "theme";
+layerinfo "name" = "Jazz";
+layerinfo "redist_uniq" = "smoove/jazz";
+set bgcolor = "#e9e7f8";
+set desc_color = "#4d4a73";
+set header_title_color = "#e9e7f8";
+set header_font_color = "#4d4a73";
+set nav_area_bg_color = "#c3bfe3";
+set dotted_color = "#4d4a73";
+set dotted_type = "solid";
+set dotted_width = 4;
+set link_hilight_color = "#dcead5";
+set link_color = "#000";
+set font_base = "Arial";
+set font_size = 12;
+set title_size = 12;
+set desc_size = 14;
+set label_size = 14;
+set use_shadows = false;
+
+#NEWLAYER: smoove/talker
+layerinfo "type" = "theme";
+layerinfo "name" = "Talker";
+layerinfo "redist_uniq" = "smoove/talker";
+set bgcolor = "#fbfbe6";
+set text_color = "#4e3c0d";
+set desc_color = "#000";
+set header_title_color = "#a66d00";
+set header_font_color = "#fff";
+set nav_area_bg_color = "#fff1ca";
+set dotted_color = "#ffd800";
+set link_hilight_color = "#ffd800";
+set link_color = "#644a19";
+set font_base = "georgia,book antiqua";
+set font_size = 12;
+set header_font_size = 22;
+set title_size = 12;
+set desc_size = 11;
+set label_size = 12;
+set imgpadding = 10;
+
+#NEWLAYER: smoove/sailing
+layerinfo "type" = "theme";
+layerinfo "name" = "Sailing";
+layerinfo "redist_uniq" = "smoove/sailing";
+set bgcolor = "#000";
+set text_color = "#deffee";
+set desc_color = "#fff";
+set img_padding_color = "#deffee";
+set header_title_color = "#000";
+set header_font_color = "#deffee";
+set nav_area_bg_color = "#000";
+set dotted_color = "#deffee";
+set dotted_type = "solid";
+set dotted_width = 8;
+set link_hilight_color = "#deffee";
+set link_color = "#deffee";
+set gallery_page_max_size = 20;
+set index_page_max_size = 20;
+set use_shadows = false;
+set show_desc = false;
+set thumb_size = "100x80";
+

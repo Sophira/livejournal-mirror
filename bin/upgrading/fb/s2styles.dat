@@ -1,0 +1,10 @@
+# A style is a collection of layers.
+# Use style name ':FB_defstyle' for the style that all new users
+# get to start.
+
+#####################################
+# name          layertype       layerfile
+
+:FB_defstyle    core      core1
+ 
+

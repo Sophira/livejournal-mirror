@@ -1,0 +1,700 @@
+#-*-s2-*-
+
+layerinfo type = "layout";
+layerinfo name = "Cornered";
+layerinfo redist_uniq = "cornered/layout";
+layerinfo author_name = "Jesse Proulx";
+layerinfo author_email = "jproulx@livejournal.com";
+
+################################################################################
+#
+# Properties
+#
+
+propgroup presentation {
+  property int rows {
+    des = "Number of rows of pictures";
+    min = 1;
+  }
+  set rows = 5;
+  
+  property int cols {
+    des = "Number of cols of pictures";
+    min = 1;
+  }
+  set cols = 5;
+
+  property bool shadows {
+    des = "Show drop-shadows under pictures?";
+  }
+  set shadows = true;
+
+  property Color shadow_color {
+    des = "Shadow color";
+    note = "Color of drop-shadow.";
+  }
+  set shadow_color = "#000000";
+
+  property string thumbnail_size {
+    des = "Thumbnail size";
+    values = "100x100|100x100|125x125|125x125|150x150|150x150|200x200|200x200";
+  }
+  set thumbnail_size = "100x100";
+  
+  property string thumbnail_size_sub {
+    des = "Sub-gallery thumbnail size";
+    values = "|None|50x50|50x50|75x75|75x75|100x100|100x100|150x150|150x150";
+  }
+  set thumbnail_size_sub = "100x100";
+  
+  property string thumbnail_style {
+    des = "Thumbnail style";
+    values = "|Scaled|,crop|Cropped|,zoom|Crop, but fit exactly";
+  }
+  set thumbnail_style = "";
+  
+  property string title {
+    des = "Main page title";
+  }
+  set title = "";
+}
+
+propgroup colors {
+  property Color page_bgcolor {
+    des = "Page Background color";
+  }
+  property Color page_fgcolor {
+    des = "Page text color";
+  }
+
+  property Color bold_bgcolor {
+    des = "Page Background color";
+  }
+  property Color bold_fgcolor {
+    des = "Page text color";
+  }
+
+  property Color accent_bgcolor {
+    des = "Page Background color";
+  }
+  property Color accent_fgcolor {
+    des = "Page text color";
+  }
+}
+
+propgroup automatic_color_palettes = "Cornered";
+propgroup automatic_color_palettes
+{
+    property Color color_scheme_base
+    {
+        des = "Color scheme base hue";
+        note = "After you select a base color and choose a color scheme, an entire palette will be built automatically for your journal colors.";
+    }
+    property string color_scheme
+    {
+        des = "Color scheme";
+        values = "monochromatic|Monochromatic: use variations of light and saturation without straying from your suggested color|analogous|Analogous: use slightly similar hues to enhance your suggested color|complementary|Complementary: create a high contrast scheme based on your suggested color|split_complementary|Split Complementary: A variation of the Complementary scheme using varying hues of the complementary color|double_complementary|Double Complementary: use slightly varying hues of the base and complementary colors|triadic|Triadic: offers less contrast than the complementary scheme, but is richer in color|tetradic|Tetradic: a combination of the Complementary and Triadic schemes";
+    }
+    set color_scheme_base = "#80A3FF";
+    set color_scheme = "monochromatic";
+}
+
+property string text_select_gallery { noui = 1; }
+set text_select_gallery = "Choose Gallery:";
+property string text_select_picture { noui = 1; }
+set text_select_picture = "Choose Picture:";
+
+# shadow tint, computed from above
+property string tint { noui = 1; }
+
+# Corner images
+property string corner { noui = 1; }
+property string accent_title { noui = 1; }
+property string bold_title { noui = 1; }
+
+################################################################################
+#
+# Color Scheme Functions
+#
+
+function color_triadic(Color base) : Color[]
+{
+    var int red         = $base->red(); 
+    var int green       = $base->green(); 
+    var int blue        = $base->blue();
+    var Color color_two = $base->clone();
+    var Color color_one = $base->clone();
+
+    $color_one->blue($red);
+    $color_one->red($green);
+    $color_one->green($blue);
+
+    $color_two->red($blue);
+    $color_two->green($red);
+    $color_two->blue($green);
+
+    return [$base, $color_one, $color_two];
+}
+
+function color_tetradic(Color base) : Color[]
+{
+    var Color[] tetradic_one = color_triadic($base);
+    var Color[] tetradic_two = color_triadic($base->inverse());
+    var Color color_one = $tetradic_one[1]->average($tetradic_two[2]);
+    var Color color_two = $tetradic_one[2]->average($tetradic_two[1]);
+
+    return [$base, $base->inverse(), $color_one, $color_two];
+}
+
+function color_analogous(Color base) : Color[]
+{
+    var Color[] triad = color_triadic($base->inverse());
+    var Color color_one = $base->average($triad[1]);
+    var Color color_two = $base->average($triad[2]);
+
+    return [$base, $color_one, $color_two];
+}
+
+function color_split_complementary(Color base) : Color[]
+{
+    var Color[] analogous = color_analogous($base->inverse());
+    var Color color_one = $analogous[1];
+    var Color color_two = $analogous[2];
+
+    return [$base, $color_one, $color_two];
+}
+function color_double_complementary(Color base) : Color[]
+{
+    var Color[] analogous_one = color_analogous($base);
+    var Color color_one       = $analogous_one[1];
+    var Color color_two       = $analogous_one[2];
+    var Color[] analogous_two = color_analogous($base->inverse());
+    var Color color_three     = $analogous_two[1];
+    var Color color_four      = $analogous_two[2];
+
+    return [$base, $color_one, $color_two, $color_three, $color_four];
+}
+
+function color_ideal_foreground(Color bg) : Color "Used to determine the best text color (out of white and black currently) given a single solid background color"
+{
+    var Color fg = $bg->inverse();
+    var int saturation = $fg->saturation();
+    $saturation = $saturation >= 127 ? 255 : 0;
+    $fg->saturation($saturation);
+    var int lightness = $fg->lightness();
+    $lightness = $lightness >= 120 ? 255 : 0;
+    $fg->lightness($lightness);
+    return $fg;
+}
+
+function prop_init ()
+{
+  $*gallery_page_max_size = $*rows * $*cols;
+  $*thumbnails = "pn=100x100" + $*thumbnail_style + "&norm=" + $*thumbnail_size + $*thumbnail_style;
+  if ($*thumbnail_size_sub != "") {
+    $*thumbnails = $*thumbnails + "&subgal=" + $*thumbnail_size_sub + $*thumbnail_style;
+  }
+  
+  if ($*color_scheme_base) {
+    if (isnull $*bold_bgcolor)     { $*bold_bgcolor   = $*color_scheme_base->clone(); }
+    if ($*color_scheme == "monochromatic") {
+
+      if (isnull $*page_bgcolor)   { $*page_bgcolor   = $*bold_bgcolor->lighter(40); }
+      if (isnull $*accent_bgcolor) { $*accent_bgcolor = $*bold_bgcolor->lighter(20); }
+    } elseif ($*color_scheme == "complementary") {
+      var Color inverse = $*bold_bgcolor->inverse();
+
+      if (isnull $*page_bgcolor)   { $*page_bgcolor   = $inverse->lighter(40); }
+      if (isnull $*accent_bgcolor) { $*accent_bgcolor = $inverse;              }
+    } elseif ($*color_scheme == "split_complementary") {
+      var Color[] split_complementary = color_split_complementary($*bold_bgcolor);
+
+      if (isnull $*page_bgcolor)   { $*page_bgcolor   = $split_complementary[1]->lighter(20); }
+      if (isnull $*accent_bgcolor) { $*accent_bgcolor = $split_complementary[2];              }
+    } elseif ($*color_scheme == "double_complementary") {
+      var Color[] double_complementary = color_double_complementary($*bold_bgcolor);
+
+      if (isnull $*page_bgcolor)   { $*page_bgcolor   = $double_complementary[3]; }
+      if (isnull $*accent_bgcolor) { $*accent_bgcolor = $double_complementary[4]; }
+    } elseif ($*color_scheme == "analogous") {
+      var Color[] analogous       = color_analogous($*bold_bgcolor);
+
+      if (isnull $*page_bgcolor)   { $*page_bgcolor   = $analogous[1]; }
+      if (isnull $*accent_bgcolor) { $*accent_bgcolor = $analogous[2]; }
+    } elseif ($*color_scheme == "triadic") {
+      var Color[] triadic         = color_triadic($*bold_bgcolor);
+
+      if (isnull $*page_bgcolor)   { $*page_bgcolor   = $triadic[1]->lighter(20); }
+      if (isnull $*accent_bgcolor) { $*accent_bgcolor = $triadic[2]->lighter(20); }
+    } elseif ($*color_scheme == "tetradic") {
+      var Color[] tetradic        = color_tetradic($*bold_bgcolor);
+
+      if (isnull $*page_bgcolor)   { $*page_bgcolor   = $tetradic[1]; }
+      if (isnull $*accent_bgcolor) { $*accent_bgcolor = $tetradic[2]; }
+    }
+  }
+  if (isnull $*page_fgcolor)       { $*page_fgcolor   = color_ideal_foreground($*page_bgcolor);   }
+  if (isnull $*bold_fgcolor)       { $*bold_fgcolor   = color_ideal_foreground($*bold_bgcolor);   }
+  if (isnull $*accent_fgcolor)     { $*accent_fgcolor = color_ideal_foreground($*accent_bgcolor); }
+  
+  $*corner       = "/img/cornered/top-right.gif/pt" + $*page_bgcolor.as_string->substr(1,6) + $*accent_bgcolor.as_string->substr(1,6);
+  $*accent_title = "/img/cornered/top-right.gif/pt" + $*accent_bgcolor.as_string->substr(1,6) + $*page_bgcolor.as_string->substr(1,6);
+  $*bold_title   = "/img/cornered/top-right.gif/pt" + $*bold_bgcolor.as_string->substr(1,6) + $*page_bgcolor.as_string->substr(1,6);
+
+  if ($*shadows) {
+    $*tint = $*page_bgcolor.as_string->substr(1, 6) + $*shadow_color.as_string->substr(1, 6);
+  }
+}
+
+################################################################################
+#
+# Layout Specific Functions
+#
+
+
+function controlbarimg(string linkurl, string icon, string title) {
+    """<a href="$linkurl" target="_top"><img src="/img/simpletoolbar/${icon}.gif" width="15" height="15" """+
+    """border="0" alt="[$title]" title="$title" /></a>""";
+}
+
+function sort_select (IndexPage i, string mode, string text) {
+  if ($i.sort_mode == $mode) {
+    println """<option selected='selected' value='$mode'>$text</option>""";
+  } elseif (not isnull $i.sort_link{$mode}) {
+    println """<option value='$mode'>$text</option>""";
+  }
+}
+
+function gal_count_em (Gallery g) : string
+{
+    var int pics = $g.numpics;
+    var int dpics = $g->desc_pics();
+    var int tpics = $pics + $dpics;
+    if ($pics > 0 and $dpics == 0) {
+      return " <em>($pics)</em>";
+    } elseif ($pics > 0 and $dpics > 0) {
+      return " <em>($pics, total: $tpics)</em>";
+    } elseif ($dpics > 0) {
+      return " <em>(total: $tpics)</em>";
+    }
+    return "";
+}
+
+################################################################################
+#
+# Page Functions
+#
+
+function print_stylesheet () {
+  print """
+body {
+    background: $*page_bgcolor;
+    color: $*page_fgcolor;
+    font-family: verdana, aerial, serif;
+    font-size: 11pt;
+    line-height: 16pt;
+    margin: 0;
+    border-top: 1em solid $*bold_bgcolor;
+    border-bottom: 1em solid $*bold_bgcolor;
+    padding: 20px;
+    vertical-align: top;
+}
+
+.header h1 {
+    color: $*bold_bgcolor;
+    border-bottom: 2px dotted $*bold_bgcolor;
+    padding-bottom: 5px;
+    margin-bottom: 0px;
+}
+.header .navigation {
+    padding-top: 5px;
+    text-align: right;
+}
+
+.page_body {
+    border: 4px solid $*accent_bgcolor;
+}
+
+.cornered {
+    background-image: url("$*corner");
+    background-position: top right;
+    background-repeat: no-repeat;
+    height: 100px;
+    text-align: center;
+    border: 2px solid $*accent_bgcolor;
+    vertical-align: center;
+}
+
+.accent_title {
+    background-image: url("$*accent_title");
+    background-position: top right;
+    background-repeat: no-repeat;
+    background-color: $*accent_bgcolor;
+    color: #000;
+    width: 200px;
+}
+
+.bold_title, .bold_title_nocorner {
+    background-color: $*bold_bgcolor;
+    border-bottom: 2px dotted $*bold_fgcolor;
+    text-align: left;
+}
+
+.bold_title_nocorner {
+    width: 150px;
+}
+
+.bold_title {
+    background-image: url("$*accent_title");
+    background-position: top right;
+    background-repeat: no-repeat;
+    width: 320px;
+}
+
+.footer { 
+    width: 100%; 
+    padding-top: 20px; 
+}
+
+.footer table {
+    border: 4px solid $*bold_bgcolor;
+}
+.footer th {
+    text-align: left;
+    background-color: $*bold_bgcolor;
+    color: $*bold_fgcolor;
+}
+.footer td {
+    width: 50%;
+}
+""";
+}
+
+function Page::lay_print_navigation() {
+  print "";
+}
+
+function Page::lay_print_header() {
+  print "<div class='header'><h1>";
+  print $this->title();
+  print "</h1><div class='navigation'>";
+  $this->lay_print_navigation();
+  print "</div></div>";
+}
+
+function Page::lay_print_footer() {
+  print "";
+}
+
+function Page::print ()
+{
+  var string title = $this->title();
+  print """
+<html>
+  <head>""";
+$this->print_head();
+"""
+    <title>$title</title>
+    <link rel="stylesheet" href="$.stylesheeturl" type="text/css">
+  </head>
+  <body>
+""";
+
+  $this->lay_print_header();
+
+  $this->print_body();
+
+  $this->lay_print_footer();
+
+  print """
+  </body>
+</html>""";
+}
+
+################################################################################
+#
+# IndexPage Functions
+#
+
+function IndexPage::title () : string
+{
+  if ($*title != "") { return $*title; }
+  return "$.user.usercs's Galleries";
+}
+
+function IndexPage::lay_print_navigation {
+  "<form method='GET' style='display: inline'><select name='sort'>";
+  sort_select($this, "top", "Top-Level");
+  sort_select($this, "recent", "Recently Updated");
+  sort_select($this, "alpha", "Alphabetical");
+  sort_select($this, "date", "By Date");
+  "</select><input type='submit' value='Sort' /></form>&nbsp;&nbsp;&nbsp;";
+
+  if ($.sorted_pages.url_first != "") {
+    controlbarimg($.sorted_pages.url_first,"nav_first",$*text_range_first);
+  }
+  if ($.sorted_pages.url_prev != "") {
+    controlbarimg($.sorted_pages.url_prev,"nav_prev",$*text_range_prev);
+  }
+  if (viewer_is_owner()) {
+    controlbarimg($.manage_url,"tweak","Manage Account");
+  }
+  if ($.sorted_pages.url_next != "") {
+    controlbarimg($.sorted_pages.url_next,"nav_next",$*text_range_next);
+  }
+  if ($.sorted_pages.url_last != "") {
+    controlbarimg($.sorted_pages.url_last,"nav_last",$*text_range_last);
+  }
+}
+
+function IndexPage::print_body ()
+{
+
+  if (size $.sorted_galleries == 0) {
+    "<p>$*text_nogalleries</p>";
+    return;
+  }
+
+  print """<table style='margin-left: 10%; margin-right: 10%;' cellpadding='0' cellspacing='0' border='0'>""";
+  print """<tr><th class='accent_title'>$*text_select_gallery</th></tr></table>""";
+  print """<table style='width: 80%; margin-right: 10%; margin-left: 10%;' cellpadding='0' cellspacing='0'>""";
+  print """<tr><td>
+          <table class='page_body' style='width: 100%' cellpadding='0' cellspacing='0'>""";
+  var bool tr   = false;
+  var int  td   = 0;
+  var int  rows = 0;
+  var int width = 100 / $*cols;
+  foreach var Gallery g ($.sorted_galleries) {
+    if (not $tr) {
+      print "<tr>"; 
+      $rows++;
+      $tr = true;
+    }
+    print "<td class='cornered' style='width: $width%' align='center'>";
+    var Image i = $g->get_preview_image("subgal");
+    if (not isnull $i) {
+      $i->print({
+        "href" => $g.url,
+          "tint" => $*tint,
+          "alt" => $g.name,
+          "inline" => "1",
+          });
+      print "<br />";
+    }
+    print """<a href='$g.url'>$g.name</a>""";
+    if ($g.des) { print "<br />$g.des"; }
+    print "</td>";
+    $td++;
+    if ($td == $*cols) {
+      print "</tr>";
+      $td = 0;
+      $tr = false;
+    }
+  }
+  var int left = ($rows * $*cols) - (size $.sorted_galleries);
+  if ($left > 0) {
+    foreach var int i (1 .. $left) { print "<td class='cornered'>&nbsp;</td>"; }
+  }
+  if ($tr) { print """</tr>"""; }
+  print """</table></td></tr></table>""";
+}
+
+################################################################################
+#
+# GalleryPage Functions
+#
+
+function GalleryPage::title () : string
+{
+  var string gallery = $.gallery.name;
+  if ($*title != "") { return "$*title :: $gallery"; }
+  return "Gallery: $gallery";
+}
+
+function GalleryPage::lay_print_navigation() 
+{
+  if ($.pages.url_first != "") {
+    controlbarimg($.pages.url_first,"nav_first",$*text_range_first);
+  }
+  if ($.pages.url_prev != "") {
+    controlbarimg($.pages.url_prev,"nav_prev",$*text_range_prev);
+  }
+  if (viewer_is_owner()) {
+    controlbarimg($.manage_url,"tweak","Manage Gallery");
+  }
+  if ($.copy_url != "") {
+    controlbarimg($.copy_url,"copy","Copy Gallery");
+  }
+  if ($.pages.url_next != "") {
+    controlbarimg($.pages.url_next,"nav_next",$*text_range_next);
+  }
+  if ($.pages.url_last != "") {
+    controlbarimg($.pages.url_last,"nav_last",$*text_range_last);
+  }
+}
+
+function GalleryPage::print_body ()
+{
+
+  if (size $.pictures == 0) {
+    "<p>$*text_nopictures</p>";
+    return;
+  }
+
+  print """<table style='margin-left: 10%; margin-right: 10%;' cellspacing='0' border='0'>""";
+  print """<tr><th style='width: 150px' class='bold_title_nocorner'>$.gallery.name</th><th class='accent_title'>$*text_select_picture</th></tr></table>""";
+  print """<table style='width: 80%; margin-right: 10%; margin-left: 10%;' cellpadding='0' cellspacing='0'>""";
+  print """<tr><td style='background-color: $*bold_bgcolor; width: 150px; text-align: center'>""";
+
+  var Image i = $.gallery->get_preview_image("subgal");
+  if (not isnull $i) {
+    $i->print({
+      "href" => $.gallery.url,
+        "tint" => "",
+        "alt" => $.gallery.name,
+        "inline" => "1",
+        });
+  }
+  if (not isnull $.gallery.date) {
+    println "<br />"; $.gallery.date->print_date();
+  }
+  if ($.des) { print "<br />$.des"; }
+  print """</td><td valign='top'><table class='page_body' style='width: 100%' cellpadding='0' cellspacing='0'>""";
+  var bool tr   = false;
+  var int  td   = 0;
+  var int  rows = 0;
+  var int width = 100 / $*cols;
+  foreach var Picture p ($.pictures) {
+    if (not $tr) {
+      print "<tr>"; 
+      $rows++;
+      $tr = true;
+    }
+    print "<td class='cornered' style='width: $width%'>";
+    var Image i = $p.thumbnails{"norm"};
+    if (not isnull $i) {
+      $i->print({
+        "href" => $p.url,
+          "tint" => $*tint,
+          "alt" => $p.title,
+          "inline" => "1",
+          });
+      print "<br />";
+    }
+    print "</td>";
+    $td++;
+    if ($td == $*cols) {
+      print "</tr>";
+      $td = 0;
+      $tr = false;
+    }
+  }
+  var int left = ($rows * $*cols) - (size $.pictures);
+  if ($left > 0) {
+    foreach var int i (1 .. $left) { print "<td class='cornered'>&nbsp;</td>"; }
+  }
+  if ($tr) { print """</tr>"""; }
+  print """</table></td></tr></table>""";
+}
+
+function GalleryPage::lay_print_footer()
+{
+  print """<table cellspacing='0' class='footer'><tr valign='top'>""";
+  if (size $.parent_links > 0) {
+    println """<td><table cellspacing='0'><tr><th>Parent Galleries</th></tr><tr><td>""";
+    foreach var Link l ($.parent_links) {
+      println """<a href="$l.url"><img src="/img/simpletoolbar/nav_up.gif" width="16" height="16" border="0" align="absmiddle">$l.caption</a><br />""";
+    }
+    print """</td></tr></table></td>""";
+  }
+  if (size $.gallery.children > 0) {
+    println """<td><table cellspacing='0'><tr><th>Related Galleries</th></tr><tr><td>""";
+    foreach var Gallery g ($.gallery.children) {
+      println """<b><a href="$g.url">$g.name</a></b>""";
+      print gal_count_em($g);
+      println "<br />";
+    }
+    println "</td></tr></table></td>";
+  }
+  println "</tr></table>";
+}
+
+################################################################################
+#
+# PicturePage Functions
+#
+
+function PicturePage::title () : string
+{
+  var string picture = $.picture.title;
+  var string title = "";
+  if ($*title != "") { $title = "$*title :: "; }
+  if (not isnull $.gallery) {
+    $title = $title + "$.gallery.name :: ";
+  }
+  if ($.picture.title != "") {
+    $title = $title + $.picture.title;
+  } elseif (not isnull $.gallery) {
+    $title = $title + "$.pictures.current/$.pictures.total";
+  }
+
+  return $title;
+}
+
+function PicturePage::lay_print_navigation()
+{
+  if ($.pictures.url_first != "") {
+    controlbarimg($.pictures.url_first,"nav_first",$*text_range_first);
+  }
+  if ($.pictures.url_prev != "") {
+    controlbarimg($.pictures.url_prev,"nav_prev",$*text_range_prev);
+  }
+  if (viewer_is_owner()) {
+    controlbarimg($.manage_url,"tweak","Manage Picture");
+  }
+  if ($.copy_url != "") {
+    controlbarimg($.copy_url,"copy","Copy Picture");
+  }
+  if ($.picture.fullimage.width > 320 or $.picture.fullimage.height > 240) {
+    controlbarimg($.picture.fullimage.url,"zoomin","Zoom in");
+  }
+  if ($.pictures.url_next != "") {
+    controlbarimg($.pictures.url_next,"nav_next",$*text_range_next);
+  }
+  if ($.pictures.url_last != "") {
+    controlbarimg($.pictures.url_last,"nav_last",$*text_range_last);
+  }
+}
+
+function PicturePage::print_body ()
+{
+  var string title = $.picture.title != "" ? $.picture.title : (not isnull $.gallery ? "$.pictures.current/$.pictures.total" : "");
+  print """<table style='margin-left: 10%; margin-right: 10%;' cellspacing='0' border='0'>""";
+  print """<tr><th class='bold_title'>$title</th></tr></table>""";
+  print """<table style='width: 80%; margin-right: 10%; margin-left: 10%;' cellspacing='0'>""";
+  print """<tr><td style='background-color: $*bold_bgcolor; width: 325px; height: 245px; vertical-align: center;text-align: center'>""";
+
+  var Image inline = $.picture->get_image(320, 240);
+  $inline->print({
+      "alt" => $.picture.piccode,
+      "tint" => "",
+  });
+
+  print """</td><td class='page_body' valign='top'>""";
+  print """Width: $.picture.fullimage.width<br />""";
+  print """Height: $.picture.fullimage.height<br />""";
+  print """Download: <a href='$.picture.fullimage.url'>Full size</a><br />""";
+  if ($*show_exif == "raw") { $this->print_exif_cats(["image", "media", "gps", "exposure"]); }
+  print """<p>$.des</p></td></tr></table></td></tr></table>""";
+}
+
+function PicturePage::lay_print_footer()
+{
+  if (size $.parent_links > 0) {
+    println """<div class='footer'><table cellspacing='0'><tr><th>Parent Galleries</th></tr><tr><td>""";
+    foreach var Link l ($.parent_links) {
+      println """<a href="$l.url"><img src="/img/simpletoolbar/nav_up.gif" width="16" height="16" border="0" align="absmiddle">$l.caption</a><br />""";
+    }
+    println """</td></tr></table></div>""";
+  }
+}

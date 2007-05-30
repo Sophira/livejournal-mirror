@@ -1,0 +1,1464 @@
+#-*-s2-*-
+
+layerinfo type = "layout";
+layerinfo name = "Portfoloroid";
+layerinfo redist_uniq = "portfoloroid/layout";
+layerinfo author_name = "Mahlon E. Smith";
+layerinfo author_email = "mahlon@martini.nu";
+layerinfo source_viewable = 0;
+layerinfo is_public = 1;
+
+##### properties
+
+propgroup presentation {
+
+    property string lay_style {
+        des = "Layout style type";
+        values = "smooth|Smooth|clean|Clean|chunky|Chunky";
+    }
+    set lay_style = "smooth";
+
+    property int rows {
+        des = "Number of image rows";
+        min = 1;
+    }
+    set rows = 5;
+
+    property int cols {
+        des = "Number of image columns";
+        min = 1;
+    }
+    set cols = 5;
+
+    property bool indexsubgals {
+        des = "Show sub-galleries on index page?";
+    }
+    set indexsubgals = true;
+
+    property use index_page_max_size;
+
+    property bool show_titles {
+        des = "Show titles under thumbnails?";
+    }
+    set show_titles = true;
+
+    property bool shadows {
+        des = "Show drop-shadows under images?";
+    }
+    set shadows = false;
+
+    property string preview_size {
+        des = "Gallery thumbnail size";
+        values = "100x100|100x100|125x125|125x125|150x150|150x150|200x150|200x150|200x200|200x200";
+        note = "Gallery preview images";
+    }
+    set preview_size = "200x200";
+
+    property string gallery_preview_style {
+        des = "Gallery preview style";
+        values = "|Scaled|,crop|Cropped|,zoom|Crop, but fit exactly";
+    }
+    set gallery_preview_style = "";
+
+    property use thumbnail_size;
+    property use thumbnail_style;
+    set thumbnail_size = "100x100";
+    set thumbnail_style = "";
+}
+
+propgroup colors {
+    property Color bgcolor {
+        des = "Background color";
+    }
+    set bgcolor = "#c7cccf";
+
+    property Color bgcolor_top {
+        des = "Background color 2";
+        note = "This only takes effect with the default background image.";
+    }
+    set bgcolor_top = "#808a96";
+
+    property Color concolor {
+        des = "Content background color";
+    }
+    set concolor = "#c7cccf";
+
+    property Color tabcol {
+        des = "'Tab' color";
+    }
+    set tabcol = "#949aa2";
+
+    property Color text_color {
+        des = "Text color";
+    }
+    set text_color = "#000000";
+
+    property Color border_color {
+        des = "Table border color";
+    }
+    set border_color = "#000000";
+
+    property Color shadow_color {
+        des = "Image drop shadow color";
+        note = "Color of optional image drop-shadow.";
+    }
+    set shadow_color = "#000000";
+}
+
+propgroup background {
+    property string bgimage {
+        des = "Background image";
+    }
+    set bgimage = "/img/portfoloroid/main/gbg.gif";
+    
+    property string bgrepeat {
+        des = "Background image repeat";
+        values = "no-repeat|none|repeat|repeat|repeat-y|vertically only|repeat-x|horizontally only";
+    }
+    set bgrepeat = "repeat-x";
+
+    property string table_background {
+        des = "Content table background image";
+    }
+    set table_background = "/img/portfoloroid/main/tbg.gif";
+
+    property string table_background_repeat {
+        des = "Repeat type for content image";
+        values = "no-repeat|none|repeat|repeat|repeat-y|vertically only|repeat-x|horizontally only";
+    }
+    set table_background_repeat = "repeat-x";
+}
+
+propgroup fonts {
+    property use font_base;
+    property use font_fallback;
+
+    property int font_size {
+        des = "Main font size";
+        min = 8;
+        max = 48;
+    }
+    set font_size = 10;
+
+    property int font_pager_size {
+        des = "Pager font size";
+        min = 8;
+        max = 48;
+    }
+    set font_pager_size = 12;
+
+    property int font_desc_size {
+        des = "Description font size";
+        min = 8;
+        max = 48;
+    }
+    set font_desc_size = 12;
+
+    property int font_galtitle_size {
+        des = "Gallery index font size";
+        min = 8;
+        max = 48;
+    }
+    set font_galtitle_size = 18;
+
+    property int font_menu_size {
+        des = "Menu and button font size";
+        min = 8;
+        max = 48;
+    }
+    set font_menu_size = 10;
+}
+
+propgroup text {
+    property string title {
+        des = "Main page title";
+        note = "If you lave this blank, we will add a generic title as a default";
+    }
+    set title = "";
+}
+
+# No GUI for these - just knobs for themes.
+property string imgroot {
+    noui = 1;
+    des = "Root of style images";
+}
+set imgroot = "/img/portfoloroid/main";
+
+property string lu_image {
+    noui = 1;
+    des = "Left corner of tables";
+}
+set lu_image = "/img/portfoloroid/main/lu.gif";
+
+property string cu_image {
+    noui = 1;
+    des = "Center repeat for tables";
+}
+set cu_image = "/img/portfoloroid/main/cu.gif";
+
+property string ru_image {
+    noui = 1;
+    des = "Right corner of tables";
+}
+set ru_image = "/img/portfoloroid/main/ru.gif";
+
+property int border_width {
+    noui = 1;
+    des = "Table border width";
+}
+set border_width = 2;
+
+property int table_shadow_height {
+    noui = 1;
+    des = "Table shadow height";
+}
+set table_shadow_height = 5;
+
+property Color mb_fill_color {
+    noui = 1;
+    des = "Selected menu/button fill color";
+}
+set mb_fill_color ="#c7cccf";
+
+property Color m_border_color {
+    noui = 1;
+    des = "Selected menu border color";
+}
+set m_border_color = "#717983";
+
+property string separator_style {
+    noui = 1;
+    des = "CSS line style";
+}
+set separator_style = "dotted";
+
+property int separator_size {
+    noui = 1;
+    des = "CSS line thickness";
+}
+set separator_size = 1;
+
+property int mb_width {
+    noui = 1;
+    des = "Menu and button border thickness";
+}
+set mb_width = 1;
+
+property bool use_tbl_img {
+    noui = 1;
+    des = "Use graphics for table top corners";
+}
+set use_tbl_img = true;
+
+property bool use_slide {
+    noui = 1;
+    des = "Use slidy menus";
+}
+set use_slide = true;
+
+property int min_c_size {
+    noui = 1;
+    des = "Minimum size of the content table";
+}
+set min_c_size = 551;
+
+property Color table_shadow_color {
+    noui = 1;
+    des = "Table shadow color";
+    note = "Color of table shadows.";
+}
+
+property string shadow_tint { noui = 1; }
+
+##### functions 
+
+function prop_init ()
+{
+    $*gallery_page_max_size = $*rows * $*cols;
+    $*thumbnails = "pn=100x100" + $*thumbnail_style + "&norm=" + $*thumbnail_size + $*thumbnail_style;
+    if ($*preview_size != "") {
+        $*thumbnails = $*thumbnails + "&preview=" + $*preview_size + $*gallery_preview_style;
+    }
+
+    if ($*shadows) {
+        $*shadow_tint = $*concolor.as_string->substr(1, 6) + $*shadow_color.as_string->substr(1, 6);
+    }
+    $*table_shadow_color = $*bgcolor->darker(60);
+
+    if ($*font_base == "") { $*font_base = "verdana"; }
+    if ($*font_fallback == "") { $*font_fallback = "sans-serif"; }
+
+    # master switches for noui options
+    if ($*lay_style == "clean") {
+        $*border_width = 1;
+        $*table_shadow_height = 3;
+        $*separator_size = 1;
+        $*separator_style = "solid";
+        $*mb_width = 1;
+        $*use_tbl_img = false;
+        $*min_c_size = 450;
+        $*use_slide = false;
+    }
+    if ($*lay_style == "chunky") {
+        $*border_width = 5;
+        $*table_shadow_height = 8;
+        $*separator_size = 5;
+        $*separator_style = "solid";
+        $*mb_width = 4;
+        $*use_tbl_img = false;
+        $*min_c_size = 500;
+        $*use_slide = true;
+    }
+    
+    # setup tints
+    if ($*bgimage == "/img/portfoloroid/main/gbg.gif") {
+        $*bgimage = palimg_gradient("portfoloroid/main/gbg.gif", PalItem(0, $*bgcolor_top), PalItem(80, $*bgcolor));
+    } 
+    if ($*table_background == "/img/portfoloroid/main/tbg.gif") {
+        $*table_background = palimg_gradient("portfoloroid/main/tbg.gif", PalItem(0, $*tabcol), PalItem(67, $*concolor));
+    } 
+    if ($*lay_style == "smooth") {
+        if ($*lu_image == "/img/portfoloroid/main/lu.gif" and $*use_tbl_img) {
+            $*lu_image = palimg_modify("portfoloroid/main/lu.gif", [PalItem(4, $*tabcol)]);
+        } 
+        if ($*cu_image == "/img/portfoloroid/main/cu.gif" and $*use_tbl_img) {
+            $*cu_image = palimg_modify("portfoloroid/main/cu.gif", [PalItem(1, $*tabcol)]);
+        } 
+        if ($*ru_image == "/img/portfoloroid/main/ru.gif" and $*use_tbl_img) {
+            $*ru_image = palimg_modify("portfoloroid/main/ru.gif", [PalItem(3, $*tabcol)]);
+        } 
+    }
+}
+
+function print_stylesheet () {
+    var int mpad = $*mb_width + 1;
+    "
+body
+{
+    ";
+    if ($*bgimage != "" and $*bgimage != "none") {
+    "
+    background-image: url($*bgimage);
+    background-attachment: fixed;
+    background-repeat: $*bgrepeat;
+    ";
+    }
+    "
+    background-color: $*bgcolor;
+    font-family: $*font_base, $*font_fallback, verdana, arial, helvetica;
+    color: $*text_color;
+}
+
+td { font-size: $*font_size" + "px" + "; }
+td div { position: relative; }
+
+a
+{
+    color: $*text_color;
+    text-decoration: none;
+}
+
+/* page x of x */
+.pager
+{
+    border-bottom: $*separator_size" + "px" + " $*separator_style $*table_shadow_color;
+    padding-bottom: 2px;
+    font-size: $*font_pager_size" + "px" + ";
+    text-align: right;
+}
+
+/* pict title */
+.piclist .pt
+{
+    border-top: $*separator_size" + "px" + " $*separator_style $*table_shadow_color;
+}
+
+/* center content cell */
+.h
+{
+    background-image: url($*cu_image);
+    background-repeat: repeat-x; 
+    width: 100%;
+}
+
+/* content table defaults */
+.ctable { font-size: $*font_size" + "px" + "; }
+
+/* gallery description text */
+.ctable .gd
+{
+    border-top: $*separator_size" + "px" + " $*separator_style $*table_shadow_color;
+    padding-top: 5px;
+    padding-right: 5px;
+    font-size: $*font_desc_size" + "px" + ";
+}
+
+/* gallery title text */
+.ctable .gt
+{
+    padding-top: 4px;
+    font-size: $*font_galtitle_size" + "px" + ";
+    font-weight: bold;
+}
+
+/* gallery preview thumbnail cell */
+.ctable .gip
+{
+    border-left: $*separator_size" + "px" + " $*separator_style $*table_shadow_color;
+}
+
+/* gallery preview image div */
+.ctable .galpreview
+{
+    ";
+    if (not $*shadows) {
+        "
+        border-top: $*separator_size" + "px" + " $*separator_style $*table_shadow_color;
+        border-right: $*separator_size" + "px" + " $*separator_style $*table_shadow_color;
+        border-bottom: $*separator_size" + "px" + " $*separator_style $*table_shadow_color;
+        ";
+    }
+    "
+}
+
+/* text for gallery picture counts */
+.ctable .piccount
+{
+    font-style: italic;
+}
+
+/* description */
+.ctable .d
+{
+    border-top: $*separator_size" + "px" + " $*separator_style $*table_shadow_color;
+    padding-top: 5px;
+    font-size: $*font_desc_size" + "px" + ";
+}
+
+/* content cell */
+.ctable .c
+{
+    border-left: $*border_width" + "px" + " solid $*border_color;
+    border-right: $*border_width" + "px" + " solid $*border_color;
+    border-bottom: $*border_width" + "px" + " solid $*border_color;
+    ";
+    if (not $*use_tbl_img) { "border-top: $*border_width" + "px" + " solid $*border_color;"; }
+    if ($*table_background != "" and $*table_background != "none") {
+        "
+        background-image: url($*table_background);
+        background-repeat: $*table_background_repeat;
+        ";
+    }
+    "
+    background-color: $*concolor;
+    padding-bottom: 8px;
+    padding-left: 8px;
+    padding-right: 8px;
+    text-align: center;
+    vertical-align: top;
+}
+
+.ctable .c a:hover
+{
+    color:black;
+    text-decoration:underline;
+}
+
+/* left menus */
+.ctable .lm
+{
+    border-left: $*border_width" + "px" + " solid $*border_color;
+    border-bottom: $*border_width" + "px" + " solid $*border_color;
+    ";
+    if (not $*use_tbl_img) {
+        "
+        border-top: $*border_width" + "px" + " solid $*border_color;
+        padding-top: 8px;
+        ";
+    }
+    if ($*table_background) {
+        "
+        background-image: url($*table_background);
+        background-repeat: repeat-x; 
+        ";
+    }
+    "
+    background-color: $*concolor;
+    padding-bottom: 8px;
+    padding-left: 8px;
+    padding-right: 8px;
+    text-align: left;
+}
+
+/* right menus */
+.ctable .rm
+{
+    border-right: $*border_width" + "px" + " solid $*border_color;
+    border-bottom: $*border_width" + "px" + " solid $*border_color;
+    ";
+    if (not $*use_tbl_img) {
+        "
+        border-top: $*border_width" + "px" + " solid $*border_color;
+        padding-top: 8px;
+        ";
+    }
+    if ($*table_background) {
+        "
+        background-image: url($*table_background);
+        background-repeat: repeat-x; 
+        ";
+    }
+    "
+    background-color: $*concolor;
+    padding-bottom: 8px;
+    padding-left: 8px;
+    padding-right: 8px;
+    text-align: left;
+}
+
+/* title tab */
+.ctab
+{
+    border-left: $*border_width" + "px" + " solid $*border_color;
+    border-right: $*border_width" + "px" + " solid $*border_color;
+    ";
+    if (not $*use_tbl_img) {
+        "
+        border-top: $*border_width" + "px" + " solid $*border_color;
+        padding-top: 6px;
+        ";
+    }
+    "
+    background-color: $*tabcol;
+    font-size: $*font_pager_size" + "px" + ";
+    font-weight: bold;
+    padding-left:6px;
+    padding-right:8px;
+    padding-bottom:6px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* button bar */
+.bbar
+{
+    padding-right:8px;
+    padding-bottom:2px;
+    width: 100%;
+    white-space: nowrap;
+    text-align: left;
+}
+
+/* currently selected menu item */
+.menuitemsel
+{
+    font-size: $*font_menu_size" + "px" + ";
+    background-color: $*concolor;
+    padding: $mpad" + "px" + ";
+}
+
+/* untouched menu item */
+.menuitemup
+{
+    font-size: $*font_menu_size" + "px" + ";
+    background-color: $*tabcol;
+    padding: $mpad" + "px" + ";
+    cursor: pointer;
+}
+
+/* mouse over menu item */
+.menuitemdown
+{
+    font-size: $*font_menu_size" + "px" + "; 
+    background-color: $*mb_fill_color;
+    padding: 1px;
+    border-top: $*mb_width" + "px" + " solid $*m_border_color;
+    border-bottom: $*mb_width" + "px" + " solid $*m_border_color;
+    border-left: $*mb_width" + "px" + " solid $*m_border_color;
+    border-right: 8px solid $*m_border_color;
+    cursor: pointer;
+}
+
+/* button untouched */
+.buttonup
+{
+    border-left: $*mb_width" + "px" + " solid $*border_color;
+    border-right: $*mb_width" + "px" + " solid $*border_color;
+    border-top: $*mb_width" + "px" + " solid $*border_color;
+    border-bottom: $*mb_width" + "px" + " solid $*border_color;
+    font-size: $*font_menu_size" + "px" + ";
+    background-color: $*tabcol;
+    padding-left:4px;
+    padding-right:4px;
+    padding-top:2px;
+    cursor: pointer;
+}
+
+/* mouse over button */
+.buttondown
+{
+    border: $*mb_width" + "px" + " solid $*border_color;
+    font-size: $*font_menu_size" + "px" + ";
+    background-color: $*mb_fill_color;
+    padding-left:4px;
+    padding-right:4px;
+    padding-top:2px;
+    cursor: pointer;
+}
+
+/* shadow under content & menus */
+.shadow
+{
+    height: $*table_shadow_height" + "px" + ";
+    background-color: $*table_shadow_color;
+    width: 100%;
+}
+dl { text-align: left; }
+    ";
+}
+
+# header buttons
+# type: 'link | menu'
+# text: the button text
+# guts: for links, the href.  for menus, the unique menu name.
+function make_button(string type, string text, string guts)
+{
+    if ($guts == "") { return; }
+    if ($type == "menu") {
+        if ($*use_slide) {
+        # write out via javascript, so we can hide if js is disabled.
+        """
+        document.write("<td class='buttonup' onmouseover='sswap(this, \\"buttondown\\"); ypSlideOutMenu.showMenu(\\"$guts\\");'");
+        document.write("onmouseout='sswap(this, \\"buttonup\\"); ypSlideOutMenu.hideMenu(\\"$guts\\")'>$text</td>");
+        document.write("<td><img src='$*imgroot/1.gif' width='5' height='1'></td>");
+        """;
+        }
+    } else { # assume link, write out normally.
+        """
+        <td class="buttonup" onmouseover="sswap(this, 'buttondown');"
+                             onmouseout="sswap(this, 'buttonup');"
+                             onClick="location.href='$guts'">
+            <a href="$guts">$text</a>
+        </td>
+        <td><img src="$*imgroot/1.gif" width="5" height="1"></td>
+        """;
+    }
+}
+
+function menu_link(string text, string link)
+{
+    """
+    <tr><td class="menuitemup" onmouseover="sswap(this, 'menuitemdown');"
+                               onmouseout="sswap(this, 'menuitemup');"
+                               onClick="location.href='$link'">
+        <a href="$link">$text</a>
+    </td></tr>
+    """;
+}
+
+function generate_menu_top() {
+    """
+    <table cellpadding="0" cellspacing="0" style="width:150px;" class="ctable" border="0">
+    """;
+    if ($*use_tbl_img) {
+        """
+        <tr>
+        <td valign="bottom" width="12"><img src="$*lu_image" width="12" height="11"></td>
+        <td class="h" valign="bottom"><img src="$*imgroot/1.gif" width="138" height="1"></td>
+        </tr>
+        """;
+    }
+    """
+        <tr><td valign="top" class="lm" colspan="2" height="100%">
+
+            <table cellpadding="0" cellspacing="0" width="100%" border="0">
+    """;
+}
+
+function generate_menu_bottom() {
+            """
+            </table>
+
+        </td></tr>
+        <tr>
+            <td width="12"><img src="$*imgroot/1.gif" width="12" height="1"></td>
+            <td class="shadow"><img src="$*imgroot/1.gif" width="1" height="1"></td>
+        </tr>
+    </table>
+    </div></div>
+    """;
+}
+
+function Page::lay_generate_menu(string type) {}
+function IndexPage::lay_generate_menu(string type)
+{
+    var string menucontainer = $type + "Container";
+    var string menucontent = $type + "Content";
+
+    """
+    <div id="$menucontainer">
+    <div id="$menucontent">
+    """;
+    generate_menu_top();
+    if ($type == "galview") {
+        if (not $*use_slide) {
+            """<tr><td class="menuitemsel" style="border-bottom:1px solid $*border_color">view</td></tr>""";
+        }
+        var string{} sort_mode;
+        $sort_mode{"top"} = "top level";
+        $sort_mode{"recent"} = "recently updated";
+        $sort_mode{"alpha"} = "alphabetical";
+        $sort_mode{"date"} = "by date";
+        foreach var string mode (["top", "recent", "alpha", "date"]) {
+            if ($.sort_mode == $mode) {
+                """<tr><td class="menuitemsel">$sort_mode{$mode}</td></tr>""";
+            } elseif (defined $.sort_link{$mode}) {
+                menu_link($sort_mode{$mode}, $.sort_link{$mode}.url);
+            }
+        }
+    }
+    generate_menu_bottom();
+}
+
+function GalleryPage::lay_generate_menu(string type)
+{
+    var string menucontainer = $type + "Container";
+    var string menucontent = $type + "Content";
+
+    """
+    <div id="$menucontainer">
+    <div id="$menucontent">
+    """;
+    generate_menu_top();
+    if ($type == "subgals") {
+        if (not $*use_slide) {
+            """<tr><td class="menuitemsel" style="border-bottom:1px solid $*border_color">sub-galleries</td></tr>""";
+        }
+        foreach var Gallery g ($.gallery.children) {
+            menu_link("$g.name", "$g.url");
+        }
+    }
+    generate_menu_bottom();
+}
+
+function generate_nl_top() : string
+{
+    var string htmltext = 
+    """
+    <td valign="top" style="padding-top:70px;" width="150">
+
+    <table cellpadding="0" cellspacing="0" style="width:65px;" class="ctable" border="0">
+    """;
+    if ($*use_tbl_img) {
+        $htmltext = $htmltext +
+        """
+        <tr>
+        <td class="h"><img src="$*imgroot/1.gif" width="53" height="1"></td>
+        <td valign="bottom" width="12"><img src="$*ru_image" width="12" height="11"></td>
+        </tr>
+        """;
+    }
+    $htmltext = $htmltext +
+    """
+        <tr><td valign="top" class="rm" colspan="2" height="100%">
+
+            <table cellpadding="0" cellspacing="0" width="100%" border="0">
+    """;
+    return $htmltext;
+}
+
+function generate_nl_bottom() : string
+{
+    return 
+    """
+            </table>
+
+        </td></tr>
+        <tr>
+            <td class="shadow"><img src="$*imgroot/1.gif" width="1" height="1"></td>
+            <td width="12"><img src="$*imgroot/1.gif" width="12" height="1"></td>
+        </tr>
+    </table>
+
+    </td>
+    """;
+}
+
+function Page::lay_make_nextlast() {}
+
+function IndexPage::lay_make_nextlast()
+{
+    var ItemRange sp = $.sorted_pages;
+    if (not $sp.all_subitems_displayed and $sp.total > 0) {
+        var string gal_nextlast = generate_nl_top();
+        if ($sp.total != $sp.current) {
+            $gal_nextlast = $gal_nextlast + 
+            """
+            <tr><td class="menuitemup" onmouseover="sswap(this, 'menuitemdown');"
+                                       onmouseout="sswap(this, 'menuitemup');"
+                                       onClick="location.href='$sp.url_next'">
+                <a href="$sp.url_next">next</a>
+            </td></tr>
+            """;
+        } else {
+            $gal_nextlast = $gal_nextlast + """<tr><td class="menuitemup">next</td></tr>""";
+        }
+        if ($sp.current != 1) {
+            $gal_nextlast = $gal_nextlast + 
+            """
+            <tr><td class="menuitemup" onmouseover="sswap(this, 'menuitemdown');"
+                                       onmouseout="sswap(this, 'menuitemup');"
+                                       onClick="location.href='$sp.url_prev'">
+                <a href="$sp.url_prev">previous</a>
+            </td></tr>
+            """;
+        } else {
+            $gal_nextlast = $gal_nextlast + """<tr><td class="menuitemup">prev</td></tr>""";
+        }
+        if ($sp.url_first != "" and $sp.total > 2) {
+            $gal_nextlast = $gal_nextlast + 
+            """
+            <tr><td class="menuitemup" onmouseover="sswap(this, 'menuitemdown');"
+                                       onmouseout="sswap(this, 'menuitemup');"
+                                       onClick="location.href='$sp.url_first'">
+                <a href="$sp.url_first">first</a>
+            </td></tr>
+            """;
+        } else {
+            $gal_nextlast = $gal_nextlast + """<tr><td class="menuitemup">first</td></tr>""";
+        }
+        if ($sp.url_last != "" and $sp.total > 2) {
+            $gal_nextlast = $gal_nextlast + 
+            """
+            <tr><td class="menuitemup" onmouseover="sswap(this, 'menuitemdown');"
+                                       onmouseout="sswap(this, 'menuitemup');"
+                                       onClick="location.href='$sp.url_last'">
+                <a href="$sp.url_last">last</a>
+            </td></tr>
+            """;
+        } else {
+            $gal_nextlast = $gal_nextlast + """<tr><td class="menuitemup">last</td></tr>""";
+        }
+        $gal_nextlast = $gal_nextlast + generate_nl_bottom();
+        print $gal_nextlast;
+    }
+}
+
+function GalleryPage::lay_make_nextlast()
+{
+    var ItemRange p = $.pages;
+    var string gal_nextlast = generate_nl_top();
+    $gal_nextlast = $gal_nextlast + 
+        """
+        <tr><td class="menuitemup" onmouseover="sswap(this, 'menuitemdown');"
+                                   onmouseout="sswap(this, 'menuitemup');"
+                                   onClick="location.href='$.parent_link.url'">
+            <a href="$.parent_link.url">up</a>
+        </td></tr>
+        """;
+    if (not $p.all_subitems_displayed and $p.total > 0) {
+        if ($p.total != $p.current) {
+            $gal_nextlast = $gal_nextlast + 
+            """
+            <tr><td class="menuitemup" onmouseover="sswap(this, 'menuitemdown');"
+                                       onmouseout="sswap(this, 'menuitemup');"
+                                       onClick="location.href='$p.url_next'">
+                <a href="$p.url_next">next</a>
+            </td></tr>
+            """;
+        } else {
+            $gal_nextlast = $gal_nextlast + """<tr><td class="menuitemup">next</td></tr>""";
+        }
+        if ($p.current != 1) {
+            $gal_nextlast = $gal_nextlast + 
+            """
+            <tr><td class="menuitemup" onmouseover="sswap(this, 'menuitemdown');"
+                                       onmouseout="sswap(this, 'menuitemup');"
+                                       onClick="location.href='$p.url_prev'">
+                <a href="$p.url_prev">previous</a>
+            </td></tr>
+            """;
+        } else {
+            $gal_nextlast = $gal_nextlast + """<tr><td class="menuitemup">prev</td></tr>""";
+        }
+        if ($p.url_first != "" and $p.total > 2) {
+            $gal_nextlast = $gal_nextlast + 
+            """
+            <tr><td class="menuitemup" onmouseover="sswap(this, 'menuitemdown');"
+                                       onmouseout="sswap(this, 'menuitemup');"
+                                       onClick="location.href='$p.url_first'">
+                <a href="$p.url_first">first</a>
+            </td></tr>
+            """;
+        } else {
+            $gal_nextlast = $gal_nextlast + """<tr><td class="menuitemup">first</td></tr>""";
+        }
+        if ($p.url_last != "" and $p.total > 2) {
+            $gal_nextlast = $gal_nextlast + 
+            """
+            <tr><td class="menuitemup" onmouseover="sswap(this, 'menuitemdown');"
+                                       onmouseout="sswap(this, 'menuitemup');"
+                                       onClick="location.href='$p.url_last'">
+                <a href="$p.url_last">last</a>
+            </td></tr>
+            """;
+        } else {
+            $gal_nextlast = $gal_nextlast + """<tr><td class="menuitemup">last</td></tr>""";
+        }
+    }
+    $gal_nextlast = $gal_nextlast + generate_nl_bottom();
+    print $gal_nextlast;
+}
+
+function PicturePage::lay_make_nextlast()
+{
+    var ItemRange p = $.pictures;
+    var string gal_nextlast = generate_nl_top();
+    $gal_nextlast = $gal_nextlast + 
+        """
+        <tr><td class="menuitemup" onmouseover="sswap(this, 'menuitemdown');"
+                                   onmouseout="sswap(this, 'menuitemup');"
+                                   onClick="location.href='$.parent_link.url'">
+            <a href="$.parent_link.url">up</a>
+        </td></tr>
+        """;
+    if (not $p.all_subitems_displayed and $p.total > 0) {
+        if ($p.url_first != "" and $p.total > 2) {
+            $gal_nextlast = $gal_nextlast + 
+            """
+            <tr><td class="menuitemup" onmouseover="sswap(this, 'menuitemdown');"
+                                       onmouseout="sswap(this, 'menuitemup');"
+                                       onClick="location.href='$p.url_first'">
+                <a href="$p.url_first">first</a>
+            </td></tr>
+            """;
+        }
+        if ($p.current != 1) {
+            $gal_nextlast = $gal_nextlast + 
+            """
+            <tr><td class="menuitemup" onmouseover="sswap(this, 'menuitemdown');"
+                                       onmouseout="sswap(this, 'menuitemup');"
+                                       onClick="location.href='$p.url_prev'">
+                <a href="$p.url_prev">previous</a>
+            </td></tr>
+            """;
+        }
+        if ($p.total != $p.current) {
+            $gal_nextlast = $gal_nextlast + 
+            """
+            <tr><td class="menuitemup" onmouseover="sswap(this, 'menuitemdown');"
+                                       onmouseout="sswap(this, 'menuitemup');"
+                                       onClick="location.href='$p.url_next'">
+                <a href="$p.url_next">next</a>
+            </td></tr>
+            """;
+        }
+        if ($p.url_last != "" and $p.total > 2) {
+            $gal_nextlast = $gal_nextlast + 
+            """
+            <tr><td class="menuitemup" onmouseover="sswap(this, 'menuitemdown');"
+                                       onmouseout="sswap(this, 'menuitemup');"
+                                       onClick="location.href='$p.url_last'">
+                <a href="$p.url_last">last</a>
+            </td></tr>
+            """;
+        }
+    }
+    $gal_nextlast = $gal_nextlast + generate_nl_bottom();
+    print $gal_nextlast;
+}
+
+function Page::lay_make_menu () { }
+function Page::lay_def_menu () { }
+function Page::lay_make_jsbutton () { }
+function Page::lay_make_button () { }
+
+function IndexPage::lay_def_menu ()
+{
+    # menu defs should match lay_generate_menu and make_jsbutton
+    if ($*use_slide) {
+        """new ypSlideOutMenu("galview", "left", 10, 85, 150, 300);""";
+    }
+}
+
+function GalleryPage::lay_def_menu ()
+{
+    if (size $.gallery.children > 0 and $*use_slide) {
+        """new ypSlideOutMenu("subgals", "left", 10, 85, 150, 300);""";
+    }
+}
+
+function IndexPage::lay_make_menu ()
+{
+    $this->lay_generate_menu("galview");
+}
+
+function GalleryPage::lay_make_menu ()
+{
+    if (size $.gallery.children > 0) {
+        $this->lay_generate_menu("subgals");
+    }
+}
+
+function IndexPage::lay_make_jsbutton ()
+{
+    make_button("menu", "view", "galview");
+}
+
+function GalleryPage::lay_make_jsbutton ()
+{
+    if (size $.gallery.children > 0) {
+        make_button("menu", "sub-galleries", "subgals");
+    }
+}
+
+function IndexPage::lay_make_button ()
+{
+    if (viewer_is_owner()) {
+        make_button("link", "manage", $.manage_url);
+    }
+    if (not viewer_logged_in()) {
+        make_button("link", "login", "/login");
+    }
+}
+
+function GalleryPage::lay_make_button ()
+{
+    if (viewer_is_owner()) {
+        make_button("link", "manage", $.manage_url);
+    }
+    make_button("link", "copy", $.copy_url);
+    if (not viewer_logged_in()) {
+        make_button("link", "login", "/login");
+    }
+}
+
+function PicturePage::lay_make_button ()
+{
+    if (viewer_is_owner()) {
+        make_button("link", "manage", $.manage_url);
+    }
+    make_button("link", "copy", $.copy_url);
+    if (not viewer_logged_in()) {
+        make_button("link", "login", "/login");
+    }
+}
+
+
+function Page::print ()
+{
+  """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>""";
+  $this->print_head();
+"""
+<!-- design by Mahlon E. Smith <mahlon@martini.nu>
+     for LiveJournal.com / PicPix.com -->
+<title>""";
+  print $this->title();
+  "</title>\n";
+  """<link rel="stylesheet" href="$.stylesheeturl" type="text/css">
+<script language="JavaScript" type="text/javascript" src="/js/portfoloroid.js"></script>
+
+<script language="Javascript">
+    <!--
+    // define dhtml menus
+    // name, dir, left, top, width, height
+    """;
+      $this->lay_def_menu();
+    """
+    // -->
+</script>
+
+</head>
+<body marginheight="0" marginwidth="0" leftmargin="0" rightmargin="0" topmargin="0">
+
+<!-- layout table -->
+<table cellpadding="0" cellspacing="0" style="margin-top:40px; margin-left:10px" border="0">
+<tr>
+
+    <!-- left bars -->
+    <td valign="top" style="padding-top:45px;" width="150">
+    <img src="$*imgroot/1.gif" height="1" width="150">
+    """;
+    $this->lay_make_menu();
+    """
+    </td>
+    <!-- end left bars -->
+
+    <!-- button bar, title tab -->
+    <td valign="top" align="right">
+    <table cellpadding="0" cellspacing="0" width="100%" border="0">
+    <tr>
+        <td><img src="$*imgroot/1.gif" width="12" height="1"></td> <!-- spacer -->
+        <td valign="bottom" class="bbar" nowrap="1" width="100%">
+        
+            <table cellpadding="0" cellspacing="0" border="0"><tr>
+
+            <script language="Javascript">
+            <!--
+            // don't display menu 'slidy' menus if javascript isn't enabled.
+            """;
+            $this->lay_make_jsbutton();
+            """
+            // -->
+            </script>
+
+            """;
+            $this->lay_make_button();
+            """
+
+            </tr></table>
+        
+        </td>
+        <!-- end button bar -->
+
+        <td>
+        <table cellpadding="0" cellspacing="0" border="0">
+        """;
+        if ($*use_tbl_img) {
+            """
+            <tr>
+            <td colspan="3">
+                <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+                <td width="12" height="11"><img src="$*lu_image" width="12" height="11"></td>
+                <td class="h" width="100%"><img src="$*imgroot/1.gif" width="1" height="1"></td>
+                <td width="12" height="11"><img src="$*ru_image" width="12" height="11"></td>
+                </tr></table>
+            </td>
+            </tr>
+            """;
+        }
+        """
+            <tr>
+            <td valign="top" class="ctab" nowrap="1">
+            <img src="$*imgroot/1.gif" height="1" width="70"><br />
+            """;
+            print $this->title();
+            """
+            </td>
+            </tr>
+        </table>
+    </td>
+    <td><img src="$*imgroot/1.gif" width="12" height="1"></td> <!-- spacer -->
+    </tr></table>
+
+    <!-- content layout -->
+    <table cellpadding="0" cellspacing="0" class="ctable" border="0">
+    """;
+    if ($*use_tbl_img) {
+        """
+        <tr>
+        <td colspan="3">
+            <!-- stupid extra table for cross browser rendering compatibility -->
+            <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+            <td width="12" height="11"><img src="$*lu_image" width="12" height="11"></td>
+            <td class="h" width="100%"><img src="$*imgroot/1.gif" width="1" height="1"></td>
+            <td width="12" height="11"><img src="$*ru_image" width="12" height="11"></td>
+            </tr></table>
+        </td>
+        </tr>
+        """;
+    }
+    """
+        <tr><td class="c" height="300">
+        <img src="$*imgroot/1.gif" height="1" width="$*min_c_size"><br />
+        <!-- content -->\n""";
+
+          if (not $*use_tbl_img) { "<br />"; }
+          $this->print_body();
+"""
+
+        <!-- end content -->
+        </td></tr>
+        <tr>
+        <td colspan="3">
+            <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+            <td width="12" height="1"><img src="$*imgroot/1.gif" width="12" height="1"></td>
+            <td class="shadow"><img src="$*imgroot/1.gif" width="1" height="1"></td>
+            <td width="12" height="1"><img src="$*imgroot/1.gif" width="12" height="1"></td>
+            </tr></table>
+        </td>
+        </tr>
+    </table>
+    </td>
+    <!-- end title tab and content layout -->
+
+</td>
+
+    <!-- right bar -->
+    """;
+    $this->lay_make_nextlast();
+    """
+    <!-- end right bars -->
+
+</tr>
+</table>
+
+<br /><br /><br /><br />
+
+</body>
+</html>\n""";
+
+}
+
+function IndexPage::title () : string
+{
+  if ($*title != "") { return $*title; }
+  return "$.user.usercs's galleries";
+}
+
+
+# blatantly ripped off from fotobilder style 'super simple'
+function gal_count_em (Gallery g) : string
+{
+    var int pics = $g.numpics;
+    var int dpics = $g->desc_pics();
+    var int tpics = $pics + $dpics;
+    var string txt = "image";
+    if ($pics > 1) {
+        $txt = $txt + "s";
+    }
+    if ($pics > 0 and $dpics == 0) {
+      return " <span class='piccount'><b>$pics</b> $txt</span>";
+    } elseif ($pics > 0 and $dpics > 0) {
+      return " <span class='piccount'><b>$tpics</b> images</span>";
+    } elseif ($dpics > 0) {
+      return " <span class='piccount'><b>$tpics</b> images</span>";
+    }
+    return "";
+}
+
+# Print HTML for a gallery.
+function show_gal_info (Gallery g, string sortmode)
+{
+    "<tr valign='top'>";
+
+    "<td width='60%' align='right'><div style='padding-right:5px'>";
+    """<div class="gt"><a href="$g.url">$g.name</a></div>""";
+    print gal_count_em($g);
+
+    if ($sortmode == "recent") {
+      if (not isnull $g.dateupdate) {
+        "<br />Last updated: "; $g.dateupdate->print_datetime();
+      }
+    } else {
+      if (not isnull $g.date) {
+        "<br />Gallery date: "; $g.date->print_datetime();
+      }
+    }
+    "</div>";
+
+    if ($g.des != "") {
+        """<div class="gd">$g.des</div><br /><div style='padding-right:5px'>""";
+    }
+
+    var int numchildren = size $g.children;
+    if ($*indexsubgals and $numchildren > 0) {
+      "<table cellpadding='0' cellspacing='0' border='0'><tr><td><ul>";
+      var bool trunc = false;
+      if ($numchildren > 10) { $numchildren = 10; $trunc = true; }
+      foreach var int i (1..$numchildren) {
+        var Gallery c = $g.children[$i-1];
+        "<li><a href=\"$c.url\">$c.name</a>";
+        if ($c.numpics > 0) {
+            " - ";
+            print gal_count_em($c);
+        }
+        "</li>";
+      }
+      if ($trunc) { "<li><a href=\"$g.url\">...</a></li>"; }
+      "</ul></td></tr></table>";
+    }
+
+    "</div></td>";
+
+    "<td width='40%' align='left' class='gip'>";
+    var Image i = $g->get_preview_image("preview");
+    if (defined $i) {
+        "<table cellpadding='0' cellspacing='0' border='0'><tr><td class='galpreview'>";
+        $i->print({
+            "href" => $g.url,
+            "tint" => $*shadow_tint,
+            "alt" => $g.name,
+        });
+        "</td></tr></table>";
+    }
+    "</td>";
+
+    # spacer
+    """</tr><tr><td><img src="$*imgroot/1.gif" height="6" width="1"></td>""";
+    "<td class='gip'><img src='$*imgroot/1.gif' height='6' width='1'></td>";
+
+    "</tr>\n";
+}
+
+function IndexPage::print_body ()
+{
+  if (size $.sorted_galleries == 0) {
+    "$*text_nogalleries";
+    return;
+  }
+
+  var ItemRange sp = $.sorted_pages;
+  var string curpage = "<div class='pager'>Page <b>$sp.current</b> of <b>$sp.total</b><br />";
+  $curpage = $curpage + "Galleries $sp.from_subitem-$sp.to_subitem of $sp.total_subitems</div>";
+  if (not $sp.all_subitems_displayed and $sp.total > 0) {
+      "$curpage";
+  }
+
+  "<table cellpadding='0' cellspacing='0' width='100%' border='0'>";
+  foreach var Gallery g ($.sorted_galleries) {
+      show_gal_info($g, $.sort_mode);
+  }
+  "</table>";
+
+}
+
+
+function GalleryPage::title () : string
+{
+  return "gallery: $.gallery.name";
+}
+
+function GalleryPage::print_body ()
+{
+  var string curpage = "<div class='pager'>Page <b>$.pages.current</b> of <b>$.pages.total</b><br />";
+  $curpage = $curpage + "Images $.pages.from_subitem-$.pages.to_subitem of $.pages.total_subitems</div>";
+  if (not $.pages.all_subitems_displayed) {
+      "$curpage";
+  }
+
+  var int numsubgals = size $.gallery.children;
+
+  # This gallery is truly empty - no images, no sub gals.
+  if ($.pages.total_subitems == 0 and $numsubgals == 0) {
+      "There is nothing to display.";
+  }
+
+  # This gallery has no images of its own, but has subgals,
+  # so it is probably being used as an organizing 'folder'.
+  # Display a subgal index, like on the main page.
+  # (limit to $*index_page_max_size subgals)
+  if ($.pages.total_subitems == 0 and $numsubgals != 0) {
+      var int galcount = 0;
+      "<table cellpadding='0' cellspacing='0' width='100%' border='0'>";
+      foreach var Gallery g ($.gallery.children) {
+          if ($galcount != $*index_page_max_size) {
+              $galcount = $galcount + 1;
+              show_gal_info($g, "");
+          }
+      }
+      "</table>";
+      var int leftover = $numsubgals - $*index_page_max_size;
+      if ($leftover > 0) {
+          """<br />($leftover additional """;
+          if ($leftover == 1) {
+              "subgallery";
+          } else {
+              "subgalleries";
+          }
+          """ not displayed.)""";
+      }
+
+      return;
+  }
+
+  # Alright - this gallery has images, and may or may not have subgals.
+  # Since we have picts to display, show the thumbs, and leave
+  # subgals in the 'slidy' menu for selection.
+  "<table cellpadding='0' height='100%' cellspacing='0' align='center' border='0'><tr><td valign='top'>";
+  "<table cellpadding='5' cellspacing='0' class='piclist' border='0'>";
+  var bool tr = false;
+  var int td = 0;
+  var string desrow;
+  var int rows = 0;
+  foreach var Picture p ($.pictures) {
+    if (not $tr) {
+      "<tr align='center' valign='bottom'>";
+      $rows++;
+      $tr = true;
+    }
+    var Image i = $p.thumbnails{"norm"};
+    "<td>";
+      $i->print({
+              "tint" => $*shadow_tint,
+              "href" => $p.url,
+              "alt" => $p.title,
+      });
+    "</td>";
+    $desrow = $desrow + "<td class='pt'><a href=\"$p.url\">$p.title</a></td>";
+
+    "</a></td>";
+    $td++;
+    if ($td == $*cols) {
+      "</tr>";
+      if ($*show_titles) {
+        "<tr valign='top' align='center'>$desrow</tr>";
+      }
+      $td = 0;
+      $tr = false;
+      $desrow = "";
+    }
+  }
+  if ($tr) {
+    "</tr>";
+    if ($*show_titles) {
+      "<tr valign='top' align='center'>$desrow</tr>";
+    }
+  }
+  "</table>";
+  "</td></tr></table>";
+
+  if ($.des != "") {
+  """<div class="gd">$.des</div><br />""";
+  }
+
+}
+
+function PicturePage::title () : string
+{
+  if ($.picture.title == "") { $.picture.title = "untitled"; }
+
+  if (isnull $.gallery) {
+    return "$.picture.title";
+  }
+
+  return "$.gallery.name : $.picture.title";
+}
+
+function PicturePage::print_body ()
+{
+  var string curpict = "<div class='pager'>Image <b>$.pictures.current</b> of <b>$.pictures.total</b></div>";
+  if ($.gallery.name != "") {
+      """$curpict""";
+  }
+  "<center>";
+
+  # Pad out the box so to avoid jumpiness
+  """<div style="height: 1px; width: 640px;">&nbsp;</div>""";
+
+  var Image inline = $.picture->get_image(640, 480);
+  $inline->print({
+          "alt" => $.picture.piccode,
+          "tint" => $*shadow_tint,
+      });
+
+  if ($.des != "") {
+      """<div class="d"> $.des </div>""";
+  }
+  if (size $.tags > 0) {
+    """<div class="d"><strong>Tags:</strong> """;
+    foreach var Link k ($.tags) {
+      """<a href="$k.url">$k.caption</a>""";
+      if ($k.url != $.tags[size $.tags -1].url) {
+        ", ";
+      }
+    }
+    """</div>""";
+  }
+
+  """<div class="d"><a href="$.picture.fullimage.url">Full size</a>""";
+  "</center>";
+  if ($*show_exif == "raw") { $this->print_exif_cats(["image", "media", "gps", "exposure"]); }
+}

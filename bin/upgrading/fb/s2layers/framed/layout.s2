@@ -1,0 +1,628 @@
+#-*-s2-*-
+
+#
+# My changes have borrowed something from just about every existing style.
+# Dont be surprised if you see something here that looks familiar in another style;
+# I probably thought "That looks cool", and swiped it ;-)
+#
+# - Jesse
+#
+
+layerinfo "type" = "layout";
+layerinfo "redist_uniq" = "framed/layout";
+layerinfo "name" = "Framed; Scrolling thumbnails";
+
+propgroup presentation {
+    property string scroll_pos {
+        des = "Scrolling Region Position";
+        note = "Which side of the browser should the scrolling thumbnails be attached to?";
+        values = "left|Left|right|Right|bottom|Bottom|top|Top";
+    }
+    property string scroll_bottom_align {
+        des = "Horizontal Scroll Frame Alignment";
+        note = "If you chose a frame position along the bottom or top, which edge of the frame should images 'rest' on?";
+        values = "top|Top|bottom|Bottom|middle|Middle";
+    }
+    property string show_thumb_titles {
+        des = "Show Thumbnail Titles";
+        note = "Should titles be displayed with the thumbnails, and if so, where?";
+        values = "no|No|below|Yes, Below|above|Yes, Above";
+    }
+    property use thumbnail_size;
+    property use thumbnail_style;
+    property bool show_shadows {
+        des = "Show drop-shadows under images?";
+    }
+    property Color shadow_color {
+        des = "Shadow color";
+        note = "Color of drop-shadow.";
+    }
+    property use gallery_page_max_size;
+    property use index_page_max_size;
+    set scroll_pos          = "bottom";
+    set scroll_bottom_align = "bottom";
+    set show_thumb_titles   = "above";
+    set thumbnail_size      = "100x100";
+    set thumbnail_style     = "";
+    set show_shadows        = false;
+    set shadow_color        = "#000000";
+    set index_page_max_size = 5;
+}
+
+propgroup colors {
+    property Color main_bgcolor   { des = "Main Background Color"; }
+    property Color main_textcolor { des = "Main Text Color"; }
+    property Color scroll_bgcolor { des = "Scrolling Region Background Color"; }
+    property Color vlink_color    { des = "Visited link color"; }
+    property Color link_color     { des = "Unvisited link color"; }
+    property Color alink_color    { des = "Active (hover) link color"; }
+
+    set main_bgcolor        = "#ffffff";
+    set main_textcolor      = "#000000";
+    set scroll_bgcolor      = "#ffffff";
+    set vlink_color         = "#000099";
+    set link_color          = "#0000cc";
+    set alink_color         = "#0000ff";
+}
+
+propgroup background
+{
+    property string background_image {
+        des = "Background image";
+        note = "URL to an image to be used for the page background (leave blank for none, or choose from a default below:).";
+    }
+    property string background_watermark {
+        des = "Background image (provided watermark)";
+        note = "Choose from a few pre-selected images to 'watermark' into the background";
+        values = "none|None|photobooth.png|Photo Booth|photodeck.png|Photo Deck|filmreel.png|Film Reel|tornfilm.png|Cut Film Frame|frame.png|Picture Frame";
+    }
+    property string background_repeat {
+       des = "Background image repeat";
+       values = "repeat|Repeat|no-repeat|Don't repeat|repeat-x|Repeat across only|repeat-y|Repeat down only";
+    }
+    property string background_position {
+       des = "Background image position";
+       note = "Does not apply if background image is repeating in both directions.";
+       values = "center|Center|center left|Center-left|center right|Center-right|top|Top|top left|Top-left|top right|Top-right|bottom|Bottom|bottom left|Bottom-left|bottom right|Bottom-right|left|Left|right|Right";
+    }
+    property string background_scrolling {
+        des = "Background image scrolling";
+        note = "Not supported in all browsers, but allows for the background image to be in a fixed position when scrolling.";
+        values = "scroll|Scroll|fixed|Fixed";
+    }
+    property string background { noui = 1; }
+    set background_image      = "";
+    set background_watermark  = "none";
+    set background_repeat     = "no-repeat";
+    set background_position   = "top right";
+    set background_scrolling  = "fixed";
+    set background            = "";
+}
+
+propgroup fonts {
+    property string font_base {
+        des = "Preferred font";
+        note = "An alternative font can be entered below";
+        values = "Arial|Arial|Helvetica|Helvetica|Times New Roman|Times New Roman|Courier|Courier|Palatino|Palatino|Garamond|Garamond|Bookman|Bookman|Avant Garde|Avant Garde|Verdana|Verdana|Georgia|Georgia|Comic Sans MS|Comic Sans MS|Trebuchet MS|Trebuchet MS|none|Use browser's default";
+    }
+    property string font_alternative {
+        des = "Alternative font, if preferred font is not provided";
+        note = "This font is not guaranteed to work for everyone.";
+    }
+    property string font_fallback {
+        des = "Fallback font style";
+        values = "sans-serif|Sans-serif|serif|Serif|cursive|Cursive|monospace|Monospaced|none|Use browser's default";
+    }
+    set font_base = "none";
+    set font_fallback = "none";
+    property string font_size {
+        des = "Font size";
+        note = "This depends on your browser's font settings and the font you selected above.";
+        values = ".75em|Smaller (.75em)|.85em|Small (.85em)|1em|Normal (1em)|1.1em|Large (1.1em)|1.25em|Larger (1.25em)";
+    }
+    set font_size = "1em";
+    property string font_style {
+        des = "Font style";
+        values = "none|Normal|bold|Bold|italic|Italic|italic bold|Bold & Italic";
+    }
+    set font_style = "none";
+    property string font { noui = 1; }
+    set font = "";
+}
+
+#
+# Text
+#
+
+property string text_label_galleries { noui = 1; }
+property string text_label_subgalleries { noui = 1; }
+property string text_label_pictures  { noui = 1; }
+
+set text_label_galleries      = "Galleries:";
+set text_label_subgalleries   = "Related Galleries:";
+set text_label_pictures       = "Images:";
+
+#
+# Navigation
+#
+
+property string prev_image { noui = 1; }
+set prev_image = "simplecontrols/prev.gif|32|32|bfgcolor";
+property string next_image { noui = 1; }
+set next_image = "simplecontrols/next.gif|32|32|bgcolor";
+property string first_image { noui = 1; }
+set first_image = "simplecontrols/first.gif|32|32|bgcolor";
+property string last_image { noui = 1; }
+set last_image = "simplecontrols/last.gif|32|32|bgcolor";
+
+property bool scroll_horz_edge { noui = 1; }
+property string main_tint { noui = 1; }
+property string scroll_tint { noui = 1; }
+
+function prop_init ()
+{
+    $*scroll_horz_edge = ($*scroll_pos == "top" or $*scroll_pos == "bottom") ? true : false;
+    $*thumbnails = "pn=100x100" + $*thumbnail_style + "&norm=" + $*thumbnail_size + $*thumbnail_style;
+    if ($*show_shadows) {
+        $*main_tint = $*main_bgcolor.as_string->substr(1, 6) + $*shadow_color.as_string->substr(1, 6);
+        $*scroll_tint = $*scroll_bgcolor.as_string->substr(1, 6) + $*shadow_color.as_string->substr(1, 6);
+    }
+
+    # Calculate font string for CSS
+    if ($*font_base != "none" or $*font_fallback != "none") {
+        $*font = "font: ";
+        if ($*font_style != "none") { $*font = $*font + "$*font_style "; }
+        $*font = $*font + "$*font_size ";
+        if ($*font_base != "") { 
+            $*font = $*font + "\"$*font_base\"";
+            if ($*font_fallback != "none") { $*font = $*font + ", "; }
+        }
+        if ($*font_fallback != "none") { $*font = $*font + $*font_fallback; }
+    } else {
+        $*font = "font-size: $*font_size";
+        if ($*font_style == "italic bold") {
+            $*font = $*font + ";\n    font-weight: bold;\nfont-style: italic";
+        } elseif ($*font_style == "italic") {
+            $*font = $*font + ";\n    font-style: italic";
+        } elseif ($*font_style == "bold") {
+            $*font = $*font + ";\n    font-weight: bold";
+        }
+    }
+    # Background CSS
+    $*background = "background-color: $*main_bgcolor";
+    if ($*background_image != "" or $*background_watermark != "none") {
+        # If possible we can tint the background image with the background color for added effect
+        if ($*background_watermark != "none") {
+            $*background_image = palimg_tint("watermarkbg/$*background_watermark", $*main_bgcolor);
+        }
+        $*background = $*background + """;\n    background-image: url('$*background_image');\n""" +
+                                      """    background-repeat: $*background_repeat;\n""" + 
+                                      """    background-position: $*background_position;\n""" + 
+                                      """    background-attachment: $*background_scrolling""";
+    }
+    
+}
+
+
+function controlbarimg(string linkurl, string icon, string title) {
+    println """<a href="$linkurl" target="_top"><img src="/img/simpletoolbar/${icon}.gif" width="15" height="15" """ +
+            """border="0" alt="[$title]" title="$title" /></a>""";
+}
+
+function print_stylesheet ()
+{
+"""
+body {
+    $*font;
+    color: $*main_textcolor;
+    text-align: center;
+}
+#Main {
+    margin: 0; padding: 5px;
+    $*background;
+}
+#Scroll {
+    $*font;
+    margin: 0; padding: 0;
+    background-color: $*scroll_bgcolor;
+}
+#Contents {
+    margin-right: auto;
+    margin-left: auto;
+    width: 480px;
+    text-align: left;
+}
+a               { text-decoration: none; }
+a:link          { color: $*link_color; }
+a:visited       { color: $*vlink_color; }
+a:hover         { color: $*alink_color; }
+dt { 
+    height: 22px;
+    padding-left: 24px;
+    background-image: url("/img/apache/folder.gif");
+    background-repeat: no-repeat;
+    background-position: top left;
+
+    line-height: 22px;
+}
+
+.exif dl dt {
+    background-image: none;
+}
+
+.picture_viewer { text-align: justify; }
+.pagination {
+    text-align: right;
+    font-weight: bold;
+}
+.pic_title {
+    font-size: 15px;
+    margin: 2px;
+}
+#GalleryPageChildren td {
+    white-space: nowrap;
+}
+""";
+}
+
+function Page::print ()
+{
+    var string title = $this->title();
+"""
+<html>
+  <head>
+""";
+$this->print_head();
+"""
+    <title>$title</title>
+    <link rel="stylesheet" href="$.stylesheeturl" type="text/css">
+  </head>
+  <body id="Main">
+    <div id="Contents">
+      <h1>$title</h1>
+""";
+    $this->print_body();
+"""
+    </div>
+  </body>
+</html>
+""";
+}
+
+function page_ir_caption(ItemRange ir) : string
+{
+    return "Page $ir.current of $ir.total"; 
+}
+
+function gallery_ir_caption (ItemRange ir) : string
+{
+    return "$ir.total_subitems Galleries, Displaying $ir.from_subitem-$ir.to_subitem"; 
+}
+
+function pic_ir_caption(ItemRange ir) : string
+{
+    return "Image $ir.current of $ir.total"; 
+}
+function choose_picture () : string
+{
+    if($*scroll_horz_edge) { return "Choose an image from the $*scroll_pos frame"; }
+    return "Choose an image from the $*scroll_pos";
+}
+
+#
+# Index Page
+#
+
+function sort_create_select(IndexPage ip, string mode, string label) {
+    if ($ip.sort_mode == $mode) {
+        println """<option value="$mode" selected="true">$label</option>""";
+    } elseif (not isnull $ip.sort_link{$mode}) {
+        println """<option value="$mode">$label</option>]""";
+    }
+}
+
+function index_navigation_blurb (ItemRange ir) {
+    if ($ir.all_subitems_displayed) { return; }
+    var Image p;
+    var string caption = page_ir_caption($ir);
+
+    print """<div style='text-align: center'>""";
+    if ($ir.url_first != "") {
+        print """<a href="$ir.url_first">""";
+        $p = palimg_create($*first_image); $p->print("", "align='absmiddle'");
+        print "</a>";
+    }
+    if ($ir.url_prev != "") {
+        print """<a href="$ir.url_prev">""";
+        $p = palimg_create($*prev_image); $p->print("", "align='absmiddle'");
+        print "</a>";
+    }
+    print "<strong>$caption</strong>";
+    if ($ir.url_next != "") {
+        print """<a href="$ir.url_next">""";
+        $p = palimg_create($*next_image); $p->print("", "align='absmiddle'");
+        print "</a>";
+    }
+    if ($ir.url_last != "") {
+        print """<a href="$ir.url_last">""";
+        $p = palimg_create($*last_image); $p->print("", "align='absmiddle'");
+        "</a>";
+    }
+    println """</div>""";
+}
+
+function print_gallery_def_list (Gallery[] gals)
+{
+    println "<dl>";
+    foreach var Gallery g ($gals) {
+        print """<dt><a href="$g.url" target="_top">$g.name</a>""";
+        if ($g.numpics) {
+            print """ <em>($g.numpics images)</em>""";
+        }
+        println """</dt>""";
+        var Image i = $g->get_preview_image("norm");
+        if (not isnull $i or $g.des != "") {
+            print """<dd>""";
+            if (not isnull $i) {
+                print """<a href="$g.url" target="_top">""";
+                $i->print({
+                    "href" => $g.url,
+                    "tint" => $*main_tint,
+                    "alt"  => $g.name,
+                });
+                print """</a>""";
+            }
+            if (not isnull $i and $g.des != "") { print "<br />"; }
+            if ($g.des != "") { print $g.des; }
+            println """</dd>""";
+        }
+    }
+    println "</dl>";
+}
+
+function IndexPage::title () : string { return "$.user.usercs's index page"; }
+
+function IndexPage::print_body ()
+{
+    if (size $.sort_mode > 0)
+    {
+        println """<form action="$.self_link.url" method="get"><select name="sort">""";
+        sort_create_select($this, "top", "Top Level");
+        sort_create_select($this, "alpha", "Alphabetical");
+        sort_create_select($this, "recent", "Most Recent");
+        sort_create_select($this, "date", "Date");
+        println """</select><input type="submit" value="Sort" /></form>""";
+    }
+    if (viewer_is_owner()) { """<strong>Manage:<strong> [<a href="$.manage_url">Account</a>]"""; }
+    if (not $.sorted_pages.all_subitems_displayed) {
+          index_navigation_blurb($.sorted_pages);
+          print gallery_ir_caption($.sorted_pages);
+    }
+    if ((size $.galleries) == 0) { 
+        println """<p>$*text_nogalleries</p>""";
+    } else {
+        print_gallery_def_list($.sorted_galleries);
+    }
+    if (not $.sorted_pages.all_subitems_displayed and $.sorted_pages.num_subitems_displayed > 10) { 
+        index_navigation_blurb($.sorted_pages);
+    }
+}
+
+#
+# Gallery Page
+#
+
+function GalleryPage::lay_print_gals_simple() 
+{
+    if ((size $.gallery.children) == 0) {
+        print "<p>$*text_nogalleries</p>";
+        return;
+    }
+    print """<table id="GalleryPageChildren">""";
+    if ($*scroll_horz_edge) { print """<tr valign="top">"""; }
+    foreach var Gallery g ($.gallery.children)
+    {
+        var string sname = $g.name;
+        if ($g.numpics) {
+            $sname = $sname + " <em>($g.numpics)</em>";
+        }
+        var string folder = """<img src="/img/apache/folder.gif" alt="[DIR]" width="16" height="16" border="0" />""";
+        $sname = """<a href="$g.url" target="_top">$folder $sname</a>""";
+
+        if (not $*scroll_horz_edge) { print """<tr>"""; }
+        print """<td>""";
+        if ($*show_thumb_titles == "above") { print """$sname<br />"""; }
+        var Image i = $g->get_preview_image("norm");
+        if (not isnull $i) {
+            print """<a href="$g.url" target="_top">""";
+            $i->print();
+            print """</a>""";
+        } else {
+            if ($*show_thumb_titles == "no") { "$sname"; }
+        }
+        if ($*show_thumb_titles == "below") { """<br />$sname"""; }
+        print """</td>""";
+        if (not $*scroll_horz_edge) { "</tr>"; }
+    }
+    if ($*scroll_horz_edge) { print """</tr>"""; }
+    println """</table>""";
+}
+
+function gallery_navigation_blurb (ItemRange ir) {
+    if ($ir.all_subitems_displayed) { return; }
+    var Image p;
+    var string caption = "<strong>" + page_ir_caption($ir) + "</strong>";
+
+    if (not $*scroll_horz_edge) { print """<tr>"""; }
+    print """<td style="text-align: center; white-space: nowrap;">$caption<br />""";
+    if ($ir.url_first != "") {
+        print """<a href="$ir.url_first&.frame=thumbs" target="thumbs">""";
+        $p = palimg_create($*first_image); $p->print("", "align='absmiddle'");
+        print "</a>";
+    }
+    if ($ir.url_prev != "") {
+        print """<a href="$ir.url_prev&.frame=thumbs" target="thumbs">""";
+        $p = palimg_create($*prev_image); $p->print("", "align='absmiddle'");
+        print "</a>";
+    }
+    if ($ir.url_next != "") {
+        print """<a href="$ir.url_next&.frame=thumbs" target="thumbs">""";
+        $p = palimg_create($*next_image); $p->print("", "align='absmiddle'");
+        print "</a>";
+    }
+    if ($ir.url_last != "") {
+        print """<a href="$ir.url_last&.frame=thumbs" target="thumbs">""";
+        $p = palimg_create($*last_image); $p->print("", "align='absmiddle'");
+        print "</a>";
+    }
+    print "</td>";
+    if (not $*scroll_horz_edge) { println "</tr>"; }
+}
+
+function GalleryPage::print ()
+{
+    if ($.args{"frame"} == "info") {
+        $super->print();
+        return;
+    }
+    if ($.args{"frame"} == "thumbs") {
+        $this->print_body();
+        return;
+    }
+    var string noborder = "frameborder='0' framespacing='0' border='0' style='border: 0;'";
+    var int frame_size = int($*thumbnail_size->substr(0,3)) + 50;
+
+    if ($*show_shadows) { $frame_size = $frame_size + 10; }
+    if ($*show_thumb_titles != "no" and $*scroll_horz_edge) { $frame_size = $frame_size + 17; }
+    var string title = $this->title();
+
+    println """<html>\n  <head>\n    <link rel="stylesheet" href="$.stylesheeturl" type="text/css" />""";
+    println """    <title>$title</title>\n  </head>""";
+    if ($*scroll_pos == "bottom") {
+        println """<frameset rows="*,$frame_size" $noborder>""";
+        println """<frame src="$.self_link.url?.frame=info" name="main" $noborder>""";
+        println """<frame noresize="noresize" src="$.self_link.url?.frame=thumbs" name="thumbs" scrolling="yes" $noborder>""";
+        println """</frameset>""";
+    } elseif ($*scroll_pos == "left") {
+        println """<frameset cols="$frame_size,*" $noborder>""";
+        println """<frame noresize="noresize" src="$.self_link.url?.frame=thumbs" name="thumbs" scrolling="yes" $noborder>""";
+        println """<frame src="$.self_link.url?.frame=info" name="main" $noborder>""";
+        println """</frameset>""";
+    } elseif ($*scroll_pos == "right") {
+        println """<frameset cols="*,$frame_size" $noborder>""";
+        println """<frame src="$.self_link.url?.frame=info" name="main" $noborder>""";
+        println """<frame noresize="noresize" src="$.self_link.url?.frame=thumbs" name="thumbs" scrolling="yes" $noborder>""";
+        println """</frameset>""";
+    } elseif ($*scroll_pos == "top") {
+        println """<frameset rows="$frame_size,*" $noborder>""";
+        println """<frame noresize="noresize" src="$.self_link.url?.frame=thumbs" name="thumbs" scrolling="yes" $noborder>""";
+        println """<frame src="$.self_link.url?.frame=info" name="main" $noborder>""";
+        println """</frameset>""";
+    }
+    println """</html>""";
+}
+
+function GalleryPage::title () : string { return $.gallery.name; }
+
+function GalleryPage::print_body ()
+{
+    if ($.args{"frame"} == "info") {
+        println """<strong>Navigate:</strong> [<a href="$.parent_link.url" target="_top">$.parent_link.caption</a>]<br />""";
+        if (viewer_is_owner()) {
+            println """<strong>Manage:</strong> [<a href="$.manage_url" target="_top">Gallery</a>]<br />""";
+        }
+        if ($.copy_url != "") {
+            println """<strong>Copy:</strong> [<a href="$.copy_url" target="_top">Gallery</a>]<br />""";
+        }
+        if (not isnull $.gallery.date) {
+            print """<strong>Date Created:</strong> ["""; $.gallery.date->print_date(); println """]<br />""";
+        }
+        if ($.des != "") {
+            println """<strong>Description:</strong> <blockquote>$.des</blockquote>""";
+        }
+        if (size $.gallery.children > 0) {
+            print_gallery_def_list($.gallery.children);
+        }
+        if ((size $.pictures) == 0 ) { 
+            println """<p>There are no images in this gallery</p>""";
+            return;
+        }
+        var string directions = choose_picture();
+        println """<p><strong>Directions:</strong> $directions</p>""";
+        print choose_picture();
+        return;
+    }
+
+    println """<html>\n  <head>\n  <link rel="stylesheet" href="$.stylesheeturl" type="text/css" />""";
+    println """  </head>\n  <body id="Scroll">""";
+    if ($*scroll_horz_edge) { """<table><tr valign="$*scroll_bottom_align">\n"""; }
+
+    gallery_navigation_blurb($.pages);
+    
+    if ((size $this.gallery.children) != 0) {
+        if ($*scroll_horz_edge) { "<td>"; }
+        $this->lay_print_gals_simple();
+        if ($*scroll_horz_edge) { "</td>\n"; }
+    }
+
+    if ($*scroll_horz_edge) { "<td>"; }
+    println """<table cellpadding="2" cellspacing="2">""";
+    if ((size $.pictures) == 0) {
+        println "<tr><td><p>There are no images in this gallery</p></td></tr>";
+    } else {
+        if ($*scroll_horz_edge) { """<tr valign="$*scroll_bottom_align">"""; }
+        foreach var Picture p ($.pictures) {
+            var Image i = $p.thumbnails{"norm"};
+            var string ftitle = $p.title != "" ? """<span class="pic_title"><a href="$p.url" target="main" class="pic_title">""" + 
+                                                 $p.title->substr(0,20) + "</a></span>" 
+                                               : "";
+            if (not $*scroll_horz_edge) { "<tr>"; }
+            println """<td nowrap="nowrap">""";
+            if ($*show_thumb_titles == "above" and $ftitle != "") { print "$ftitle<br />"; }
+            $i->print({
+                "tint" => $*scroll_tint,
+                "href" => $p.url,
+                "alt"  => $p.title,
+                "a_attr" => "target='main'",
+            });
+            if ($*show_thumb_titles == "below" and $ftitle != "") { print "<br />$ftitle"; }
+            println "</td>";
+            if (not $*scroll_horz_edge) { "</tr>"; }
+        }
+        if(size $.pictures > 10) { gallery_navigation_blurb($.pages); }
+        if ($*scroll_horz_edge) { "</tr>"; }
+    }
+    
+    println "</table>";
+    if ($*scroll_horz_edge) { println "</td></tr></table>"; }
+    println "</body></html>";
+}
+
+#
+# Picture Page
+#
+
+function PicturePage::title () : string
+{
+    var Page p = get_page();
+    if ($.picture.title != "") { return "$p.user.usercs - $.picture.title"; }
+    return "$p.user.usercs";
+}
+
+function PicturePage::print_body ()
+{
+    print """<div style="text-align: center">""";
+
+    var Image inline = $.picture->get_image(640, 480);
+    print """<a target="_top" href="$.picture.fullimage.url">"""; $inline->print($.picture.title); println """</a><br />""";
+    print """[<a href="$.parent_link.url" target="_top">$.parent_link.caption</a>]""";
+
+    if (viewer_is_owner()) { controlbarimg($this.manage_url,"tweak","Manage Image"); }
+    if ($.copy_url != "")  { controlbarimg($.copy_url,"copy","Copy Image"); }
+    controlbarimg($.picture.fullimage.url,"zoomin","Zoom In");
+
+    if ($.des != "") { println """<blockquote style="text-align: left">$.des</blockquote>"""; }
+    print """</div>""";
+
+    if ($*show_exif == "raw") { "<div class='exif'>"; $this->print_exif_cats(["image", "media", "gps", "exposure"]); "</div>"; }
+}

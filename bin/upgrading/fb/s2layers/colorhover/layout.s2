@@ -1,0 +1,163 @@
+#-*-c++-*-
+
+layerinfo "type" = "layout";
+layerinfo "name" = "Color Hover";
+layerinfo "redist_uniq" = "colorhover/layout";
+
+property Color bgcolor {
+  des = "Background color";
+}
+set bgcolor = "#000000";
+
+property Color fgcolor {
+  des = "Foreground color";
+}
+set fgcolor = "#ffffff";
+
+set thumbnails = "bw=100x100,grey&color=100x100";
+
+function print_stylesheet () {
+  print "body {
+   background: $*bgcolor;
+   color: $*fgcolor;
+   font-family: verdana, arial, serif;
+   font-size: 11pt;
+   line-height: 16pt;
+   margin: 40px;
+   vertical-align: top;
+}
+";
+}
+
+function Page::print ()
+{
+  "<html><head><title>";
+  print $this->title();
+  "</title>\n";
+  $this->print_head();
+  """<link rel="stylesheet" href="$.stylesheeturl" type="text/css">\n""";
+  "</head>\n<body link='#c0c0c0' vlink='#c0c0c0' alink='#ffffff'>";
+
+  "<h1>";
+  print $this->title();
+  "</h1>";
+  "<p>";
+  $this->print_body();
+  "</body></html>";
+}
+
+function IndexPage::title () : string
+{
+  return "$.user.usercs's index page";
+}
+
+function IndexPage::print_body ()
+{
+  "Galleries:";
+  $this->print_gallerylist($.galleries);
+}
+
+
+function GalleryPage::title () : string
+{
+  return $.gallery.name;
+}
+
+function GalleryPage::print_body ()
+{
+  var Image img;
+
+  if (not $.pages.all_subitems_displayed) {
+    """<p style="text-align: right">""";
+    $.pages->print("<b>Page $.pages.current of $.pages.total</b><br />Pictures $.pages.from_subitem-$.pages.to_subitem");
+    "</p>";
+  }
+
+  "<p>";
+  "[&lt;&lt; <a href=\"$.parent_link.url\">$.parent_link.caption</a>]\n";
+  if (viewer_is_owner()) {
+    "[<a href=\"$.manage_url\">Manage Gallery</a>]\n";
+  }
+  if ($.copy_url != "") {
+    "[<a href=\"$.copy_url\">Copy Gallery</a>]\n";
+  }
+  "</p>";
+
+  if (size $.gallery.children > 0) {
+    "<b>Sub-galleries:</b><ul>";
+    foreach var Gallery g ($.gallery.children) {
+      "<li><a href=\"$g.url\">$g.name</a>";
+      if ($g.numpics > 0) { " <i>($g.numpics)</i>"; }
+      "</li>\n";
+    }
+    "</ul>";
+  }
+
+  "<script>";
+  "var ar = new Array;";
+  foreach var Picture p ($.pictures) {
+    $img = $p.thumbnails{"color"};
+    """
+ar["${p.piccode}c"] = new Image();
+ar["${p.piccode}c"].src = "$img.url";
+""";
+    $img = $p.thumbnails{"bw"};
+    """
+ar["${p.piccode}b"] = new Image();
+ar["${p.piccode}b"].src = "$img.url";
+""";
+  }  
+  """
+function withcolor (code) {
+  var im = document.getElementById('thumb'+code);
+  if (im) {
+    im.src = ar[code+"c"].src;
+  }
+}
+function withoutcolor (code) {
+  var im = document.getElementById('thumb'+code);
+  if (im) {
+    im.src = ar[code+"b"].src;
+  }
+}
+
+</script>
+""";
+
+
+  foreach var Picture p ($.pictures) {
+    "<a href=\"$p.url\">";
+    $img = $p.thumbnails{"bw"};
+    "<img border='0' id='thumb$p.piccode' src='$img.url' width='$img.width' height='$img.height' ";
+    " onmouseover=\"withcolor('$p.piccode')\" onmouseout=\"withoutcolor('$p.piccode')\" >";
+    "</a>\n";
+  }
+
+}
+
+function PicturePage::title () : string
+{
+  var Page p = get_page();
+  return "$p.user.usercs: $.picture.piccode";
+}
+
+function PicturePage::print_body ()
+{ 
+  "<p>";
+  if ($.parent_link.url != "") {
+      "[&lt;&lt; <a href=\"$.parent_link.url\">$.parent_link.caption</a>]\n";
+  }
+  if (viewer_is_owner()) {
+      "[<a href=\"$.manage_url\">Manage Picture</a>]\n";
+  }
+  if ($.copy_url != "") {
+    "[<a href=\"$.copy_url\">Copy Picture</a>]\n";
+  }
+  "</p>";
+  var Image inline = $.picture->get_image(640, 480);
+  "<a href=\"$.picture.fullimage.url\">";
+  $inline->print($.picture.piccode); # foo
+  "</a>\n";
+  if ($*show_exif == "raw") { $this->print_exif_cats(["image", "media", "gps", "exposure"]); }
+}
+

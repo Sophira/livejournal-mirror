@@ -1,0 +1,55 @@
+#NEWLAYER: framed/filmreel
+layerinfo "type" = "theme";
+layerinfo "name" = "Film Reel";
+layerinfo "redist_uniq" = "framed/filmreel";
+
+set main_bgcolor = "#ffffff";
+set scroll_bgcolor = "#c0c0c0";
+set background_watermark = "filmreel.png";
+set background_position = "center right";
+set background_scrolling = "fixed";
+
+#NEWLAYER: framed/tornfilm
+layerinfo "type" = "theme";
+layerinfo "name" = "Torn Film";
+layerinfo "redist_uniq" = "framed/tornfilm";
+
+set main_bgcolor = "#336699";
+set scroll_bgcolor = "#336699";
+set background_watermark = "tornfilm.png";
+set background_position = "top right";
+set background_scrolling = "fixed";
+
+#NEWLAYER: framed/photodeck
+layerinfo "type" = "theme";
+layerinfo "name" = "Deck of Photos";
+layerinfo "redist_uniq" = "framed/photodeck";
+
+set main_bgcolor = "#ee8179";
+set scroll_bgcolor = "#ee8179";
+set background_watermark = "photodeck.png";
+set background_position = "top left";
+set background_scrolling = "fixed";
+
+#NEWLAYER: framed/photobooth
+layerinfo "type" = "theme";
+layerinfo "name" = "Photo Booth";
+layerinfo "redist_uniq" = "framed/photobooth";
+
+set main_bgcolor = "#42c634";
+set scroll_bgcolor = "#42c634";
+set background_watermark = "photobooth.png";
+set background_position = "top right";
+set background_scrolling = "fixed";
+
+#NEWLAYER: framed/frame
+layerinfo "type" = "theme";
+layerinfo "name" = "Picture Frame";
+layerinfo "redist_uniq" = "framed/frame";
+
+set main_bgcolor = "#acacad";
+set scroll_bgcolor = "#acacad";
+set background_watermark = "frame.png";
+set background_position = "center left";
+set background_scrolling = "fixed";
+

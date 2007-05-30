@@ -1,0 +1,622 @@
+################################################################################
+#
+# Layout Information
+#
+
+layerinfo type = "layout";
+layerinfo name = "Positive Contact";
+layerinfo redist_uniq = "positivecontact/layout";
+layerinfo author_name = "Jesse Proulx";
+layerinfo author_email = "jproulx@livejournal.com";
+layerinfo source_viewable = 1;
+layerinfo is_public = 1;
+
+################################################################################
+#
+# Properties
+#
+
+propgroup presentation 
+{
+    property string viewing_size {
+        des = "View individual images at what size?";
+        values = "small|Small (320x240)|regular|Regular (640x480)";
+    }
+
+    property string sidebar_position {
+        des = "Position of the sidebar relative to the main content";
+        values = "left|To the left|right|To the right";
+    }
+
+    property string thumb_size {
+        des = "Thumbnail size";
+        values = "100x80|100x80|150x120|150x120|200x180|200x180";
+    }
+    property string thumb_style {
+        des = "Thumbnail preview style";
+        values = "|Scaled|,crop|Cropped|,zoom|Crop, but fit exactly";
+    }
+    property string title_align {
+      des = "Alignment of the page title";
+      values = "left|Flush to the left|center|Centered|right|Flush to the right";
+    }
+    set viewing_size = "regular";
+    set sidebar_position = "right";
+    set thumb_style = "";
+    set thumb_size = "150x120";
+    set title_align = "left";
+
+}
+propgroup colors 
+{
+    property Color bgcolor {
+        des = "Page Background color";
+    }
+  
+    property Color title_fgcolor {
+        des = "Text color of the page title";
+    }
+
+    property Color title_navigation_bgcolor {
+        des = "Background color for the navigation bar";
+    }
+    property Color title_navigation_fgcolor {
+        des = "Text color for the navigation bar";
+    }
+    property Color title_navigation_border {
+        des = "Border color around the navigation bar";
+    }
+
+    property Color sidebar_box_bgcolor {
+        des = "Background color for sidebar boxes";
+    }
+    property Color sidebar_box_fgcolor {
+        des = "Text color for sidebar boxes";
+    }
+    property Color sidebar_box_border {
+        des = "Border color around sidebar boxes";
+    }
+    property Color sidebar_box_title_bgcolor {
+        des = "Background color for sidebar box titles";
+    }
+    property Color sidebar_box_title_fgcolor {
+        des = "Text color for sidebar box titles";
+    }
+
+    property Color floater_bgcolor {
+        des = "Background color for thumbnail descriptions";
+    }
+    property Color floater_fgcolor {
+        des = "Text color for thumbnail descriptions";
+    }
+
+    property Color tags_fgcolor {
+        des = "Text color for tag links"; 
+    }
+
+    set bgcolor = "#dedede";
+
+    set title_fgcolor = "#5252ff";
+
+    set title_navigation_bgcolor = "#5252ff";
+    set title_navigation_fgcolor = "#ffffff";
+    set title_navigation_border  = "#003366";
+
+    set sidebar_box_bgcolor = "#dddddd";
+    set sidebar_box_fgcolor = "#333333";
+    set sidebar_box_border  = "#003366";
+    set sidebar_box_title_bgcolor = "#336699";
+    set sidebar_box_title_fgcolor = "#ffffff";
+
+    set floater_bgcolor = "#6699cc";
+    set floater_fgcolor = "#ffffff";
+
+    set tags_fgcolor = "#555555";
+}
+propgroup background 
+{
+    property string background_image {
+        des = "Background image";
+        note = "URL to an image to be used for the page background (leave blank for none, or choose from a default below:).";
+    }
+    property string background_repeat {
+        des = "Background image repeat";
+        values = "repeat|Repeat|no-repeat|Don't repeat|repeat-x|Repeat across only|repeat-y|Repeat down only";
+    }
+    property string background_position {
+        des = "Background image position";
+        note = "Does not apply if background image is repeating in both directions.";
+        values = "center|Center|center left|Center-left|center right|Center-right|top|Top|top left|Top-left|top right|Top-right|bottom|Bottom|bottom left|Bottom-left|bottom right|Bottom-right|left|Left|right|Right";
+    }
+    property string background_scrolling {
+        des = "Background image scrolling";
+        note = "Not supported in all browsers, but allows for the background image to be in a fixed position when scrolling.";
+        values = "scroll|Scroll|fixed|Fixed";
+    }
+    property string background { noui = 1; }
+    set background_image      = "";
+    set background_repeat     = "no-repeat";
+    set background_position   = "top right";
+    set background_scrolling  = "fixed";
+    set background            = "";
+}
+propgroup fonts
+{
+    property use font_base;
+    property use font_fallback;
+
+}
+propgroup text 
+{
+    property string title {
+        des = "Main page title";
+        note = "If you lave this blank, we will add a generic title as a default";
+    }
+    set title = "Fantabulous Galleria";
+}
+
+property string no_gal_preview_img {
+    noui = 1;
+    des = "Filler for galleries with no preview image.";
+}
+property string main_position {
+    noui = 1;
+    des = "Position of the main content relative to the sidebar";
+}
+property int picwidth {
+    des = "Pixel width of thumbnail image boxes";
+}
+set picwidth = 200;
+set main_position = "left";
+
+function prop_init () {
+    $*thumbnails = "preview=" + $*thumb_size + $*thumb_style;
+    $*thumbnails = $*thumbnails + "&subgal=" + "150x120" + ",zoom";
+
+    if ($*font_base == "") { $*font_base = "verdana"; }
+    if ($*font_fallback == "") { $*font_fallback = "sans-serif"; }
+
+    # I STEALZOR MAHLON IMGZ OMGLEETHAX
+    if ($*no_gal_preview_img == "") {
+        $*no_gal_preview_img = "/img/smoove/nogalpreview_" + $*thumb_size + ".png";
+    }
+
+    # set width so we can figure out shadow placements
+    if ($*thumb_size == "100x80")  { $*picwidth = 150; }
+    if ($*thumb_size == "150x120") { $*picwidth = 200; }
+    if ($*thumb_size == "200x180") { $*picwidth = 250; }
+
+    if ($*sidebar_position == "left") { $*main_position == "right"; }
+
+    # Background CSS
+    $*background = "background-color: $*bgcolor";
+    if ($*background_image != "") {
+        $*background = $*background + """;\n    background-image: url('$*background_image');\n""" +
+          """    background-repeat: $*background_repeat;\n""" + 
+          """    background-position: $*background_position;\n""" + 
+          """    background-attachment: $*background_scrolling""";
+    }
+}
+
+################################################################################
+#
+# CSS
+#
+
+function print_stylesheet () {
+    var string thumbnail_width = $*picwidth + "px";
+    """
+body {
+      $*background;
+      margin: 0;
+      padding: 0;
+      font: $*font_base, $*font_fallback;
+}
+#Title {
+      width: 100%;
+}
+#Title h1 {
+      color: $*title_fgcolor;
+      padding-left: 1em;
+}
+#TitleNav {
+      margin: 0;
+      padding: .5em;
+      padding-left: 1em;
+      height: 1.2em;
+      border-top: 1px solid $*title_navigation_border;
+      border-bottom: 1px solid $*title_navigation_border;
+      background-color: $*title_navigation_bgcolor;
+      color: $*title_navigation_fgcolor;
+}
+#TitleNav a {
+      color: $*title_navigation_fgcolor;
+}
+#Main {
+      margin: 0;
+      width: 100%;
+}
+#Sidebar {
+      width: 24%;
+      float: $*sidebar_position;
+      margin-top: 2%;
+      padding-left: 2%;
+}
+#SidebarContents {
+      width: 90%; 
+      text-align: left; 
+      padding-left: .5em; 
+      padding-right: .5em; 
+      margin-left: auto; 
+      margin-right: auto;
+}
+#Sidebar ul {
+      margin-left: 1em;
+      padding-left: 1em;
+}
+#Viewer {
+      width: 74%;
+      margin-top: 2%;
+      text-align: center;
+      float: $*main_position;
+}
+.Floater {
+      width: $thumbnail_width;
+      height: 220px;
+      margin-bottom: 10px;
+      margin-right: 10px;
+      margin-left: 10px;
+      float: left;
+}
+.FloaterDes {
+      margin: 0; 
+      padding: .5em; 
+      background-color: $*floater_bgcolor;
+      color: $*floater_fgcolor;
+}
+.FloaterDes a {
+      color: $*floater_fgcolor;
+}
+.SidebarBox { 
+      border: 1px solid $*sidebar_box_border;
+      background-color: $*sidebar_box_bgcolor;
+      color: $*sidebar_box_fgcolor;
+      padding: 0;
+      margin-bottom: 10px;
+}
+.SidebarBox a {
+      color: $*sidebar_box_fgcolor;
+}
+.SidebarBoxTitle { 
+      padding: .25em;
+      font-size: .8em;
+      margin: 1px;
+      background-color: $*sidebar_box_title_bgcolor;
+      color: $*sidebar_box_title_fgcolor;
+      font-family: verdana, sans-serif;
+}
+
+.SidebarBoxBody { 
+      padding: .25em;
+      margin: 1px;
+      font-size: .8em;
+      margin-top: 0;
+}
+
+#PictureTags {
+      font-size: .8em;
+      color: $*tags_fgcolor;
+}
+#PictureTags a {
+      color: $*tags_fgcolor;
+}
+    """;
+}
+
+function picture_title (Picture p) : string
+{
+  return $p.title != "" ? $p.title : "<em>Untitled Image</em>"; 
+}
+function print_sidebar_box(string title, string body)
+{
+    print """
+<div class="SidebarBox">
+  <h3 class="SidebarBoxTitle">$title</h3>
+  <div class="SidebarBoxBody">$body</div>
+</div>
+    """;
+}
+function logged_in(string login_text) : string
+{
+    var Page p = get_page();
+    if (viewer_logged_in()) {
+        if (viewer_is_owner()) {
+            return """<a href="$p.manage_account.url">$p.manage_account.caption</a>""";
+        }
+    }
+    return $login_text;
+}
+
+################################################################################
+#
+# Extending Page
+#
+
+function Page::lay_print_sidebar() { }
+function Page::lay_sidebar_title() : string { return ""; }
+function Page::lay_self_link() : string { return ""; }
+function Page::lay_sidebar_navigation() : string { return ""; }
+
+################################################################################
+#
+# Page
+#
+
+function Page::print ()
+{
+    var string title     = $this->title();
+    var string logged_in = logged_in("You are not currently logged in, <a href='/login'>Login now</a>?");
+    """
+<html>
+  <head>
+""";
+$this->print_head();
+"""
+    <title>$title</title>
+    <link rel="stylesheet" href="$.stylesheeturl" type="text/css">
+  </head>
+  <body>
+    <div id="Title" style="text-align: $*title_align">
+      <a name="top"></a>
+      <h1>$title</h1>
+      <div id="TitleNav">$logged_in</div>
+    </div>
+    <div id="Main" style="clear: both">
+      <div id="Sidebar" style="text-align: center"><div id="SidebarContents">
+    """;
+    var string navigation = """<ul><li><a href="$.user.url">View All Galleries</a></li>""" + 
+                            """<li>""" + logged_in("<a href='/login'>Log in to ScrapBook</a>") + """</li>""";
+    $navigation = $navigation + $this->lay_sidebar_navigation() + "</ul>";
+
+    print_sidebar_box("Navigation", $navigation);
+    print_sidebar_box("Link Back", """<p>Use this HTML to link back to this page:</p>""" +
+                                   """<textarea style="width: 100%" rows="5" cols="5">""" + 
+                                   ehtml($this->lay_self_link()) + """</textarea>""");
+
+    $this->lay_print_sidebar();
+    """
+        </div>
+      </div>
+
+      <div id="Viewer">
+        <div style="left: -16em; height: 100%; position: absolute;"> </div>
+    """;
+    $this->print_body();
+    """
+        </div>
+     </div>
+  </body>
+</html>
+""";
+}
+
+################################################################################
+#
+# IndexPage
+#
+
+function IndexPage::lay_print_sidebar() {
+    print """
+<div class="SidebarBox">
+  <h3 class="SidebarBoxTitle">All Galleries</h3>
+  <div class="SidebarBoxBody">
+    """;
+    $this->print_gallerylist();
+    print """
+  </div>
+</div>
+    """;
+}
+
+function IndexPage::lay_self_link() : string 
+{
+    if (viewer_is_owner()) {
+        return """<a href="$.self_link.url">Check out my gallery!</a>""";
+    } else {
+        return """<a href="$.self_link.url">Check out this gallery I found!</a>""";
+    }
+}
+
+function IndexPage::print_body()
+{
+    foreach var Gallery g ($.sorted_galleries) {
+        print """<div class="Floater"><div style="border: 1px solid #999;">""";
+        var Image i = $g->get_preview_image("preview");
+        if (not isnull $i) {
+            $i->print({
+              "href" => $g.url,
+              "alt" => $g.name,
+            });
+        } else {
+            print """<a href="$g.url"><img src="$*no_gal_preview_img" border="" /></a>""";
+        }
+        print """<p class="FloaterDes"><a href='$g.url'>$g.name</a>""";
+        print """</p></div></div>""";
+    }
+}
+
+function IndexPage::title () : string
+{
+    if ($*title != "") { return $*title; }
+    return "$.user.usercs's Galleries";
+}
+
+################################################################################
+#
+# GalleryPage
+#
+
+function GalleryPage::title () : string
+{
+    if ($*title != "") { return "$*title :: $.gallery.name"; }
+    return $.gallery.name;
+}
+
+function GalleryPage::lay_print_iframe_contents()
+{
+    print """<html><body><center>""";
+    foreach var Picture p ($.pictures) {
+        print """<a href="$p.url#top" style="border: 0;" target="_parent">""";
+        var Image i = $p.thumbnails{"preview"};
+        if (not isnull $i) {
+            $i->print({
+              "alt" => $p.title,
+              "inline" => "1",
+            });
+        }
+        print """</a><br /><br />""";
+        print """<a name="$p.piccode"></a>""";
+    }
+    print """</center></body></html>""";
+}
+
+function GalleryPage::lay_print_sidebar()
+{
+    if (size $.gallery.children > 0) {
+        var string related = "";
+        foreach var Gallery g ($.gallery.children) {
+          $related = $related + """<li><a href="$g.url">$g.name</a></li>""";
+        }
+        print_sidebar_box("Related Galleries", """<ul>$related</ul>""");
+    }
+}
+
+function GalleryPage::lay_self_link() : string
+{
+    return """<a href="$.self_link.url">Check out this gallery!</a>""";
+}
+
+function GalleryPage::lay_sidebar_navigation() : string 
+{
+    var string sidebar = "";
+    if (viewer_is_owner()) { $sidebar = $sidebar + """<li><a href="$.manage_url">Manage This Gallery</a></li>"""; }
+    if ($.copy_url != "")  { $sidebar = $sidebar + """<li><a href="$.copy_url">Copy this Gallery</a></li>"""; }
+    return $sidebar;
+}
+
+function GalleryPage::print()
+{
+    if (int($.args{"inline"})) { $this->lay_print_iframe_contents(); return; }
+    $super->print();
+}
+
+function GalleryPage::print_body()
+{
+    if (not $.pages.all_subitems_displayed) {
+        "<p>"; $.pages->print(""); "</p>";
+    }
+    foreach var Picture p ($.pictures) {
+        print """<div class="Floater"><div style="border: 1px solid #999;">""";
+        var Image i = $p.thumbnails{"preview"};
+        if (not isnull $i) {
+            $i->print({
+              "href" => $p.url,
+              "alt" => $p.title,
+              "inline" => "1",
+            });
+        } else {
+            print """<img src="$*no_gal_preview_img" border="" />""";
+        }
+        var string pictitle = picture_title($p);
+        print """<p class="FloaterDes"><a href='$p.url'>$pictitle</a>""";
+        print """</p></div></div>""";    
+    }
+
+    if (size $.gallery.children > 0) {
+        foreach var Gallery g ($.gallery.children) {
+            print """<div class="Floater"><div style="border: 1px solid #999;">""";
+            var Image i = $g->get_preview_image("preview");
+            if (not isnull $i) {
+                $i->print({
+                    "href" => $g.url,
+                    "alt" => $g.name,
+                });
+            } else {
+                print """<a href="$g.url"><img src="$*no_gal_preview_img" border="" /></a>""";
+            }
+            print """<p class="FloaterDes"><a href='$g.url'>$g.name</a>""";
+            print """</p></div></div>""";
+        }
+    }
+}
+
+################################################################################
+#
+# PicturePage
+#
+
+function PicturePage::title () : string
+{
+    var string title = $.picture.title == "" ? "Untitled Image" : $.picture.title;
+    if ($*title != "") { return "$*title :: $title"; }
+    return $title;
+}
+
+function PicturePage::lay_print_sidebar()
+{
+    var string part_of;
+    foreach var Link l ($.parent_links) {
+        $part_of = $part_of + """<li><a href="$l.url">$l.caption</a></li>""";
+    }
+    print_sidebar_box("Related Galleries", """<ul>$part_of</ul>""");
+
+    var string iframeurl = $.parent_link.url + "&.inline=1#" + $.picture.piccode;
+    var string iframe = """<iframe src="$iframeurl" style="width: 100%; height: 350px" """ +
+                        """frameborder="0" framespacing="0" border="0" scrolling="yes" scroll="yes"></iframe>""";
+    if ($.gallery.url != "") {
+        print_sidebar_box("Other Pictures", "<p>Here are some other pictures in this gallery:</p>" + $iframe);
+    }
+}
+
+function PicturePage::lay_sidebar_navigation() : string 
+{
+    var string sidebar = "";
+    if (viewer_is_owner()) { $sidebar = $sidebar + """<li><a href="$.manage_url">Manage This Image</a></li>"""; }
+    if ($.copy_url != "")  { $sidebar = $sidebar + """<li><a href="$.copy_url">Copy this Image</a></li>"""; }
+    $sidebar = $sidebar + """<li><a href="$.picture.fullimage.url">Download This Image</a></li>""";
+    return $sidebar;
+}
+
+function PicturePage::lay_self_link : string 
+{
+    var Image inline = $.picture->get_image(320, 240);
+    return """<a href="$.picture.url"><img src="$inline.url" alt="$.picture.piccode" /></a>""";
+}
+
+function PicturePage::print_body() {
+    if (not isnull $.pictures) {
+        if (not $.pictures.all_subitems_displayed) {
+            print "<p>"; $.pictures->print(""); "</p>";
+        }
+    }
+    var Image inline = $.picture->get_image(320, 240);
+    if ($*viewing_size == "small") { 
+        $inline = $.picture->get_image(320, 240);
+    } else {
+        $inline = $.picture->get_image(640, 480);
+    }
+    $inline->print({
+        "alt" => $.picture.piccode,
+    });
+    if (size $.tags > 0) {
+        print """<p id="PictureTags"><strong>Tags:</strong> """;
+        foreach var Link k ($.tags) {
+            print """<a href="$k.url">$k.caption</a>""";
+            if ($k.url != $.tags[size $.tags -1].url) {
+                print """, """;
+            }
+        }
+        print """</a>""";
+    }
+    if ($.picture.des != "") { print """<p id="PictureDes">$.picture.des</p>"""; }
+}

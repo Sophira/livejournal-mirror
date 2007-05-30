@@ -1,0 +1,1054 @@
+#-*-s2-*-
+
+layerinfo type = "layout";
+layerinfo name = "Vestibule";
+layerinfo redist_uniq = "vestibule/layout";
+layerinfo author_name = "Mahlon E. Smith";
+layerinfo author_email = "mahlon@martini.nu";
+layerinfo source_viewable = 0;
+layerinfo is_public = 1;
+
+##### properties
+
+propgroup presentation {
+    
+    property int conwidth {
+        des = "Content border width";
+    }
+    set conwidth = 1;
+
+    property use gallery_page_max_size;
+    set gallery_page_max_size = 25;
+    property use index_page_max_size;
+
+    property int imgborder {
+        des = "Width of border around images";
+    }
+    set imgborder = 1;
+
+    property string preview_size {
+        des = "Gallery thumbnail size";
+        values = "50x50|50x50|100x100|100x100|125x125|125x125|150x150|150x150|200x150|200x150|200x200|200x200";
+        note = "Gallery preview images";
+    }
+    set preview_size = "50x50";
+
+    property string gallery_preview_style {
+        des = "Gallery preview style";
+        values = "|Scaled|,crop|Cropped|,zoom|Crop, but fit exactly";
+    }
+    set gallery_preview_style = ",zoom";
+
+    property use thumbnail_size;
+    set thumbnail_size = "100x100";
+
+    property use thumbnail_style;
+    set thumbnail_style = ",zoom";
+
+    property bool indexsubgals {
+        des = "Show sub-galleries on index page?";
+    }
+    set indexsubgals = true;
+
+    property bool jsscroll {
+        des = "Use javascript scrollbars?";
+    }
+    set jsscroll = true;
+
+    property string scrollspeed {
+        des = "Javascript scrolling speed";
+        values = "2|Very slow|4|Slow|6|Medium|8|Fast|10|Very Fast";
+    }
+    set scrollspeed = "4";
+
+    property string pic_size {
+        des = "Image page image size";
+        values = "normal|Normal (640x480)|small|Small (320x240)";
+        note = "Smaller images mean less scrolling for small monitors.";
+    }
+    set pic_size = "normal";
+}
+
+propgroup colors {
+    property Color bgcolor {
+        des = "Background color";
+    }
+    set bgcolor = "#888888";
+
+    property Color hicolor {
+        des = "Button hilight color";
+    }
+    set hicolor = "#d9eeff";
+
+    property Color concolor {
+        des = "Content background color";
+    }
+    set concolor = "#dedede";
+
+    property Color fcolor {
+        des = "Inner frame background color";
+    }
+    set fcolor = "#dedede";
+
+    property Color scrollcol {
+        des = "Scrollbar color";
+    }
+    set scrollcol = "#cdcdcd";
+
+    property Color framebcol {
+        des = "Content border color";
+    }
+    set framebcol = "#888888";
+
+    property Color text_color {
+        des = "Text color";
+    }
+    set text_color = "#000000";
+}
+
+propgroup background {
+    property string bgimage {
+        des = "Background image";
+    }
+    set bgimage = "/img/vestibule/main/bg.png";
+    
+    property string bgrepeat {
+        des = "Background image repeat";
+        values = "no-repeat|none|repeat|repeat|repeat-y|vertically only|repeat-x|horizontally only";
+    }
+    set bgrepeat = "repeat-x";
+}
+
+propgroup fonts {
+    property use font_base;
+    property use font_fallback;
+
+    property int font_size {
+        des = "Main font size";
+        min = 8;
+        max = 48;
+    }
+    set font_size = 10;
+
+    property int header_font_size {
+        des = "Header font size";
+        min = 8;
+        max = 48;
+    }
+    set header_font_size = 10;
+
+    property int title_font_size {
+        des = "Title font size";
+        min = 8;
+        max = 48;
+    }
+    set title_font_size = 10;
+
+    property int font_pager_size {
+        des = "Pager font size";
+        min = 8;
+        max = 48;
+    }
+    set font_pager_size = 10;
+
+    property int font_desc_size {
+        des = "Description font size";
+        min = 8;
+        max = 48;
+    }
+    set font_desc_size = 10;
+}
+
+propgroup text {
+    property string title {
+        des = "Main page title";
+        note = "If you lave this blank, we will add a generic title as a default";
+    }
+    set title = "";
+}
+
+# No GUI for these - just knobs for themes.
+property string imgroot {
+    noui = 1;
+    des = "Root of style images";
+}
+set imgroot = "/img/vestibule/main";
+
+property int frameper {
+    noui = 1;
+    des = "Percentage of space the frame consumes";
+    max = 100;
+    min = 30;
+}
+set frameper = 100;
+
+property int bmargin {
+    noui = 1;
+    des = "Content box margin from browser border";
+    min = 0;
+}
+set bmargin = 20;
+
+property int borderwidth {
+    noui = 1;
+    des = "Main box border width";
+    min = 1;
+}
+set borderwidth = 2;
+
+property bool scrollshadows {
+    noui = 1;
+    des = "Use scrollbar shadows?";
+}
+set scrollshadows = true;
+
+property int pagerwidth { noui = 1; }
+set pagerwidth = 150;
+
+# scroll arrow highlights - up, down, left, right
+property string uah { noui = 1; }
+property string dah { noui = 1; }
+property string lah { noui = 1; }
+property string rah { noui = 1; }
+
+property int arrow_size { noui = 1; }
+set arrow_size = 12;
+
+property string bss { noui = 1; } # bottom scrollbar shadow
+property string rss { noui = 1; } # right scrollbar shadow
+
+property Color cbl { noui = 1; } # content border upper left
+property Color cbd { noui = 1; } # content border lower right
+
+property Color fcolor2 { noui = 1; } # alternating table color
+
+##### functions 
+
+function prop_init ()
+{
+    $*thumbnails = "pn=100x100" + $*thumbnail_style + "&norm=" + $*thumbnail_size + $*thumbnail_style;
+    if ($*preview_size != "") {
+        $*thumbnails = $*thumbnails + "&preview=" + $*preview_size + $*gallery_preview_style;
+    }
+
+    if ($*font_base == "") { $*font_base = "verdana"; }
+    if ($*font_fallback == "") { $*font_fallback = "sans-serif"; }
+
+    # setup tints
+    $*uah = palimg_tint("vestibule/main/uarrow.png", $*hicolor);
+    $*dah = palimg_tint("vestibule/main/darrow.png", $*hicolor);
+    $*lah = palimg_tint("vestibule/main/larrow.png", $*hicolor);
+    $*rah = palimg_tint("vestibule/main/rarrow.png", $*hicolor);
+
+    if (isnull $*cbl) { $*cbl = $*bgcolor->lighter(50); }
+    if (isnull $*cbd) { $*cbd = $*bgcolor->darker(50); }
+
+    if (isnull $*fcolor2) { $*fcolor2 = $*fcolor->darker(10); }
+   
+    if ($*scrollshadows) {
+        $*bss = palimg_gradient("vestibule/main/g_bottom.png", PalItem(0, $*framebcol), PalItem(6, $*scrollcol));
+        $*rss = palimg_gradient("vestibule/main/g_right.png", PalItem(0, $*framebcol), PalItem(6, $*scrollcol));
+    }
+
+    if ($*bgimage == "/img/vestibule/main/bg.png") {
+        var Color topimg = $*bgcolor->darker(70);
+        $*bgimage = palimg_gradient("vestibule/main/bg.png", PalItem(0, $topimg), PalItem(16, $*bgcolor));
+    } 
+}
+
+function print_ss_common () {
+    "
+a
+{
+    color: $*text_color;
+    text-decoration: none;
+}
+
+ul
+{
+    list-style-type: square;
+    padding:0;
+    margin-left:15px;
+}
+
+/* content outer */
+.c 
+{
+    background-color: $*concolor;
+    height: 100%;
+    width: 100%;
+    border-left: $*borderwidth" + "px solid $*cbl" + ";
+    border-top: $*borderwidth" + "px solid $*cbl" + ";
+    border-right: $*borderwidth" + "px solid $*cbd" + ";
+    border-bottom: $*borderwidth" + "px solid $*cbd" + ";
+}
+
+/* header */
+.c .h
+{
+    background-color: $*scrollcol;
+    height: 43px;
+    white-space: nowrap;
+}
+
+/* content frame */
+.c .i
+{
+    width: 100%;
+    height: 100%;
+    min-height: 500px;
+    border-bottom: $*conwidth" + "px" + " solid $*framebcol;
+    border-left: $*conwidth" + "px" + " solid $*framebcol;
+    border-right: $*conwidth" + "px" + " solid $*framebcol;
+}
+
+/* scroller button */
+.sbar .btn
+{
+    border: $*conwidth" + "px" + " solid $*framebcol;
+}
+
+/* right scroller bar */
+.sbar .rbar
+{
+    ";
+    if ($*scrollshadows) {
+    "
+    background-image: url($*rss);
+    background-repeat: repeat-y;
+    ";
+    }
+    "
+    background-color: $*scrollcol;
+    border-right: $*conwidth" + "px" + " solid $*framebcol;
+}
+
+/* bottom scroller bar */
+.sbar .bbar
+{
+    ";
+    if ($*scrollshadows) {
+    "
+    background-image: url($*bss);
+    background-repeat: repeat-x;
+    ";
+    }
+    "
+    background-color: $*scrollcol;
+    border-bottom: $*conwidth" + "px" + " solid $*framebcol;
+}
+
+/* button header */
+.bheader
+{
+    font-size: $*header_font_size" + "px" + ";
+    text-align: center;
+    white-space: nowrap;
+    width: 100%;
+}
+
+/* button container */
+.bbar
+{
+    font-size: $*header_font_size" + "px" + ";
+    white-space: nowrap;
+    text-align: center;
+    border-top: 1px dotted $*cbd;
+}
+
+/* button */
+.bbar .button
+{
+    padding: 2px 5px 2px 5px;
+    cursor: pointer;
+}
+
+/* button hover */
+.bbar .buttondown
+{
+    padding: 1px 4px 1px 4px;
+    cursor: pointer;
+    background-color: $*hicolor;
+    border: 1px solid $*bgcolor;
+}
+
+/* gallery title */
+.gtitle
+{
+    font-size: $*title_font_size" + "px" + ";
+    padding-left: 5px;
+    font-weight: bold;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.g
+{
+    font-size: $*font_size" + "px" + ";
+    width: 500px;
+}
+
+.g td
+{
+    padding: 5px;
+    border-bottom: 1px dotted $*cbd;
+    vertical-align: top;
+}
+
+.gd
+{
+    font-size: $*font_desc_size" + "px" + ";
+}
+
+.gd dl
+{
+    text-align: left;
+}
+.ghead
+{
+    font-size: $*font_size" + "px" + ";
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.gname a
+{
+    padding: 1px;
+    font-weight: bold;
+}
+
+.gname a:hover
+{
+    padding: 0px;
+    font-weight: bold;
+    background-color: $*hicolor;
+    border: 1px solid $*bgcolor;
+}
+
+.pager
+{
+    font-size: $*font_pager_size" + "px" + ";
+    text-align: left;
+    vertical-align: top;
+    padding-left: 4px;
+    padding-top: 4px;
+    width: $*pagerwidth" + "px" + ";
+}
+
+.pager a { }
+.pager a:hover { }
+
+    ";
+}
+
+function print_stylesheet () {
+    "
+body
+{
+    ";
+    if ($*bgimage != "" and $*bgimage != "none") {
+    "
+    background-image: url($*bgimage);
+    background-repeat: $*bgrepeat;
+    ";
+    }
+    "
+    font-size: $*font_size" + "px" + ";
+    font-family: $*font_base, $*font_fallback, arial, helvetica;
+    background-color: $*bgcolor;
+    margin: $*bmargin" + "px;
+    vertical-align: center;
+    color: $*text_color;
+}
+    ";
+    print_ss_common();
+}
+
+function make_button (string text, string link)
+{
+    """
+    <span class="button" onclick="content.location.href='$link'" onmouseover="sswap(this, 'buttondown');" onmouseout="sswap(this, 'button');">
+    <a href="$link" target="content">$text</a>
+    </span>
+    """;
+    #<a href="$link" onclick='setframetext(loadingtext)' target="content">$text</a>
+}
+
+function make_button_no_frame (string text, string link)
+{
+    """
+    <span class="button" onclick="location.href='$link'" onmouseover="sswap(this, 'buttondown');" onmouseout="sswap(this, 'button');">
+    <a href="$link">$text</a>
+    </span>
+    """;
+}
+
+function Page::lay_make_button () {}
+function IndexPage::lay_make_button ()
+{
+    if (viewer_is_owner()) {
+        make_button_no_frame("manage", $.manage_url);
+    }
+    if (not viewer_logged_in()) {
+        make_button_no_frame("login", "/login");
+    }
+}
+
+function Page::lay_makegalsort () {}
+function IndexPage::lay_makegalsort ()
+{
+    var string{} sort_mode;
+    $sort_mode{"top"} = "top level";
+    $sort_mode{"recent"} = "recently updated";
+    $sort_mode{"alpha"} = "alphabetical";
+    $sort_mode{"date"} = "by date";
+    foreach var string mode (["top", "recent", "alpha", "date"]) {
+        make_button($sort_mode{$mode}, "$.sort_link{$mode}.url&.f=1");
+    }
+}
+
+function Page::print ()
+{
+  """<html>
+<head>""";
+$this->print_head();
+"""
+<!-- design by Mahlon E. Smith <mahlon@martini.nu>
+     for LiveJournal.com / PicPix.com -->
+<title>""";
+  print $this->title();
+  "</title>\n";
+  if ($.args{"f"}) {
+     "
+<style>
+body
+{
+    font-size: $*font_size" + "px" + ";
+    font-family: $*font_base, $*font_fallback, verdana, arial, helvetica;
+    background-color: $*fcolor;
+    color: $*text_color;
+    margin: 0px;
+    border-top: $*conwidth" + "px" + " solid $*framebcol;
+}
+";
+    print_ss_common();
+"</style>";
+  } else {
+          """<link rel="stylesheet" href="$.stylesheeturl" type="text/css">""";
+  }
+  """
+<script language="JavaScript" type="text/javascript">
+    var fheader = "<html><body>";
+    var loadingtext = "<div align='right'>" + "Loading..." + "</div></body></html>";
+    var scrollspeed = $*scrollspeed;
+</script>
+<script language="JavaScript" type="text/javascript" src="/js/vestibule.js"></script>
+
+</head>
+""";
+print "<body ";
+if ($.args{"f"} == "") {
+#    """onLoad='setframetext(loadingtext); content.location.href="$.self_link.url?.f=1"'""";
+    """onLoad='content.location.href="$.self_link.url?.f=1"'""";
+}
+print ">";
+"""
+""";
+    if ($.args{"f"}) {
+        $this->print_body();
+        "</body></html>";
+        return;
+    }
+"""
+    <!-- layout start -->
+    <table border="0" cellpadding="0" cellspacing="0" class="c">
+    <tr><td height="100%">
+
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%">
+        <tr><td class="h" nowrap=1> <!-- button cell start -->
+            <table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%">
+            <!-- gallery title and manage/login -->
+
+            <tr>
+                <td class="gtitle">
+                """;
+                print $this->title();
+                """
+                </td>
+                <td class="bheader" valign='bottom'>
+                """;
+                if ($.view == "index") {
+                    "gallery sorting";
+                } else {
+                    "&nbsp;";
+                }
+                if ($.view != "index" and $.args{"f"} == "") {
+                    var string title = ($*title == "") ? "$.user.usercs's galleries" : $*title;
+                    make_button_no_frame("$title : go up to main index", "/$.user.usercs");
+                }
+                """
+                </td>
+            </tr>
+
+            <tr>
+                <td class="bbar" >
+                """;
+                $this->lay_make_button();
+                """
+                </td>
+                <td class="bbar" style="border-left: 1px dotted $*cbd">
+                """;
+                $this->lay_makegalsort();
+                """
+                </td>
+            </tr>
+            </table>
+
+        </td></tr> <!-- button cell end -->
+
+        <!-- content start -->
+        <tr><td>
+
+        <!-- iframe + scrollers -->
+        <table border="0" cellpadding="0" cellspacing="0" width="$*frameper%" height="$*frameper%" align="center">
+        <tr><td width="100%" height="100%">
+        """;
+        if ($*jsscroll) {
+            "<noscript>
+            This fotobilder style requires a browser that supports javascript.<br />
+            </noscript>";
+        }
+        var string nativescroll = ($*jsscroll) ? "no" : "yes";
+        """
+        <iframe frameborder="0" scrolling="$nativescroll" id="content" name="content" class="i">
+        Sorry, this fotobilder style requires a browser that supports Iframes.<br />
+        </iframe>
+        """;
+        if ($*jsscroll) {
+        """
+        </td><td valign="top">
+        <!-- begin side scrollers (up and down) -->
+            <table border="0" cellpadding="0" cellspacing="0" height="100%" class="sbar">
+            <tr><td class="btn">
+                <img src="$*imgroot/uarrow.png" name="uu" height="$*arrow_size" width="$*arrow_size" onclick="scrolljump('u')" onmouseover="imgswp('uu', '$*uah'); scrollstart('u');" onmouseout="imgswp('uu', '$*imgroot/uarrow.png'); scrollstop();" />
+                <img src="$*imgroot/darrow.png" name="ud" height="$*arrow_size" width="$*arrow_size" onclick="scrolljump('d')" onmouseover="imgswp('ud', '$*dah'); scrollstart('d');" onmouseout="imgswp('ud', '$*imgroot/darrow.png'); scrollstop();" />
+            </td></tr>
+            <!-- spacer -->
+            <tr><td class="rbar" height="100%"><img src="$*imgroot/1.gif" height="1" width="1" /></td></tr>
+            <tr><td class="btn">
+                <img src="$*imgroot/uarrow.png" name="bu" height="$*arrow_size" width="$*arrow_size" onclick="scrolljump('u')" onmouseover="imgswp('bu', '$*uah'); scrollstart('u');" onmouseout="imgswp('bu', '$*imgroot/uarrow.png'); scrollstop();" />
+                <img src="$*imgroot/darrow.png" name="bd" height="$*arrow_size" width="$*arrow_size" onclick="scrolljump('d')" onmouseover="imgswp('bd', '$*dah'); scrollstart('d');" onmouseout="imgswp('bd', '$*imgroot/darrow.png'); scrollstop();" />
+            </td></tr>
+            </table>
+        <!-- end side scrollers (up and down) -->
+        </td></tr>
+        <!-- begin side scrollers (left and right) -->
+        <!-- * no spaces inbetween images * !! -->
+        <tr><td>
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" class="sbar">
+            <tr>
+            <td class="btn" nowrap="1"><img src="$*imgroot/larrow.png" name="ll" height="$*arrow_size" width="$*arrow_size" onclick="scrolljump('l')" onmouseover="imgswp('ll', '$*lah'); scrollstart('l');" onmouseout="imgswp('ll', '$*imgroot/larrow.png'); scrollstop();" /><img src="$*imgroot/rarrow.png" name="lr" height="$*arrow_size" width="$*arrow_size" onclick="scrolljump('r')" onmouseover="imgswp('lr', '$*rah'); scrollstart('r');" onmouseout="imgswp('lr', '$*imgroot/rarrow.png'); scrollstop();" /></td>
+            <!-- spacer -->
+            <td class="bbar" width="100%"><img src="$*imgroot/1.gif" height="1" width="1" /></td>
+            <td class="btn" nowrap="1"><img src="$*imgroot/larrow.png" name="rl" height="$*arrow_size" width="$*arrow_size" onclick="scrolljump('l')" onmouseover="imgswp('rl', '$*lah'); scrollstart('l');" onmouseout="imgswp('rl', '$*imgroot/larrow.png'); scrollstop();" /><img src="$*imgroot/rarrow.png" name="rr" height="$*arrow_size" width="$*arrow_size" onclick="scrolljump('r')" onmouseover="imgswp('rr', '$*rah'); scrollstart('r');" onmouseout="imgswp('rr', '$*imgroot/rarrow.png'); scrollstop();" /></td>
+            </tr>
+            </table>
+        <!-- end side scrollers (left and right) -->
+        """;
+        }
+        """
+        </td></tr>
+        <!-- end iframe + scrollers -->
+        </table>
+
+        <!-- layout end -->
+        </td></tr>
+        </table>
+            
+    </td></tr></table>
+</body>
+</html>
+""";
+}
+
+function IndexPage::title () : string
+{
+  if ($*title != "") { return $*title; }
+  return "$.user.usercs's galleries";
+}
+
+# blatantly ripped off from fotobilder style 'super simple'
+function gal_count_em (Gallery g) : string
+{
+    var int pics = $g.numpics;
+    var int dpics = $g->desc_pics();
+    var int tpics = $pics + $dpics;
+    var string txt = "image";
+    if ($pics > 1) {
+        $txt = $txt + "s";
+    }
+    if ($pics > 0 and $dpics == 0) {
+      return " <span class='piccount'>$pics $txt</span>";
+    } elseif ($pics > 0 and $dpics > 0) {
+      return " <span class='piccount'>$tpics $txt</span>";
+    } elseif ($dpics > 0) {
+      return " <span class='piccount'>$tpics $txt</span>";
+    }
+    return " <span class='piccount'>0 images</span>";
+}
+
+function make_navlinks (ItemRange sp, string unique) {
+    var string q;
+    var string name;
+    if ($sp.current != 1) {
+        $q = ($sp.url_prev->contains("?")) ? "&" : "?";
+        var string prev_url = "$sp.url_prev" + $q + ".f=1";
+        $name = "prev_arrow" + $unique;
+        """
+        <a href="$prev_url"><img src="$*imgroot/larrow.png" height="$*arrow_size" width="$*arrow_size"
+        name="$name" alt="prev page" border="0"
+        onmouseover="imgswp('$name', '$*lah');"
+        onmouseout="imgswp('$name', '$*imgroot/larrow.png');" /></a>&nbsp;
+        """;
+    }
+    if ($sp.total != $sp.current) {
+        $q = ($sp.url_next->contains("?")) ? "&" : "?";
+        if ($sp.current == 1) { # spacer
+            """<img src="$*imgroot/1.gif" height="$*arrow_size" width="$*arrow_size" />&nbsp;""";
+        }
+        var string next_url = "$sp.url_next" + $q + ".f=1";
+        $name = "next_arrow" + $unique;
+        """
+        <a href="$next_url"><img src="$*imgroot/rarrow.png" height="$*arrow_size" width="$*arrow_size"
+        name="$name" alt="next page" border="0"
+        onmouseover="imgswp('$name', '$*rah');"
+        onmouseout="imgswp('$name', '$*imgroot/rarrow.png');" /></a>&nbsp;
+        """;
+    }
+}
+
+function Page::lay_make_navlinks () {}
+function IndexPage::lay_make_navlinks (string unique) {
+    make_navlinks($.sorted_pages, $unique);
+}
+function GalleryPage::lay_make_navlinks (string unique) {
+    make_navlinks($.pages, $unique);
+}
+function PicturePage::lay_make_navlinks (string unique) {
+    make_navlinks($.pictures, $unique);
+}
+
+# Print HTML for a gallery.
+function show_gal_info (Gallery g, string rowcol, string sortmode)
+{
+    "<tr bgcolor='$rowcol'>";
+    "<td valign='top'>";
+    var Image i = $g->get_preview_image("preview");
+    if (defined $i) {
+        "<a href='$g.url?.f=1' alt='$g.name'>
+        <img src='$i.url' border='$*imgborder' width='$i.width' height='$i.height'></a>";
+    } else {
+        "&nbsp;";
+    }
+    "</td>";
+
+    """<td class='gname'>
+        <div style='white-space: nowrap'>
+        <a href="$g.url?.f=1">$g.name</a></div>""";
+    if ($g.des != "" and $sortmode == "top") {
+        "<span class='gd'>$g.des</span>";
+    }
+
+    var int numchildren = size $g.children;
+    if ($*indexsubgals and $numchildren > 0) {
+        "<div style='white-space: nowrap'>";
+        "<ul>";
+        var bool trunc = false;
+        if ($numchildren > 10) { $numchildren = 10; $trunc = true; }
+        foreach var int i (1..$numchildren) {
+            var Gallery c = $g.children[$i-1];
+            "<li><a href=\"$c.url?.f=1\">$c.name</a>";
+            if ($c.numpics > 0) {
+                " - ";
+                print gal_count_em($c);
+            }
+            "</li>";
+        }
+        if ($trunc) { "<li><a href=\"$g.url\">...</a></li>"; }
+        "</ul></div>";
+    }
+
+    "</td>";
+    "<td>"; print gal_count_em($g); "</td>";
+
+    "<td nowrap='1'>";
+    if ($sortmode == "date") {
+        if (not isnull $g.date) {
+            $g.date->print_datetime();
+        } else {
+            "&nbsp;";
+        }
+    } else {
+        if (not isnull $g.dateupdate) {
+            $g.dateupdate->print_datetime();
+        } else {
+            "&nbsp;";
+        }
+    }
+    "</td></tr>";
+}
+
+function IndexPage::print_body ()
+{
+  if (size $.sorted_galleries == 0) {
+    "<br /><br /><center>$*text_nogalleries</center>";
+    return;
+  }
+
+  "<br /><table border='0' cellspacing='0' cellpadding='0' width='100%'>";
+  "<tr><td class='pager'>";
+
+  var ItemRange sp = $.sorted_pages;
+  if (not $sp.all_subitems_displayed and $sp.total > 0) {
+      "Page <b>$sp.current</b> of <b>$sp.total</b><br />";
+      "Galleries $sp.from_subitem-$sp.to_subitem of $sp.total_subitems<br />";
+      $this->lay_make_navlinks("pager");
+  } else {
+      "&nbsp;";
+  }
+  "</td><td>";
+
+  "<table border='0' cellspacing='0' cellpadding='0' class='g'>";
+  "<tr>
+      <td>&nbsp;</td>
+      <td class='ghead'>gallery</td>
+      <td class='ghead'>image count</td>
+  ";
+  if ($.sort_mode == "date") {
+      "<td class='ghead'>date</td>";
+  } else {
+      "<td class='ghead'>last updated</td>";
+  }
+  "</tr>";
+
+  var int gc = 0;
+  foreach var Gallery g ($.sorted_galleries) {
+      $gc++;
+      var string rowcol;
+      $rowcol = ($gc % 2 == 0) ? $*fcolor.as_string : $*fcolor2.as_string;
+      show_gal_info($g, $rowcol, $.sort_mode);
+  }
+  "<tr><td colspan='4' align='center'>";
+  $this->lay_make_navlinks("bottom");
+  "</td></tr>";
+
+  "</table>";
+  "</td></tr></table>";
+}
+
+
+function GalleryPage::title () : string
+{
+  return "gallery: $.gallery.name";
+}
+
+function GalleryPage::print_body() {
+
+    var int numsubgals = size $.gallery.children;
+
+    "<br /><table border='0' cellspacing='0' cellpadding='0' width='100%'>";
+    "<tr><td class='pager'>";
+
+    # This gallery has picts.  Enough that we need a pager.
+    if (not $.pages.all_subitems_displayed) {
+        "Page <b>$.pages.current</b> of <b>$.pages.total</b><br />";
+        "Images $.pages.from_subitem-$.pages.to_subitem of $.pages.total_subitems<br />";
+        $this->lay_make_navlinks("pager");
+    } else {
+        "&nbsp;";
+    }
+
+    # Picts, and subgalleries.  List 'em.
+    if ($.pages.total_subitems > 0 and $numsubgals > 0) {
+        "<br /><br /><div class='gname'>";
+        "Related Galleries:<ul>";
+        foreach var Gallery g ($.gallery.children) {
+            "<li><a href='$g.url?.f=1'>$g.name</a></li>";
+        }
+        "</ul></div>";
+    }
+    "</td><td>";
+
+    # Totally empty gallery.  No picts, no subgalleries.
+    if ($.pages.total_subitems == 0 and $numsubgals == 0) {
+        "<div class='gd'>";
+        "There are no images to display.";
+        "</div></td></tr></table>";
+        return;
+    }
+
+    # No picts of its own, but subgals found.
+    # Display an index of subgals instead of a pict index,
+    # limited to $*index_page_max_size.
+    if ($.pages.total_subitems == 0 and $numsubgals != 0) {
+        "<table border='0' cellspacing='0' cellpadding='0' class='g'>";
+        "<td align='center' colspan='4' class='gname'>";
+        "Gallery: <a href='$.gallery.url?.f=1'>$.gallery.name</a>";
+        " : <a href='$.parent_link.url?.f=1'>up</a>";
+        if (viewer_is_owner()) {
+            " : <a href='$.manage_url' target='_top'>manage</a>";
+        }
+
+        if ($.des != "") { "<br /><span class='gd'>$.des</span>"; }
+        "</td>";
+        "<tr>
+            <td>&nbsp;</td>
+            <td class='ghead'>related gallery</td>
+            <td class='ghead'>image count</td>
+            <td class='ghead'>last updated</td>
+            ";
+        var int gc = 0;
+        foreach var Gallery g ($.gallery.children) {
+            var string rowcol;
+            $rowcol = ($gc % 2 == 0) ? $*fcolor.as_string : $*fcolor2.as_string;
+            if ($gc != $*index_page_max_size) {
+                $gc++;
+                show_gal_info($g, $rowcol, "");
+            }
+        }
+        "</table>";
+
+        var int leftover = $numsubgals - $*index_page_max_size;
+        if ($leftover > 0) {
+            """<br /><span class='g'>($leftover additional """;
+            if ($leftover == 1) {
+                "subgallery";
+            } else {
+                "subgalleries";
+            }
+            """ not displayed.)<br /><ul>""";
+            foreach var Gallery g ($.gallery.children) {
+                "<li><a href='$g.url?.f=1'>$g.name</a></li>";
+            }
+            "</ul></span>";
+        }
+
+        return;
+    }
+
+    "<table border='0' cellspacing='0' cellpadding='0' class='g'>";
+    "<td align='center' colspan='4' class='gname'>";
+    "Gallery: <a href='$.gallery.url?.f=1'>$.gallery.name</a>";
+    " : <a href='$.parent_link.url?.f=1'>up</a>";
+    if (viewer_is_owner()) {
+        " : <a href='$.manage_url' target='_top'>manage</a>";
+    }
+
+    if ($.des != "") { "<br /><span class='gd'>$.des</span>"; }
+    "</td>";
+    "<tr>
+        <td>&nbsp;</td>
+        <td class='ghead' width='100%'>name</td>
+        <td class='ghead'>dimensions</td>
+        <td class='ghead'>size</td>
+        </tr>
+        ";
+
+    var int pc = 0;
+    $this->load_pict_descriptions();
+    foreach var Picture p ($.pictures) {
+        $pc++;
+        var string rowcol;
+        $rowcol = ($pc % 2 == 0) ? $*fcolor.as_string : $*fcolor2.as_string;
+        "<tr bgcolor='$rowcol'><td>";
+
+        var Image i = $p.thumbnails{"norm"};
+        "<a href='$p.url?.f=1' alt='$p.title'>
+            <img src='$i.url' border='$*imgborder' width='$i.width' height='$i.height'></a>";
+        
+        "</td><td class='gname'>
+            <div style='white-space: nowrap'>
+            <a href=\"$p.url?.f=1\">";
+        if ($p.title == "") {
+            "untitled";
+        } else {
+            "$p.title";
+        }
+        "</a></div><span class='gd'>$p.des</span></td>";
+        "<td>$p.fullimage.width" + "x" +"$p.fullimage.height</td>";
+        var int size = $p.bytes / 1024;
+        "<td>$size" + "k</td>";
+        "</tr>";
+    }
+    "<tr><td colspan='4' align='center'>";
+    $this->lay_make_navlinks("bottom");
+    "</td></tr>";
+
+    "</table>";
+    "</td></tr></table>";
+    "<br /><br />";
+}
+
+function PicturePage::title () : string
+{
+  if ($.picture.title == "") { $.picture.title = "untitled"; }
+  return "$.picture.title";
+}
+
+
+function PicturePage::print_body ()
+{
+    "<table border='0' cellspacing='0' cellpadding='0' width='100%'>";
+    "<tr><td class='pager'>";
+
+    if (not isnull $.gallery) {
+        "<div class='gname'>Gallery: <br />
+            <div style='margin-left: 10px'>
+            <a href='$.gallery.url?.f=1'>$.gallery.name</a>
+            </div>
+        </div>";
+    }
+    if (not $.pictures.all_subitems_displayed and not isnull $.gallery) {
+        "Image <b>$.pictures.current</b> of <b>$.pictures.total</b><br />";
+        $this->lay_make_navlinks("pager");
+    } else {
+        "&nbsp;";
+    }
+    "</td><td>";
+
+    "<table border='0' cellspacing='0' cellpadding='0' class='g'>";
+    "<td align='center' class='gname'>Image:
+        <a href='$.picture.url' target='_top'>$.picture.title</a>"; 
+    if (viewer_is_owner()) {
+        " : <a href='$.manage_url' target='_top'>manage</a>";
+    }
+    " : <a href='$.picture.fullimage.url' target='_new' alt='$.picture.piccode'>download</a>";
+    if ($.des != "") { "<br /><span class='gd'>$.des</span>"; }
+    if ($*show_exif == "raw") { "<div class='gd'>"; $this->print_exif_cats(["image", "media", "gps", "exposure"]); "</div>"; }
+    "</td></tr>";
+    "<tr><td align='center'>";
+
+    var Image i;
+    if ($*pic_size == "small") {
+        $i = $.picture->get_image(320, 240);
+    } else {
+        $i = $.picture->get_image(640, 480);
+    }
+    "<img src='$i.url' border='$*imgborder' width='$i.width' height='$i.height'>";
+
+    if (size $.tags > 0) {
+        """<div class="gd"><strong>Tags:</strong> """;
+        foreach var Link k ($.tags) {
+            """<a href="$k.url">$k.caption</a>""";
+            if ($k.url != $.tags[size $.tags -1].url) {
+                ", ";
+            }
+        }
+        """</div>""";
+    }
+
+    "</td></tr></table>";
+    "</td></tr></table>";
+}
+
+

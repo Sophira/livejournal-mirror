@@ -1,0 +1,274 @@
+#NEWLAYER: ultima/babyblue
+layerinfo "type" = "theme";
+layerinfo "name" = "Baby Blue";
+layerinfo "redist_uniq" = "ultima/babyblue";
+
+set bgcolor = "#fff";
+set text_color = "#557799";
+set title_color = "#6699cc";
+set label_color = "#6699cc";
+set gallery_des_color = "#6699cc";
+set img_padding_color = "#fff";
+set img_hover_padding_color = "#6699cc";
+set img_border_color = "#99ccee";
+set header_bg_color = "#99ccee";
+set header_text_color = "#fff";
+set subheader_bg_color = "#ccddff";
+set subheader_border_color = "#bbccee";
+set subheader_text_color = "#6699cc";
+set gallery_item_bg_color = "#f6f9ff";
+set gallery_item_bg_color_hover = "#e3effb";
+set link_color = "#006699";
+set link_visited_color = "#006699";
+set link_hover_color = "#004488";
+set link_active_color = "#006699";
+
+#NEWLAYER: ultima/blackityblack
+layerinfo "type" = "theme";
+layerinfo "name" = "Blackity Black";
+layerinfo "redist_uniq" = "ultima/blackityblack";
+
+set bgcolor = "#000";
+set text_color = "#666";
+set title_color = "#aaa";
+set label_color = "#fff";
+set gallery_des_color = "#fff";
+set img_padding_color = "#000";
+set img_hover_padding_color = "#fff";
+set img_border_color = "#666";
+set header_bg_color = "#000";
+set header_text_color = "#999";
+set subheader_bg_color = "#000";
+set subheader_border_color = "#333";
+set subheader_text_color = "#999";
+set gallery_item_bg_color = "#111";
+set gallery_item_bg_color_hover = "#fff";
+set link_color = "#fff";
+set link_visited_color = "#fff";
+set link_hover_color = "#666";
+set link_active_color = "#fff";
+
+#NEWLAYER: ultima/chocolatecharlie
+layerinfo "type" = "theme";
+layerinfo "name" = "Chocolate Charlie";
+layerinfo "redist_uniq" = "ultima/chocolatecharlie";
+
+set bgcolor = "#aa8362";
+set text_color = "#ffd9b4";
+set title_color = "#725031";
+set label_color = "#644325";
+set gallery_des_color = "#725031";
+set img_padding_color = "#a6805f";
+set img_hover_padding_color = "#ffd5b1";
+set img_border_color = "#d6ad89";
+set header_bg_color = "#926e4e";
+set header_text_color = "#dbb28f";
+set subheader_bg_color = "#002a24";
+set subheader_border_color = "#6a370a";
+set subheader_text_color = "#926e4e";
+set gallery_item_bg_color = "#c79f7c";
+set gallery_item_bg_color_hover = "#dbb28f";
+set link_color = "#6e4c2e";
+set link_visited_color = "#6e4c2e";
+set link_hover_color = "#cba27f";
+set link_active_color = "#6e4c2e";
+
+#NEWLAYER: ultima/crispcontrast
+layerinfo "type" = "theme";
+layerinfo "name" = "Crisp Contrast";
+layerinfo "redist_uniq" = "ultima/crispcontrast";
+
+set bgcolor = "#fff";
+set text_color = "#000";
+set title_color = "#000";
+set label_color = "#000";
+set gallery_des_color = "#000";
+set img_padding_color = "#fff";
+set img_hover_padding_color = "#000";
+set img_border_color = "#999";
+set header_bg_color = "#000";
+set header_text_color = "#fff";
+set subheader_bg_color = "#666";
+set subheader_border_color = "#333";
+set subheader_text_color = "#fff";
+set gallery_item_bg_color = "#fff";
+set gallery_item_bg_color_hover = "#fff";
+set link_color = "#fff";
+set link_visited_color = "#fff";
+set link_hover_color = "#333";
+set link_active_color = "#fff";
+
+#NEWLAYER: ultima/deviantdefault
+layerinfo "type" = "theme";
+layerinfo "name" = "Deviant Default";
+layerinfo "redist_uniq" = "ultima/deviantdefault";
+
+set bgcolor = "#a7afa7";
+set text_color = "#666";
+set title_color = "#444";
+set label_color = "#666";
+set gallery_des_color = "#444";
+set img_padding_color = "#bbc2bb";
+set img_hover_padding_color = "#546359";
+set img_border_color = "#546359";
+set header_bg_color = "#88938d";
+set header_text_color = "#666";
+set subheader_bg_color = "#bbc2bb";
+set subheader_border_color = "#546359";
+set subheader_text_color = "#666";
+set gallery_item_bg_color = "#bbc2bb";
+set gallery_item_bg_color_hover = "#dbb28f";
+set link_color = "#ddd";
+set link_visited_color = "#ddd";
+set link_hover_color = "#ddd";
+set link_active_color = "#ddd";
+
+#NEWLAYER: ultima/dysfunctionaldystopia
+layerinfo "type" = "theme";
+layerinfo "name" = "Dysfunctional Dystopia";
+layerinfo "redist_uniq" = "ultima/dysfunctionaldystopia";
+
+set bgcolor = "#fff";
+set text_color = "#666";
+set title_color = "#660066";
+set label_color = "#660066";
+set gallery_des_color = "#660066";
+set img_padding_color = "#fff";
+set img_hover_padding_color = "#6699cc";
+set img_border_color = "#bbddff";
+set header_bg_color = "#cc6600";
+set header_text_color = "#fff";
+set subheader_bg_color = "#660066";
+set subheader_border_color = "#fff";
+set subheader_text_color = "#fff";
+set gallery_item_bg_color = "#fff";
+set gallery_item_bg_color_hover = "#fff";
+set link_color = "#fff";
+set link_visited_color = "#fff";
+set link_hover_color = "#660066";
+set link_active_color = "#fff";
+
+#NEWLAYER: ultima/grassygreen
+layerinfo "type" = "theme";
+layerinfo "name" = "Grassy Green";
+layerinfo "redist_uniq" = "ultima/grassygreen";
+
+set bgcolor = "#edfdd8";
+set text_color = "#777";
+set title_color = "#7fbb11";
+set label_color = "#7fbb11";
+set gallery_des_color = "#7fbb11";
+set img_padding_color = "#fff";
+set img_hover_padding_color = "#346202";
+set img_border_color = "#9ecf5c";
+set header_bg_color = "#8ec63f";
+set header_text_color = "#fff";
+set subheader_bg_color = "#9a6333";
+set subheader_border_color = "#6a370a";
+set subheader_text_color = "#fff";
+set gallery_item_bg_color = "#fff";
+set gallery_item_bg_color_hover = "#fff";
+set link_color = "#fff";
+set link_visited_color = "#fff";
+set link_hover_color = "#346202";
+set link_active_color = "#fff";
+
+#NEWLAYER: ultima/prettypink
+layerinfo "type" = "theme";
+layerinfo "name" = "Pretty Pink";
+layerinfo "redist_uniq" = "ultima/prettypink";
+
+set bgcolor = "#ffe5ff";
+set text_color = "#666";
+set title_color = "#dd988d";
+set label_color = "#dd988d";
+set gallery_des_color = "#dd988d";
+set img_padding_color = "#fff";
+set img_hover_padding_color = "#ce9b93";
+set img_border_color = "#f5b6ac";
+set header_bg_color = "#f5b6ac";
+set header_text_color = "#fff";
+set subheader_bg_color = "#fde9c1";
+set subheader_border_color = "#e0cfa3";
+set subheader_text_color = "#a78d6c";
+set gallery_item_bg_color = "#fff";
+set gallery_item_bg_color_hover = "#ffe5ff";
+set link_color = "#ce7f7f";
+set link_visited_color = "#ce7f7f";
+set link_hover_color = "#d29f97";
+set link_active_color = "#ce7f7f";
+
+#NEWLAYER: ultima/subtlesunrise
+layerinfo "type" = "theme";
+layerinfo "name" = "Subtle Sunrise";
+layerinfo "redist_uniq" = "ultima/subtlesunrise";
+
+set bgcolor = "#f2c838";
+set text_color = "#d38e3c";
+set title_color = "#cc670e";
+set label_color = "#fff";
+set gallery_des_color = "#fff";
+set img_padding_color = "#fff";
+set img_hover_padding_color = "#9e7944";
+set img_border_color = "#c59653";
+set header_bg_color = "#d57eca";
+set header_text_color = "#fff";
+set subheader_bg_color = "#f49632";
+set subheader_border_color = "#cd804d";
+set subheader_text_color = "#fff";
+set gallery_item_bg_color = "#ffebcf";
+set gallery_item_bg_color_hover = "#dbb28f";
+set link_color = "#fff";
+set link_visited_color = "#fff";
+set link_hover_color = "#cc670e";
+set link_active_color = "#fff";
+
+#NEWLAYER: ultima/winterwhite
+layerinfo "type" = "theme";
+layerinfo "name" = "Winter White";
+layerinfo "redist_uniq" = "ultima/winterwhite";
+
+set bgcolor = "#fff";
+set text_color = "#666";
+set title_color = "#444";
+set label_color = "#aaa";
+set gallery_des_color = "#aa";
+set img_padding_color = "#fff";
+set img_hover_padding_color = "#ccc";
+set img_border_color = "#eee";
+set header_bg_color = "#fff";
+set header_text_color = "#999";
+set subheader_bg_color = "#fff";
+set subheader_border_color = "#ccc";
+set subheader_text_color = "#999";
+set gallery_item_bg_color = "#fff";
+set gallery_item_bg_color_hover = "#fff";
+set link_color = "#666";
+set link_visited_color = "#666";
+set link_hover_color = "#333";
+set link_active_color = "#666";
+
+#NEWLAYER: ultima/xtremexcolibur
+layerinfo "type" = "theme";
+layerinfo "name" = "Xtreme Xcolibur";
+layerinfo "redist_uniq" = "ultima/xtremexcolibur";
+
+set bgcolor = "#fff";
+set text_color = "#666";
+set title_color = "#000";
+set label_color = "#000";
+set gallery_des_color = "#000";
+set img_padding_color = "#fff";
+set img_hover_padding_color = "#6699cc";
+set img_border_color = "#bbddff";
+set header_bg_color = "#6699cc";
+set header_text_color = "#fff";
+set subheader_bg_color = "#003366";
+set subheader_border_color = "#fff";
+set subheader_text_color = "#fff";
+set gallery_item_bg_color = "#fff";
+set gallery_item_bg_color_hover = "#fff";
+set link_color = "#fff";
+set link_visited_color = "#fff";
+set link_hover_color = "#0000cc";
+set link_active_color = "#fff";

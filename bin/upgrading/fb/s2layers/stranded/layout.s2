@@ -1,0 +1,732 @@
+#-*-s2-*-
+
+layerinfo "type" = "layout";
+layerinfo "name" = "Stranded";
+layerinfo "redist_uniq" = "stranded/layout";
+layerinfo "des"  = "Original layout by Martin Atkins, updates by Jesse Proulx. Looks best with lots of preview images.";
+
+propgroup presentation {
+    property int opt_viewsize {
+        des = "Size of the central viewing box";
+        values = "150|Small (150 by 150 pixels)|320|Medium (320 by 240 pixels)|640|Large (640 by 480 pixels)";
+    }
+    set opt_viewsize = 320;
+    property int opt_showdes {
+        des = "Display gallery title page on first load";
+        note = "If you disable this, your gallery description (if any) will not be displayed.";
+        values = "1|Display title page and description|0|Display the first image from the gallery instead";
+    }
+    set opt_showdes = 1;
+
+    property string galdesoverlay {
+        des = "Tint or shade level for gallery title page";
+        values = "darken_seventyfive.png|Darker|darken_fifty.png|Dark|trans.gif|No tint or shade|lighten_fifty.png|Light|lighten_seventyfive.png|Lighter";
+    }
+    set galdesoverlay = "lighten_seventyfive.png";
+
+    property int{} heightlookup { noui = 1; }
+    set heightlookup = {
+        640 => 480,
+        320 => 240,
+        150 => 150
+    };
+
+    property int[]{} viewboxdimlookup { noui = 1; }
+    set viewboxdimlookup = {
+        640 => [ 600, 400 ],
+        320 => [ 500, 300 ],
+        150 => [ 400, 200 ]
+    };
+
+    property int rows { noui = 1; }
+    property int cols { noui = 1; }
+    set rows = 8;
+    set cols = 6;
+
+    set gallery_page_min_size = 24;
+    set gallery_page_max_size = 24;
+
+    set index_page_max_size = 8;
+
+    set thumbnails = "large=100x100,zoom&medium=100x100,zoom&small=50x50,zoom";
+
+    property string index_page_thumb_size { noui = 1; }
+    set index_page_thumb_size = "large";
+}
+
+propgroup colors {
+    property Color background {
+        des = "Background color";
+    }
+    set background = "#ffffff";
+    property Color border {
+        des = "Viewbox border color";
+        note = "The border is shown on your main page, and behind transparent images in your galleries.";
+    }
+    set border = "#6699cc";
+    property Color toolbar_color {
+        des = "Color of toolbar icons";
+    }
+    set toolbar_color = "#336699";
+}
+
+propgroup background
+{
+    property string background_image {
+        des = "Background image";
+        note = "URL to an image to be used for the page background (leave blank for none, or choose from a default below:).";
+    }
+    property string background_repeat {
+        des = "Background image repeat";
+        values = "repeat|Repeat|no-repeat|Don't repeat|repeat-x|Repeat across only|repeat-y|Repeat down only";
+    }
+    property string background_position {
+        des = "Background image position";
+        note = "Does not apply if background image is repeating in both directions.";
+        values = "center|Center|center left|Center-left|center right|Center-right|top|Top|top left|Top-left|top right|Top-right|bottom|Bottom|bottom left|Bottom-left|bottom right|Bottom-right|left|Left|right|Right";
+    }
+    property string background_scrolling {
+        des = "Background image scrolling";
+        note = "Not supported in all browsers, but allows for the background image to be in a fixed position when scrolling.";
+        values = "scroll|Scroll|fixed|Fixed";
+    }
+    property string background_css { noui = 1; }
+    set background_image      = "";
+    set background_repeat     = "no-repeat";
+    set background_position   = "top right";
+    set background_scrolling  = "fixed";
+    set background_css        = "";
+}
+
+propgroup fonts {
+    property string font_base {
+        des = "Preferred font";
+        note = "An alternative font can be entered below";
+        values = "Arial|Arial|Helvetica|Helvetica|Times New Roman|Times New Roman|Courier|Courier|Palatino|Palatino|Garamond|Garamond|Bookman|Bookman|Avant Garde|Avant Garde|Verdana|Verdana|Georgia|Georgia|Comic Sans MS|Comic Sans MS|Trebuchet MS|Trebuchet MS|none|Use browser's default";
+    }
+    property string font_alternative {
+        des = "Alternative font, if preferred font is not provided";
+        note = "This font is not guaranteed to work for everyone.";
+    }
+    property string font_fallback {
+        des = "Fallback font style";
+        values = "sans-serif|Sans-serif|serif|Serif|cursive|Cursive|monospace|Monospaced|none|Use browser's default";
+    }
+    set font_base = "none";
+    set font_fallback = "none";
+    property Color foreground {
+        des = "Font color";
+    }
+    set foreground = "#000000";
+    property string font_size {
+        des = "Font size";
+        note = "This depends on your browser's font settings and the font you selected above.";
+        values = ".75em|Smaller (.75em)|.85em|Small (.85em)|1em|Normal (1em)|1.1em|Large (1.1em)|1.25em|Larger (1.25em)";
+    }
+    set font_size = "1em";
+    property string font_style {
+        des = "Font style";
+        values = "none|Normal|bold|Bold|italic|Italic|italic bold|Bold & Italic";
+    }
+    set font_style = "none";
+    property string font { noui = 1; }
+    set font = "";
+}
+
+propgroup text {
+    property string title {
+        des = "Main page title";
+        note = "If you lave this blank, we will add a generic title as a default";
+    }
+    set title = "";
+
+    ## i18n props ##
+    property string text_error_badscaling { noui = 1; }
+    set text_error_badscaling = "Can't get an image of the requested size.";
+
+    property string text_toolbar_zoomin  { noui = 1; }
+    property string text_toolbar_zoomout { noui = 1; }
+    set text_toolbar_zoomin = "Zoom In";
+    set text_toolbar_zoomout = "Zoom Out";
+}
+
+
+function prop_init
+{
+    # Readjust settings for different viewport sizes
+    if ($*opt_viewsize == 320) { 
+        $*gallery_page_min_size = 20; 
+        $*gallery_page_max_size = 20; 
+        $*rows = 7; $*cols = 5;
+        $*index_page_thumb_size = "medium";
+    } elseif ($*opt_viewsize == 150) {
+        $*gallery_page_min_size = 16; 
+        $*gallery_page_max_size = 16; 
+        $*rows = 6; $*cols = 4;
+        $*index_page_thumb_size = "small";
+    }
+
+    # Calculate font string for CSS
+    if ($*font_base != "none" or $*font_fallback != "none") {
+        $*font = "font: ";
+        if ($*font_style != "none") { $*font = $*font + "$*font_style "; }
+        $*font = $*font + "$*font_size ";
+        if ($*font_base != "") { 
+            $*font = $*font + "\"$*font_base\"";
+            if ($*font_fallback != "none") { $*font = $*font + ", "; }
+        }
+        if ($*font_fallback != "none") { $*font = $*font + $*font_fallback; }
+    } else {
+        $*font = "font-size: $*font_size";
+        if ($*font_style == "italic bold") {
+            $*font = $*font + ";\nfont-weight: bold;\nfont-style: italic";
+        } elseif ($*font_style == "italic") {
+            $*font = $*font + ";\nfont-style: italic";
+        } elseif ($*font_style == "bold") {
+            $*font = $*font + ";\nfont-weight: bold";
+        }
+    }
+
+    # Background CSS
+    $*background_css = "background-color: $*background";
+    if ($*background_image != "") {
+      $*background_css = $*background_css + """;\n    background-image: url('$*background_image');\n""" +
+        """    background-repeat: $*background_repeat;\n""" + 
+        """    background-position: $*background_position;\n""" + 
+        """    background-attachment: $*background_scrolling""";
+    }
+}
+
+function maketitles(Page page) : string[] {
+    var string[] ret;
+    $ret[0] = $*title != "" ? $*title : "$page.user.usercs";
+    $ret[1] = $page->title();
+    if ($page.view != "index") {
+        $ret[2] = "$ret[1] [$ret[0]]";
+    } else {
+        $ret[2] = $ret[0];
+    }
+    return $ret;
+}
+
+function controlbarimg(string linkurl, string icon, string title) {
+    var string iconurl = "/img/simpletoolbar/${icon}.gif";
+    if ($*toolbar_color.as_string != "#000000") { $iconurl = $iconurl + "/p0" + $*toolbar_color.as_string->substr(1,7); }
+    """<a href="$linkurl" target="_top"><img src="$iconurl" width="15" height="15" """+
+    """border="0" alt="[$title]" title="$title" hspace="0" vspace="0" /></a>&nbsp;&nbsp;""";
+}
+
+function Page::print() {
+
+    var string[] titles = maketitles($this);
+
+"""<html>
+<head>""";
+$this->print_head();
+"""
+<title>$titles[2]</title>
+<link rel="stylesheet" type="text/css" href="$.stylesheeturl" />
+</head>
+<body>
+<h1>$titles[1]</h1>
+""";
+    $this->print_body();
+"""
+</body>
+</html>
+""";
+
+}
+
+
+function IndexPage::print()
+{
+
+    var string[] titles = maketitles($this);
+
+    var int viewboxwidth  = $*viewboxdimlookup{$*opt_viewsize}[0];
+    var int viewboxheight = $*viewboxdimlookup{$*opt_viewsize}[1];
+
+"""<html>
+<head>
+<title>$titles[2]</title>
+<link rel="stylesheet" type="text/css" href="$.stylesheeturl" />
+</head>
+<body class="pics"><div style="text-align: center">
+<div id="IndexPage">
+""";
+    println """</div><div id="Controls">""";
+    if ($.sorted_pages.url_first != "") {
+        controlbarimg($.sorted_pages.url_first,"nav_first",$*text_range_first);
+    }
+    if ($.sorted_pages.url_prev != "") {
+        controlbarimg($.sorted_pages.url_prev,"nav_prev",$*text_range_prev);
+    }
+    if (viewer_is_owner()) {
+        controlbarimg($.manage_url,"tweak","Manage Account");
+    }
+    println """Page $.sorted_pages.current of $.sorted_pages.total""";
+    if ($.sorted_pages.url_next != "") {
+        controlbarimg($.sorted_pages.url_next,"nav_next",$*text_range_next);
+    }
+    if ($.sorted_pages.url_last != "") {
+        controlbarimg($.sorted_pages.url_last,"nav_last",$*text_range_last);
+    }
+    $this->print_body();
+    println "</div></body></html>";
+}
+
+function IndexPage::print_body() {
+    if ((size $.sorted_galleries) == 0) {
+        println "<p>$*text_nogalleries</p>";
+        return;
+    }
+    foreach var Gallery g ($.sorted_galleries) {
+        println """<div class="IndexPageGals_$*index_page_thumb_size"><a href="$g.url">$g.name</a>""";
+        var Image i = $g->get_preview_image($*index_page_thumb_size);
+        if (defined $i) {
+            print """<br /><a href='$g.url?.f=1' alt='$g.name'><img src="$i.url" width="$i.width" """ + 
+                  """height="$i.height" alt="[thumb]" border="0" hspace="0" vspace="0" /></a>""";
+        }
+   
+        if ($g.numpics > 0 or size $g.children > 0) {
+            print "<br /><em>";
+            if ($g.numpics)  { print "$g.numpics Images"; }
+            if ($g.numpics > 0 and size $g.children > 0) { print ", "; }
+            if ($g.children) { print size $g.children + " Related"; }
+            print "</em>";
+        }
+        print "</div>\n";
+    }
+}
+
+function GalleryPage::print() {
+
+    var string[] titles = maketitles($this);
+
+"""<html>
+<head>
+<title>$titles[2]</title>
+<link rel="stylesheet" type="text/css" href="$.stylesheeturl" />
+</head>
+<body class="pics">
+<table width="100%" height="100%" cellpadding="0" cellspacing="0" border="0" id="uglyhack" class="NoExtraBoxModel">
+<tr><td>
+""";
+ $this->print_body();
+""" 
+</td></tr>
+</table>
+</body>
+</html>
+""";
+
+}
+function PicturePage::print() {
+    var string[] titles = maketitles($this);
+
+"""<html>
+<head>
+<title>$titles[2]</title>
+<link rel="stylesheet" type="text/css" href="$.stylesheeturl" />
+</head>
+<body class="pics">
+""";
+    $this->print_body();
+"""
+</body>
+</html>
+""";
+}
+
+
+function picinabox(Picture p)
+{
+    var Image i = $p.thumbnails{"large"};
+    println """<div class="PicInABox"><img src="$i.url" width="$i.width" height="$i.height" """ + 
+            """alt="[thumb]" title="$p.title" border="0" class="NoExtraBoxModel" hspace="0" vspace="0" /></div>""";
+}
+
+function border_picture(Picture p) {
+    var Image i = $p.thumbnails{"large"};
+    var int bw = $*viewboxdimlookup{$*opt_viewsize}[0];
+    var int bh = $*viewboxdimlookup{$*opt_viewsize}[1];
+    var int pw = $*opt_viewsize;
+    var int ph = $*heightlookup{$pw};
+
+    println """<td width="100" height="100" valign="middle" style="background-color: $*border">""" +
+            """<a href="$p.url?.bw=${bw}&amp;.bh=${bh}&amp;.pw=${pw}&amp;.ph=${ph}" target="viewer">""" + 
+            """<img src="$i.url" width="$i.width" height="$i.height" alt="[thumb]" title="$p.title" border="0" """ + 
+            """ class="NoExtraBoxModel" hspace="0" vspace="0" /></a></td>""";
+}
+
+# Generate the initial content of the inline frame, which contains the gallery description
+function gallery_desview(GalleryPage p) {
+
+    println """<div class="GalPageDesc">""";
+    var int total = ($*rows - 2) * ($*cols - 2);
+    foreach var int j (1 .. $total) { picinabox(rand_pic($p.pictures)); }
+    println """</div>""";
+
+    if ($p.des != "") {
+        # ooh, another table hack
+        """<table cellpadding="0" cellspacing="0" border="0" """+
+        """style="position: absolute; top: 0; left: 0;" width="100%" height="100%"><tr valign="middle"><td>""";
+        """<div class="overlay" id="gallerydes" style="position: static; margin: 75px;">"""+
+        $p.des+"</div>\n";
+        """</td></tr></table>""";
+    }
+}
+
+function GalleryPage::print_body()
+{
+    if (int($.args{"desview"})) { gallery_desview($this); return; }
+
+    # GalleryPage bottom
+    var int bottomcolspan = $*rows + 2;
+    println """<div id="Controls">""";
+    if ($.pages.url_first != "") {
+        controlbarimg($.pages.url_first,"nav_first",$*text_range_first);
+    }
+    if ($.pages.url_prev != "") {
+        controlbarimg($.pages.url_prev,"nav_prev",$*text_range_prev);
+    }
+    if (viewer_is_owner()) {
+        controlbarimg($.manage_url,"tweak","Manage Account");
+    }
+    println """Page $.pages.current of $.pages.total""";
+    if ($.copy_url != "") {
+        controlbarimg($.copy_url,"copy","Copy Gallery");
+    }
+    if ($.parent_link.url != "") {
+        controlbarimg($.parent_link.url,"nav_up",$.parent_link.caption);
+    }
+    if ($.pages.url_next != "") {
+        controlbarimg($.pages.url_next,"nav_next",$*text_range_next);
+    }
+    if ($.pages.url_last != "") {
+        controlbarimg($.pages.url_last,"nav_last",$*text_range_last);
+    }
+    print """</div>""";
+    
+    # Border picture index
+    var int pi = 0;
+
+    println """<table width="100%" cellpadding="0" cellspacing="0" border="0">""";
+
+    ### TOP
+
+    # Previous button
+    println """<tr><td rowspan="6" style="text-align: right;">""";
+    if ($.pages.url_prev != "") {
+        var string iconurl = "/img/stranded/tall_prev.gif/p0" + $*border.as_string->substr(1,7);
+        println """<a href="$.pages.url_prev">""" +
+                """<img src="$iconurl" width="50" height="199" />""" +
+                """</a>""";
+    } else {
+        println """<img src="/img/stranded/tall_space.gif" width="50" height="199" />""";
+    }
+    println """</td>""";
+
+    # Top row of border pictures
+    foreach var int i (1 .. $*rows) { border_picture($.pictures[$pi++]); }
+
+    # Next button
+    println """<td rowspan="$*cols" style="text-align: left;">""";
+    if ($.pages.url_next != "") {
+        var string iconurl = "/img/stranded/tall_next.gif/p0" + $*border.as_string->substr(1,7);
+        println """<a href="$.pages.url_next">""" +
+                """<img src="$iconurl" width="50" height="199" />""" +
+                """</a>""";
+    } else {
+        println """<img src="/img/stranded/tall_space.gif" width="50" height="199" />""";
+    }
+    println """</td>""";
+
+    ### MIDDLE
+
+    println """</tr><tr>""";
+    border_picture($.pictures[$pi++]);
+
+    var int iframewidth   = $*viewboxdimlookup{$*opt_viewsize}[0];
+    var int iframeheight  = $*viewboxdimlookup{$*opt_viewsize}[1];
+    var int picturewidth  = $*opt_viewsize;
+    var int pictureheight = $*heightlookup{$picturewidth};
+
+    var string iframeurl = ($.pages.current == 1 and $*opt_showdes == 1 ?
+                             "$.self_link.url?.desview=1" :
+                             "$.pictures[0].url?.bw=${iframewidth}&amp;.bh=${iframeheight}&amp;.pw=${picturewidth}&amp;.ph=${pictureheight}");
+
+    var int viewbox_colspan = $*rows - 2;
+    var int viewbox_rowspan = $*cols - 2;
+    
+    println """<td colspan="$viewbox_colspan" rowspan="$viewbox_rowspan" width="$iframewidth" height="$iframeheight">""";
+    println """<iframe src="$iframeurl" width="$iframewidth" height="$iframeheight" class="NoExtraBoxModel" """ +
+            """frameborder="0" framespacing="0" border="0" name="viewer" scrolling="no" scroll="no">""";
+    println """<p>This layout is pretty useless when your browser doesn't support inline frames.</p>""";
+    println """</iframe></td>""";
+    border_picture($.pictures[$pi++]);
+    println """</tr>""";
+
+    # above prints two border pictures and the main iframe content
+    # below prints the rest of the side border pictures
+    foreach var int i (1.. $*cols - 3) {
+        println "<tr>";
+        border_picture($.pictures[$pi++]);
+        border_picture($.pictures[$pi++]);
+        println "</tr>";
+    }
+
+    ### BOTTOM
+
+    println """<tr>""";
+    foreach var int i (1 .. $*rows) {
+        border_picture($.pictures[$pi++]);
+    }
+    println """</tr></table>""";
+
+    if (size $.gallery.children > 0) {
+        println """<div id="SubGalleries"><h2>Related Galleries</h2>""";
+        foreach var Gallery g ($.gallery.children) {
+            println """<div class="IndexPageGals_$*index_page_thumb_size"><a href="$g.url">$g.name</a>""";
+            var Image i = $g->get_preview_image($*index_page_thumb_size);
+            if (defined $i) {
+                print """<br /><a href='$g.url?.f=1' alt='$g.name'><img src="$i.url" width="$i.width" """ + 
+                      """height="$i.height" alt="[thumb]" border="0" hspace="0" vspace="0" /></a>""";
+            }
+   
+            if ($g.numpics > 0 or size $g.children > 0) {
+                print "<br /><em>";
+                if ($g.numpics)  { print "$g.numpics Images"; }
+                if ($g.numpics > 0 and size $g.children > 0) { print ", "; }
+                if ($g.children) { print size $g.children + " Related"; }
+                print "</em>";
+            }
+            print "</div>\n";
+        }
+        println """</div>""";
+    }
+
+}
+
+## This function adds the overlays to a picturepage
+function picpage_addoverlays(PicturePage p, bool fullmode, bool zoomout, int boxheight) {
+
+    var string titlesize = ($fullmode ? "60" : "30");
+
+    # Hack because Mozilla and IE suck donkey balls
+    var string bottomtop = ($boxheight ? string($boxheight - 28)+"px" : ($fullmode ? "85px" : "55px"));
+
+    if ($p.picture.title != "") {
+        """\n<h1 class="overlay" style="top: 5px; left: 5px; font-size: ${titlesize}px;">""";
+        print $p.picture.title;
+        """</h1>""";
+    } else {
+        if ($boxheight == 0) {
+            $bottomtop = "5px";
+        }
+    }
+
+    var int viewboxwidth  = $*viewboxdimlookup{$*opt_viewsize}[0];
+    var int viewboxheight = $*viewboxdimlookup{$*opt_viewsize}[1];
+
+    """\n<div class="overlay" id="controlbar" style="top: ${bottomtop}; left: 5px; height: 15px;">""";
+    if (not $fullmode and ($p.picture.fullimage.width > $viewboxwidth or $p.picture.fullimage.height > $viewboxheight)) {
+        controlbarimg($p.picture.url,"zoomin",$*text_toolbar_zoomin);
+    }
+    # FIXME: Zoomout image might go here sometime
+
+    if (viewer_is_owner()) {
+        controlbarimg($p.manage_url,"tweak","Manage Image");
+    }
+    if ($p.copy_url != "") {
+        controlbarimg($p.copy_url,"copy","Copy Image");
+    }
+
+    if ($fullmode) {
+        if ($p.pictures.url_prev != "") {
+            controlbarimg($p.pictures.url_prev,"nav_prev",$*text_range_prev);
+        }
+        if ($p.pictures.url_next != "") {
+            controlbarimg($p.pictures.url_next,"nav_next",$*text_range_next);
+        }
+    }
+
+    """</div>""";
+
+}
+
+function PicturePage::print_body() {
+    var int bw = int($.args{"bw"});
+    var int bh = int($.args{"bh"});
+    var int pw = int($.args{"pw"});
+    var int ph = int($.args{"ph"});
+    var bool fullmode = false;
+
+    var Image i;
+    if ($pw and $ph) {
+        $i = $.picture->get_image($pw,$ph);
+    } else {
+        $i = $.picture.fullimage;
+        $fullmode = true;
+    }
+    $pw = $i.width;
+    $ph = $i.height;
+
+    if ($bw and $bh) {
+        var int px = ($bw / 2) - ($pw / 2);
+        var int py = ($bh / 2) - ($ph / 2);
+
+        if (isnull $i) {
+            println """<p>$*text_error_badscaling</p>""";
+            return;
+        }
+
+        println """<a href="#" target="_top"><img src="$i.url" width="$i.width" height="$i.height" """ +
+                """ style="position: absolute; top: ${py}px; left: ${px}px; border: 0;" """ +
+                """ alt="[full image]" title="$.picture.title" /></a>""";
+        picpage_addoverlays($this, false, false, $bh);
+        return;
+    }
+
+    # If there is no box size given, just spit out the image
+    println """<div style="width: 100%; height: 100%; padding: 0; margin-left: auto; margin-right: auto; text-align: center">""" +
+            """<img src="$i.url" width="$i.width" height="$i.height" """ +
+            """ alt="[full image]" title="$.picture.title" /></div>""";
+    picpage_addoverlays($this, $fullmode, false, 0);
+    if ($*show_exif == "raw") { $this->print_exif_cats(["image", "media", "gps", "exposure"]); }
+}
+
+function print_stylesheet() {
+    var int viewboxwidth  = $*viewboxdimlookup{$*opt_viewsize}[0];
+    var int viewboxheight = $*viewboxdimlookup{$*opt_viewsize}[1];
+    var int iehackwidth   = $viewboxwidth + 200;
+    var int iehackheight  = $viewboxheight + 200;
+"""
+body {
+    $*background_css;
+    color: $*foreground;
+}
+a { color: $*foreground; }
+body.pics {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    $*font;
+}
+#uglyhack {
+    vertical-align: middle;
+    margin-top: 50px;
+}
+#uglyhack td {
+    text-align: center;
+}
+#uglyhack img {
+    border: 0; margin: 0;
+    padding: 0;
+}
+.overlay {
+    color: #000000;
+    background-image: url('/static/img/$*galdesoverlay');
+    text-align: left;
+    padding: 3px;
+    position: absolute;
+    z-index: 999; /* just to make sure ;) */
+}
+body > .overlay { /* pull precedence trick and hide from IE */
+    position: fixed;
+}
+h1.overlay {
+    font-weight: normal;
+    margin: 0;
+    border: 0;
+}
+#controlbar {
+    font-size: 1px; /* Stop text enlarging the box */
+}
+#controlbar img {
+    margin-left: 5px;
+    margin-right: 5px;
+    border: 0;
+}
+* html #IndexPage {
+    width: ${iehackwidth}px; /* for IE5 and IE6 in quirks mode */
+    height: ${iehackheight}px;
+}
+#IndexPage {
+    width: ${viewboxwidth}px; 
+    margin-top: 50px; 
+    height: ${viewboxheight}px; 
+    margin-left: auto; 
+    margin-right: auto; 
+    border: 100px solid $*border;
+    padding: 0px;
+}
+
+.IndexPageGals_large {
+    width: 150px;
+    height: 200px;
+    text-align: center;
+    float: left;
+}
+.IndexPageGals_medium {
+    width: 125px;
+    height: 150px;
+    text-align: center;
+    float: left;
+    font-size: .9em;
+}
+.IndexPageGals_small {
+    width: 100px;
+    height: 100px;
+    text-align: center;
+    font-size: .8em;
+    float: left;
+}
+.GalPageDesc
+{
+    padding: 0;
+    margin: 0;
+    margin-top: -100px;
+    width: ${viewboxwidth}px;
+    height: ${viewboxheight}px;
+    -moz-opacity: 0.4; 
+    filter: alpha(opacity=40);
+}
+.PicInABox
+{
+    width: 100px;
+    height: 100px;
+    float: left;
+}
+.NoExtraBoxModel 
+{
+    padding: 0;
+    margin: 0;
+    border: 0;
+}
+#Controls {
+    width: ${viewboxwidth}px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px dashed $*border;
+    margin-top: 10px;
+}
+#Controls img {
+    vertical-align: middle;
+}
+#SubGalleries {
+    width: ${viewboxwidth}px; 
+    margin-top: 50px; 
+    margin-left: auto;
+    margin-right: auto;
+}
+#SubGalleries h2 {
+    border-bottom: 2px solid $*border;
+    color: $*border;
+    width: 100%;
+    text-align: left;
+    font-size: 1em;
+}
+""";
+}

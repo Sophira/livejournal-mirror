@@ -1,0 +1,255 @@
+#-*-c++-*-
+
+layerinfo "type" = "layout";
+layerinfo "redist_uniq" = "apache/layout";
+layerinfo "name" = "Apache-style Directory Indexing";
+
+property string imgroot {
+  des = "Root of images";
+}
+set imgroot = "/img/apache";
+
+property bool show_titles {
+  des = "Show titles under thumbnails?";
+}
+set show_titles = true;
+
+property bool shadows {
+  des = "Show drop-shadows under pictures?";
+}
+set shadows = false;
+
+property Color shadow_color {
+  des = "Shadow color";
+  note = "Color of drop-shadow.";
+}
+set shadow_color = "#336699";
+
+property string thumbnail_size {
+  des = "Thumbnail size";
+  values = "100x100|100x100|125x125|125x125|150x150|150x150|200x200|200x200";
+}
+set thumbnail_size = "100x100";
+
+property string thumbnail_style {
+  des = "Thumbnail style";
+  values = "|Scaled|,crop|Cropped|,zoom|Crop, but fit exactly";
+}
+set thumbnail_style = "";
+
+property int rows {
+  des = "Number of rows of pictures";
+  min = 1;
+}
+set rows = 5;
+
+property int cols {
+  des = "Number of cols of pictures";
+  min = 1;
+}
+set cols = 5;
+
+property string tint { noui = 1; }
+function prop_init ()
+{
+  $*gallery_page_max_size = $*rows * $*cols;
+  $*thumbnails = "pn=100x100" + $*thumbnail_style + "&norm=" + $*thumbnail_size + $*thumbnail_style;
+
+  if ($*shadows) {$*tint = "ffffff" + $*shadow_color.as_string->substr(1, 6);}
+}
+
+function DateTime::print_datetime ()
+{
+  if ($.month == 0) {
+    print "                 ";
+    return;
+  }
+
+  print $.day->zeropad(2); "-";
+  print $*text_months_short[$.month-1]; "-";
+  print $.year; " ";
+  print $.hour->zeropad(2); ":";
+  print $.min->zeropad(2);
+}
+
+function Page::print ()
+{
+  var string title = $this->title();
+  
+  """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" 
+"http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>""";
+$this->print_head();
+"""
+<title>$title</title>
+</head><body bgcolor="#ffffff" text="#000000">
+
+<table><tr><td bgcolor="#ffffff" class="title">
+<font size="+3" face="Helvetica,Arial,sans-serif">
+<b>$title</b></font>
+
+</td></tr></table>""";
+
+   $this->print_body();
+
+"""<hr noshade align="left" width="80%">
+<address>Apache/1.3.26 Server at fotobilder Port 80</address>
+</body></html>""";
+}
+
+function IndexPage::title () : string
+{
+  return "Index of /$.user.user";
+}
+
+function dir_header {
+  """<pre><img border="0" src="$*imgroot/blank.gif" ALT="     "> Name                    Last modified      Size  Description
+<hr noshade align="left" width="80%">
+""";
+}
+
+function dir_item (string icon, string url, string name, DateTime dt, string size, string des) 
+{
+  var string alt;
+  if ($icon == "folder") { $alt = "[DIR]"; }
+  """<img border="0" src="$*imgroot/${icon}.gif" alt="$alt" /> """;
+  "<a href=\"$url\">$name</a>";
+
+  var string space = " ";
+  print $space->repeat(24 - $name->length());
+
+  if (isnull $dt) { $dt = new DateTime; }
+  $dt->print_datetime();
+
+  print "  ";
+  print $size != "" ? $space->repeat(4 - $size->length()) + $size : "   -";
+  print "  " + ehtml($des->substr(0,35));
+  print ($des->length() > 35) ? "&hellip;\n" : "\n";
+
+}
+
+function IndexPage::print_body ()
+{
+  var string space = " ";
+  """<pre><img border="0" src="$*imgroot/blank.gif" ALT="     "> """;
+  if ((not isnull $.sort_link{"alpha"}) and ($.sort_mode != "alpha")) {
+    """<a href=\"$.sort_link{"alpha"}.url\">Name</a>""";
+  } else {
+    "Name";
+  }
+  print $space->repeat(20);
+  if ((not isnull $.sort_link{"date"}) and ($.sort_mode != "date")) {
+    """<a href=\"$.sort_link{"date"}.url\">Last Modified</a>""";
+  } else {
+    "Last Modified";
+  }
+  "      Size  Description";
+  """<hr noshade align="left" width="80%" />""";
+  foreach var Gallery g ($.sorted_galleries) {
+    dir_item("folder", $g.url, $g.name, $g.dateupdate, string($g.numpics), $g.des);
+  }
+  if (viewer_is_owner()) { dir_item("screw2", $.manage_url, "Manage", new DateTime, "", "Make Changes to Your Account"); }
+  "</pre>";
+}
+
+function GalleryPage::title () : string
+{
+  return $.gallery.name;
+}
+
+function GalleryPage::print_body ()
+{
+  dir_header();
+  foreach var Link l ($.parent_links) {
+    dir_item("back", $l.url, $l.caption, new DateTime, "", "");
+  }
+
+  foreach var Gallery g ($.gallery.children) {
+    dir_item("folder", $g.url, $g.name, $g.dateupdate, string($g.numpics), $g.des);
+  }
+  if (not $.pages.all_subitems_displayed) {
+    foreach var int i (1..$.pages.total) {
+      dir_item("text", $.pages->url_of($i), "Page $i", $.gallery.dateupdate, "", "");
+    }
+    if ($.pages.url_prev != "") { 
+      dir_item("left", $.pages.url_prev, "Previous Page", $.gallery.dateupdate, "", "Page " + ($.pages.current - 1) + " of $.pages.total"); 
+    }
+    if ($.pages.url_next != "") { 
+      dir_item("right", $.pages.url_next, "Next Page", $.gallery.dateupdate, "", "Page " + ($.pages.current + 1) + " of $.pages.total"); 
+    }
+  }
+  if (viewer_is_owner()) { dir_item("screw2", $.manage_url, "Manage", new DateTime, "", "Make Changes to Your Gallery"); }
+  if ($.copy_url != "") { dir_item("screw2", $.copy_url, "Copy", new DateTime, "", "Copy this Gallery to Your Account"); }
+  "</pre>";
+
+  if ((size $.pictures) == 0) { return; }
+
+  "<hr noshade align=\"left\" width=\"80%\" />";
+
+  "<table cellpadding='2'>";
+  var bool tr = false;
+  var int td = 0;
+  var string desrow;
+  var int rows = 0;
+  foreach var Picture p ($.pictures) {
+    if (not $tr) {
+      "<tr align='center' valign='bottom'>\n";
+      $rows++;
+      $tr = true;
+    }
+    var Image i = $p.thumbnails{"norm"};
+    "<td>";
+    $i->print({
+      "tint" => $*tint,
+      "href" => $p.url,
+      "alt" => $p.title,
+    });
+    "</td>\n";
+    $desrow = $desrow + "<td><a href=\"$p.url\">$p.title</a></td>";
+    $td++;
+    if ($td == $*cols) {
+      "</tr>\n";
+      if ($*show_titles) {
+        "<tr valign='top'>$desrow</tr>\n";
+      }
+      $td = 0;
+      $tr = false;
+      $desrow = "";
+    }
+  }
+  if ($tr) {
+    "</tr>\n";
+    if ($*show_titles) {
+      "<tr valign='top' align='center'>$desrow</tr>\n";
+    }
+  }
+  "</table>";
+
+}
+
+function PicturePage::title () : string
+{
+  var Page p = get_page();
+  if ($.picture.title != "") { return "$p.user.usercs - $.picture.title"; }
+  return "$p.user.usercs - $.picture.piccode";
+}
+
+function PicturePage::print_body ()
+{
+  dir_header();
+  foreach var Link l ($.parent_links) {
+    dir_item("back", $l.url, $l.caption, new DateTime, "", "");
+  }
+  if (viewer_is_owner()) { dir_item("screw2", $.manage_url, "Manage", new DateTime, "", "Make Changes to Your Picture"); }
+  if ($.copy_url != "") { dir_item("screw2", $.copy_url, "Copy", new DateTime, "", "Copy this Picture to Your Account"); }
+
+ "<hr noshade align=\"left\" width=\"80%\">";
+  var Image inline = $.picture->get_image(640, 480);
+  $inline->print({
+    "alt" => $.picture.piccode,
+    "tint" => $*tint,
+    "href" => $.picture.fullimage.url,
+  });
+  if ($*show_exif == "raw") { $this->print_exif_cats(["image", "media", "gps", "exposure"]); }
+}

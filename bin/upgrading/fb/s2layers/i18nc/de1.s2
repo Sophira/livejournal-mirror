@@ -1,0 +1,9 @@
+#-*-c++-*-
+
+layerinfo "type" = "i18nc";
+layerinfo "redist_uniq" = "i18nc/de1";
+layerinfo "name" = "Deutsch";
+
+
+
+

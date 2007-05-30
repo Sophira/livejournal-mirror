@@ -1,0 +1,920 @@
+#-*-s2-*-
+
+layerinfo type = "layout";
+layerinfo name = "Smoove";
+layerinfo redist_uniq = "smoove/layout";
+layerinfo author_name = "Mahlon E. Smith";
+layerinfo author_email = "mahlon@martini.nu";
+layerinfo source_viewable = 0;
+layerinfo is_public = 1;
+
+##### properties
+
+propgroup presentation {
+    
+    property string alt_css {
+        des = "Alternate stylesheet";
+        note = "A URL to an external stylesheet, if you'd like total control over your style.";
+    }
+
+    property use gallery_page_max_size;
+    set gallery_page_max_size = 16;
+    property use index_page_max_size;
+    set index_page_max_size = 8;
+
+    property int rowspacing {
+        des = "Extra spacing between picture rows";
+        note = "Set this to help avoid odd picture wrapping due to descriptions. (value in pixels)";
+    }
+    set rowspacing = 0;
+
+    property bool use_shadows {
+        des = "Show drop shadows on images?";
+    }
+    set use_shadows = true;
+
+    property bool show_desc {
+        des = "Show descriptions in list formats?";
+        note = "Descriptions have the potential side effect of causing undesired wrapping.";
+    }
+    set show_desc = true;
+
+    property int imgpadding {
+        des = "Width of padding around images";
+    }
+    set imgpadding = 6;
+
+    property string thumb_size {
+        des = "Thumbnail size";
+        values = "100x80|100x80|150x120|150x120|200x180|200x180";
+    }
+    set thumb_size = "150x120";
+
+    property string thumb_style {
+        des = "Thumbnail preview style";
+        values = "|Scaled|,crop|Cropped|,zoom|Crop, but fit exactly";
+    }
+    set thumb_style = ",zoom";
+}
+
+propgroup colors {
+    property Color bgcolor {
+        des = "Background color";
+    }
+    set bgcolor = "#fff";
+
+    property Color text_color {
+        des = "Text color";
+    }
+    set text_color = "#000";
+
+    property Color desc_color {
+        des = "Description text color";
+    }
+    set desc_color = "#777";
+
+    property Color img_padding_color {
+        des = "Color of the padding around images";
+    }
+    set img_padding_color = "#fff";
+
+    property Color dotted_color {
+        des = "Color of the header and footer bar";
+    }
+    set dotted_color = "#999";
+
+    property Color header_title_color {
+        des = "Header title background color";
+    }
+    set header_title_color = "#ddd";
+
+    property Color header_font_color {
+        des = "Header title font color";
+    }
+    set header_font_color = "#000";
+
+    property Color nav_area_bg_color {
+        des = "Navigation area background color";
+    }
+    set nav_area_bg_color = "#eee";
+
+    property Color link_hilight_color {
+        des = "Link hover background color";
+    }
+    set link_hilight_color = "#ddd";
+
+    property Color link_color {
+        des = "Link text color";
+    }
+    set link_color = "#555";
+
+}
+
+propgroup background {
+    property string bgimage {
+        des = "Background image";
+    }
+    set bgimage = "none";
+
+    property string bgrepeat {
+        des = "Background image repeat";
+        values = "no-repeat|none|repeat|repeat|repeat-y|vertically only|repeat-x|horizontally only";
+    }
+    set bgrepeat = "repeat-x";
+}
+
+propgroup fonts {
+    property use font_base;
+    property use font_fallback;
+
+    property int font_size {
+        des = "Main font size";
+        min = 8;
+        max = 48;
+    }
+    set font_size = 10;
+
+    property int header_font_size {
+        des = "Header font size";
+        min = 8;
+        max = 48;
+    }
+    set header_font_size = 24;
+
+    property int title_size {
+        des = "Image/gallery title font size";
+        min = 8;
+        max = 48;
+    }
+    set title_size = 9;
+
+    property int desc_size {
+        des = "Description font size";
+        min = 8;
+        max = 48;
+    }
+    set desc_size = 9;
+
+    property int label_size {
+        des = "Label font size (for galleries that contain subgalleries)";
+        min = 8;
+        max = 48;
+    }
+    set label_size = 9;
+}
+
+propgroup text {
+
+    property string title {
+        des = "Main page title";
+        note = "If you lave this blank, we will add a generic title as a default";
+    }
+    set title = "";
+
+}
+
+# No GUI for these - just knobs for themes.
+
+# image props
+property string shadow_img {
+    noui = 1;
+    des = "Image frame drop shadow.";
+}
+
+property string navbox_top_img {
+    noui = 1;
+    des = "Rounded corner background image for navigation box. (top)";
+}
+
+property string navbox_btm_img {
+    noui = 1;
+    des = "Rounded corner background image for navigation box. (bottom)";
+}
+
+property string no_gal_preview_img {
+    noui = 1;
+    des = "Filler for galleries with no preview image.";
+}
+
+property string no_subgal_preview_img {
+    noui = 1;
+    des = "Filler for subgalleries with no preview image.";
+}
+
+property int picwidth {
+    des = "Simple width, for calculating shadow.";
+    noui = 1;
+}
+
+property string dotted_type {
+    des = "Style of separator lines.";
+    noui = 1;
+}
+set dotted_type = "dotted";
+
+property int dotted_width {
+    des = "Width of separator lines";
+    noui = 1;
+}
+set dotted_width = 1;
+
+##### functions 
+
+function prop_init () {
+    $*thumbnails = "preview=" + $*thumb_size + $*thumb_style;
+    $*thumbnails = $*thumbnails + "&subgal=" + "70x50" + ",zoom";
+
+    if ($*font_base == "") { $*font_base = "verdana"; }
+    if ($*font_fallback == "") { $*font_fallback = "sans-serif"; }
+
+    # initial pict paths
+    var string shadow_path     = "/img/smoove/imgshadow.png";
+    var string navbox_top_path = "smoove/round_top_750.gif";
+    var string navbox_btm_path = "smoove/round_btm_750.gif";
+    
+    # "no preview" images.  allow layer override.
+    if ($*no_gal_preview_img == "") {
+        $*no_gal_preview_img = "/img/smoove/nogalpreview_" + $*thumb_size + ".png";
+    }
+    if ($*no_subgal_preview_img == "") {
+        $*no_subgal_preview_img = "/img/smoove/nogalpreview_70x50.png";
+    }
+
+    # set width so we can figure out shadow placements
+    if ($*thumb_size == "100x80")  { $*picwidth = 100 + $*imgpadding + 5; }
+    if ($*thumb_size == "150x120") { $*picwidth = 150 + $*imgpadding + 5; }
+    if ($*thumb_size == "200x180") { $*picwidth = 200 + $*imgpadding + 5; }
+
+    # setup shadow tint to match background color (nevermind. we're just going to use a png.)
+    if ($*shadow_img == "") { $*shadow_img = $shadow_path; }
+
+    # setup navbox 'corners' to match background color.
+    $*navbox_top_img = palimg_modify($navbox_top_path, [PalItem(0, $*bgcolor)]);
+    $*navbox_btm_img = palimg_modify($navbox_btm_path, [PalItem(0, $*bgcolor)]);
+
+}
+
+function print_stylesheet () {
+"body
+{
+    ";
+    if ($*bgimage != "" and $*bgimage != "none") {
+    "
+    background-image: url($*bgimage);
+    background-repeat: $*bgrepeat;
+    ";
+    }
+    "
+    font-size: $*font_size" + "px" + ";
+    font-family: $*font_base, $*font_fallback, arial, helvetica;
+    background-color: $*bgcolor;
+    margin: 12px;
+    color: $*text_color;
+}
+
+div.picbox
+{
+    width: 800px;
+    text-align: left;
+}
+
+.pic
+{
+    float: left;
+    padding: 5px 5px ";
+    print $*rowspacing == 0 ? "20" : "0";
+    "px 20px;
+    width: " + $*picwidth + "px;
+    min-height: " + $*rowspacing + "px;
+}
+
+.picshadow
+{
+    ";
+    if ($*use_shadows) {
+        "background: url($*shadow_img) no-repeat bottom right;";
+    }
+    "
+}
+
+.pic img
+{
+    background-color: $*img_padding_color" + ";
+    ";
+    if ($*use_shadows) {
+        "margin: -6px 6px 6px -9px;";
+    } else {
+        "margin-bottom: 6px;";
+    }
+    "
+    padding: " + $*imgpadding + "px;
+    border: 1px solid #bbb;
+}
+
+.pic p.title
+{
+    font-size: $*title_size" + "px;
+    display: inline;
+}
+
+.pic p.des
+{
+    font-size: $*desc_size" + "px;
+    color: $*desc_color" + ";
+    ";
+    var int sep_width;
+    if ($*dotted_width > 1) {
+        $sep_width = $*dotted_width / 2;
+    } else {
+        $sep_width = $*dotted_width;
+    }
+    "
+    border-top: $sep_width" + "px " + "$*dotted_type $*dotted_color" + ";
+}
+
+.galpicdes
+{
+    font-size: $*desc_size" + "px;
+    color: $*desc_color" + ";
+}
+
+div.spacer
+{
+    clear: both;
+}
+
+.number
+{
+    font-weight: bold;
+}
+
+.navbox
+{
+    text-align: left;
+    width: 750px;  /* needs to match the rounded corner image width */
+    background: $*nav_area_bg_color url($*navbox_btm_img) no-repeat bottom left;
+    position: relative;
+    ";
+    if ($*use_shadows) {
+        "left: -30px;";
+    } else {
+        "left: -20px;";
+    }
+    "
+}
+
+.navbox .header
+{
+    margin: 0;
+    padding: 4px 4px 4px 10px;
+    background: $*header_title_color url($*navbox_top_img) no-repeat top left;
+}
+
+.navbox .header .title
+{
+    font-weight: bold;
+    font-size: " + $*header_font_size + "px;
+    color: $*header_font_color" + ";
+}
+
+.navbox .header .pager
+{
+    font-size: $*font_size" + "px;
+    padding-right: 10px;
+    color: $*header_font_color" + ";
+}
+
+.navbox p
+{
+    border-top: $*dotted_width" + "px " + "$*dotted_type $*dotted_color" + ";
+    margin: 0;
+    padding: 10px;
+    font-size: $*font_size" + "px;
+}
+
+.navbox a 
+{
+    color: $*link_color" + ";
+    padding: 3px;
+    text-decoration: none;
+}
+
+.navbox a:hover 
+{
+    color: black;
+    background-color: $*link_hilight_color" + ";
+    border: 1px solid $*link_color" + ";
+    padding: 2px;
+}
+
+.label
+{
+    margin-bottom: 10px;
+    color: $*desc_color" + ";
+    font-size: $*label_size" + ";
+}
+
+    ";
+}
+
+function gal_total_picts (Gallery g) : int
+{
+    return $g.numpics + $g->desc_pics();
+}
+
+function Page::lay_top_left_links () { "&nbsp;"; }
+function Page::lay_top_right_links () { "&nbsp;"; }
+function Page::lay_btm_left_links () { "&nbsp;"; }
+function Page::lay_btm_right_links () { "&nbsp;"; }
+function Page::lay_pager () { "&nbsp;"; }
+
+function IndexPage::lay_btm_left_links ()
+{
+    var string{} sort_mode;
+    $sort_mode{"top"} = "top level";
+    $sort_mode{"recent"} = "recently updated";
+    $sort_mode{"alpha"} = "alphabetical";
+    $sort_mode{"date"} = "by date";
+    foreach var string mode (["top", "recent", "alpha", "date"]) {
+        """<a href="$.sort_link{$mode}.url">$sort_mode{$mode}</a> &nbsp;""";
+    }
+}
+
+function IndexPage::lay_top_left_links ()
+{
+    var ItemRange sp = $.sorted_pages;
+    if (not $sp.all_subitems_displayed and $sp.total > 0) {
+
+        if ($sp.url_first != "" and $sp.total > 2) {
+            """<a href="$sp.url_first">first page</a> &nbsp;""";
+        }
+
+        if ($sp.current != 1) {
+            """<a href="$sp.url_prev">previous page</a>""";
+        }
+
+    }
+    "&nbsp;";
+}
+
+function IndexPage::lay_top_right_links ()
+{
+    var ItemRange sp = $.sorted_pages;
+    "&nbsp;";
+    if (not $sp.all_subitems_displayed and $sp.total > 0) {
+
+        if ($sp.total != $sp.current) {
+            """<a href="$sp.url_next">next page</a>""";
+        }
+
+        if ($sp.url_last != "" and $sp.total > 2) {
+            """&nbsp;<a href="$sp.url_last">last page</a>""";
+        }
+
+    }
+}
+
+function IndexPage::lay_btm_right_links ()
+{
+    if (viewer_is_owner()) {
+        """<a href="$.manage_url">manage account</a>""";
+    }
+    if (not viewer_logged_in()) {
+        """<a href="/login">login</a>""";
+    }
+}
+
+function IndexPage::lay_pager ()
+{
+    var ItemRange sp = $.sorted_pages;
+    if (not $sp.all_subitems_displayed and $sp.total > 0) {
+        "Page <span class=\"number\">$sp.current</span> of <span class=\"number\">$sp.total</span><br />";
+        "Galleries $sp.from_subitem-$sp.to_subitem of $sp.total_subitems<br />";
+    } else {
+        "&nbsp;";
+    }
+}
+
+function GalleryPage::lay_btm_right_links ()
+{
+    if (viewer_is_owner()) {
+        """<a href="$.manage_url">manage gallery</a>""";
+    } else {
+        if (viewer_logged_in() and $.copy_url != "") {
+            """<a href="$.copy_url">copy gallery</a>""";
+        }
+    }
+    if (not viewer_logged_in()) {
+        """<a href="/login">login</a>""";
+    }
+}
+
+function GalleryPage::lay_top_left_links ()
+{
+    var ItemRange sp = $.pages;
+    if (not $sp.all_subitems_displayed and $sp.total > 0) {
+
+        if ($sp.url_first != "" and $sp.total > 2) {
+            """<a href="$sp.url_first">first page</a> &nbsp;""";
+        }
+
+        if ($sp.current != 1) {
+            """<a href="$sp.url_prev">previous page</a>""";
+        }
+
+    }
+    "&nbsp;";
+}
+
+function GalleryPage::lay_pager ()
+{
+    if (not $.pages.all_subitems_displayed) {
+        "Page <span class=\"number\">$.pages.current</span> of <b>$.pages.total</b><br />";
+        "Pictures $.pages.from_subitem-$.pages.to_subitem of $.pages.total_subitems<br />";
+    } else {
+        "&nbsp;";
+    }
+}
+
+function GalleryPage::lay_top_right_links ()
+{
+    var ItemRange sp = $.pages;
+    "<a href='$.parent_link.url'>up to gallery list</a>";
+    if (not $sp.all_subitems_displayed and $sp.total > 0) {
+        "&nbsp; &nbsp;";
+        if ($sp.total != $sp.current) {
+            """&nbsp;<a href="$sp.url_next">next page</a>""";
+        }
+
+        if ($sp.url_last != "" and $sp.total > 2) {
+            """&nbsp;<a href="$sp.url_last">last page</a>""";
+        }
+
+    }
+}
+
+function GalleryPage::lay_btm_left_links ()
+{
+    "&nbsp;";
+    if ($.des != "") {
+        """<span class="galpicdes">$.des""";
+    } else {
+        "&nbsp;";
+    }
+}
+
+function PicturePage::lay_btm_right_links ()
+{
+    if (viewer_is_owner()) {
+        """<a href="$.manage_url">manage picture</a>""";
+    } else {
+        if (viewer_logged_in()) {
+            """<a href="$.copy_url">copy picture</a>""";
+        }
+    }
+    if (not viewer_logged_in()) {
+        """<a href="/login">login</a>""";
+    }
+}
+
+function PicturePage::lay_pager ()
+{
+    if (not $.pictures.all_subitems_displayed and not isnull $.gallery) {
+        "Picture <span class=\"number\">$.pictures.current</span> of ";
+        "<span class=\"number\">$.pictures.total</span><br />";
+    } else {
+        "&nbsp;";
+    }
+}
+
+function PicturePage::lay_btm_left_links ()
+{
+    "&nbsp;";
+    if ($.des != "") {
+        """<span class="galpicdes">$.des""";
+    } else {
+        "&nbsp;";
+    }
+    if ($*show_exif == "raw") { "<div class='galpicdes'>"; $this->print_exif_cats(["image", "media", "gps", "exposure"]); "</div>"; }
+}
+
+function PicturePage::lay_top_right_links ()
+{
+    var ItemRange sp = $.pictures;
+    if ($.parent_link.url != "") {
+        """<a href="$.parent_link.url">up to gallery</a>""";
+    }
+    if (not $sp.all_subitems_displayed and $sp.total > 0) {
+        if ($sp.total != $sp.current) {
+            """&nbsp; &nbsp;<a href="$sp.url_next">next picture</a>""";
+        }
+
+        if ($sp.url_last != "" and $sp.total > 2) {
+            """&nbsp;<a href="$sp.url_last">last picture</a>""";
+        }
+
+    }
+}
+
+function PicturePage::lay_top_left_links ()
+{
+    var ItemRange sp = $.pictures;
+    if (not $sp.all_subitems_displayed and $sp.total > 0) {
+
+        if ($sp.url_first != "" and $sp.total > 2) {
+            """<a href="$sp.url_first">first picture</a> &nbsp;""";
+        }
+
+        if ($sp.current != 1) {
+            """<a href="$sp.url_prev">previous picture</a>""";
+        }
+
+    }
+    "&nbsp;";
+}
+
+function make_navbox (Page this, int top)
+{
+    """<div class="navbox">""";
+    if ($top == 1) {
+        """
+        <div class="header">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%"><tr>
+        <td width="50%" class="title">
+        """;
+        print $this->title();
+        """</td><td align="right" valign="bottom" width="50%" class="pager">""";
+        $this->lay_pager();
+        "</td></tr></table></div>";
+    }
+    """
+    <table border="0" cellpadding="0" cellspacing="0" width="100%"><tr>
+    <td width="50%"><p>
+    """;
+    if ($top == 1) {
+        $this->lay_top_left_links();
+    } else {
+        $this->lay_btm_left_links();
+    }
+    """
+    </p></td>
+
+    <td align="right" width="50%" valign="top"><p>
+    """;
+    if ($top == 1) {
+        $this->lay_top_right_links();
+    } else {
+        $this->lay_btm_right_links();
+    }
+    """
+    </p></td>
+
+    </tr></table>
+    </div>
+    """;
+}
+
+function Page::print ()
+{
+    """<html>
+<head>""";
+$this->print_head();
+"""
+<!-- design by Mahlon E. Smith <mahlon@martini.nu>
+     for LiveJournal.com / PicPix.com -->
+<title>
+    """;
+  print $this->title();
+  "\n</title>\n";
+    if ($*alt_css == "") {
+        """<link rel="stylesheet" href="$.stylesheeturl" type="text/css">""";
+    } else {
+        """<link rel="stylesheet" href="$*alt_css" type="text/css">""";
+    }
+    """
+</head>
+<body>
+<center>
+    """;
+    make_navbox($this, 1);
+    """
+<div class="picbox">
+    <div class="spacer">&nbsp;</div>
+    """;
+    $this->print_body();
+    """
+
+<div class="spacer">&nbsp;</div>
+</div>
+
+    """;
+    make_navbox($this, 0);
+    """
+<div style="margin-bottom: 60px;">&nbsp;</div>
+</center>
+
+</body>
+</html>
+""";
+}
+
+function IndexPage::title () : string
+{
+  if ($*title != "") { return $*title; }
+  return "$.user.usercs's galleries";
+}
+
+function GalleryPage::title () : string
+{
+  return $.gallery.name;
+}
+
+function PicturePage::title () : string
+{
+  if ($.picture.title == "") { $.picture.title = "untitled picture"; }
+  return $.picture.title;
+}
+
+function IndexPage::print_body ()
+{
+    var int totalwidth = 0; # The total width that the pictures have taken up on this line so far
+    var int picwidth_padding = $*picwidth + 25; # The width of the picture plus the padding
+
+    if (size $.sorted_galleries == 0) {
+        "$*text_nogalleries";
+        return;
+    }
+
+    foreach var Gallery g ($.sorted_galleries) {
+        var Image i = $g->get_preview_image("preview");
+        """
+        <div class="pic">
+            <div class="picshadow">
+                <a href="$g.url" alt="$g.name">
+        """;
+        if (defined $i) {
+            """<img src="$i.url" border="0" width="$i.width" height="$i.height" />""";
+        } else {
+            """<img src="$*no_gal_preview_img" border="0" />""";
+        }
+        "</a><br /></div>";
+        """<p class="title">$g.name</p><br />""";
+        var int numchildren = size $g.children;
+        if ($numchildren > 0) {
+            if ($numchildren == 1) {
+                "<span class=\"number\">$numchildren</span> gallery, ";
+            } else {
+                "<span class=\"number\">$numchildren</span> galleries, ";
+            }
+        }
+        var int totalpicts = gal_total_picts($g);
+        if ($totalpicts == 1) {
+            """<span class="number">$totalpicts</span> picture""";
+        } else {
+            """<span class="number">$totalpicts</span> pictures""";
+        }
+        "<br />";
+
+        if ($.sort_mode == "date") {
+            if (not isnull $g.date) {
+                "date: ";
+                $g.date->print_date();
+            }
+        } else {
+            if (not isnull $g.dateupdate) {
+                "Last updated: ";
+                $g.dateupdate->print_date();
+            }
+        }
+
+        if ($*show_desc) {
+            """<br /><p class="des">$g.des</p>""";
+        }
+        "</div>";
+
+        $totalwidth = $totalwidth + $picwidth_padding; # Add this picture's width to the total width
+        if ($totalwidth + $picwidth_padding >= 800) { # If we're going to wrap to the next line
+            """<br style="clear: both;" />"""; # Do this so the pictures don't get bumped down when descriptions are long
+            $totalwidth = 0; # Reset total width
+        }
+    }
+}
+
+function GalleryPage::print_body() {
+
+    var int totalwidth = 0; # The total width that the pictures have taken up on this line so far
+    var int picwidth_padding = $*picwidth + 25; # The width of the picture plus the padding
+
+    var int numsubgals = size $.gallery.children;
+
+    # subgalleries!
+    if ($numsubgals > 0) {
+        """<div class="label">subgalleries:</div>""";
+        foreach var Gallery g ($.gallery.children) {
+            var Image i = $g->get_preview_image("subgal");
+            var string width;
+            if (defined $i) {
+                $width = $i.width + $*imgpadding + 4 + "px;";
+            } else {
+                $width = 70 + $*imgpadding + 4 + "px;";
+            }
+            """
+            <div class="pic" style="width: $width">
+                <div class="picshadow">
+                    <a href="$g.url" alt="$g.name">
+            """;
+            if (defined $i) {
+                """<img src="$i.url" border="0" width="$i.width" height="$i.height" />""";
+            } else {
+                """<img src="$*no_subgal_preview_img" border="0" width="70" height="50" />""";
+            }
+            "</a><br /></div>";
+            """<p class="title">$g.name<br />""";
+            var int totalpicts = gal_total_picts($g);
+            if ($totalpicts == 1) {
+                """<span class="number">$totalpicts</span> picture""";
+            } else {
+                """<span class="number">$totalpicts</span> pictures""";
+            }
+            "</div>";
+        }
+        if ($.pages.total_subitems != 0) {
+            """<div style="clear: both">&nbsp;</div>""";
+            """<div class="label">images:</div>""";
+        }
+    }
+
+
+    # Totally empty gallery.  No picts, no subgalleries.
+    if ($.pages.total_subitems == 0 and $numsubgals == 0) {
+        "There are no pictures to display.";
+        return;
+    }
+
+    foreach var Picture p ($.pictures) {
+        var Image i = $p.thumbnails{"preview"};
+        """
+        <div class="pic">
+            <div class="picshadow">
+                <a href="$p.url" alt="$p.title">
+                <img src="$i.url" border="0" width="$i.width" height="$i.height" />
+                </a><br />
+            </div>
+            <p class="title">
+        """;
+        if ($p.title == "") {
+            "untitled</p>";
+        } else {
+            "$p.title</p>";
+        }
+
+        var int size = $p.bytes / 1024;
+        "<br />size: ";
+        "$p.fullimage.width" + "x" +"$p.fullimage.height, ";
+        "$size" + "k<br />";
+
+        if ($*show_desc) {
+            $this->load_pict_descriptions();
+            """<p class="des">$p.des</p>""";
+        }
+        "</div>";
+
+        $totalwidth = $totalwidth + $picwidth_padding; # Add this picture's width to the total width
+        if ($totalwidth + $picwidth_padding >= 800) { # If we're going to wrap to the next line
+            """<br style="clear: both;" />"""; # Do this so the pictures don't get bumped down when descriptions are long
+            $totalwidth = 0; # Reset total width
+        }
+    }
+
+}
+
+function PicturePage::print_body ()
+{
+    var Image i = $.picture->get_image(640, 480);
+
+    # need to override the width on these images,
+    # since the drop shadow needs an explicit number.
+    var string width = $i.width + 10 + "px";
+
+    """
+        <div class="pic" style="width: $width;">
+            <div class="picshadow">
+                <a href='$.picture.fullimage.url' alt='$.picture.title'>
+                    <img src="$i.url" border="0" width="$i.width" height="$i.height"></a>
+                </a><br />
+            </div>
+        </div>
+    """;
+    if (size $.tags > 0) {
+      """<div class="pic" style="width: $width"><strong>Tags:</strong> """;
+      foreach var Link k ($.tags) {
+        """<a href="$k.url">$k.caption</a>""";
+        if ($k.url != $.tags[size $.tags -1].url) {
+          ", ";
+        }
+      }
+      """</div>""";
+    }
+
+}
+

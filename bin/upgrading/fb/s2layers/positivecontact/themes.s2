@@ -1,0 +1,31 @@
+#NEWLAYER: positivecontact/graded
+layerinfo "type" = "theme";
+layerinfo "name" = "Graded";
+layerinfo "redist_uniq" = "positivecontact/graded";
+
+set floater_fgcolor = "#000000";
+set title_fgcolor = "#000000";
+set background_image = "";
+set background_repeat = "no-repeat";
+set font_base = "";
+set background_position = "top right";
+set title_align = "left";
+set thumb_style = "";
+set bgcolor = "#FFFFFF";
+set tags_fgcolor = "#555555";
+set sidebar_box_title_bgcolor = "#ffffff";
+set sidebar_box_bgcolor = "#ffffff";
+set viewing_size = "regular";
+set thumb_size = "150x120";
+set font_fallback = "none";
+set floater_bgcolor = "#ffffff";
+set title_navigation_bgcolor = "#CD2F27";
+set sidebar_box_title_fgcolor = "#000000";
+set title_navigation_fgcolor = "#ffffff";
+set sidebar_position = "right";
+set title_navigation_border = "#ffffff";
+set picwidth = 200;
+set sidebar_box_fgcolor = "#333333";
+set title = "Fantabulous Galleria";
+set background_scrolling = "fixed";
+set sidebar_box_border = "#ffffff";
