@@ -1106,6 +1106,7 @@ sub User
         '_domainid' => $u->{'domainid'},
         'user' => $u->{'user'},
         'usercs' => $u->{'usercs'},
+        'url'    => $u->media_base_url,
     };
 }
 
