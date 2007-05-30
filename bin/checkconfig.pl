@@ -13,6 +13,7 @@ my @checks = (  # put these in the order they should be checked in
     "env",
     "database",
     "ljconfig",
+    "fb",
 );
 foreach my $check (@checks) { $dochecks{$check} = 1; }
 
@@ -228,6 +229,8 @@ sub check_env {
     if ($LJ::SMTP_SERVER && ! defined $Net::SMTP::VERSION) {
         $err->("Net::SMTP isn't available, and you have \$LJ::SMTP_SERVER set.");
     }
+
+    $err->("FBHOME must be the same as LJHOME.") unless $ENV{FBHOME} && $ENV{FBHOME} eq $ENV{LJHOME};
 }
 
 sub check_database {
@@ -259,6 +262,28 @@ sub check_ljconfig {
     my @errs = LJ::ConfCheck::config_errors();
     local $" = ",\n\t";
     $err->("Config errors: @errs") if @errs;
+}
+
+sub check_fb {
+    my $fbconfig = "$ENV{LJHOME}/etc/fbconfig.pl";
+    return $err->("No $fbconfig present") unless -e $fbconfig;
+    require $fbconfig;
+
+    eval {
+        use lib "$ENV{LJHOME}/cgi-bin";
+        require "ljlib.pl";
+        1;
+    } or die $@;
+
+    # is there mogile?
+    if (! $FB::MogileFS) {
+        my $spool_dir = "$FB::PIC_ROOT";
+
+        $err->("Mogile is not configured and there is no FB PIC_ROOT directory at $FB::PIC_ROOT")
+            unless -e $spool_dir;
+    }
+
+    $err->("\$FB::LJ_DOMAINID must be configured") unless defined $FB::LJ_DOMAINID;
 }
 
 foreach my $check (@checks) {
