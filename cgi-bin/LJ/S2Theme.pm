@@ -579,11 +579,13 @@ sub get_cats {
 
 sub get_layouts {
     return (
-        '1'  => '1 Column (no sidebar)',
-        '2l' => '2 Column (sidebar on left)',
-        '2r' => '2 Column (sidebar on right)',
-        '3l' => '3 Column (content on left)',
-        '3m' => '3 Column (content in middle)',
+        '1'    => '1 Column (no sidebar)',
+        '2l'   => '2 Column (sidebar on left)',
+        '2r'   => '2 Column (sidebar on right)',
+        '2lnh' => '2 Column (sidebar on left; no header)',
+        '2rnh' => '2 Column (sidebar on right; no header)',
+        '3l'   => '3 Column (content on left)',
+        '3m'   => '3 Column (content in middle)',
     );
 }
 
