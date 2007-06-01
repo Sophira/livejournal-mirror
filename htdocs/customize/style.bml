@@ -137,7 +137,15 @@ body<=
                 $u->set_prop("s2_style", '');
 
                 # we are only saving a layout, so the theme is the default theme of the layout
-                my $theme = LJ::S2Theme->load_default_of($layid);
+                my $theme;
+                if (ref $pub->{$layid}) {
+                    $theme = LJ::S2Theme->load_default_of($layid);
+                } elsif (ref $userlay->{$layid}) {
+                    $theme = LJ::S2Theme->load_custom_layoutid($layid, $u);
+                } else {
+                    die "Theme is neither system nor custom.";
+                }
+
                 $style{theme} = $theme->themeid;
 
                 # if a style for the default theme of this layout already exists, set that as the user's style
@@ -181,8 +189,17 @@ body<=
 
                 # if a style for this theme already exists, set that as the user's style
                 my $theme;
-                if ($themeid == 0 && ref $pub->{$style{layout}}) {
-                    $theme = LJ::S2Theme->load_default_of($style{layout});
+                if ($themeid == 0) {
+                    # default theme of system layout
+                    if (ref $pub->{$style{layout}}) {
+                        $theme = LJ::S2Theme->load_default_of($style{layout});
+
+                    # default theme of custom layout
+                    } elsif (ref $userlay->{$style{layout}}) {
+                        $theme = LJ::S2Theme->load_custom_layoutid($style{layout}, $u);
+                    } else {
+                        die "Theme is neither system nor custom.";
+                    }
                 } else {
                     $theme = LJ::S2Theme->load_by_themeid($themeid, $u);
                 }
@@ -277,8 +294,17 @@ body<=
 
                 # if a style for this theme already exists, set that as the user's style
                 my $theme;
-                if ($themeid == 0 && ref $pub->{$layid}) {
-                    $theme = LJ::S2Theme->load_default_of($layid);
+                if ($themeid == 0) {
+                    # default theme of system layout
+                    if (ref $pub->{$layid}) {
+                        $theme = LJ::S2Theme->load_default_of($layid);
+
+                    # default theme of custom layout
+                    } elsif (ref $userlay->{$layid}) {
+                        $theme = LJ::S2Theme->load_custom_layoutid($layid, $u);
+                    } else {
+                        die "Theme is neither system nor custom.";
+                    }
                 } else {
                     $theme = LJ::S2Theme->load_by_themeid($themeid, $u);
                 }

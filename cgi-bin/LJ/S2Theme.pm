@@ -83,6 +83,10 @@ sub load {
     } elsif ($opts{user}) {
         return $class->load_by_user($opts{user});
 
+    # load custom layout with themeid of 0
+    } elsif ($opts{custom_layoutid}) {
+        return $class->load_custom_layoutid($opts{custom_layoutid}, $opts{user});
+
     # load all themes
     # will load user themes in addition to system themes if user opt is specified
     } elsif ($opts{all}) {
@@ -187,6 +191,14 @@ sub load_by_user {
     return @themes;
 }
 
+sub load_custom_layoutid {
+    my $class = shift;
+    my $layoutid = shift;
+    my $u = shift;
+
+    return $class->new_custom_layout( layoutid => $layoutid, user => $u );
+}
+
 sub load_all {
     my $class = shift;
     my $u = shift;
@@ -208,6 +220,33 @@ sub load_all {
     }
 
     return @themes;
+}
+
+# custom layouts without themes need special treatment when creating an S2Theme object
+sub new_custom_layout {
+    my $class = shift;
+    my $self = {};
+    my %opts = @_;
+
+    my $layoutid = $opts{layoutid}+0;
+    die "No layout id given." unless $layoutid;
+
+    my $u = $opts{user};
+    die "Invalid user object." unless LJ::isu($u);
+
+    my $userlay = LJ::S2::get_layers_of_user($u);
+    die "Given layout id does not correspond to a layout owned by the given user."
+        unless ref $userlay->{$layoutid} && $userlay->{$layoutid}->{type} eq "layout";
+
+    $self->{s2lid}     = 0;
+    $self->{b2lid}     = $layoutid;
+    $self->{name}      = $userlay->{$layoutid}->{name};
+    $self->{uniq}      = undef;
+    $self->{is_custom} = 1;
+    $self->{coreid}    = $userlay->{$layoutid}->{b2lid}+0;
+
+    bless $self, $class;
+    return $self;
 }
 
 sub new {
@@ -340,7 +379,7 @@ sub get_styleid_for_theme {
     my $u = shift;
 
     my $style_name_old = "wizard-" . ((split("/", $self->uniq))[0] || $self->layoutid); # wizard-layoutname
-    my $style_name_new = "wizard-" . ($self->uniq || $self->themeid); # wizard-layoutname/themename
+    my $style_name_new = "wizard-" . ($self->uniq || $self->themeid || $self->layoutid); # wizard-layoutname/themename
 
     my $userstyles = LJ::S2::load_user_styles($u);
     foreach my $styleid (keys %$userstyles) {

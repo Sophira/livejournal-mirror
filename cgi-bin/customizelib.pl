@@ -108,7 +108,8 @@ sub s2_implicit_style_create
     my $s2style = LJ::S2::load_style($u->prop('s2_style'));
     if (! ($s2style && $s2style->{'userid'} eq $u->{'userid'}) || $opts->{'force'}) {
         my $themeid = $style{theme};
-        my $layer = $pub->{$themeid} || $userlay->{$themeid};
+        my $layoutid = $style{layout};
+        my $layer = $pub->{$themeid} || $userlay->{$themeid} || $userlay->{$layoutid};
         my $uniq = $layer->{uniq} || $layer->{s2lid};
 
         my $s2_style;
