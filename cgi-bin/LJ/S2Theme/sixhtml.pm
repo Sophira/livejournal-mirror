@@ -6,12 +6,6 @@ sub layout_prop { "layout_type" }
 sub cats { qw( clean cool ) }
 sub designer { "Lilia Ahner" }
 
-sub hidden_props {
-    my $self = shift;
-    my @props = qw( layout_type );
-    return $self->_append_props("hidden_props", @props);
-}
-
 sub display_option_props {
     my $self = shift;
     my @props = qw( opt_showtime );

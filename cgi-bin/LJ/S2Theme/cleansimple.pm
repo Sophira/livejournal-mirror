@@ -6,12 +6,6 @@ sub layout_prop { "opt_navbar_pos" }
 sub cats { qw( clean cool ) }
 sub designer { "Martin Atkins" }
 
-sub hidden_props {
-    my $self = shift;
-    my @props = qw( opt_navbar_pos );
-    return $self->_append_props("hidden_props", @props);
-}
-
 sub display_option_props {
     my $self = shift;
     my @props = qw( counter_code );
