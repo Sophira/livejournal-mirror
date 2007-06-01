@@ -4,6 +4,7 @@ use base qw(LJ::S2Theme);
 sub layouts { qw( 2r ) }
 sub cats { qw( clean dark modern ) }
 sub desginer { "Jesse Proulx" }
+sub linklist_support_tab { "Sidebar" }
 
 sub display_option_props {
     my $self = shift;
