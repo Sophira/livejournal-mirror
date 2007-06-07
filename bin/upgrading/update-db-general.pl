@@ -2897,6 +2897,31 @@ CREATE TABLE usermsgproplist (
 )
 EOC
 
+# clustered
+register_tablecreate("notifyarchive", <<'EOC');
+CREATE TABLE notifyarchive (
+  userid     INT UNSIGNED NOT NULL,
+  qid        INT UNSIGNED NOT NULL,
+  createtime INT UNSIGNED NOT NULL,
+  journalid  INT UNSIGNED NOT NULL,
+  etypeid    SMALLINT UNSIGNED NOT NULL,
+  arg1       INT UNSIGNED,
+  arg2       INT UNSIGNED,
+  state      CHAR(1),
+  PRIMARY KEY (userid, qid),
+  INDEX       (userid, createtime)
+)
+EOC
+
+# clustered
+register_tablecreate("notifybookmarks", <<'EOC');
+CREATE TABLE notifybookmarks (
+  userid     INT UNSIGNED NOT NULL,
+  qid        INT UNSIGNED NOT NULL,
+  PRIMARY KEY  (userid, qid)
+)
+EOC
+
 # NOTE: new table declarations go here
 
 ### changes
