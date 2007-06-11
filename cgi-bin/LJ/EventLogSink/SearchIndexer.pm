@@ -1,6 +1,7 @@
 package LJ::EventLogSink::SearchIndexer;
 use strict;
 use base 'LJ::EventLogSink';
+use SixApart::Search;
 
 our @EVENT_TYPES = qw(new_entry new_comment edit_entry delete_comment);
 
@@ -16,6 +17,9 @@ sub new {
 sub should_log {
     my ($self, $evt) = @_;
     my $type = $evt->event_type;
+
+    # don't search unless we have a client object
+    return 0 unless LJ::Search->client;
 
     return grep { $_ eq $type }
         @LJ::EventLogSink::SearchIndexer::EVENT_TYPES;
@@ -42,6 +46,13 @@ sub log {
 sub index_new_entry {
     my $evt = shift;
 
+    my $info = $evt->params or return 0;
+    my $entry = LJ::Entry->new($info->{'journal.userid'},
+                               ditemid => $info->{ditemid});
+
+    my $id = "entry_" .  $entry->jitemid;
+
+    LJ::Search->client->update(id => $id, $entry->event_text);
 }
 
 sub index_new_comment {
@@ -55,10 +66,18 @@ sub index_new_comment {
 sub index_edit_entry {
     my $evt = shift;
 
+    my $info = $evt->params or return 0;
+    my $entry = LJ::Entry->new($info->{'journalid'},
+                               jitemid => $info->{jitemid});
+
 }
 
 sub index_delete_comment {
     my $evt = shift;
+
+    my $info = $evt->params or return 0;
+    my $cmt = LJ::Comment->new($info->{'journalid'},
+                               jtalkid => $info->{jtalkid});
 
 }
 

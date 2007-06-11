@@ -162,6 +162,10 @@ my %modules = (
                "IP::Country::Fast" => {
                    opt => "Required for country lookup with IP address.",
                },
+               "Module::Pluggable" => {
+                   deb => 'libmodule-pluggable-perl',
+                   opt => "Required for SixApart::Search",
+               },
                );
 
 sub check_modules {
