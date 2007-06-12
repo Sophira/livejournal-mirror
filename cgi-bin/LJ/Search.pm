@@ -19,7 +19,7 @@ sub client {
 sub document {
     my ($class, %opts) = @_;
 
-    return LJ::run_hook("content_search_document_class", %opts);
+    return LJ::run_hook("content_search_document", %opts);
 }
 
 1;
