@@ -4,10 +4,9 @@ use Carp qw (croak);
 
 our $searcher;
 
+# returns a search client
 sub client {
     my ($class) = @_;
-
-    return undef unless $LJ::SEARCH_SERVER;
 
     unless ($searcher) {
         $searcher = LJ::run_hook("content_search_client");
@@ -15,5 +14,14 @@ sub client {
 
     return $searcher;
 }
+
+# returns a new document with the data in %opts
+sub document {
+    my ($class, %opts) = @_;
+
+    return LJ::run_hook("content_search_document_class", %opts);
+}
+
+1;
 
 

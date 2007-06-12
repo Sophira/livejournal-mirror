@@ -906,6 +906,20 @@ sub can_tellafriend {
     return 1;
 }
 
+sub search_index_id {
+    my $entry = shift;
+
+    return "entry_" . $entry->jitemid;
+}
+
+sub search_document {
+    my $entry = shift;
+
+    my $doc = LJ::Search->document(subject => $entry->subject_text,
+                                   body => $entry->event_text,
+                                   date => $entry->logtime_unix);
+}
+
 package LJ;
 
 use Class::Autouse qw (

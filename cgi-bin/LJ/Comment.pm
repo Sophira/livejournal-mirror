@@ -1028,4 +1028,18 @@ sub is_text_spam($\$) {
     return 0; # normal text
 }
 
+sub search_index_id {
+    my $self = shift;
+
+    return "cmt_" . $self->jtalkid;
+}
+
+sub search_document {
+    my $self = shift;
+
+    my $doc = LJ::Search->document(subject => $self->subject_text,
+                                   body => $self->body_text,
+                                   date => $self->unixtime);
+}
+
 1;

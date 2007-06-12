@@ -1,7 +1,7 @@
 package LJ::EventLogSink::SearchIndexer;
 use strict;
 use base 'LJ::EventLogSink';
-use SixApart::Search;
+use LJ::Search;
 
 our @EVENT_TYPES = qw(new_entry new_comment edit_entry delete_comment);
 
@@ -50,17 +50,7 @@ sub index_new_entry {
     my $entry = LJ::Entry->new($info->{'journal.userid'},
                                ditemid => $info->{ditemid});
 
-    my $id = "entry_" .  $entry->jitemid;
-
-    LJ::Search->client->update(id => $id, $entry->event_text);
-}
-
-sub index_new_comment {
-    my $evt = shift;
-
-    my $info = $evt->params or return 0;
-    my $cmt = LJ::Comment->new($info->{'journal.userid'},
-                               jtalkid => $info->{jtalkid});
+    LJ::Search->client->update(id => $entry->search_index_id, $entry->search_document);
 }
 
 sub index_edit_entry {
@@ -70,6 +60,17 @@ sub index_edit_entry {
     my $entry = LJ::Entry->new($info->{'journalid'},
                                jitemid => $info->{jitemid});
 
+    LJ::Search->client->update(id => $entry->search_index_id, $entry->search_document);
+}
+
+sub index_new_comment {
+    my $evt = shift;
+
+    my $info = $evt->params or return 0;
+    my $cmt = LJ::Comment->new($info->{'journal.userid'},
+                               jtalkid => $info->{jtalkid});
+
+    LJ::Search->client->update(id => $cmt->search_index_id, $cmt->search_document);
 }
 
 sub index_delete_comment {
@@ -79,6 +80,7 @@ sub index_delete_comment {
     my $cmt = LJ::Comment->new($info->{'journalid'},
                                jtalkid => $info->{jtalkid});
 
+    LJ::Search->client->delete(id => $cmt->search_index_id);
 }
 
 1;
