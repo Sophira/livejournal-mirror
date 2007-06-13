@@ -426,6 +426,7 @@ sub _get_msg_row {
 
     if ($row) {
         @$item{'journalid', 'type', 'parent_msgid', 'otherid', 'timesent'} = unpack("NNNNN", $row);
+        return $item;
     }
 
     my $db = LJ::get_cluster_def_reader($u);

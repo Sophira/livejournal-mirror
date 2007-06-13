@@ -69,6 +69,9 @@
         $u->set_prop('esn_inbox_default_expand', $POST{default_expand} eq 'Y' ? 'Y' : 'N');
     } elsif ($action eq 'get_unread_items') {
         $ret{unread_count} = $u->notification_inbox->unread_count;
+    } elsif ($action eq 'toggle_bookmark') {
+        $u->notification_inbox->toggle_bookmark($_->qid) foreach @items;
+        $success = 1;
     } else {
         return $err->("Invalid action $action");
     }
@@ -77,6 +80,7 @@
         push @{$ret{items}}, {
             read => $item->read,
             qid  => $item->qid,
+            bookmarked => $u->notification_inbox->is_bookmark($item->qid),
         };
     }
 

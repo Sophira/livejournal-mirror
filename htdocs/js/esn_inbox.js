@@ -38,6 +38,16 @@ ESN_Inbox.initTableSelection = function (folder) {
         if (parentRow)
             parentRow.rowClicked();
     });
+
+    var bookmarks = DOM.getElementsByClassName($(folder), "InboxItem_Bookmark") || [];
+
+    for (var i=0; i<bookmarks.length; i++) {
+        DOM.addEventListener(bookmarks[i], "click", function(evt) {
+            var row = DOM.getFirstAncestorByClassName(evt.target, "InboxItem_Row");
+            var qid = row.getAttribute("lj_qid");
+            ESN_Inbox.bookmark(evt, folder, qid)
+        });
+    }
 };
 
 // Callback for when selected rows of the inbox change
@@ -151,8 +161,14 @@ ESN_Inbox.markAllRead = function (evt, folder) {
     return false;
 };
 
+ESN_Inbox.bookmark = function (evt, folder, qid) {
+    Event.stop(evt);
+    ESN_Inbox.updateItems('toggle_bookmark', evt, folder, qid);
+    return false;
+}
+
 // do an ajax action on the currently selected items
-ESN_Inbox.updateItems = function (action, evt, folder) {
+ESN_Inbox.updateItems = function (action, evt, folder, qid) {
     if (!ESN_Inbox.hourglass) {
         var coords = DOM.getAbsoluteCursorPosition(evt);
         ESN_Inbox.hourglass = new Hourglass();
@@ -160,9 +176,11 @@ ESN_Inbox.updateItems = function (action, evt, folder) {
         ESN_Inbox.hourglass.hourglass_at(coords.x, coords.y);
     }
 
+    var qids = qid || ESN_Inbox.selected_qids.join(",");
+
     var postData = {
         "action": action,
-        "qids": ESN_Inbox.selected_qids.join(",")
+        "qids": qids
     };
 
     var opts = {
@@ -206,12 +224,22 @@ ESN_Inbox.finishedUpdate = function (info, folder) {
         var qid     = item.qid;
         var read    = item.read;
         var deleted = item.deleted;
+        var bookmarked = item.bookmarked;
         if (!qid) return;
 
         if (!read && !deleted) unread_count++;
 
         var rowElement = $(folder + "_Row_" + qid);
         if (!rowElement) return;
+
+        var bookmarks = DOM.getElementsByClassName(rowElement, "InboxItem_Bookmark") || [];
+        for (var i=0; i<bookmarks.length; i++) {
+            if (bookmarked) {
+                bookmarks[i].innerHTML = "F";
+            } else {
+                bookmarks[i].innerHTML = "--";
+            }
+        }
 
         if (deleted) {
             rowElement.parentNode.removeChild(rowElement);

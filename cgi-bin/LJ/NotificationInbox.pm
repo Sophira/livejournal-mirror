@@ -19,9 +19,10 @@ sub new {
     return $u->{_notification_inbox} if $u->{_notification_inbox};
 
     my $self = {
-        u => $u,
+        uid => $u->userid,
         count => undef, # defined once ->count is loaded/cached
         items => undef, # defined to arrayref once items loaded
+        bookmarks => undef, # defined to arrayref
     };
 
     return $u->{_notification_inbox} = bless $self, $class;
@@ -31,7 +32,7 @@ sub new {
 *owner = \&u;
 sub u {
     my $self = shift;
-    return $self->{u};
+    return LJ::load_userid($self->{uid});
 }
 
 # Returns a list of LJ::NotificationItems in this queue.
@@ -226,6 +227,12 @@ sub _unread_memkey {
     return [$userid, "inbox:newct:${userid}"];
 }
 
+sub _bookmark_memkey {
+    my $self = shift;
+    my $userid = $self->u->id;
+    return [$userid, "inbox:bookmarks:${userid}"];
+}
+
 # deletes an Event that is queued for this user
 # args: Queue ID to remove from queue
 sub delete_from_queue {
@@ -318,10 +325,102 @@ sub enqueue {
            join(",", map { '?' } values %item) . ")", undef, values %item)
         or die $u->errstr;
 
+    # insert into the notifyarchive table without State
+    delete $item{state};
+    $u->do("INSERT INTO notifyarchive (" . join(",", keys %item) . ") VALUES (" .
+           join(",", map { '?' } values %item) . ")", undef, values %item)
+        or die $u->errstr;
+
     # invalidate memcache
     $self->expire_cache;
 
     return LJ::NotificationItem->new($u, $qid);
+}
+
+# return true if item is bookmarked
+sub is_bookmark {
+    my ($self, $qid) = @_;
+
+    # load bookmarks if they don't already exist
+    $self->load_bookmarks unless defined $self->{bookmarks};
+
+    return $self->{bookmarks}{$qid} ? 1 : 0;
+}
+
+# populate the bookmark hash
+sub load_bookmarks {
+    my ($self) = @_;
+
+    my $u = $self->u;
+    my $uid = $self->u->id;
+    my $row = LJ::MemCache::get($self->_bookmark_memkey);
+
+    $self->{bookmarks} = ();
+    if ($row){
+        my @qids = unpack("NNNNN", $row);
+        foreach my $qid (@qids) {
+            $self->{bookmarks}{$qid} = 1;
+        }
+        return;
+    }
+
+    my $sql = "SELECT qid FROM notifybookmarks WHERE userid=?";
+    my $qids = $u->selectcol_arrayref($sql, undef, $uid);
+    die "Failed to load bookmarks: " . $u->errstr . "\n" if $u->err;
+
+    foreach my $qid (@$qids) {
+        $self->{bookmarks}{$qid} = 1;
+    }
+
+    $row = pack("NNNNN", @$qids);
+    LJ::MemCache::set($self->_bookmark_memkey, $row);
+
+    return;
+}
+
+# add a bookmark
+sub add_bookmark {
+    my ($self, $qid) = @_;
+
+    my $u = $self->u;
+    my $uid = $self->u->id;
+
+    my $sql = "INSERT INTO notifybookmarks (userid, qid) VALUES (?, ?)";
+    $u->do($sql, undef, $uid, $qid);
+    die "Failed to add bookmark: " . $u->errstr . "\n" if $u->err;
+
+    $self->{bookmarks}{$qid} = 1 if defined $self->{bookmarks};
+    LJ::MemCache::delete($self->_bookmark_memkey);
+
+    return;
+}
+
+# remove bookmark
+sub remove_bookmark {
+    my ($self, $qid) = @_;
+
+    my $u = $self->u;
+    my $uid = $self->u->id;
+
+    my $sql = "DELETE FROM notifybookmarks WHERE userid=? AND qid=?";
+    $u->do($sql, undef, $uid, $qid);
+    die "Failed to remove bookmark: " . $u->errstr . "\n" if $u->err;
+
+    delete $self->{bookmarks}->{$qid} if defined $self->{bookmarks};
+    LJ::MemCache::delete($self->_bookmark_memkey);
+
+    return;
+}
+
+# add or remove bookmark based on whether it is already bookmarked
+sub toggle_bookmark {
+    my ($self, $qid) = @_;
+
+    $self->is_bookmark($qid)
+        ? $self->remove_bookmark($qid)
+        : $self->add_bookmark($qid);
+
+    return;
 }
 
 1;
