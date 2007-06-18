@@ -358,7 +358,7 @@ sub is_custom {
 sub preview_imgtag {
     my $self = shift;
 
-    my $imgtag = "<img src='$LJ::IMGPREFIX/customize/";
+    my $imgtag = "<img src='$LJ::IMGPREFIX/customize/previews/";
     $imgtag .= $self->uniq ? $self->uniq : "nopreview";
     $imgtag .= ".png' alt='' />";
 
