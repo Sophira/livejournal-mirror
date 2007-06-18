@@ -556,7 +556,7 @@ sub custom_props { () }
 
 sub get_cats {
     return (
-        'new' => 'New',
+        'featured' => 'Featured',
         'sponsored' => 'Sponsored',
         'animals' => 'Animals',
         'clean' => 'Clean/Simple',
