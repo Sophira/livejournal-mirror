@@ -2382,6 +2382,8 @@ sub ads {
     # cache busting
     $adcall{r} = time();
 
+    LJ::run_hook("transform_adcall", \%opts, \%adcall);
+
     # Build up escaped query string of adcall parameters
     my $adparams = LJ::encode_url_string(\%adcall, [ sort { length $adcall{$a} <=> length $adcall{$b} } keys %adcall ]);
 
