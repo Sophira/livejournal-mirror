@@ -4,6 +4,34 @@ use Carp qw(croak);
 
 require "$ENV{'LJHOME'}/cgi-bin/customizelib.pl";
 
+# returns the S2Theme object of the given user's current theme
+sub get_current_theme {
+    my $class = shift;
+    my $u = shift;
+
+    die "Invalid user object." unless LJ::isu($u);
+
+    my $pub = LJ::S2::get_public_layers();
+    my $userlay = LJ::S2::get_layers_of_user($u);
+    my %style = LJ::S2::get_style($u, "verify");
+
+    if ($style{theme} == 0) {
+        # default theme of system layout
+        if (ref $pub->{$style{layout}}) {
+            return LJ::S2Theme->load_default_of($style{layout});
+
+        # default theme of custom layout
+        } elsif (ref $userlay->{$style{layout}}) {
+            return LJ::S2Theme->load_custom_layoutid($style{layout}, $u);
+        } else {
+            die "Theme is neither system nor custom.";
+        }
+    } else {
+        return LJ::S2Theme->load_by_themeid($style{theme}, $u);
+    }
+}
+
+# applies the given theme to the given user's journal
 sub apply_theme {
     my $class = shift;
     my $u = shift;
@@ -51,8 +79,7 @@ sub apply_theme {
 }
 
 # wrapper around LJ::cmize::s2_implicit_style_create
-sub implicit_style_create
-{
+sub implicit_style_create {
     my $class = shift;
     my ($opts, $u, %style);
 

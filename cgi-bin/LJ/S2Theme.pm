@@ -10,6 +10,11 @@ sub init {
     1;
 }
 
+
+##################################################
+# Class Methods
+##################################################
+
 # returns the uniq of the default theme for the given layout id or uniq (for lazy migration)
 sub default_theme {
     my $class = shift;
@@ -79,6 +84,10 @@ sub load {
     } elsif ($opts{cat}) {
         return $class->load_by_cat($opts{cat});
 
+    # load all themes by a particular designer
+    } elsif ($opts{designer}) {
+        return $class->load_by_designer($opts{designer});
+
     # load all custom themes of the user
     } elsif ($opts{user}) {
         return $class->load_by_user($opts{user});
@@ -94,7 +103,7 @@ sub load {
     }
 
     # no valid option given
-    die "Must pass one or more of the following options to theme loader: themeid, layoutid, cat, user, all";
+    die "Must pass one or more of the following options to theme loader: themeid, layoutid, default_of, uniq, cat, designer, user, custom_layoutid, all";
 }
 
 sub load_by_themeid {
@@ -170,6 +179,24 @@ sub load_by_cat {
             push @themes, $theme;
             last;
         }
+    }
+
+    return @themes;
+}
+
+sub load_by_designer {
+    my $class = shift;
+    my $designer = shift;
+
+    my @themes;
+    my $pub = LJ::S2::get_public_layers();
+    foreach my $layer (keys %$pub) {
+        next unless $layer =~ /^\d+$/;
+        next unless $pub->{$layer}->{type} eq "theme";
+        my $theme = $class->new( themeid => $layer );
+
+        # we have a theme, now see if it's made by the given designer
+        push @themes, $theme if lc $theme->designer eq lc $designer;
     }
 
     return @themes;
@@ -309,6 +336,11 @@ sub new {
 
     return $self;
 }
+
+
+##################################################
+# Object Methods
+##################################################
 
 sub s2lid {
     my $self = shift;
