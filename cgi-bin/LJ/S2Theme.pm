@@ -265,12 +265,13 @@ sub new_custom_layout {
     die "Given layout id does not correspond to a layout owned by the given user."
         unless ref $userlay->{$layoutid} && $userlay->{$layoutid}->{type} eq "layout";
 
-    $self->{s2lid}     = 0;
-    $self->{b2lid}     = $layoutid;
-    $self->{name}      = $userlay->{$layoutid}->{name};
-    $self->{uniq}      = undef;
-    $self->{is_custom} = 1;
-    $self->{coreid}    = $userlay->{$layoutid}->{b2lid}+0;
+    $self->{s2lid}       = 0;
+    $self->{b2lid}       = $layoutid;
+    $self->{name}        = "(Layout Default)";
+    $self->{uniq}        = undef;
+    $self->{is_custom}   = 1;
+    $self->{coreid}      = $userlay->{$layoutid}->{b2lid}+0;
+    $self->{layout_name} = $userlay->{$layoutid}->{name};
 
     bless $self, $class;
     return $self;
@@ -303,15 +304,20 @@ sub new {
 
     $self->{s2lid}     = $themeid;
     $self->{b2lid}     = $layers->{$themeid}->{b2lid}+0;
-    $self->{name}      = $layers->{$themeid}->{name};
+    $self->{name}      = $layers->{$themeid}->{name} || "(Unnamed)";
     $self->{uniq}      = $layers->{$themeid}->{uniq};
     $self->{is_custom} = $is_custom;
 
     # get the coreid by first checking the user layers and then the public layers for the layout
     my $pub = LJ::S2::get_public_layers();
     my $userlay = $opts{user} ? LJ::S2::get_layers_of_user($opts{user}) : "";
-    $self->{coreid} = $userlay->{$self->{b2lid}}->{b2lid}+0 if $userlay;
+    $self->{coreid} = $userlay->{$self->{b2lid}}->{b2lid}+0 if ref $userlay && $userlay->{$self->{b2lid}};
     $self->{coreid} = $pub->{$self->{b2lid}}->{b2lid}+0 unless $self->{coreid};
+
+    # layout name
+    $self->{layout_name} = $self->{name};
+    $self->{layout_name} = $pub->{$self->{b2lid}}->{name} if $pub->{$self->{b2lid}} && $pub->{$self->{b2lid}}->{name};
+    $self->{layout_name} = $userlay->{$self->{b2lid}}->{name} if ref $userlay && $userlay->{$self->{b2lid}} && $userlay->{$self->{b2lid}}->{name};
 
     # package name for the theme
     my $theme_class = $self->{uniq};
@@ -371,8 +377,7 @@ sub name {
 sub layout_name {
     my $self = shift;
 
-    my $pub = LJ::S2::get_public_layers();
-    return $pub->{$self->b2lid} ? $pub->{$self->b2lid}->{name} : $self->name;
+    return $self->{layout_name};
 }
 
 sub uniq {
