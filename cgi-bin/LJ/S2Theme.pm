@@ -271,7 +271,7 @@ sub new_custom_layout {
     $self->{uniq}        = undef;
     $self->{is_custom}   = 1;
     $self->{coreid}      = $userlay->{$layoutid}->{b2lid}+0;
-    $self->{layout_name} = $userlay->{$layoutid}->{name};
+    $self->{layout_name} = $userlay->{$layoutid}->{name} || "(Unnamed)";
 
     bless $self, $class;
     return $self;
@@ -315,7 +315,7 @@ sub new {
     $self->{coreid} = $pub->{$self->{b2lid}}->{b2lid}+0 unless $self->{coreid};
 
     # layout name
-    $self->{layout_name} = $self->{name};
+    $self->{layout_name} = "(Unnamed)";
     $self->{layout_name} = $pub->{$self->{b2lid}}->{name} if $pub->{$self->{b2lid}} && $pub->{$self->{b2lid}}->{name};
     $self->{layout_name} = $userlay->{$self->{b2lid}}->{name} if ref $userlay && $userlay->{$self->{b2lid}} && $userlay->{$self->{b2lid}}->{name};
 
