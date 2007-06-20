@@ -1756,6 +1756,16 @@ widget.commsofuser.title=Communities [[user]] has added
 
 widget.commsofuser.viewprofile=View [[user]]'s profile
 
+widget.currenttheme.desc=[[layout]] by [[designer]]
+
+widget.currenttheme.options=More options:
+
+widget.currenttheme.options.change=Change colors, images, CSS, mood themes, and more...
+
+widget.currenttheme.options.layout=Change page layout
+
+widget.currenttheme.title=[[user]]'s Current Theme
+
 widget.friendbirthdays.gift=Gift
 
 widget.friendbirthdays.title=Birthdays
