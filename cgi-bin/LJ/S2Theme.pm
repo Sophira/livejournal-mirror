@@ -372,7 +372,7 @@ sub layout_name {
     my $self = shift;
 
     my $pub = LJ::S2::get_public_layers();
-    return $pub->{$self->b2lid}->{name};
+    return $pub->{$self->b2lid} ? $pub->{$self->b2lid}->{name} : $self->name;
 }
 
 sub uniq {
@@ -387,14 +387,14 @@ sub is_custom {
     return $self->{is_custom};
 }
 
-sub preview_imgtag {
+sub preview_imgurl {
     my $self = shift;
 
-    my $imgtag = "<img src='$LJ::IMGPREFIX/customize/previews/";
-    $imgtag .= $self->uniq ? $self->uniq : "nopreview";
-    $imgtag .= ".png' alt='' />";
+    my $imgurl = "$LJ::IMGPREFIX/customize/previews/";
+    $imgurl .= $self->uniq ? $self->uniq : "nopreview";
+    $imgurl .= ".png";
 
-    return $imgtag;
+    return $imgurl;
 }
 
 sub available_to {
