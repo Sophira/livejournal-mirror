@@ -28,6 +28,12 @@ LJWidget = new Class(Object, {
         this.doAjaxRequest(postParams);
     },
 
+    doPostAndUpdateContent: function (params) {
+        this.origParams = params;
+        this.updateAfterPost = 1;
+        this.doPost(params);
+    },
+
 
 
     ///////////////// PRIVATE METHODS ////////////////////
@@ -128,6 +134,8 @@ LJWidget = new Class(Object, {
             if (this.onRefresh) {
                 this.onRefresh();
             }
+        } else if (this.updateAfterPost == 1) {
+            this.updateContent(this.origParams);
         }
     },
 
