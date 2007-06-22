@@ -2,7 +2,7 @@ LJWidget = new Class(Object, {
     // replace the widget contents with an ajax call to render with params
     updateContent: function (params) {
         if (! params) params = {};
-        this._make_frame = params["makeFrame"];
+        this._show_frame = params["showFrame"];
 
         params["_widget_update"] = 1;
 
@@ -20,7 +20,7 @@ LJWidget = new Class(Object, {
     // do a simple post to the widget
     doPost: function (params) {
         var postParams = {};
-        this._make_frame = params["makeFrame"];
+        this._show_frame = params["showFrame"];
 
         for (var k in params) {
             if (! params.hasOwnProperty(k)) continue;
@@ -48,7 +48,7 @@ LJWidget = new Class(Object, {
     },
 
     hilightFrame: function () {
-        if (this._make_frame != 1) return;
+        if (this._show_frame != 1) return;
         if (this._frame) return;
 
         var widgetEle = this.getWidget();
@@ -70,7 +70,7 @@ LJWidget = new Class(Object, {
     },
 
     removeHilightFrame: function () {
-        if (this._make_frame != 1) return;
+        if (this._show_frame != 1) return;
 
         var widgetEle = this.getWidget();
         if (! widgetEle) return;
