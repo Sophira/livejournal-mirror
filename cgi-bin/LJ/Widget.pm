@@ -25,7 +25,16 @@ sub render_body {
 }
 
 sub start_form {
-    my $ret = "<form method='POST'>";
+    my $class = shift;
+    my %opts = @_;
+
+    my $eopts = "";
+    my $ehtml = $opts{noescape} ? 0 : 1;
+    foreach my $attr (grep { ! /^(noescape)$/ } keys %opts) {
+        $eopts .= " $attr=\"" . ($ehtml ? LJ::ehtml($opts{$attr}) : $opts{$_}) . "\"";
+    }
+
+    my $ret = "<form method='POST'$eopts>";
     $ret .= LJ::form_auth();
     return $ret;
 };
