@@ -26,14 +26,24 @@ LJWidget = new Class(Object, {
             if (! params.hasOwnProperty(k)) continue;
             postParams["Widget_" + this.widgetClass + "_" + k] = params[k];
         }
+        postParams["_widget_post"] = 1;
 
         this.doAjaxRequest(postParams);
     },
 
     doPostAndUpdateContent: function (params) {
-        this._orig_params = params;
-        this._update_after_post = 1;
-        this.doPost(params);
+        if (! params) params = {};
+        this._show_frame = params["showFrame"];
+        var postParams = {};
+
+        for (var k in params) {
+            if (! params.hasOwnProperty(k)) continue;
+            postParams["Widget_" + this.widgetClass + "_" + k] = params[k];
+        }
+        postParams["_widget_update"] = 1;
+        postParams["_widget_post"] = 1;
+
+        this.doAjaxRequest(postParams);
     },
 
 
@@ -139,8 +149,6 @@ LJWidget = new Class(Object, {
             if (this.onRefresh) {
                 this.onRefresh();
             }
-        } else if (this._update_after_post == 1) {
-            this.updateContent(this._orig_params);
         }
     },
 

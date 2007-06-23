@@ -42,11 +42,7 @@
                auth_token    => $auth_token,    # generate new auth token for future requests
                );
 
-    if (delete $POST{_widget_update}) {
-        # render the widget and return it
-        $ret{_widget_body} = eval { $widget_class->render_body(%POST); };
-        $ret{_widget_body} = "Error: $@" if $@;
-    } else {
+    if (delete $POST{_widget_post}) {
         # just a normal post request, handle it and then return status
         # bypass auth checking, we already checked the ajax auth token
         my @errors;
@@ -56,9 +52,15 @@
         };
 
         $ret{errors} = \@errors;
-      }
+    }
 
-    sleep(2) if $LJ::IS_DEV_SERVER;
+    if (delete $POST{_widget_update}) {
+        # render the widget and return it
+        $ret{_widget_body} = eval { $widget_class->render_body(%POST); };
+        $ret{_widget_body} = "Error: $@" if $@;
+    }
+
+#    sleep(2) if $LJ::IS_DEV_SERVER;
 
     return LJ::js_dumper(\%ret);
 }
