@@ -1806,6 +1806,16 @@ widget.gettingstarted.userpics.link=Upload a Userpic
 
 widget.gettingstarted.userpics.note=You have no userpics.
 
+widget.journaltitles.desc=Your journal titles appear on your journal and in your profile.
+
+widget.journaltitles.friendspagetitle=Friends Page Title:
+
+widget.journaltitles.journalsubtitle=Journal Subtitle:
+
+widget.journaltitles.journaltitle=Journal Title:
+
+widget.journaltitles.title=1. Edit Titles
+
 widget.qotd.answer=Answer
 
 widget.qotd.entry.subject=Writer's Block

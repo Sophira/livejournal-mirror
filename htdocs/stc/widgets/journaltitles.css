@@ -1,0 +1,24 @@
+.theme-titles p span {
+    line-height: 22px;
+}
+.theme-titles label {
+    width: 10.5em;
+    float: left;
+    line-height: 22px;
+}
+.theme-titles input.text {
+    float: left;
+}
+.theme-title-control {
+    font-size: 11px;
+    color: #00c;
+    background-color: transparent;
+    text-decoration: underline;
+    cursor: pointer;
+}
+#journaltitle_view, #journaltitle_cancel,
+#journalsubtitle_view, #journalsubtitle_cancel,
+#friendspagetitle_view, #friendspagetitle_cancel
+{
+    display: none;
+}
