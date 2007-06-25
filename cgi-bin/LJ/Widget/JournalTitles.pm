@@ -62,6 +62,8 @@ sub handle_post {
     my $eff_val = LJ::text_trim($post->{title_value}, 0, LJ::std_max_length());
     $eff_val = "" unless $eff_val;
     $u->set_prop($post->{which_title}, $eff_val);
+
+    return;
 }
 
 sub js {
