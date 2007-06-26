@@ -26,12 +26,12 @@ sub render_body {
     $ret .= "<h3>" . $theme->name . "</h3>";
     $ret .= "<p class='theme-current-desc'>";
     if ($designer) {
-        $ret .= $class->ml('widget.currenttheme.desc', {'layout' => "<a href='#'><em>" . $theme->layout_name . "</em></a>", 'designer' => "<a href='#'>" . $theme->designer . "</a>"});
+        $ret .= $class->ml('widget.currenttheme.desc', {'layout' => "<a href='#'><em>" . $layout_name . "</em></a>", 'designer' => "<a href='#'>" . $designer . "</a>"});
     } elsif ($layout_name) {
         if ($userlay->{$theme->layoutid}) {
-            $ret .= "<em>" . $theme->layout_name . "</em>";
+            $ret .= "<em>" . $layout_name . "</em>";
         } else {
-            $ret .= "<a href='#'><em>" . $theme->layout_name . "</em></a>";
+            $ret .= "<a href='#'><em>" . $layout_name . "</em></a>";
         }
     }
     $ret .= "</p>";
