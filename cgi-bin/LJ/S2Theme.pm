@@ -503,13 +503,16 @@ sub get_preview_styleid {
     return "" unless $styleid;
 
     # if we already have a style for this theme, copy it to the _for_preview style and use it
+    # -- don't re-use the theme layer though, since this might be a layout (old format) style
+    #    instead of a theme (new format) style
     my $theme_styleid = $self->get_styleid_for_theme($u);
     if ($theme_styleid) {
         my $style = LJ::S2::load_style($theme_styleid);
         my %layers;
-        foreach my $layer (qw( core i18nc layout i18n theme user )) {
+        foreach my $layer (qw( core i18nc layout i18n user )) {
             $layers{$layer} = $style->{layer}->{$layer};
         }
+        $layers{theme} = $self->themeid;
         LJ::S2::set_style_layers($u, $styleid, %layers);
 
         return $styleid;
