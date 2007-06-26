@@ -50,7 +50,7 @@ sub index_new_entry {
     my $entry = LJ::Entry->new($info->{'journal.userid'},
                                ditemid => $info->{ditemid});
 
-    LJ::Search->client->update(id => $entry->search_index_id, $entry->search_document);
+    LJ::Search->client->index($entry->search_document);
 }
 
 sub index_edit_entry {
@@ -60,7 +60,7 @@ sub index_edit_entry {
     my $entry = LJ::Entry->new($info->{'journalid'},
                                jitemid => $info->{jitemid});
 
-    LJ::Search->client->update(id => $entry->search_index_id, $entry->search_document);
+    LJ::Search->client->replace($entry->search_document);
 }
 
 sub index_new_comment {
