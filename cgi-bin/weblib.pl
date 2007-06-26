@@ -6,6 +6,7 @@ use strict;
 
 # load the bread crumb hash
 require "$ENV{'LJHOME'}/cgi-bin/crumbs.pl";
+require 'ljlang.pl';
 
 use Carp;
 use Class::Autouse qw(
@@ -3258,9 +3259,9 @@ sub lj_replace {
 
 # Replace for lj-replace name="first_post"
 sub lj_replace_first_post {
-    return BML::ml('web.lj-replace.first_post', {
-                   'update_link' => "href='$LJ::SITEROOT/update.bml'",
-                   });
+    return LJ::Lang::ml('web.lj-replace.first_post', {
+        'update_link' => "href='$LJ::SITEROOT/update.bml'",
+    });
 }
 
 # this returns the right max length for a VARCHAR(255) database
