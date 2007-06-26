@@ -1882,7 +1882,7 @@ sub Page
 
     # get MAX(modtime of style layers)
     my $stylemodtime = S2::get_style_modtime($opts->{'ctx'});
-    my $style = load_style($u->{'s2_style'});
+    my $style = load_style($styleid);
     $stylemodtime = $style->{'modtime'} if $style->{'modtime'} > $stylemodtime;
 
     my $linkobj = LJ::Links::load_linkobj($u);
