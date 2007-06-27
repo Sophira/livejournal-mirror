@@ -3527,6 +3527,11 @@ sub is_in_beta {
     return LJ::BetaFeatures->user_in_beta( $u => $key );
 }
 
+sub can_manage {
+    my ($u, $target) = @_;
+    return LJ::can_manage($u, $target);
+}
+
 package LJ;
 
 use Carp;
@@ -6368,17 +6373,18 @@ sub make_journal
             };
 
             # forced s2 style id
-            if ($geta->{'s2id'} && LJ::get_cap($u, "s2styles")) {
+            if ($geta->{'s2id'}) {
 
-                # see if they own the requested style
-                my $dbr = LJ::get_db_reader();
-                my $style_userid = $dbr->selectrow_array("SELECT userid FROM s2styles WHERE styleid=?",
-                                                         undef, $geta->{'s2id'});
+                # get the owner of the requested style
+                my $style = LJ::S2::load_style( $geta->{s2id}, skip_layer_load => 1 );
+                my $owner = $style && $style->{userid} ? $style->{userid} : 0;
 
-                # if remote owns the style or the journal owns the style, it's okay
-                if ($u->{'userid'} == $style_userid ||
-                    ($remote && $remote->{'userid'} == $style_userid) ) {
-                    $opts->{'style_u'} = LJ::load_userid($style_userid);
+                # remote can use s2id on this journal if:
+                # owner of the style is remote or managed by remote OR
+                # owner of the style has s2styles cap and remote is viewing owner's journal
+                if (($remote && $remote->can_manage($owner)) ||
+                    ($u->id == $owner && $owner->get_cap("s2styles"))) {
+                    $opts->{'style_u'} = LJ::load_userid($owner);
                     return (2, $geta->{'s2id'});
                 }
             }

@@ -992,6 +992,7 @@ sub load_style
     my $db = ref $_[0] ? shift : undef;
     my $id = shift;
     return undef unless $id;
+    my %opts = @_;
 
     my $memkey = [$id, "s2s:$id"];
     my $style = LJ::MemCache::get($memkey);
@@ -1007,10 +1008,12 @@ sub load_style
     }
     return undef unless $style;
 
-    my $u = LJ::load_userid($style->{userid})
-        or return undef;
+    unless ($opts{skip_layer_load}) {
+        my $u = LJ::load_userid($style->{userid})
+            or return undef;
 
-    $style->{'layer'} = LJ::S2::get_style_layers($u, $id) || {};
+        $style->{'layer'} = LJ::S2::get_style_layers($u, $id) || {};
+    }
 
     return $style;
 }
