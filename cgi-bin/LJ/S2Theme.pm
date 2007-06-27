@@ -294,6 +294,7 @@ sub new_custom_layout {
     $self->{is_custom}   = 1;
     $self->{coreid}      = $userlay->{$layoutid}->{b2lid}+0;
     $self->{layout_name} = $userlay->{$layoutid}->{name} || "(Unnamed)";
+    $self->{layout_uniq} = undef;
 
     bless $self, $class;
     return $self;
@@ -340,6 +341,9 @@ sub new {
     $self->{layout_name} = "(Unnamed)";
     $self->{layout_name} = $pub->{$self->{b2lid}}->{name} if $pub->{$self->{b2lid}} && $pub->{$self->{b2lid}}->{name};
     $self->{layout_name} = $userlay->{$self->{b2lid}}->{name} if ref $userlay && $userlay->{$self->{b2lid}} && $userlay->{$self->{b2lid}}->{name};
+
+    # layout uniq
+    $self->{layout_uniq} = $pub->{$self->{b2lid}}->{uniq} if $pub->{$self->{b2lid}} && $pub->{$self->{b2lid}}->{uniq};
 
     # package name for the theme
     my $theme_class = $self->{uniq};
@@ -408,6 +412,12 @@ sub uniq {
     return $self->{uniq};
 }
 
+sub layout_uniq {
+    my $self = shift;
+
+    return $self->{layout_uniq};
+}
+
 sub is_custom {
     my $self = shift;
 
@@ -428,12 +438,8 @@ sub available_to {
     my $self = shift;
     my $u = shift;
 
-    my $pub = LJ::S2::get_public_layers();
-    my $layout_uniq = $pub->{$self->layoutid}->{uniq}
-        if $pub->{$self->layoutid} && $pub->{$self->layoutid}->{uniq};
-
     # theme isn't available to $u if the layout isn't
-    return LJ::S2::can_use_layer($u, $self->uniq) && LJ::S2::can_use_layer($u, $layout_uniq);
+    return LJ::S2::can_use_layer($u, $self->uniq) && LJ::S2::can_use_layer($u, $self->layout_uniq);
 }
 
 # find the appropriate styleid for this theme
