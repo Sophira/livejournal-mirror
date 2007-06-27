@@ -909,15 +909,19 @@ sub can_tellafriend {
 sub search_index_id {
     my $entry = shift;
 
-    return "entry_" . $entry->jitemid;
+    return 'entry_' . $entry->jitemid;
 }
 
 sub search_document {
     my $entry = shift;
 
-    my $doc = LJ::Search->document(subject => $entry->subject_text,
-                                   body => $entry->event_text,
-                                   date => $entry->logtime_unix);
+    my $doc = LJ::Search->document(
+                                   special_key => $entry->search_index_id,
+                                   id          => $entry->search_index_id,
+                                   content     => $entry->subject_text . ' ' . $entry->event_text,
+                                   date        => $entry->logtime_unix,
+                                   );
+    return $doc;
 }
 
 package LJ;
