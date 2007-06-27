@@ -6383,7 +6383,7 @@ sub make_journal
                 # owner of the style is remote or managed by remote OR
                 # owner of the style has s2styles cap and remote is viewing owner's journal
                 if (($remote && $remote->can_manage($owner)) ||
-                    ($u->id == $owner && $owner->get_cap("s2styles"))) {
+                    ($u->id == $owner && $u->get_cap("s2styles"))) {
                     $opts->{'style_u'} = LJ::load_userid($owner);
                     return (2, $geta->{'s2id'});
                 }
