@@ -32,6 +32,7 @@ JournalTitle.editTitle = function (evt) {
     var id = this;
     $(id + "_modify").style.display = "inline";
     $(id + "_view").style.display = "none";
+    Event.stop(evt);
 }
 
 JournalTitle.cancelTitle = function (evt) {
@@ -47,6 +48,8 @@ JournalTitle.cancelTitle = function (evt) {
     } else if (id == "friendspagetitle") {
         $("friendspagetitle").value = JournalTitle.friendspagetitle_value;
     }
+
+    Event.stop(evt);
 }
 
 LiveJournal.register_hook("page_load", JournalTitle.init);

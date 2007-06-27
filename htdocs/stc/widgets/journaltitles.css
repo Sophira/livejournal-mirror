@@ -11,10 +11,6 @@
 }
 .theme-title-control {
     font-size: 11px;
-    color: #00c;
-    background-color: transparent;
-    text-decoration: underline;
-    cursor: pointer;
 }
 #journaltitle_view, #journaltitle_cancel,
 #journalsubtitle_view, #journalsubtitle_cancel,
