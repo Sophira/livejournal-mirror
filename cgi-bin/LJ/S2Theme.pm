@@ -188,6 +188,10 @@ sub load_by_designer {
     my $class = shift;
     my $designer = shift;
 
+    # lowercase and remove spaces
+    $designer = lc $designer;
+    $designer =~ s/\s//g;
+
     my @themes;
     my $pub = LJ::S2::get_public_layers();
     foreach my $layer (keys %$pub) {
@@ -196,7 +200,9 @@ sub load_by_designer {
         my $theme = $class->new( themeid => $layer );
 
         # we have a theme, now see if it's made by the given designer
-        push @themes, $theme if lc $theme->designer eq lc $designer;
+        my $theme_designer = lc $theme->designer;
+        $theme_designer =~ s/\s//g;
+        push @themes, $theme if $theme_designer eq $designer;
     }
 
     return @themes;
@@ -422,7 +428,12 @@ sub available_to {
     my $self = shift;
     my $u = shift;
 
-    return LJ::S2::can_use_layer($u, $self->uniq);
+    my $pub = LJ::S2::get_public_layers();
+    my $layout_uniq = $pub->{$self->layoutid}->{uniq}
+        if $pub->{$self->layoutid} && $pub->{$self->layoutid}->{uniq};
+
+    # theme isn't available to $u if the layout isn't
+    return LJ::S2::can_use_layer($u, $self->uniq) && LJ::S2::can_use_layer($u, $layout_uniq);
 }
 
 # find the appropriate styleid for this theme
