@@ -173,8 +173,7 @@ sub load_by_cat {
         my $theme = $class->new( themeid => $layer );
 
         # we have a theme, now see if it's in the given category
-        my $cats = $theme->cats;
-        foreach my $possible_cat (@$cats) {
+        foreach my $possible_cat ($theme->cats) {
             next unless $possible_cat eq $cat;
             push @themes, $theme;
             last;
