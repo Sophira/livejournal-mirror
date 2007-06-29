@@ -43,6 +43,7 @@ sub render_body {
     my $expand = $opts{expand} || 0;
     my $inbox = $opts{inbox};
     my $nitems = $opts{items};
+    my $page = $opts{page} || 1;
     my $remote = LJ::get_remote();
 
     my $unread_count = 1; #TODO get real number
@@ -63,6 +64,16 @@ sub render_body {
                     value => "${name}"
                   });
 
+    # pagination
+    my $page_limit = 15;
+    $page = 1 if $page < 1;
+    my $last_page = POSIX::ceil((scalar @$nitems) / $page_limit);
+    $last_page ||= 1;
+    $page = $last_page if $page > $last_page;
+
+    my $prev_disabled = ($page <= 1) ? 'disabled' : '';
+    my $next_disabled = ($page >= $last_page) ? 'disabled' : '';
+
     # create table of messages
     my $messagetable = qq {
      <div id="${name}_Table" class="NotificationTable">
@@ -71,6 +82,11 @@ sub render_body {
                 <thead>
                     <td class="checkbox">$checkall</td>
                     <td class="actions" colspan="2">
+                        <span class="Pages">
+                            Page $page of $last_page
+                            <input type="button" id="Page_Prev" value="Previous" $prev_disabled />
+                            <input type="button" id="Page_Next" value="Next" $next_disabled />
+                        </span>
                         <input type="submit" name="markRead" value="Read" $disabled id="${name}_MarkRead" />
                         <input type="submit" name="markUnread" value="Unread" id="${name}_MarkUnread" />
                         <input type="submit" name="delete" value="Delete" id="${name}_Delete" />
@@ -92,8 +108,6 @@ sub render_body {
 
     # print out messages
     my $rownum = 0;
-    my $page = 1;
-    my $page_limit = 15;
 
     my $starting_index = ($page - 1) * $page_limit;
     for (my $i = $starting_index; $i < $starting_index + $page_limit; $i++) {
@@ -113,31 +127,24 @@ sub render_body {
             name  => $checkbox_name,
         });
 
+        # HTML for displaying bookmark flag
         my $bookmark = $inbox->is_bookmark($qid)
-            ? "<span class='InboxItem_Bookmark'>F</span>"
-            : "<span class='InboxItem_Bookmark'>--</span>";
+            ? "on"
+            : "off";
+        $bookmark = "<a href='$LJ::SITEROOT/inbox/?page=$page&bookmark=$qid'><img src='$LJ::IMGPREFIX/flag_$bookmark.gif' width='16' height='18' class='InboxItem_Bookmark' border='0' /></a>";
 
         my $when = LJ::ago_text(time() - $inbox_item->when_unixtime);
-        my $contents = $inbox_item->as_html || ' ';
+        my $contents = $inbox_item->as_html || '';
 
         my $row_class = ($rownum++ % 2 == 0) ? "InboxItem_Meta" : "InboxItem_Meta alt";
 
         my $expandbtn = '';
         my $content_div = '';
 
-        my $msgid = $inbox_item->event->load_message->msgid;
-        my $buttons = qq {
-                          <div style="border: 1px dashed #ddd; background-color: #eee; padding: 2px; float: left;" class="pkg">
-                          <a href="./compose.bml?mode=reply&msgid=$msgid"
-                          style="padding: 2px; background-color: #fff"> REPLY </a></div>
-                          <div style="clear: both"></div>
-                      };
-
-
         if ($contents) {
             # TODO check that clean_event will be cool instead of ebml
             #BML::ebml(\$contents);
-            LJ::CleanHTML::clean_event(\$contents);
+            LJ::CleanHTML::clean_event(\$contents, { preformatted => 1 });
 
             my $expanded = $expand && $expand == $qid;
             $expanded ||= $remote->prop('esn_inbox_default_expand');
@@ -152,7 +159,7 @@ sub render_body {
             my $display = $expanded ? "block" : "none";
 
             $content_div = qq {
-                <div class="InboxItem_Content" style="display: $display;">$buttons $contents</div>
+                <div class="InboxItem_Content" style="display: $display;">$contents</div>
                 };
         }
 
@@ -160,8 +167,8 @@ sub render_body {
             <tr class="InboxItem_Row $row_class" lj_qid="$qid" id="${name}_Row_$qid">
                 <td class="checkbox">$checkbox</td>
                 <td class="item">
-                    <span class="$read_class" id="${name}_Title_$qid">$bookmark$title</span>
-                    $expandbtn
+                    $bookmark $expandbtn
+                    <span class="$read_class" id="${name}_Title_$qid">$title</span>
                     $content_div
                     </td>
                     <td class="time">$when</td>

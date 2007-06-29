@@ -41,14 +41,18 @@ ESN_Inbox.initTableSelection = function (folder) {
 
     var bookmarks = DOM.getElementsByClassName($(folder), "InboxItem_Bookmark") || [];
 
-    for (var i=0; i<bookmarks.length; i++) {
-        DOM.addEventListener(bookmarks[i], "click", function(evt) {
-            var row = DOM.getFirstAncestorByClassName(evt.target, "InboxItem_Row");
-            var qid = row.getAttribute("lj_qid");
-            ESN_Inbox.bookmark(evt, folder, qid)
-        });
-    }
+    Array.prototype.forEach.call(bookmarks, function (bmark) {
+        bmark.folder = folder;
+        DOM.addEventListener(bmark, "click", ESN_Inbox.bookmarkClicked.bindEventListener(bmark));
+    });
 };
+
+// Handle the event where the bookmark flag is clicked on
+ESN_Inbox.bookmarkClicked = function(evt) {
+    var row = DOM.getFirstAncestorByClassName(this, "InboxItem_Row");
+    var qid = row.getAttribute("lj_qid");
+    ESN_Inbox.bookmark(evt, this.folder, qid);
+}
 
 // Callback for when selected rows of the inbox change
 ESN_Inbox.selectedRowsChanged = function (rows) {
@@ -234,11 +238,8 @@ ESN_Inbox.finishedUpdate = function (info, folder) {
 
         var bookmarks = DOM.getElementsByClassName(rowElement, "InboxItem_Bookmark") || [];
         for (var i=0; i<bookmarks.length; i++) {
-            if (bookmarked) {
-                bookmarks[i].innerHTML = "F";
-            } else {
-                bookmarks[i].innerHTML = "--";
-            }
+            bookmarks[i].src = bookmarked ? Site.imgprefix + "/flag_on.gif" :
+                                Site.imgprefix + "/flag_off.gif";
         }
 
         if (deleted) {

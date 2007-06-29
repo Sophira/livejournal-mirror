@@ -81,6 +81,17 @@ sub as_html {
     return $ret;
 }
 
+sub as_html_actions {
+    my $self = shift;
+
+    my $msgid = $self->load_message->msgid;
+    my $ret = "<div class='actions'>";
+    $ret .= " <a href='$LJ::SITEROOT/compose.bml?mode=reply&msgid=$msgid'>Reply</a>";
+    $ret .= "</div>";
+
+    return $ret;
+}
+
 sub as_string {
     my $self = shift;
 
@@ -113,7 +124,7 @@ sub content {
 
     my $msg = $self->load_message;
 
-    return $msg->body;
+    return $msg->body . $self->as_html_actions;
 }
 
 # override parent class sbuscriptions method to always return
