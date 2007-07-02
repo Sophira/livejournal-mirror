@@ -216,8 +216,12 @@ sub load_by_user {
     my @themes;
     my $userlay = LJ::S2::get_layers_of_user($u);
     foreach my $layer (keys %$userlay) {
-        next unless $userlay->{$layer}->{type} eq "theme";
-        push @themes, $class->new( themeid => $layer, user => $u );
+        my $layer_type = $userlay->{$layer}->{type};
+        if ($layer_type eq "theme") {
+            push @themes, $class->new( themeid => $layer, user => $u );
+        } elsif ($layer_type eq "layout") {
+            push @themes, $class->new_custom_layout( layoutid => $layer, user => $u );
+        }
     }
 
     return @themes;
@@ -244,11 +248,7 @@ sub load_all {
     }
 
     if ($u) {
-        my $userlay = LJ::S2::get_layers_of_user($u);
-        foreach my $layer (keys %$userlay) {
-            next unless $userlay->{$layer}->{type} eq "theme";
-            push @themes, $class->new( themeid => $layer, user => $u );
-        }
+        push @themes, $class->load_by_user($u);
     }
 
     return @themes;
@@ -427,7 +427,7 @@ sub preview_imgurl {
     my $self = shift;
 
     my $imgurl = "$LJ::IMGPREFIX/customize/previews/";
-    $imgurl .= $self->uniq ? $self->uniq : "nopreview";
+    $imgurl .= $self->uniq ? $self->uniq : "custom-layer";
     $imgurl .= ".png";
 
     return $imgurl;

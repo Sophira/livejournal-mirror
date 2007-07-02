@@ -11,9 +11,17 @@ body<=
     return "Invalid user." unless $u;
 
     my $themeid = $GET{themeid}+0;
-    return "No theme id specified." unless $themeid;
+    my $layoutid = $GET{layoutid}+0;
 
-    my $theme = LJ::S2Theme->load_by_themeid($themeid);
+    my $theme;
+    if ($themeid) {
+        $theme = LJ::S2Theme->load_by_themeid($themeid, $u);
+    } elsif ($layoutid) {
+        $theme = LJ::S2Theme->load_custom_layoutid($layoutid, $u);
+    } else {
+        return "No theme id or custom layout id specified.";
+    }
+
     my $styleid = $theme->get_preview_styleid($u);
 
     return "Error loading preview." unless $styleid;
