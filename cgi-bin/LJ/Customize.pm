@@ -97,4 +97,55 @@ sub implicit_style_create {
     return LJ::cmize::s2_implicit_style_create($opts, $u, %style);
 }
 
+# given a layout id, get the layout's name
+sub get_layout_name {
+    my $class = shift;
+    my $layoutid = shift;
+    my %opts = @_;
+
+    my $pub = LJ::S2::get_public_layers();
+    my $userlay = $opts{user} ? LJ::S2::get_layers_of_user($opts{user}) : "";
+
+    my $layout_name = LJ::Lang::ml('customize.layoutname.default');
+    $layout_name = $pub->{$layoutid}->{name} if $pub->{$layoutid} && $pub->{$layoutid}->{name};
+    $layout_name = $userlay->{$layoutid}->{name} if ref $userlay && $userlay->{$layoutid} && $userlay->{$layoutid}->{name};
+
+    return $layout_name;
+}
+
+sub get_cats {
+    return (
+        'featured' => 'Featured',
+        'sponsored' => 'Sponsored',
+        'animals' => 'Animals',
+        'clean' => 'Clean/Simple',
+        'cool' => 'Cool Colors',
+        'warm' => 'Warm Colors',
+        'cute' => 'Cute',
+        'dark' => 'Dark',
+        'food' => 'Food/Drink',
+        'hobbies' => 'Hobbies',
+        'illustrated' => 'Illustrated',
+        'media' => 'Media',
+        'modern' => 'Modern',
+        'nature' => 'Nature',
+        'occasions' => 'Occasions',
+        'pattern' => 'Pattern/Texture',
+        'tech' => 'Tech',
+        'travel' => 'Travel',
+    );
+}
+
+sub get_layouts {
+    return (
+        '1'    => '1 Column (no sidebar)',
+        '2l'   => '2 Column (sidebar on left)',
+        '2r'   => '2 Column (sidebar on right)',
+        '2lnh' => '2 Column (sidebar on left; no header)',
+        '2rnh' => '2 Column (sidebar on right; no header)',
+        '3l'   => '3 Column (content on left)',
+        '3m'   => '3 Column (content in middle)',
+    );
+}
+
 1;

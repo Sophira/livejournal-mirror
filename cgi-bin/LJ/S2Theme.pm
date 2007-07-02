@@ -1,6 +1,7 @@
 package LJ::S2Theme;
 use strict;
 use Carp qw(croak);
+use Class::Autouse qw( LJ::Customize );
 use LJ::ModuleLoader;
 
 LJ::ModuleLoader->autouse_subclasses("LJ::S2Theme");
@@ -130,9 +131,16 @@ sub load_by_layoutid {
     if ($u) {
         my $userlay = LJ::S2::get_layers_of_user($u);
         foreach my $layer (keys %$userlay) {
-            next unless $userlay->{$layer}->{type} eq "theme";
-            next unless $userlay->{$layer}->{b2lid} == $layoutid;
-            push @themes, $class->new( themeid => $layer, user => $u );
+            my $layer_type = $userlay->{$layer}->{type};
+
+            # custom themes of the given layout
+            if ($layer_type eq "theme" && $userlay->{$layer}->{b2lid} == $layoutid) {
+                push @themes, $class->new( themeid => $layer, user => $u );
+
+            # custom layout that is the given layout (no theme)
+            } elsif ($layer_type eq "layout" && $userlay->{$layer}->{s2lid} == $layoutid) {
+                push @themes, $class->new_custom_layout( layoutid => $layer, user => $u );
+            }
         }
     }
 
@@ -187,7 +195,8 @@ sub load_by_designer {
     my $class = shift;
     my $designer = shift;
 
-    # lowercase and remove spaces
+    # decode and lowercase and remove spaces
+    $designer = LJ::durl($designer);
     $designer = lc $designer;
     $designer =~ s/\s//g;
 
@@ -292,7 +301,7 @@ sub new_custom_layout {
     $self->{uniq}        = undef;
     $self->{is_custom}   = 1;
     $self->{coreid}      = $userlay->{$layoutid}->{b2lid}+0;
-    $self->{layout_name} = $userlay->{$layoutid}->{name} || "(Unnamed)";
+    $self->{layout_name} = LJ::Customize->get_layout_name($self->{b2lid}, user => $u);
     $self->{layout_uniq} = undef;
 
     bless $self, $class;
@@ -326,7 +335,7 @@ sub new {
 
     $self->{s2lid}     = $themeid;
     $self->{b2lid}     = $layers->{$themeid}->{b2lid}+0;
-    $self->{name}      = $layers->{$themeid}->{name} || "(Unnamed)";
+    $self->{name}      = $layers->{$themeid}->{name} || LJ::Lang::ml('s2theme.themename.default');
     $self->{uniq}      = $layers->{$themeid}->{uniq};
     $self->{is_custom} = $is_custom;
 
@@ -337,9 +346,7 @@ sub new {
     $self->{coreid} = $pub->{$self->{b2lid}}->{b2lid}+0 unless $self->{coreid};
 
     # layout name
-    $self->{layout_name} = "(Unnamed)";
-    $self->{layout_name} = $pub->{$self->{b2lid}}->{name} if $pub->{$self->{b2lid}} && $pub->{$self->{b2lid}}->{name};
-    $self->{layout_name} = $userlay->{$self->{b2lid}}->{name} if ref $userlay && $userlay->{$self->{b2lid}} && $userlay->{$self->{b2lid}}->{name};
+    $self->{layout_name} = LJ::Customize->get_layout_name($self->{b2lid}, user => $opts{user});
 
     # layout uniq
     $self->{layout_uniq} = $pub->{$self->{b2lid}}->{uniq} if $pub->{$self->{b2lid}} && $pub->{$self->{b2lid}}->{uniq};
@@ -619,46 +626,5 @@ sub component_props { () }
 sub setup_props { () }
 sub ordering_props { () }
 sub custom_props { () }
-
-
-##################################################
-# Methods that just return data
-# TODO: Move these into BML/Widgets?
-##################################################
-
-sub get_cats {
-    return (
-        'featured' => 'Featured',
-        'sponsored' => 'Sponsored',
-        'animals' => 'Animals',
-        'clean' => 'Clean/Simple',
-        'cool' => 'Cool Colors',
-        'warm' => 'Warm Colors',
-        'cute' => 'Cute',
-        'dark' => 'Dark',
-        'food' => 'Food/Drink',
-        'hobbies' => 'Hobbies',
-        'illustrated' => 'Illustrated',
-        'media' => 'Media',
-        'modern' => 'Modern',
-        'nature' => 'Nature',
-        'occasions' => 'Occasions',
-        'pattern' => 'Pattern/Texture',
-        'tech' => 'Tech',
-        'travel' => 'Travel',
-    );
-}
-
-sub get_layouts {
-    return (
-        '1'    => '1 Column (no sidebar)',
-        '2l'   => '2 Column (sidebar on left)',
-        '2r'   => '2 Column (sidebar on right)',
-        '2lnh' => '2 Column (sidebar on left; no header)',
-        '2rnh' => '2 Column (sidebar on right; no header)',
-        '3l'   => '3 Column (content on left)',
-        '3m'   => '3 Column (content in middle)',
-    );
-}
 
 1;
