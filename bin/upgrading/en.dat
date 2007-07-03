@@ -668,7 +668,57 @@ crumb.yourlayers=Your Layers
 
 crumb.yourstyles=Your Styles
 
+customize.cats.animals=Animals
+
+customize.cats.clean=Clean/Simple
+
+customize.cats.cool=Cool Colors
+
+customize.cats.cute=Cute
+
+customize.cats.dark=Dark
+
+customize.cats.featured=Featured
+
+customize.cats.food=Food/Drink
+
+customize.cats.hobbies=Hobbies
+
+customize.cats.illustrated=Illustrated
+
+customize.cats.media=Media
+
+customize.cats.modern=Modern
+
+customize.cats.nature=Nature
+
+customize.cats.occasions=Occasions
+
+customize.cats.pattern=Pattern/Texture
+
+customize.cats.special=Special
+
+customize.cats.tech=Tech
+
+customize.cats.travel=Travel
+
+customize.cats.warm=Warm Colors
+
 customize.layoutname.default=(Unnamed)
+
+customize.layouts.1=1 Column (no sidebar)
+
+customize.layouts.2l=2 Column (sidebar on left)
+
+customize.layouts.2lnh=2 Column (sidebar on left; no header)
+
+customize.layouts.2r=2 Column (sidebar on right)
+
+customize.layouts.2rnh=2 Column (sidebar on right; no header)
+
+customize.layouts.3l=3 Column (content on left)
+
+customize.layouts.3m=3 Column (content in middle)
 
 date.day.friday.long=Friday
 

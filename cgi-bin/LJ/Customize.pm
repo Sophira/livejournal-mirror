@@ -115,36 +115,36 @@ sub get_layout_name {
 
 sub get_cats {
     return (
-        'featured' => 'Featured',
-        'sponsored' => 'Sponsored',
-        'animals' => 'Animals',
-        'clean' => 'Clean/Simple',
-        'cool' => 'Cool Colors',
-        'warm' => 'Warm Colors',
-        'cute' => 'Cute',
-        'dark' => 'Dark',
-        'food' => 'Food/Drink',
-        'hobbies' => 'Hobbies',
-        'illustrated' => 'Illustrated',
-        'media' => 'Media',
-        'modern' => 'Modern',
-        'nature' => 'Nature',
-        'occasions' => 'Occasions',
-        'pattern' => 'Pattern/Texture',
-        'tech' => 'Tech',
-        'travel' => 'Travel',
+        'featured' => LJ::Lang::ml('customize.cats.featured'),
+        'special' => LJ::Lang::ml('customize.cats.special'),
+        'animals' => LJ::Lang::ml('customize.cats.animals'),
+        'clean' => LJ::Lang::ml('customize.cats.clean'),
+        'cool' => LJ::Lang::ml('customize.cats.cool'),
+        'warm' => LJ::Lang::ml('customize.cats.warm'),
+        'cute' => LJ::Lang::ml('customize.cats.cute'),
+        'dark' => LJ::Lang::ml('customize.cats.dark'),
+        'food' => LJ::Lang::ml('customize.cats.food'),
+        'hobbies' => LJ::Lang::ml('customize.cats.hobbies'),
+        'illustrated' => LJ::Lang::ml('customize.cats.illustrated'),
+        'media' => LJ::Lang::ml('customize.cats.media'),
+        'modern' => LJ::Lang::ml('customize.cats.modern'),
+        'nature' => LJ::Lang::ml('customize.cats.nature'),
+        'occasions' => LJ::Lang::ml('customize.cats.occasions'),
+        'pattern' => LJ::Lang::ml('customize.cats.pattern'),
+        'tech' => LJ::Lang::ml('customize.cats.tech'),
+        'travel' => LJ::Lang::ml('customize.cats.travel'),
     );
 }
 
 sub get_layouts {
     return (
-        '1'    => '1 Column (no sidebar)',
-        '2l'   => '2 Column (sidebar on left)',
-        '2r'   => '2 Column (sidebar on right)',
-        '2lnh' => '2 Column (sidebar on left; no header)',
-        '2rnh' => '2 Column (sidebar on right; no header)',
-        '3l'   => '3 Column (content on left)',
-        '3m'   => '3 Column (content in middle)',
+        '1'    => LJ::Lang::ml('customize.layouts.1'),
+        '2l'   => LJ::Lang::ml('customize.layouts.2l'),
+        '2r'   => LJ::Lang::ml('customize.layouts.2r'),
+        '2lnh' => LJ::Lang::ml('customize.layouts.2lnh'),
+        '2rnh' => LJ::Lang::ml('customize.layouts.2rnh'),
+        '3l'   => LJ::Lang::ml('customize.layouts.3l'),
+        '3m'   => LJ::Lang::ml('customize.layouts.3m'),
     );
 }
 
