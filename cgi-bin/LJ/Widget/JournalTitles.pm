@@ -40,7 +40,7 @@ sub render_body {
         ) . " ";
         $ret .= $class->html_hidden( which_title => $id );
         $ret .= $class->html_hidden({ name => "user", value => $u->id, id => "${id}_user" });
-        $ret .= $class->html_submit("Save") . " ";
+        $ret .= $class->html_submit($class->ml('widget.journaltitles.btn')) . " ";
         $ret .= "<a href='' class='theme-title-control' id='${id}_cancel'>cancel</a>";
         $ret .= "</span></p>";
 
