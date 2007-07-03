@@ -99,24 +99,50 @@ sub non_usermsg_items {
 sub usermsg_recvd_items {
     my $self = shift;
 
-    my @usermsg_events = qw(
-                           UserMessageRecvd
-                           );
+    my @events = ( 'UserMessageRecvd' );
 
-    my %usermsg_events = map { "LJ::Event::" . $_ => 1 } @usermsg_events;
-    return grep { $usermsg_events{$_->event->class} } $self->items;
+    return $self->subset_items(@events);
 }
 
 # returns a list of non user-message recvd notificationitems
 sub usermsg_sent_items {
     my $self = shift;
 
-    my @usermsg_events = qw(
-                           UserMessageSent
-                           );
+    my @events = ( 'UserMessageSent' );
 
-    my %usermsg_events = map { "LJ::Event::" . $_ => 1 } @usermsg_events;
-    return grep { $usermsg_events{$_->event->class} } $self->items;
+    return $self->subset_items(@events);
+}
+
+sub birthday_items {
+    my $self = shift;
+
+    my @events = ( 'Birthday' );
+
+    return $self->subset_items(@events);
+}
+
+sub befriended_items {
+    my $self = shift;
+
+    my @events = ( 'Befriended' );
+
+    return $self->subset_items(@events);
+}
+
+sub entrycomment_items {
+    my $self = shift;
+
+    my @events = ( 'JournalNewEntry', 'JournalNewComment');
+
+    return $self->subset_items(@events);
+}
+
+# return a subset of notificationitems
+sub subset_items {
+    my ($self, @subset) = @_;
+
+     my %subset_events = map { "LJ::Event::" . $_ => 1 } @subset;
+     return grep { $subset_events{$_->event->class} } $self->items;
 }
 
 sub count {

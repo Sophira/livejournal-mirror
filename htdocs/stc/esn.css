@@ -170,7 +170,7 @@ div.argOptsContainer {
 
 .inbox {
     padding: 0;
-    margin: .5em 0 2em 0;
+    margin: 0em 0 0em 0;
     border: 1px solid #ccc;
 }
 
@@ -296,6 +296,15 @@ span.InboxItem_Read:hover a {
 
 .NotificationTable tr.Selected .Body {
 }
+
+/* folder links */
+.folders a {
+    white-space: nowrap;
+}
+.folders a.subs {
+    padding-left: 1em;
+}
+
 
 /**** ESM AJAX ****/
 .ippu .track_title {

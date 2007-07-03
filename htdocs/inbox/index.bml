@@ -38,6 +38,10 @@ body<=
     my $inbox = $remote->notification_inbox
         or return LJ::error_list("Could not retrieve inbox for user $remote->{user}");
 
+    # Take a supplied filter but default it to undef unless it is valid
+    my $view = $POST{view} || $GET{view} || undef;
+    $view = undef if ($view && !LJ::NotificationInbox->can("${view}_items"));
+
     # get events sitting in inbox
     my @notifications = $inbox->items;
 
@@ -46,8 +50,8 @@ body<=
         # operate on notices by default but switch if view parameter specified
         my $nitems = \@notifications;
         my $name = "notice";
-        if ($POST{view}) {
-            $name = $POST{view};
+        if ($view) {
+            $name = $view;
             my @items = eval "\$inbox->${name}_items";
             $nitems = \@items;
         }
@@ -94,43 +98,64 @@ body<=
         </div>
         };
 
-    # print form
-    $body .= qq {
-        <form action="$LJ::SITEROOT/inbox/" method="POST" id="EditNotificationsForm" onsubmit="return false;">
-        };
-
     # print number of new alerts
     my $unread_count = $inbox->unread_count;
     my $alert_plural = $unread_count == 1 ? 'message' : 'messages';
     $alert_plural .= $unread_count ? '!' : '.';
 
-    # check all checkbox
-    my $checkall = LJ::html_check({
-        id      => "notice_CheckAll",
-    });
-
-    my $disabled = $unread_count ? '' : 'disabled';
-
     # Pagination
     my $page = int($POST{page} || $GET{page});
 
-    $body .= "<h3>Inbox</h3>";
+    $body .= "<h2>Inbox</h2>";
     $body .= qq{
         <div class="inbox_newitems">
             <span id="Inbox_NewItems">You have $unread_count new $alert_plural</span>
             <a href="$LJ::SITEROOT/inbox/?page=$page" id="RefreshLink">Refresh</a>
         </div> };
 
-    my @all_items = $inbox->items;
+    $body .= qq{
+        <table><tr><td valign="top" style="padding-right: 12px">
+            <form action="./compose.bml" method="GET">
+            <input type="submit" value="New Message" style="width: 100%">
+            </form>
+            <p class="folders">
+            <a href="."><b>ALL</b></a><br />
+            <a href=".?view=usermsg_recvd">Messages</a><br />
+            <a href=".?view=friend">Friend Updates</a><br />
+              <a href=".?view=birthday" class="subs">Birthdays</a><br />
+              <a href=".?view=befriended" class="subs">New Friends</a><br />
+            <a href=".?view=entrycomment">Entries &amp; Comments</a><br />
+            </p>
+        </td>
+        <td width="1" height="100%" style="border-left: 1px solid #ccc"><img src="$LJ::IMGPREFIX/spacer.gif"></td>
+        <td valign="top" style="padding-left: 10px">
+    };
+
+    # print form
+    $body .= qq {
+        <form action="$LJ::SITEROOT/inbox/" method="POST" id="EditNotificationsForm" onsubmit="return false;">
+        };
+
+    # Filter by view if specified
+    my @all_items;
+    if ($view) {
+        @all_items = eval "\$inbox->${view}_items";
+    } else {
+        @all_items = $inbox->items;
+    }
+
     $body .= LJ::Widget::InboxFolder->render(
                      folder  => "allinbox",
                      reply_btn => 1,
                      expand    => $GET{expand},
                      inbox     => $inbox,
                      page      => $page,
+                     filter    => $POST{'view'} || $GET{'view'},
                      items     => \@all_items);
 
-
+    $body .= qq{
+        </td></tr></table>
+    };
 
     return $body;
 }
