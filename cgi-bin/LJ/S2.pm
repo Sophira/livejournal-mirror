@@ -557,16 +557,19 @@ sub get_layers_of_user
 # opts may contain keys:
 #   - 'u' -- $u object
 #   - 'verify' --  if verify, the $u->{'s2_style'} key is deleted if style isn't found
+#   - 'force_layers' -- if force_layers, then the style's layers are loaded from the database
 sub get_style
 {
     my ($arg, $opts) = @_;
 
     my $verify = 0;
+    my $force_layers = 0;
     my ($styleid, $u);
 
     if (ref $opts eq "HASH") {
         $verify = $opts->{'verify'};
         $u = $opts->{'u'};
+        $force_layers = $opts->{'force_layers'};
     } elsif ($opts) {
         $verify = 1;
         die "Bogus second arg to LJ::S2::get_style" if ref $opts;
@@ -593,8 +596,8 @@ sub get_style
 
     if ($styleid) {
         my $stylay = $u ?
-            LJ::S2::get_style_layers($u, $styleid) :
-            LJ::S2::get_style_layers($styleid);
+            LJ::S2::get_style_layers($u, $styleid, $force_layers) :
+            LJ::S2::get_style_layers($styleid, $force_layers);
         while (my ($t, $id) = each %$stylay) { $style{$t} = $id; }
         $have_style = scalar %style;
     }

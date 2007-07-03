@@ -13,7 +13,7 @@ sub get_current_theme {
 
     my $pub = LJ::S2::get_public_layers();
     my $userlay = LJ::S2::get_layers_of_user($u);
-    my %style = LJ::S2::get_style($u, "verify");
+    my %style = LJ::S2::get_style($u, { verify => 1, force_layers => 1 });
 
     if ($style{theme} == 0) {
         # default theme of system layout
