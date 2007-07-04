@@ -1912,3 +1912,19 @@ widget.search.username=Username
 
 widget.search.yahoo=Yahoo! ID
 
+widget.themechooser.desc=Click on a thumbnail to see a preview.
+
+widget.themechooser.header.all=All
+
+widget.themechooser.header.custom=Your Custom Layers
+
+widget.themechooser.theme.apply=Apply Theme
+
+widget.themechooser.theme.customize=Customize
+
+widget.themechooser.theme.desc=[[layout]] by [[designer]]
+
+widget.themechooser.theme.preview=Preview
+
+widget.themechooser.theme.specialdesc=<a [[aopts]]><em>Special</em></a> by [[designer]]
+
