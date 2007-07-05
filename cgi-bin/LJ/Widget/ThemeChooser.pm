@@ -133,7 +133,7 @@ sub render_body {
         } else { # apply theme form
             $ret .= $class->start_form( class => "theme-form" );
             $ret .= $class->html_hidden(
-                apply_uid => $u->id,
+                user => $u->id,
                 apply_themeid => $theme->themeid,
                 apply_layoutid => $theme->layoutid,
                 view_cat => $cat,
@@ -158,7 +158,7 @@ sub handle_post {
     my $post = shift;
     my %opts = @_;
 
-    my $u = $post->{apply_uid} || LJ::get_remote();
+    my $u = $post->{user} || LJ::get_remote();
     $u = LJ::load_userid($u) unless LJ::isu($u);
     die "Invalid user." unless LJ::isu($u);
 
@@ -196,7 +196,7 @@ sub js {
                 for (var arg in getArgs) {
                     var pair = getArgs[arg].split("=");
                     if (pair[0] == "cat" || pair[0] == "layoutid" || pair[0] == "designer") {
-                        DOM.addEventListener(filter_link, "click", function (evt) { self.reloadWidget(evt, pair[0], pair[1]) });
+                        DOM.addEventListener(filter_link, "click", function (evt) { self.filterThemes(evt, pair[0], pair[1]) });
                         break;
                     }
                 }
@@ -209,7 +209,7 @@ sub js {
                 DOM.addEventListener(form, "submit", function (evt) { self.applyTheme(evt, form) });
             });
         },
-        reloadWidget: function (evt, key, value) {
+        filterThemes: function (evt, key, value) {
             if (key == "cat") {
                 this.updateContent({ cat: value, page: 1 });
             } else if (key == "layoutid") {
@@ -220,8 +220,10 @@ sub js {
             Event.stop(evt);
         },
         applyTheme: function (evt, form) {
+            this.uid = form.Widget_ThemeChooser_user.value;
+
             this.doPostAndUpdateContent({
-                apply_uid: form.Widget_ThemeChooser_apply_uid.value,
+                user: this.uid,
                 apply_themeid: form.Widget_ThemeChooser_apply_themeid.value,
                 apply_layoutid: form.Widget_ThemeChooser_apply_layoutid.value,
                 cat: form.Widget_ThemeChooser_view_cat.value,
@@ -233,6 +235,9 @@ sub js {
                 num_per_page: form.Widget_ThemeChooser_view_num_per_page.value,
             });
             Event.stop(evt);
+        },
+        onData: function (data) {
+            Customize.updateCurrentTheme({ user: this.uid });
         },
         onRefresh: function (data) {
             this.initWidget();
