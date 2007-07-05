@@ -65,13 +65,11 @@ sub js {
 
             // add event listeners to all of the category, layout, and designer links
             filter_links.forEach(function (filter_link) {
-                var href = filter_link.href;
-                var urlParts = href.split("?");
-                getArgs = urlParts[1].split("&");
+                var getArgs = LiveJournal.parseGetArgs(filter_link.href);
                 for (var arg in getArgs) {
-                    var pair = getArgs[arg].split("=");
-                    if (pair[0] == "cat" || pair[0] == "layoutid" || pair[0] == "designer") {
-                        DOM.addEventListener(filter_link, "click", function (evt) { Customize.updateThemeChooser(evt, pair[0], pair[1]) });
+                    if (!getArgs.hasOwnProperty(arg)) continue;
+                    if (arg == "cat" || arg == "layoutid" || arg == "designer") {
+                        DOM.addEventListener(filter_link, "click", function (evt) { Customize.updateThemeChooser(evt, arg, getArgs[arg]) });
                         break;
                     }
                 }

@@ -287,3 +287,18 @@ LiveJournal.ajaxError = function (err) {
         alert("Error: " + err);
     }
 };
+
+// given a URL, parse out the GET args and return them in a hash
+LiveJournal.parseGetArgs = function (url) {
+    var getArgsHash = {};
+
+    var urlParts = url.split("?");
+    var getArgs = urlParts[1].split("&");
+    for (var arg in getArgs) {
+        if (!getArgs.hasOwnProperty(arg)) continue;
+        var pair = getArgs[arg].split("=");
+        getArgsHash[pair[0]] = pair[1];
+    }
+
+    return getArgsHash;
+};
