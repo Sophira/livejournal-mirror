@@ -187,16 +187,6 @@ sub js {
         initWidget: function () {
             var self = this;
 
-            // figure out which username we are working with
-            var pageGetArgs = LiveJournal.parseGetArgs(document.location.href);
-            if (pageGetArgs["authas"]) {
-                self.username = pageGetArgs["authas"];
-                self.getExtra = "?authas=" + self.username;
-            } else {
-                self.username = "";
-                self.getExtra = "";
-            }
-
             var filter_links = DOM.getElementsByClassName(document, "theme-cat");
             filter_links = filter_links.concat(DOM.getElementsByClassName(document, "theme-layout"));
             filter_links = filter_links.concat(DOM.getElementsByClassName(document, "theme-designer"));
@@ -222,17 +212,17 @@ sub js {
         },
         filterThemes: function (evt, key, value) {
             if (key == "cat") {
-                this.updateContent({ user: this.username, cat: value, page: 1, getextra: this.getExtra });
+                this.updateContent({ user: Customize.username, cat: value, page: 1, getextra: Customize.getExtra });
             } else if (key == "layoutid") {
-                this.updateContent({ user: this.username, layoutid: value, page: 1, getextra: this.getExtra });
+                this.updateContent({ user: Customize.username, layoutid: value, page: 1, getextra: Customize.getExtra });
             } else if (key == "designer") {
-                this.updateContent({ user: this.username, designer: value, page: 1, getextra: this.getExtra });
+                this.updateContent({ user: Customize.username, designer: value, page: 1, getextra: Customize.getExtra });
             }
             Event.stop(evt);
         },
         applyTheme: function (evt, form) {
             this.doPostAndUpdateContent({
-                user: this.username,
+                user: Customize.username,
                 apply_themeid: form.Widget_ThemeChooser_apply_themeid.value,
                 apply_layoutid: form.Widget_ThemeChooser_apply_layoutid.value,
                 cat: form.Widget_ThemeChooser_view_cat.value,
@@ -242,13 +232,13 @@ sub js {
                 filter_available: form.Widget_ThemeChooser_view_filter_available.value,
                 page: form.Widget_ThemeChooser_view_page.value,
                 num_per_page: form.Widget_ThemeChooser_view_num_per_page.value,
-                getextra: this.getExtra,
+                getextra: Customize.getExtra,
             });
             Event.stop(evt);
         },
         onData: function (data) {
             if (data._widget_post == 1) {
-                Customize.updateCurrentTheme({ user: this.username, getextra: this.getExtra });
+                Customize.updateCurrentTheme({ user: Customize.username, getextra: Customize.getExtra });
             }
         },
         onRefresh: function (data) {
