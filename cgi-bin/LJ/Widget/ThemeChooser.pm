@@ -13,8 +13,11 @@ sub render_body {
     my %opts = @_;
 
     my $u = $opts{user} || LJ::get_remote();
-    $u = LJ::load_userid($u) unless LJ::isu($u);
+    $u = LJ::load_user($u) unless LJ::isu($u);
     die "Invalid user." unless LJ::isu($u);
+
+    my $getextra = $opts{getextra};
+    my $getsep = $getextra ? "&" : "?";
 
     # filter criteria
     my $cat = defined $opts{cat} ? $opts{cat} : "";
@@ -81,7 +84,7 @@ sub render_body {
         $theme_icons .= "<div class='theme-icons'>" if $theme_types{upgrade} || $theme_types{special};
         if ($theme_types{current}) {
             $theme_class .= " current";
-            $theme_options .= "<strong><a href='$LJ::SITEROOT/customize2/options.bml'>" . $class->ml('widget.themechooser.theme.customize') . "</a></strong>";
+            $theme_options .= "<strong><a href='$LJ::SITEROOT/customize2/options.bml$getextra'>" . $class->ml('widget.themechooser.theme.customize') . "</a></strong>";
         }
         if ($theme_types{upgrade}) {
             $theme_class .= " upgrade";
@@ -113,11 +116,11 @@ sub render_body {
         $ret .= "<img src='$LJ::IMGPREFIX/customize/preview-theme.gif' class='theme-preview-image' /></a>";
         $ret .= $theme_icons;
 
-        my $layout_link = "<a href='$LJ::SITEROOT/customize2/?layoutid=" . $theme->layoutid . "' class='theme-layout'><em>$theme_layout_name</em></a>";
-        my $special_link_opts = "href='$LJ::SITEROOT/customize2/?cat=special' class='theme-cat'";
+        my $layout_link = "<a href='$LJ::SITEROOT/customize2/$getextra${getsep}layoutid=" . $theme->layoutid . "' class='theme-layout'><em>$theme_layout_name</em></a>";
+        my $special_link_opts = "href='$LJ::SITEROOT/customize2/$getextra${getsep}cat=special' class='theme-cat'";
         $ret .= "<p class='theme-desc'>";
         if ($theme_designer) {
-            my $designer_link = "<a href='$LJ::SITEROOT/customize2/?designer=" . LJ::eurl($theme_designer) . "' class='theme-designer'>$theme_designer</a>";
+            my $designer_link = "<a href='$LJ::SITEROOT/customize2/$getextra${getsep}designer=" . LJ::eurl($theme_designer) . "' class='theme-designer'>$theme_designer</a>";
             if ($theme_types{special}) {
                 $ret .= $class->ml('widget.themechooser.theme.specialdesc', {'aopts' => $special_link_opts, 'designer' => $designer_link});
             } else {
@@ -133,7 +136,7 @@ sub render_body {
         } else { # apply theme form
             $ret .= $class->start_form( class => "theme-form" );
             $ret .= $class->html_hidden(
-                user => $u->id,
+                user => $u->user,
                 apply_themeid => $theme->themeid,
                 apply_layoutid => $theme->layoutid,
                 view_cat => $cat,
@@ -159,7 +162,7 @@ sub handle_post {
     my %opts = @_;
 
     my $u = $post->{user} || LJ::get_remote();
-    $u = LJ::load_userid($u) unless LJ::isu($u);
+    $u = LJ::load_user($u) unless LJ::isu($u);
     die "Invalid user." unless LJ::isu($u);
 
     my $themeid = $post->{apply_themeid}+0;
@@ -183,6 +186,16 @@ sub js {
     q [
         initWidget: function () {
             var self = this;
+
+            // figure out which username we are working with
+            var pageGetArgs = LiveJournal.parseGetArgs(document.location.href);
+            if (pageGetArgs["authas"]) {
+                self.username = pageGetArgs["authas"];
+                self.getExtra = "?authas=" + self.username;
+            } else {
+                self.username = "";
+                self.getExtra = "";
+            }
 
             var filter_links = DOM.getElementsByClassName(document, "theme-cat");
             filter_links = filter_links.concat(DOM.getElementsByClassName(document, "theme-layout"));
@@ -209,19 +222,17 @@ sub js {
         },
         filterThemes: function (evt, key, value) {
             if (key == "cat") {
-                this.updateContent({ cat: value, page: 1 });
+                this.updateContent({ user: this.username, cat: value, page: 1, getextra: this.getExtra });
             } else if (key == "layoutid") {
-                this.updateContent({ layoutid: value, page: 1 });
+                this.updateContent({ user: this.username, layoutid: value, page: 1, getextra: this.getExtra });
             } else if (key == "designer") {
-                this.updateContent({ designer: value, page: 1 });
+                this.updateContent({ user: this.username, designer: value, page: 1, getextra: this.getExtra });
             }
             Event.stop(evt);
         },
         applyTheme: function (evt, form) {
-            this.uid = form.Widget_ThemeChooser_user.value;
-
             this.doPostAndUpdateContent({
-                user: this.uid,
+                user: this.username,
                 apply_themeid: form.Widget_ThemeChooser_apply_themeid.value,
                 apply_layoutid: form.Widget_ThemeChooser_apply_layoutid.value,
                 cat: form.Widget_ThemeChooser_view_cat.value,
@@ -231,12 +242,13 @@ sub js {
                 filter_available: form.Widget_ThemeChooser_view_filter_available.value,
                 page: form.Widget_ThemeChooser_view_page.value,
                 num_per_page: form.Widget_ThemeChooser_view_num_per_page.value,
+                getextra: this.getExtra,
             });
             Event.stop(evt);
         },
         onData: function (data) {
             if (data._widget_post == 1) {
-                Customize.updateCurrentTheme({ user: this.uid });
+                Customize.updateCurrentTheme({ user: this.username, getextra: this.getExtra });
             }
         },
         onRefresh: function (data) {
