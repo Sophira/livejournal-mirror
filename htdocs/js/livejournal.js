@@ -293,6 +293,7 @@ LiveJournal.parseGetArgs = function (url) {
     var getArgsHash = {};
 
     var urlParts = url.split("?");
+    if (!urlParts[1]) return getArgsHash;
     var getArgs = urlParts[1].split("&");
     for (var arg in getArgs) {
         if (!getArgs.hasOwnProperty(arg)) continue;
