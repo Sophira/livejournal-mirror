@@ -10,10 +10,14 @@ LJ::ModuleLoader->autouse_subclasses("LJ::Widget");
 
 our $currentId = 1;
 
+# can pass in "id" opt to use instead of incrementing $currentId.
+# useful for when a widget will be created more than once but we want to keep its ID the same.
 sub new {
     my $class = shift;
-    my $id = $currentId++;
-    return bless {id => $currentId}, $class;
+    my %opts = @_;
+
+    my $id = $opts{id} ? $opts{id} : $currentId++;
+    return bless {id => $id}, $class;
 }
 
 sub need_res {
