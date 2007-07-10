@@ -124,7 +124,11 @@ body<=
             <a href=".?view=friend">Friend Updates</a><br />
               <a href=".?view=birthday" class="subs">Birthdays</a><br />
               <a href=".?view=befriended" class="subs">New Friends</a><br />
-            <a href=".?view=entrycomment">Entries &amp; Comments</a><br />
+            <a href=".?view=entrycomment">Entries &amp; Comments</a>
+            <div style='margin-top:0px'>---</div>
+            <a href=".?view=archived">Archived</a><br />
+            <a href=".?view=bookmark">Flagged</a><br />
+            <a href=".?view=usermsg_sent">Sent</a><br />
             </p>
         </td>
         <td width="1" height="100%" style="border-left: 1px solid #ccc"><img src="$LJ::IMGPREFIX/spacer.gif"></td>
@@ -175,6 +179,7 @@ DOM.addEventListener(window, "load", setup);
 
 var tableview;
 var checkallButton;
+/* Can have multiple tables or folders displayed on the same page */
 var folders = ['allinbox'];
 
 function setup (e) {

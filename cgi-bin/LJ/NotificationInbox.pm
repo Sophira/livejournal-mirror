@@ -6,7 +6,7 @@ package LJ::NotificationInbox;
 
 use strict;
 use Carp qw(croak);
-use Class::Autouse qw (LJ::NotificationItem LJ::Event);
+use Class::Autouse qw (LJ::NotificationItem LJ::Event LJ::NotificationArchive);
 
 # constructor takes a $u
 sub new {
@@ -143,6 +143,22 @@ sub subset_items {
 
      my %subset_events = map { "LJ::Event::" . $_ => 1 } @subset;
      return grep { $subset_events{$_->event->class} } $self->items;
+}
+
+# return flagged notifications
+sub bookmark_items {
+    my $self = shift;
+
+    return grep { $self->is_bookmark($_->qid) } $self->items;
+}
+
+# return archived notifications
+sub archived_items {
+    my $self = shift;
+
+    my $u = $self->u;
+    my $archive = $u->notification_archive;
+    return $archive->items;
 }
 
 sub count {
@@ -312,6 +328,7 @@ sub enqueue {
     my ($self, %opts) = @_;
 
     my $evt = delete $opts{event};
+    my $archive = delete $opts{archive} || 1;
     croak "No event" unless $evt;
     croak "Extra args passed to enqueue" if %opts;
 
@@ -351,11 +368,13 @@ sub enqueue {
            join(",", map { '?' } values %item) . ")", undef, values %item)
         or die $u->errstr;
 
-    # insert into the notifyarchive table without State
-    delete $item{state};
-    $u->do("INSERT INTO notifyarchive (" . join(",", keys %item) . ") VALUES (" .
-           join(",", map { '?' } values %item) . ")", undef, values %item)
-        or die $u->errstr;
+    if ($archive) {
+        # insert into the notifyarchive table with State defaulted to space
+        $item{state} = ' ';
+        $u->do("INSERT INTO notifyarchive (" . join(",", keys %item) . ") VALUES (" .
+               join(",", map { '?' } values %item) . ")", undef, values %item)
+            or die $u->errstr;
+    }
 
     # invalidate memcache
     $self->expire_cache;
@@ -415,6 +434,9 @@ sub add_bookmark {
     $u->do($sql, undef, $uid, $qid);
     die "Failed to add bookmark: " . $u->errstr . "\n" if $u->err;
 
+    # Make sure notice is in inbox
+    $self->ensure_queued($qid);
+
     $self->{bookmarks}{$qid} = 1 if defined $self->{bookmarks};
     LJ::MemCache::delete($self->_bookmark_memkey);
 
@@ -445,6 +467,43 @@ sub toggle_bookmark {
     $self->is_bookmark($qid)
         ? $self->remove_bookmark($qid)
         : $self->add_bookmark($qid);
+
+    return;
+}
+
+# Copy archive notice to inbox
+# Needed when bookmarking a notice that only lives in archive
+sub ensure_queued {
+    my ($self, $qid) = @_;
+
+    my $u = $self->u
+        or die "No user object";
+
+    my $sth = $u->prepare
+        ("SELECT userid, qid, journalid, etypeid, arg1, arg2, state, createtime " .
+         "FROM notifyarchive WHERE userid=? AND qid=?");
+    $sth->execute($u->{userid}, $qid);
+    die $sth->errstr if $sth->err;
+
+    my $row = $sth->fetchrow_hashref;
+    if ($row) {
+        my %item = (qid        => $row->{qid},
+                    userid     => $row->{userid},
+                    journalid  => $row->{journalid},
+                    etypeid    => $row->{etypeid},
+                    arg1       => $row->{arg1},
+                    arg2       => $row->{arg2},
+                    state      => 'R',
+                    createtime => $row->{createtime});
+
+        # insert this event into the notifyqueue table
+        $u->do("INSERT IGNORE INTO notifyqueue (" . join(",", keys %item) . ") VALUES (" .
+               join(",", map { '?' } values %item) . ")", undef, values %item)
+            or die $u->errstr;
+
+        # invalidate memcache
+        $self->expire_cache;
+    }
 
     return;
 }
