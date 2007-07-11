@@ -115,24 +115,74 @@ sub get_layout_name {
 
 sub get_cats {
     return (
-        'featured' => LJ::Lang::ml('customize.cats.featured'),
-        'special' => LJ::Lang::ml('customize.cats.special'),
-        'animals' => LJ::Lang::ml('customize.cats.animals'),
-        'clean' => LJ::Lang::ml('customize.cats.clean'),
-        'cool' => LJ::Lang::ml('customize.cats.cool'),
-        'warm' => LJ::Lang::ml('customize.cats.warm'),
-        'cute' => LJ::Lang::ml('customize.cats.cute'),
-        'dark' => LJ::Lang::ml('customize.cats.dark'),
-        'food' => LJ::Lang::ml('customize.cats.food'),
-        'hobbies' => LJ::Lang::ml('customize.cats.hobbies'),
-        'illustrated' => LJ::Lang::ml('customize.cats.illustrated'),
-        'media' => LJ::Lang::ml('customize.cats.media'),
-        'modern' => LJ::Lang::ml('customize.cats.modern'),
-        'nature' => LJ::Lang::ml('customize.cats.nature'),
-        'occasions' => LJ::Lang::ml('customize.cats.occasions'),
-        'pattern' => LJ::Lang::ml('customize.cats.pattern'),
-        'tech' => LJ::Lang::ml('customize.cats.tech'),
-        'travel' => LJ::Lang::ml('customize.cats.travel'),
+        all => {
+            text => LJ::Lang::ml('customize.cats.all'),
+            main => 1,
+            order => 2,
+        },
+        featured => {
+            text => LJ::Lang::ml('customize.cats.featured'),
+            main => 1,
+            order => 1,
+        },
+        special => {
+            text => LJ::Lang::ml('customize.cats.special'),
+            main => 1,
+            order => 3,
+        },
+        custom => {
+            text => LJ::Lang::ml('customize.cats.custom'),
+            main => 1,
+            order => 4,
+        },
+        animals => {
+            text => LJ::Lang::ml('customize.cats.animals'),
+        },
+        clean => {
+            text => LJ::Lang::ml('customize.cats.clean'),
+        },
+        cool => {
+            text => LJ::Lang::ml('customize.cats.cool'),
+        },
+        warm => {
+            text => LJ::Lang::ml('customize.cats.warm'),
+        },
+        cute => {
+            text => LJ::Lang::ml('customize.cats.cute'),
+        },
+        dark => {
+            text => LJ::Lang::ml('customize.cats.dark'),
+        },
+        food => {
+            text => LJ::Lang::ml('customize.cats.food'),
+        },
+        hobbies => {
+            text => LJ::Lang::ml('customize.cats.hobbies'),
+        },
+        illustrated => {
+            text => LJ::Lang::ml('customize.cats.illustrated'),
+        },
+        media => {
+            text => LJ::Lang::ml('customize.cats.media'),
+        },
+        modern => {
+            text => LJ::Lang::ml('customize.cats.modern'),
+        },
+        nature => {
+            text => LJ::Lang::ml('customize.cats.nature'),
+        },
+        occasions => {
+            text => LJ::Lang::ml('customize.cats.occasions'),
+        },
+        pattern => {
+            text => LJ::Lang::ml('customize.cats.pattern'),
+        },
+        tech => {
+            text => LJ::Lang::ml('customize.cats.tech'),
+        },
+        travel => {
+            text => LJ::Lang::ml('customize.cats.travel'),
+        },
     );
 }
 

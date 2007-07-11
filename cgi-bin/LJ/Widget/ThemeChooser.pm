@@ -33,7 +33,7 @@ sub render_body {
 
     my @themes;
     if ($cat) {
-        $ret .= "<h3>$cats{$cat}</h3>";
+        $ret .= "<h3>$cats{$cat}->{text}</h3>";
         @themes = LJ::S2Theme->load_by_cat($cat);
     } elsif ($layoutid) {
         my $layout_name = LJ::Customize->get_layout_name($layoutid, user => $u);
