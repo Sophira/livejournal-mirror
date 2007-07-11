@@ -18,6 +18,7 @@ sub render_body {
 
     my $getextra = $opts{getextra};
     my $getsep = $getextra ? "&" : "?";
+    my $filterarg = $opts{filter_available} ? "&filter_available=1" : "";
 
     my $theme = LJ::Customize->get_current_theme($u);
     my $userlay = LJ::S2::get_layers_of_user($u);
@@ -30,11 +31,11 @@ sub render_body {
     $ret .= "<img src='" . $theme->preview_imgurl . "' class='theme-current-image' />";
     $ret .= "<h3>" . $theme->name . "</h3>";
 
-    my $layout_link = "<a href='$LJ::SITEROOT/customize2/$getextra${getsep}layoutid=" . $theme->layoutid . "' class='theme-current-layout'><em>$layout_name</em></a>";
-    my $special_link_opts = "href='$LJ::SITEROOT/customize2/$getextra${getsep}cat=special' class='theme-current-cat'";
+    my $layout_link = "<a href='$LJ::SITEROOT/customize2/$getextra${getsep}layoutid=" . $theme->layoutid . "$filterarg' class='theme-current-layout'><em>$layout_name</em></a>";
+    my $special_link_opts = "href='$LJ::SITEROOT/customize2/$getextra${getsep}cat=special$filterarg' class='theme-current-cat'";
     $ret .= "<p class='theme-current-desc'>";
     if ($designer) {
-        my $designer_link = "<a href='$LJ::SITEROOT/customize2/$getextra${getsep}designer=" . LJ::eurl($designer) . "' class='theme-current-designer'>$designer</a>";
+        my $designer_link = "<a href='$LJ::SITEROOT/customize2/$getextra${getsep}designer=" . LJ::eurl($designer) . "$filterarg' class='theme-current-designer'>$designer</a>";
         if (LJ::run_hook("layer_is_special", $theme->uniq)) {
             $ret .= $class->ml('widget.currenttheme.specialdesc', {'aopts' => $special_link_opts, 'designer' => $designer_link});
         } else {
@@ -70,11 +71,9 @@ sub js {
             filter_links.forEach(function (filter_link) {
                 var getArgs = LiveJournal.parseGetArgs(filter_link.href);
                 for (var arg in getArgs) {
-                    if (!getArgs.hasOwnProperty(arg)) continue;
-                    if (arg == "cat" || arg == "layoutid" || arg == "designer") {
-                        DOM.addEventListener(filter_link, "click", function (evt) { Customize.updateThemeChooser(evt, arg, getArgs[arg]) });
-                        break;
-                    }
+                    if (arg == "authas" || arg == "filter_available") continue;
+                    DOM.addEventListener(filter_link, "click", function (evt) { Customize.ThemeNav.filterThemes(evt, arg, getArgs[arg]) });
+                    break;
                 }
             });
         },

@@ -26,9 +26,11 @@ sub render_body {
     my $custom = defined $opts{custom} ? $opts{custom} : 0;
     my $filter_available = defined $opts{filter_available} ? $opts{filter_available} : 0;
     my $page = defined $opts{page} ? $opts{page} : 1;
-    my $num_per_page = defined $opts{num_per_page} ? $opts{num_per_page} : 12;
+
+    my $filterarg = $filter_available ? "&filter_available=1" : "";
 
     my %cats = LJ::Customize->get_cats;
+    my $num_per_page = 12;
     my $ret;
 
     my @themes;
@@ -116,11 +118,11 @@ sub render_body {
         $ret .= "<img src='$LJ::IMGPREFIX/customize/preview-theme.gif' class='theme-preview-image' /></a>";
         $ret .= $theme_icons;
 
-        my $layout_link = "<a href='$LJ::SITEROOT/customize2/$getextra${getsep}layoutid=" . $theme->layoutid . "' class='theme-layout'><em>$theme_layout_name</em></a>";
-        my $special_link_opts = "href='$LJ::SITEROOT/customize2/$getextra${getsep}cat=special' class='theme-cat'";
+        my $layout_link = "<a href='$LJ::SITEROOT/customize2/$getextra${getsep}layoutid=" . $theme->layoutid . "$filterarg' class='theme-layout'><em>$theme_layout_name</em></a>";
+        my $special_link_opts = "href='$LJ::SITEROOT/customize2/$getextra${getsep}cat=special$filterarg' class='theme-cat'";
         $ret .= "<p class='theme-desc'>";
         if ($theme_designer) {
-            my $designer_link = "<a href='$LJ::SITEROOT/customize2/$getextra${getsep}designer=" . LJ::eurl($theme_designer) . "' class='theme-designer'>$theme_designer</a>";
+            my $designer_link = "<a href='$LJ::SITEROOT/customize2/$getextra${getsep}designer=" . LJ::eurl($theme_designer) . "$filterarg' class='theme-designer'>$theme_designer</a>";
             if ($theme_types{special}) {
                 $ret .= $class->ml('widget.themechooser.theme.specialdesc', {'aopts' => $special_link_opts, 'designer' => $designer_link});
             } else {
@@ -139,13 +141,6 @@ sub render_body {
                 user => $u->user,
                 apply_themeid => $theme->themeid,
                 apply_layoutid => $theme->layoutid,
-                view_cat => $cat,
-                view_layoutid => $layoutid,
-                view_designer => $designer,
-                view_custom => $custom,
-                view_filter_available => $filter_available,
-                view_page => $page,
-                view_num_per_page => $num_per_page,
             );
             $ret .= $class->html_submit( "apply" => $class->ml('widget.themechooser.theme.apply'), { raw => "class='theme-button'" });
             $ret .= $class->end_form;
@@ -195,11 +190,9 @@ sub js {
             filter_links.forEach(function (filter_link) {
                 var getArgs = LiveJournal.parseGetArgs(filter_link.href);
                 for (var arg in getArgs) {
-                    if (!getArgs.hasOwnProperty(arg)) continue;
-                    if (arg == "cat" || arg == "layoutid" || arg == "designer") {
-                        DOM.addEventListener(filter_link, "click", function (evt) { self.filterThemes(evt, arg, getArgs[arg]) });
-                        break;
-                    }
+                    if (arg == "authas" || arg == "filter_available") continue;
+                    DOM.addEventListener(filter_link, "click", function (evt) { Customize.ThemeNav.filterThemes(evt, arg, getArgs[arg]) });
+                    break;
                 }
             });
 
@@ -210,36 +203,31 @@ sub js {
                 DOM.addEventListener(form, "submit", function (evt) { self.applyTheme(evt, form) });
             });
         },
-        filterThemes: function (evt, key, value) {
-            if (key == "cat") {
-                this.updateContent({ user: Customize.username, cat: value, page: 1, getextra: Customize.getExtra });
-            } else if (key == "layoutid") {
-                this.updateContent({ user: Customize.username, layoutid: value, page: 1, getextra: Customize.getExtra });
-            } else if (key == "designer") {
-                this.updateContent({ user: Customize.username, designer: value, page: 1, getextra: Customize.getExtra });
-            }
-            Event.stop(evt);
-        },
         applyTheme: function (evt, form) {
-            this.doPostAndUpdateContent({
+            this.doPost({
                 user: Customize.username,
                 apply_themeid: form.Widget_ThemeChooser_apply_themeid.value,
                 apply_layoutid: form.Widget_ThemeChooser_apply_layoutid.value,
-                cat: form.Widget_ThemeChooser_view_cat.value,
-                layoutid: form.Widget_ThemeChooser_view_layoutid.value,
-                designer: form.Widget_ThemeChooser_view_designer.value,
-                custom: form.Widget_ThemeChooser_view_custom.value,
-                filter_available: form.Widget_ThemeChooser_view_filter_available.value,
-                page: form.Widget_ThemeChooser_view_page.value,
-                num_per_page: form.Widget_ThemeChooser_view_num_per_page.value,
-                getextra: Customize.getExtra,
             });
             Event.stop(evt);
         },
         onData: function (data) {
-            if (data._widget_post == 1) {
-                Customize.updateCurrentTheme({ user: Customize.username, getextra: Customize.getExtra });
-            }
+            Customize.ThemeNav.updateContent({
+                user: Customize.username,
+                cat: Customize.cat,
+                layoutid: Customize.layoutid,
+                designer: Customize.designer,
+                custom: Customize.custom,
+                filter_available: Customize.filter_available,
+                page: Customize.page,
+                getextra: Customize.getExtra,
+                theme_chooser_id: $('theme_chooser_id').value,
+            });
+            Customize.CurrentTheme.updateContent({
+                user: Customize.username,
+                getextra: Customize.getExtra,
+                filter_available: Customize.filter_available,
+            });
         },
         onRefresh: function (data) {
             this.initWidget();
