@@ -114,7 +114,7 @@ sub render_body {
         getextra => $getextra,
     );
 
-    $ret .= "<p class='detail theme-nav-footnote'>* S1, LiveJournal's old style system, supports fewer features and is no longer updated.</p>";
+    $ret .= "<p class='detail theme-nav-footnote'>* " . $class->ml('widget.themenav.footnote', {'sitename' => $LJ::SITENAMESHORT}) . "</p>";
 
     return $ret;
 }

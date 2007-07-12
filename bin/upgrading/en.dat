@@ -1934,3 +1934,13 @@ widget.themechooser.theme.preview=Preview
 
 widget.themechooser.theme.specialdesc=<a [[aopts]]><em>Special</em></a> by [[designer]]
 
+widget.themenav.developer=Developer Area
+
+widget.themenav.filteravailable=Only show themes available to me
+
+widget.themenav.footnote=S1, [[sitename]]'s old style system, supports fewer features and is no longer updated.
+
+widget.themenav.switchtos1=Switch to old style system
+
+widget.themenav.title=2. Select a New Theme
+
