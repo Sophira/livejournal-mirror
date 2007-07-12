@@ -97,7 +97,7 @@ sub render_body {
 
     $ret .= "<ul class='theme-nav theme-nav-small nostyle'>";
     $ret .= "<li class='first'><a href='$LJ::SITEROOT/customize/advanced/'>" . $class->ml('widget.themenav.developer') . "</a></li>";
-    $ret .= "<li class='last'><a href=''>" . $class->ml('widget.themenav.switchtos1') . "*</a></li>";
+    $ret .= "<li class='last'><a href=''>" . $class->ml('widget.themenav.switchtos1') . "</a></li>";
     $ret .= "</ul>";
 
     $ret .= "</div>";
@@ -113,8 +113,6 @@ sub render_body {
         page => $page,
         getextra => $getextra,
     );
-
-    $ret .= "<p class='detail theme-nav-footnote'>* " . $class->ml('widget.themenav.footnote', {'sitename' => $LJ::SITENAMESHORT}) . "</p>";
 
     return $ret;
 }
