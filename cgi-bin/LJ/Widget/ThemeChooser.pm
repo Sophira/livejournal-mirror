@@ -31,22 +31,27 @@ sub render_body {
 
     my %cats = LJ::Customize->get_cats;
     my $num_per_page = 12;
-    my $ret;
+    my $ret .= "<div class='theme-selector-content pkg'>";
 
+    my @getargs;
     my @themes;
     if ($cat) {
         $ret .= "<h3>$cats{$cat}->{text}</h3>";
+        push @getargs, "cat=$cat";
         @themes = LJ::S2Theme->load_by_cat($cat);
     } elsif ($layoutid) {
         my $layout_name = LJ::Customize->get_layout_name($layoutid, user => $u);
         $ret .= "<h3>$layout_name</h3>";
+        push @getargs, "layoutid=$layoutid";
         @themes = LJ::S2Theme->load_by_layoutid($layoutid, $u);
     } elsif ($designer) {
         $designer = LJ::durl($designer);
         $ret .= "<h3>$designer</h3>";
+        push @getargs, "designer=$designer";
         @themes = LJ::S2Theme->load_by_designer($designer);
     } elsif ($custom) {
         $ret .= "<h3>" . $class->ml('widget.themechooser.header.custom') . "</h3>";
+        push @getargs, "custom=$custom";
         @themes = LJ::S2Theme->load_by_user($u);
     } else {
         $ret .= "<h3>" . $class->ml('widget.themechooser.header.all') . "</h3>";
@@ -54,6 +59,7 @@ sub render_body {
     }
 
     if ($filter_available) {
+        push @getargs, "filter_available=$filter_available";
         @themes = LJ::S2Theme->filter_available($u, @themes);
     }
 
@@ -70,6 +76,17 @@ sub render_body {
     my @themes_this_page = @themes[$index_of_first_theme..$index_of_last_theme];
 
     $ret .= "<p class='detail'>" . $class->ml('widget.themechooser.desc') . "</p>";
+
+    $ret .= "<ul class='theme-paging theme-paging-top nostyle'>";
+    $ret .= $class->print_paging(
+        themes => \@themes,
+        num_per_page => $num_per_page,
+        page => $page,
+        getargs => \@getargs,
+        getextra => $getextra,
+    );
+    $ret .= "</ul>";
+
     foreach my $theme (@themes_this_page) {
         next unless defined $theme;
 
@@ -148,6 +165,67 @@ sub render_body {
         $ret .= "</div><!-- end .theme-item -->";
     }
 
+    $ret .= "<ul class='theme-paging theme-paging-bottom nostyle'>";
+    $ret .= $class->print_paging(
+        themes => \@themes,
+        num_per_page => $num_per_page,
+        page => $page,
+        getargs => \@getargs,
+        getextra => $getextra,
+    );
+    $ret .= "</ul>";
+
+    $ret .= "</div><!-- end .theme-selector-content -->";
+
+    return $ret;
+}
+
+sub print_paging {
+    my $class = shift;
+    my %opts = @_;
+
+    my $themes = $opts{themes};
+    my $page = $opts{page};
+    my $num_per_page = $opts{num_per_page};
+
+    my $max_page = POSIX::ceil(scalar(@$themes) / $num_per_page) || 1;
+    return "" if $page == 1 && $max_page == 1;
+
+    my $page_padding = 2; # number of pages to show on either side of the current page
+    my $start_page = $page - $page_padding > 1 ? $page - $page_padding : 1;
+    my $end_page = $page + $page_padding < $max_page ? $page + $page_padding : $max_page;
+
+    my $getargs = $opts{getargs};
+    my $getextra = $opts{getextra};
+
+    my $q_string = join("&", @$getargs);
+    my $q_sep = $q_string ? "&" : "";
+    my $getsep = $getextra ? "&" : "?";
+
+    my $url = "$LJ::SITEROOT/customize2/$getextra$getsep$q_string$q_sep";
+
+    my $ret;
+    if ($page - 1 >= 1) {
+        $ret .= "<li class='first'><a href='${url}page=" . ($page - 1) . "' class='theme-page'>&lt;</a></li>";
+    }
+    if ($page - $page_padding > 1) {
+        $ret .= "<li><a href='${url}page=1' class='theme-page'>1</a></li><li>&hellip;</li>";
+    }
+    for (my $i = $start_page; $i <= $end_page; $i++) {
+        my $li_class = " class='on'" if $i == $page;
+        if ($i == $page) {
+            $ret .= "<li$li_class>$i</li>";
+        } else {
+            $ret .= "<li$li_class><a href='${url}page=$i' class='theme-page'>$i</a></li>";
+        }
+    }
+    if ($page + $page_padding < $max_page) {
+        $ret .= "<li>&hellip;</li><li><a href='${url}page=$max_page' class='theme-page'>$max_page</a></li>";
+    }
+    if ($page + 1 <= $max_page) {
+        $ret .= "<li class='last'><a href='${url}page=" . ($page + 1) . "' class='theme-page'>&gt;</a></li>";
+    }
+
     return $ret;
 }
 
@@ -185,14 +263,21 @@ sub js {
             var filter_links = DOM.getElementsByClassName(document, "theme-cat");
             filter_links = filter_links.concat(DOM.getElementsByClassName(document, "theme-layout"));
             filter_links = filter_links.concat(DOM.getElementsByClassName(document, "theme-designer"));
+            filter_links = filter_links.concat(DOM.getElementsByClassName(document, "theme-page"));
 
-            // add event listeners to all of the category, layout, and designer links
+            // add event listeners to all of the category, layout, designer, and page links
+            // adding an event listener to page is done separately because we need to be sure to use that if it is there,
+            //     and we will miss it if it is there but there was another arg before it in the URL
             filter_links.forEach(function (filter_link) {
                 var getArgs = LiveJournal.parseGetArgs(filter_link.href);
-                for (var arg in getArgs) {
-                    if (arg == "authas" || arg == "filter_available") continue;
-                    DOM.addEventListener(filter_link, "click", function (evt) { Customize.ThemeNav.filterThemes(evt, arg, getArgs[arg]) });
-                    break;
+                if (getArgs["page"]) {
+                    DOM.addEventListener(filter_link, "click", function (evt) { Customize.ThemeNav.filterThemes(evt, "page", getArgs["page"]) });
+                } else {
+                    for (var arg in getArgs) {
+                        if (arg == "authas" || arg == "filter_available") continue;
+                        DOM.addEventListener(filter_link, "click", function (evt) { Customize.ThemeNav.filterThemes(evt, arg, getArgs[arg]) });
+                        break;
+                    }
                 }
             });
 
