@@ -106,3 +106,33 @@
     display: block !important;
     left: 0px;
 }
+.theme-paging {
+    position: absolute;
+    right: 0;
+    border: 1px solid #ccc;
+}
+.theme-paging-top {
+    top: 0;
+}
+.theme-paging-bottom {
+    bottom: 0;
+}
+.theme-paging li {
+    float: left;
+    width: 20px;
+    display: block;
+    float: left;
+    text-align: center;
+    font-size: 11px;
+    padding: 3px 0;
+    margin-left: 1px;
+}
+.theme-paging li a {
+    text-decoration: none;
+}
+.theme-paging li.on {
+    font-weight: bold;
+}
+.theme-paging li a:visited {
+    color: #00c;
+}
