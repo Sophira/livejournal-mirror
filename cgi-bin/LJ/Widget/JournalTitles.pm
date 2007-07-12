@@ -17,7 +17,7 @@ sub render_body {
 
     my $ret;
     $ret .= "<h2 class='widget-header'>" . $class->ml('widget.journaltitles.title') . "</h2>";
-    $ret .= "<p class='detail'>" . $class->ml('widget.journaltitles.desc') . "</p>";
+    $ret .= "<p class='detail'>" . $class->ml('widget.journaltitles.desc') . " " . LJ::help_icon('journal_titles') . "</p>";
 
     foreach my $id (qw( journaltitle journalsubtitle friendspagetitle )) {
         $ret .= $class->start_form( id => "${id}_form" );
