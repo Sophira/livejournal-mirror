@@ -5,7 +5,6 @@ Customize.init = function () {
     Customize.cat = "";
     Customize.layoutid = 0;
     Customize.designer = "";
-    Customize.custom = 0;
     Customize.filter_available = 0;
     Customize.page = 1;
     Customize.getExtra = "";
@@ -29,10 +28,6 @@ Customize.init = function () {
         Customize.designer = pageGetArgs["designer"];
     }
 
-    if (pageGetArgs["custom"]) {
-        Customize.custom = pageGetArgs["custom"];
-    }
-
     if (pageGetArgs["filter_available"]) {
         Customize.filter_available = pageGetArgs["filter_available"];
     }
@@ -46,7 +41,6 @@ Customize.resetFilters = function () {
     Customize.cat = "";
     Customize.layoutid = 0;
     Customize.designer = "";
-    Customize.custom = 0;
     Customize.page = 1;
 }
 

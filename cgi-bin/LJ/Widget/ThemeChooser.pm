@@ -23,11 +23,12 @@ sub render_body {
     my $cat = defined $opts{cat} ? $opts{cat} : "";
     my $layoutid = defined $opts{layoutid} ? $opts{layoutid} : 0;
     my $designer = defined $opts{designer} ? $opts{designer} : "";
-    my $custom = defined $opts{custom} ? $opts{custom} : 0;
     my $filter_available = defined $opts{filter_available} ? $opts{filter_available} : 0;
     my $page = defined $opts{page} ? $opts{page} : 1;
 
     my $filterarg = $filter_available ? "&filter_available=1" : "";
+
+    my $viewing_featured = !$cat && !$layoutid && !$designer;
 
     my %cats = LJ::Customize->get_cats;
     my $num_per_page = 12;
@@ -35,7 +36,15 @@ sub render_body {
 
     my @getargs;
     my @themes;
-    if ($cat) {
+    if ($cat eq "all") {
+        $ret .= "<h3>" . $class->ml('widget.themechooser.header.all') . "</h3>";
+        push @getargs, "cat=all";
+        @themes = LJ::S2Theme->load_all($u);
+    } elsif ($cat eq "custom") {
+        $ret .= "<h3>" . $class->ml('widget.themechooser.header.custom') . "</h3>";
+        push @getargs, "cat=custom";
+        @themes = LJ::S2Theme->load_by_user($u);
+    } elsif ($cat) {
         $ret .= "<h3>$cats{$cat}->{text}</h3>";
         push @getargs, "cat=$cat";
         @themes = LJ::S2Theme->load_by_cat($cat);
@@ -49,13 +58,9 @@ sub render_body {
         $ret .= "<h3>$designer</h3>";
         push @getargs, "designer=$designer";
         @themes = LJ::S2Theme->load_by_designer($designer);
-    } elsif ($custom) {
-        $ret .= "<h3>" . $class->ml('widget.themechooser.header.custom') . "</h3>";
-        push @getargs, "custom=$custom";
-        @themes = LJ::S2Theme->load_by_user($u);
-    } else {
-        $ret .= "<h3>" . $class->ml('widget.themechooser.header.all') . "</h3>";
-        @themes = LJ::S2Theme->load_all($u);
+    } else { # category is "featured"
+        $ret .= "<h3>$cats{featured}->{text}</h3>";
+        @themes = LJ::S2Theme->load_by_cat("featured");
     }
 
     if ($filter_available) {
@@ -112,7 +117,7 @@ sub render_body {
             $theme_icons .= LJ::run_hook("customize_special_icons", $u, $theme);
         }
         if ($theme_types{special}) {
-            $theme_class .= " special" if $cat eq "featured" && LJ::run_hook("should_see_special_content", $u);
+            $theme_class .= " special" if $viewing_featured && LJ::run_hook("should_see_special_content", $u);
             $theme_icons .= LJ::run_hook("customize_available_until", $theme);
         }
         $theme_icons .= "</div><!-- end .theme-icons -->" if $theme_icons;
@@ -302,7 +307,6 @@ sub js {
                 cat: Customize.cat,
                 layoutid: Customize.layoutid,
                 designer: Customize.designer,
-                custom: Customize.custom,
                 filter_available: Customize.filter_available,
                 page: Customize.page,
                 getextra: Customize.getExtra,

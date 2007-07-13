@@ -25,14 +25,13 @@ sub render_body {
     my $cat = defined $opts{cat} ? $opts{cat} : "";
     my $layoutid = defined $opts{layoutid} ? $opts{layoutid} : 0;
     my $designer = defined $opts{designer} ? $opts{designer} : "";
-    my $custom = defined $opts{custom} ? $opts{custom} : 0;
     my $filter_available = defined $opts{filter_available} ? $opts{filter_available} : 0;
     my $page = defined $opts{page} ? $opts{page} : 1;
 
     my $filterarg = $filter_available ? "filter_available=1" : "";
 
     # we want to have "All" selected if we're filtering by layout or designer
-    my $viewing_all = !$cat && !$custom;
+    my $viewing_all = $layoutid || $designer;
 
     my $theme_chooser = LJ::Widget::ThemeChooser->new( id => $theme_chooser_id );
     $theme_chooser_id = $theme_chooser->{id} unless $theme_chooser_id;
@@ -72,7 +71,6 @@ sub render_body {
         user => $u,
         selected_cat => $cat,
         viewing_all => $viewing_all,
-        viewing_custom => $custom,
         cat_list => \@main_cats_sorted,
         getextra => $getextra,
         filterarg => $filterarg,
@@ -86,7 +84,6 @@ sub render_body {
         user => $u,
         selected_cat => $cat,
         viewing_all => $viewing_all,
-        viewing_custom => $custom,
         cat_list => \@cats_sorted,
         getextra => $getextra,
         filterarg => $filterarg,
@@ -108,7 +105,6 @@ sub render_body {
         cat => $cat,
         layoutid => $layoutid,
         designer => $designer,
-        custom => $custom,
         filter_available => $filter_available,
         page => $page,
         getextra => $getextra,
@@ -131,7 +127,10 @@ sub print_cat_list {
         my $c = $cat_list->[$i];
 
         my $li_class = "";
-        $li_class .= " on" if ($c eq $opts{selected_cat}) || ($c eq "all" && $opts{viewing_all}) || ($c eq "custom" && $opts{viewing_custom});
+        $li_class .= " on" if
+            ($c eq $opts{selected_cat}) ||
+            ($c eq "featured" && !$opts{selected_cat} && !$opts{viewing_all}) ||
+            ($c eq "all" && $opts{viewing_all});
         $li_class .= " first" if $i == 0;
         $li_class .= " last" if (keys %$userlay && $i == @$cat_list - 1) || (!keys %$userlay && $i == @$cat_list - 2);
         $li_class =~ s/^\s//; # remove the first space
@@ -139,8 +138,7 @@ sub print_cat_list {
 
         if (($c ne "custom") || ($c eq "custom" && keys %$userlay)) {
             my $arg = "";
-            $arg = "cat=$c" unless $c eq "all";
-            $arg = "custom=1" if $c eq "custom";
+            $arg = "cat=$c" unless $c eq "featured";
             if ($arg || $opts{filterarg}) {
                 my $allargs = $arg;
                 $allargs .= "&" if $arg && $opts{filterarg};
@@ -213,7 +211,6 @@ sub js {
             if (key == "cat") Customize.cat = value;
             if (key == "layoutid") Customize.layoutid = value;
             if (key == "designer") Customize.designer = value;
-            if (key == "custom") Customize.custom = value;
             if (key == "page") Customize.page = value;
 
             this.updateContent({
@@ -221,7 +218,6 @@ sub js {
                 cat: Customize.cat,
                 layoutid: Customize.layoutid,
                 designer: Customize.designer,
-                custom: Customize.custom,
                 filter_available: Customize.filter_available,
                 page: Customize.page,
                 getextra: Customize.getExtra,
