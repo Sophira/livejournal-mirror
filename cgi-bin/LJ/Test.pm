@@ -65,6 +65,7 @@ sub temp_user {
     my %args = @_;
     my $underscore  = delete $args{'underscore'};
     my $journaltype = delete $args{'journaltype'}  || "P";
+    my $password    = delete $args{'password'};
     croak('unknown args') if %args;
 
     my $pfx = $underscore ? "_" : "t_";
@@ -75,6 +76,7 @@ sub temp_user {
             name => "test account $username",
             email => "test\@$LJ::DOMAIN",
             journaltype => $journaltype,
+            password => $password,
         });
         if ($uid) {
             my $u = LJ::load_userid($uid) or next;
