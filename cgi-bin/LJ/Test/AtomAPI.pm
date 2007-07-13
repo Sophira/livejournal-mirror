@@ -4,6 +4,9 @@ use strict;
 use warnings;
 
 use lib "$ENV{LJHOME}/cgi-bin";
+
+use Test::FakeApache;
+
 require "modperl.pl";
 
 use Carp ();
@@ -27,8 +30,11 @@ sub new {
     $self->{apache} = LJ::Test->fake_apache;
     my $client = $self->{client} = XML::Atom::Client->new;
 
-    $client->username('ads');
-    $client->password('ads');
+    my $password = 'mountains';
+    my $u = temp_user(password => $password);
+
+    $client->username($u->username);
+    $client->password($password);
 
     return $self;
 }
@@ -92,7 +98,12 @@ sub atom_run {
 
     my $client = $self->{client};
 
-    $client->munge_request($req);
+    eval { $client->munge_request($req) };
+    if ($@) {
+        warn "XML::Atom::Client->munge_request failed: $@\n";
+        return;
+    }
+
 
     if ($ENV{DEBUG}) {
         print "****** START REQUEST ******\n";
@@ -100,9 +111,20 @@ sub atom_run {
         print "****** END REQUEST  ******\n";
     }
 
-    my $res = $a->run($req);
+    my $res;
+    if ($uri =~ m/\b\Q$LJ::FBDOMAIN\E\b/) {
+        warn "FB cannot be tested in-band. Switching to out-of-band requests for this transaction. This test may fail if Apache is not running\n";
+        my $ua = LWP::UserAgent->new();
+        $res = $ua->request($req);
+    } else {
+        $res = $a->run($req);
+    }
 
-    $client->munge_response($res);
+    eval { $client->munge_response($res) };
+    if ($@) {
+        warn "XML::Atom::Client->munge_response failed: $@\n";
+        return;
+    }
 
     if ($ENV{DEBUG}) {
         print "****** START RESPONSE ******\n";
