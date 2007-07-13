@@ -102,6 +102,18 @@ body<=
     my $unread_count = $inbox->unread_count;
     my $alert_plural = $unread_count == 1 ? 'message' : 'messages';
     $alert_plural .= $unread_count ? '!' : '.';
+    my $unread_all = $unread_count
+                     ? " (".$unread_count.")"
+                     : '';
+    my $unread_usermsg_sent = $inbox->usermsg_sent_event_count
+                        ? " (".$inbox->usermsg_sent_event_count.")"
+                        : '';
+    my $unread_friend = $inbox->friend_event_count
+                        ? " (".$inbox->friend_event_count.")"
+                        : '';
+    my $unread_entrycomment = $inbox->entrycomment_event_count
+                        ? " (".$inbox->entrycomment_event_count.")"
+                        : '';
 
     # Pagination
     my $page = int($POST{page} || $GET{page});
@@ -119,12 +131,12 @@ body<=
             <input type="submit" value="New Message" style="width: 100%">
             </form>
             <p class="folders">
-            <a href="."><b>ALL</b></a><br />
-            <a href=".?view=usermsg_recvd">Messages</a><br />
-            <a href=".?view=friend">Friend Updates</a><br />
+            <a href="."><b>ALL$unread_all</b></a><br />
+            <a href=".?view=usermsg_recvd">Messages$unread_usermsg_sent</a><br />
+            <a href=".?view=friend">Friend Updates$unread_friend</a><br />
               <a href=".?view=birthday" class="subs">Birthdays</a><br />
               <a href=".?view=befriended" class="subs">New Friends</a><br />
-            <a href=".?view=entrycomment">Entries &amp; Comments</a>
+            <a href=".?view=entrycomment">Entries &amp; Comments$unread_entrycomment</a>
             <div style='margin-top:0px'>---</div>
             <a href=".?view=archived">Archived</a><br />
             <a href=".?view=bookmark">Flagged</a><br />

@@ -67,14 +67,7 @@ sub items {
 sub friend_items {
     my $self = shift;
 
-    my @friend_events = qw(
-                           Befriended
-                           InvitedFriendJoins
-                           CommunityInvite
-                           NewUserpic
-                           );
-
-    @friend_events = (@friend_events, (LJ::run_hook('friend_notification_types') || ()));
+    my @friend_events = friend_event_list();
 
     my %friend_events = map { "LJ::Event::" . $_ => 1 } @friend_events;
     return grep { $friend_events{$_->event->class} } $self->items;
@@ -132,7 +125,7 @@ sub befriended_items {
 sub entrycomment_items {
     my $self = shift;
 
-    my @events = ( 'JournalNewEntry', 'JournalNewComment');
+    my @events = entrycomment_event_list();
 
     return $self->subset_items(@events);
 }
@@ -506,6 +499,48 @@ sub ensure_queued {
     }
 
     return;
+}
+
+# return a count of a subset of notificationitems
+sub subset_unread_count {
+    my ($self, @subset) = @_;
+
+     my %subset_events = map { "LJ::Event::" . $_ => 1 } @subset;
+     my @events = grep { $subset_events{$_->event->class} && $_->unread } $self->items;
+     return scalar @events;
+}
+
+sub friend_event_count {
+    my $self = shift;
+    return $self->subset_unread_count(friend_event_list());
+}
+
+sub entrycomment_event_count {
+    my $self = shift;
+    return $self->subset_unread_count(entrycomment_event_list());
+}
+
+sub usermsg_sent_event_count {
+    my $self = shift;
+    my @events = ('UserMessageRecvd' );
+    return $self->subset_unread_count(@events);
+}
+
+# Methods that return Arrays of Event categories
+sub friend_event_list {
+    my @events = qw(
+                    Befriended
+                    InvitedFriendJoins
+                    CommunityInvite
+                    NewUserpic
+                    );
+    @events = (@events, (LJ::run_hook('friend_notification_types') || ()));
+    return @events;
+}
+
+sub entrycomment_event_list {
+    my @events = ( 'JournalNewEntry', 'JournalNewComment');
+    return @events;
 }
 
 1;
