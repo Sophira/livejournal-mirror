@@ -112,7 +112,7 @@ sub atom_run {
     }
 
     my $res;
-    if ($uri =~ m/\b\Q$LJ::FBDOMAIN\E\b/) {
+    if ($uri =~ m/\b\Q$LJ::FB_DOMAIN\E\b/) {
         warn "FB cannot be tested in-band. Switching to out-of-band requests for this transaction. This test may fail if Apache is not running\n";
         my $ua = LWP::UserAgent->new();
         $res = $ua->request($req);
