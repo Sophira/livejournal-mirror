@@ -3507,12 +3507,13 @@ sub _friend_friendof_uids {
     my %args = @_;
 
     my @uids;
-    if (! LJ::conf_test($LJ::DISABLED{'frienduids-gearman'}, $u) && @LJ::GEARMAN_SERVERS
+    if (LJ::conf_test($LJ::LOADFRIENDS_USING_GEARMAN, $u->id) && @LJ::GEARMAN_SERVERS
         && (my $gc = LJ::gearman_client())) {
 
         # do friend/friendof uid load in gearman
         my $res = $gc->do_task("load_friend_friendof_uids",
-                               Storable::nfreeze({uid => $u->id, opts => \%args}));
+                               Storable::nfreeze({uid => $u->id, opts => \%args}),
+                               { uniq => join("-", $args{mode}, $u->id, $args{limit}) });
 
         my $uidsref = Storable::thaw($$res) if $res;
         @uids = @$uidsref;
