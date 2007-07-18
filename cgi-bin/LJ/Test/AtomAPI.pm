@@ -77,6 +77,13 @@ sub post_entry {
     return $self->atom_run(POST => $uri, $entry);
 }
 
+sub delete_entry {
+    my $self = shift;
+    my $uri = shift;
+    my $res = $self->atom_run(DELETE => $uri);
+    return $res;
+}
+
 sub atom_run {
     my $self = shift;
     my ($method, $uri, $obj) = @_;
