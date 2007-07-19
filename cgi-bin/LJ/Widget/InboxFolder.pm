@@ -167,7 +167,7 @@ sub render_body {
             <tr class="InboxItem_Row $row_class" lj_qid="$qid" id="${name}_Row_$qid">
                 <td class="checkbox">$checkbox</td>
                 <td class="item">
-                    $bookmark $expandbtn
+                    <div class="InboxItem_Controls">$bookmark $expandbtn</div>
                     <span class="$read_class" id="${name}_Title_$qid">$title</span>
                     $content_div
                     </td>

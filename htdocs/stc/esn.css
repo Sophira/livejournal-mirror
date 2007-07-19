@@ -123,6 +123,7 @@ div.argOptsContainer {
 
 
 .NotificationTable {
+    width: 100%;
 }
 
 .NotificationTable tr.Selected {
@@ -166,6 +167,7 @@ div.argOptsContainer {
     float: right;
     display: block;
     margin: 0 0 0 0;
+    font-weight: normal;
     }
 
 .inbox {
@@ -208,6 +210,11 @@ span.Pages input {
 
 .inbox_newitems {
     font-weight: bold;
+}
+
+.InboxItem_Controls {
+    float: left;
+    width: 40px;
 }
 
 .InboxItem_Unread {
@@ -300,9 +307,22 @@ span.InboxItem_Read:hover a {
 /* folder links */
 .folders a {
     white-space: nowrap;
+    text-decoration: none;
+    color: #000;
+    display: block;
+    margin: 0px;
+    padding: 0px 0px 1px 2px;
+    border: 1px solid #fff;
 }
 .folders a.subs {
     padding-left: 1em;
+}
+.folders a:visited, .folders a:link {
+    color: #000;
+}
+.folders a:hover {
+    border: 1px solid #bbb;
+    background-color: #eee;
 }
 
 

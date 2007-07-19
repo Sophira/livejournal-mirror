@@ -73,9 +73,10 @@ sub as_html {
     my $subject = $msg->subject;
 
     my $ret;
-    $ret .= "<div style='width: 120px; float: left;' class='pkg'>";
-    $ret .= $pichtml . " " . $other_u->user . "</div><div>";
+    $ret .= "<div class='pkg'><div style='width: 60px; float: left;'>";
+    $ret .= $pichtml . "</div><div>";
     $ret .= $subject || "(no subject)";
+    $ret .= "<br />from " . $other_u->ljuser_display . "</div>";
     $ret .= "</div>";
 
     return $ret;
@@ -86,7 +87,7 @@ sub as_html_actions {
 
     my $msgid = $self->load_message->msgid;
     my $ret = "<div class='actions'>";
-    $ret .= " <a href='$LJ::SITEROOT/compose.bml?mode=reply&msgid=$msgid'>Reply</a>";
+    $ret .= " <a href='$LJ::SITEROOT/inbox/compose.bml?mode=reply&msgid=$msgid'>Reply</a>";
     $ret .= "</div>";
 
     return $ret;
@@ -179,7 +180,7 @@ sub display_pic {
     my $ret;
     $ret .= '<img src="';
     $ret .= $pic ? $pic->url : "$LJ::STATPREFIX/horizon/nouserpic.png";
-    $ret .= '" width="35" height="35" align="absmiddle" />';
+    $ret .= '" width="50" height="50" align="top" />';
 
     return $ret;
 }

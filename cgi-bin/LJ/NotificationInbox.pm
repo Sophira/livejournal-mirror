@@ -63,11 +63,28 @@ sub items {
     return @items;
 }
 
+# returns a list of all notification items except for sent user messages
+sub all_items {
+    my $self = shift;
+
+    return grep { $_->event->class ne "LJ::Event::UserMessageSent" } $self->items;
+}
+
 # returns a list of friend-related notificationitems
 sub friend_items {
     my $self = shift;
 
     my @friend_events = friend_event_list();
+
+    my %friend_events = map { "LJ::Event::" . $_ => 1 } @friend_events;
+    return grep { $friend_events{$_->event->class} } $self->items;
+}
+
+# returns a list of friend-related notificationitems
+sub friendplus_items {
+    my $self = shift;
+
+    my @friend_events = friendplus_event_list();
 
     my %friend_events = map { "LJ::Event::" . $_ => 1 } @friend_events;
     return grep { $friend_events{$_->event->class} } $self->items;
@@ -515,12 +532,17 @@ sub friend_event_count {
     return $self->subset_unread_count(friend_event_list());
 }
 
+sub friendplus_event_count {
+    my $self = shift;
+    return $self->subset_unread_count(friendplus_event_list());
+}
+
 sub entrycomment_event_count {
     my $self = shift;
     return $self->subset_unread_count(entrycomment_event_list());
 }
 
-sub usermsg_sent_event_count {
+sub usermsg_recvd_event_count {
     my $self = shift;
     my @events = ('UserMessageRecvd' );
     return $self->subset_unread_count(@events);
@@ -533,6 +555,19 @@ sub friend_event_list {
                     InvitedFriendJoins
                     CommunityInvite
                     NewUserpic
+                    );
+    @events = (@events, (LJ::run_hook('friend_notification_types') || ()));
+    return @events;
+}
+
+sub friendplus_event_list {
+    my @events = qw(
+                    Befriended
+                    InvitedFriendJoins
+                    CommunityInvite
+                    NewUserpic
+                    NewVGift
+                    Birthday
                     );
     @events = (@events, (LJ::run_hook('friend_notification_types') || ()));
     return @events;

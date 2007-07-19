@@ -222,6 +222,9 @@ ESN_Inbox.finishedUpdate = function (info, folder) {
     }
 
     var unread_count = 0;
+    var usermsg_recvd_count = 0;
+    var friend_count = 0;
+    var entrycomment_count = 0;
     var inbox_count  = info.items.length;
 
     info.items.forEach(function (item) {
@@ -259,8 +262,10 @@ ESN_Inbox.finishedUpdate = function (info, folder) {
         }
     });
 
-    $("Inbox_NewItems").innerHTML = "You have " + unread_count + " new " + (unread_count == 1 ? "message" : "messages") +
-    (unread_count ? "!" : ".");
+    ESN_Inbox.refresh_count("esn_folder_all", info.unread_all);
+    ESN_Inbox.refresh_count("esn_folder_usermsg_recvd", info.unread_usermsg_recvd);
+    ESN_Inbox.refresh_count("esn_folder_friendplus", info.unread_friend);
+    ESN_Inbox.refresh_count("esn_folder_entrycomment", info.unread_entrycomment);
 
     if (! $(folder + "_Body").getElementsByTagName("tr").length) {
         // no rows left, refresh page if more messages
@@ -282,4 +287,9 @@ ESN_Inbox.finishedUpdate = function (info, folder) {
 
     $(folder + "_MarkRead").disabled    = unread_count ? false : true;
     $(folder + "_MarkAllRead").disabled = unread_count ? false : true;
+};
+
+ESN_Inbox.refresh_count = function(name, count) {
+    var unread_ele = DOM.getElementsByClassName($(name), "unread_count");
+    if ($(name)) unread_ele[0].innerHTML = (count > 0) ? "(" +count+ ")" : " ";
 };

@@ -9,7 +9,7 @@ body<=
                            LJ::Event
                            );
 
-    $title = "Message Center";
+    $title = "Inbox";
     $body = "";
 
     my $remote = LJ::get_remote()
@@ -40,7 +40,19 @@ body<=
 
     # Take a supplied filter but default it to undef unless it is valid
     my $view = $POST{view} || $GET{view} || undef;
+    $view = undef if ($view eq 'archive' && $LJ::DISABLED{esn_archive});
     $view = undef if ($view && !LJ::NotificationInbox->can("${view}_items"));
+
+    # Bolds the selected View/Folder
+    my $selected_folder = $view || 'all';
+    $selected_folder = qq(
+        <style>#esn_folder_$selected_folder {
+        font-weight: bold;
+        background-color: #C7E0F6;
+        border: 1px solid #bbb;
+        }</style>
+        );
+    $head = $selected_folder;
 
     # get events sitting in inbox
     my @notifications = $inbox->items;
@@ -83,68 +95,52 @@ body<=
         }
     }
 
-    # print sidebar
-    $body .= qq {
-        <div id="NotificationSidebar">
-            <div class="Blurb">
-            <?p In the Message Center, you can find out who has friended you,
-            get updates from $LJ::SITENAMESHORT, read your notices, and more. p?>
-            <?p To start getting notices, click on the
-            <img src="$LJ::SITEROOT/img/btn_track.gif" width="22" height="20" valign="absmiddle" alt="Notify Me" style="white-space: nowrap; vertical-align: bottom;"/>
-            icon when you are
-            browsing $LJ::SITENAMESHORT. You can use notices to keep an eye on comment threads,
-            user updates, and new posts. p?>
-            </div>
-        </div>
-        };
+    my $unread_html = sub {
+        my $count = shift || 0;
+        return $count ? " <span class='unread_count'>($count)</span>"
+                      : " <span class='unread_count'></span>";
+    };
 
     # print number of new alerts
     my $unread_count = $inbox->unread_count;
     my $alert_plural = $unread_count == 1 ? 'message' : 'messages';
     $alert_plural .= $unread_count ? '!' : '.';
-    my $unread_all = $unread_count
-                     ? " (".$unread_count.")"
-                     : '';
-    my $unread_usermsg_sent = $inbox->usermsg_sent_event_count
-                        ? " (".$inbox->usermsg_sent_event_count.")"
-                        : '';
-    my $unread_friend = $inbox->friend_event_count
-                        ? " (".$inbox->friend_event_count.")"
-                        : '';
-    my $unread_entrycomment = $inbox->entrycomment_event_count
-                        ? " (".$inbox->entrycomment_event_count.")"
-                        : '';
+    my $unread_all = $unread_html->($unread_count);
+    my $unread_usermsg_recvd = $unread_html->($inbox->usermsg_recvd_event_count);
+    my $unread_friend = $unread_html->($inbox->friendplus_event_count);
+    my $unread_entrycomment = $unread_html->($inbox->entrycomment_event_count);
+    my $message_button = "";
+    $message_button = qq{
+        <form action="./compose.bml" method="GET">
+        <input type="submit" value="New Message" style="width: 100%">
+        </form>} unless $LJ::DISABLED{user_messaging};
 
     # Pagination
     my $page = int($POST{page} || $GET{page});
 
-    $body .= "<h2>Inbox</h2>";
     $body .= qq{
-        <div class="inbox_newitems">
-            <span id="Inbox_NewItems">You have $unread_count new $alert_plural</span>
-            <a href="$LJ::SITEROOT/inbox/?page=$page" id="RefreshLink">Refresh</a>
+        <div class="inbox_newitems pkg">
+            <span class="esnlinks"><a href="$LJ::SITEROOT/inbox/?page=$page" id="RefreshLink">Refresh</a> | <a href="$LJ::SITEROOT/manage/subscriptions/">Manage Settings</a></span>
         </div> };
 
     $body .= qq{
-        <table><tr><td valign="top" style="padding-right: 12px">
-            <form action="./compose.bml" method="GET">
-            <input type="submit" value="New Message" style="width: 100%">
-            </form>
-            <p class="folders">
-            <a href="."><b>ALL$unread_all</b></a><br />
-            <a href=".?view=usermsg_recvd">Messages$unread_usermsg_sent</a><br />
-            <a href=".?view=friend">Friend Updates$unread_friend</a><br />
-              <a href=".?view=birthday" class="subs">Birthdays</a><br />
-              <a href=".?view=befriended" class="subs">New Friends</a><br />
-            <a href=".?view=entrycomment">Entries &amp; Comments$unread_entrycomment</a>
-            <div style='margin-top:0px'>---</div>
-            <a href=".?view=archived">Archived</a><br />
-            <a href=".?view=bookmark">Flagged</a><br />
-            <a href=".?view=usermsg_sent">Sent</a><br />
-            </p>
+        <table style="width: 100%"><tr><td valign="top" style="padding-right: 12px">
+            $message_button
+            <div class="folders"><p>
+            <a href="." id="esn_folder_all">All$unread_all</a>};
+    $body .= qq{<a href=".?view=usermsg_recvd" id="esn_folder_usermsg_recvd">Messages$unread_usermsg_recvd</a>} unless $LJ::DISABLED{user_messaging};
+    $body .= qq{<a href=".?view=friendplus" id="esn_folder_friendplus">Friend Updates$unread_friend</a>
+              <a href=".?view=birthday" class="subs" id="esn_folder_birthday">Birthdays</a>
+              <a href=".?view=befriended" class="subs" id="esn_folder_befriended">New Friends</a><a href=".?view=entrycomment" id="esn_folder_entrycomment">Entries &amp; Comments$unread_entrycomment</a>
+            ---
+            <a href=".?view=bookmark" id="esn_folder_bookmark">Flagged <img src="$LJ::IMGPREFIX/flag_on.gif" width="12" height="14" border="0" /></a>};
+    $body .= qq{<a href=".?view=usermsg_sent" id="esn_folder_usermsg_sent">Sent</a>\n} unless $LJ::DISABLED{user_messaging};
+    $body .= qq{<a href=".?view=archived" id="esn_folder_archived">Archive</a>\n} unless $LJ::DISABLED{esn_archive};
+    $body .= qq{
+            </p></div>
         </td>
         <td width="1" height="100%" style="border-left: 1px solid #ccc"><img src="$LJ::IMGPREFIX/spacer.gif"></td>
-        <td valign="top" style="padding-left: 10px">
+        <td valign="top" style="padding-left: 10px; width: 100%;">
     };
 
     # print form
@@ -157,7 +153,7 @@ body<=
     if ($view) {
         @all_items = eval "\$inbox->${view}_items";
     } else {
-        @all_items = $inbox->items;
+        @all_items = $inbox->all_items;
     }
 
     $body .= LJ::Widget::InboxFolder->render(
