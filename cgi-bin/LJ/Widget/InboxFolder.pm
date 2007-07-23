@@ -131,7 +131,7 @@ sub render_body {
         my $bookmark = $inbox->is_bookmark($qid)
             ? "on"
             : "off";
-        $bookmark = "<a href='$LJ::SITEROOT/inbox/?page=$page&bookmark=$qid'><img src='$LJ::IMGPREFIX/flag_$bookmark.gif' width='16' height='18' class='InboxItem_Bookmark' border='0' /></a>";
+        $bookmark = "<a href='$LJ::SITEROOT/inbox/?page=$page&bookmark_$bookmark=$qid'><img src='$LJ::IMGPREFIX/flag_$bookmark.gif' width='16' height='18' class='InboxItem_Bookmark' border='0' /></a>";
 
         my $when = LJ::ago_text(time() - $inbox_item->when_unixtime);
         my $contents = $inbox_item->as_html || '';

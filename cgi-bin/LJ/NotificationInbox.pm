@@ -346,15 +346,22 @@ sub enqueue {
 
     # if over the max, delete the oldest notification
     my $max = $u->get_cap('inbox_max');
+    my $skip = $max - 1; # number to skip to get to max
     if ($max && $self->count >= $max) {
+
+        # Get list of bookmarks and ignore them when checking inbox limits
+        my $bmarks = join ',', map { $self->is_bookmark($_->qid) ? $_->qid : () } $self->items;
+        my $bookmark_sql = '';
+        $bookmark_sql = "AND qid NOT IN ($bmarks) " if ($bmarks);
+
         my $too_old_qid = $u->selectrow_array
             ("SELECT qid FROM notifyqueue ".
-             "WHERE userid=? ".
-             "ORDER BY qid DESC LIMIT $max,1",
+             "WHERE userid=? $bookmark_sql".
+             "ORDER BY qid DESC LIMIT $skip,1",
              undef, $u->id);
 
         if ($too_old_qid) {
-            $u->do("DELETE FROM notifyqueue WHERE userid=? AND qid <= ?",
+            $u->do("DELETE FROM notifyqueue WHERE userid=? AND qid <= ? $bookmark_sql",
                    undef, $u->id, $too_old_qid);
             $self->expire_cache;
         }
