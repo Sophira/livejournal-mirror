@@ -564,7 +564,7 @@ sub get_preview_styleid {
 ##################################################
 
 sub cats { () } # categories that the theme is in
-sub layouts { qw( 1 ) } # theme layout/sidebar placement options
+sub layouts { ( "1" => 1 ) } # theme layout/sidebar placement options ( layout type => property value or 1 if no property )
 sub layout_prop { "" } # property that controls the layout/sidebar placement
 sub show_sidebar_prop { "" } # property that controls whether a sidebar shows or not
 sub designer { "" } # designer of the theme

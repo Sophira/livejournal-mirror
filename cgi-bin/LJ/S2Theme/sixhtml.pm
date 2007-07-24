@@ -1,7 +1,7 @@
 package LJ::S2Theme::sixhtml;
 use base qw(LJ::S2Theme);
 
-sub layouts { qw( 1 2l 2r 3m ) }
+sub layouts { ( "1" => "1C", "2l" => "2CL", "2r" => "2CR", "3m" => "3C" ) }
 sub layout_prop { "layout_type" }
 sub cats { qw( clean cool ) }
 sub designer { "Lilia Ahner" }

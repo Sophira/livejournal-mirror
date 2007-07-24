@@ -1,7 +1,7 @@
 package LJ::S2Theme::cleansimple;
 use base qw(LJ::S2Theme);
 
-sub layouts { qw( 2l 2r ) }
+sub layouts { ( "2l" => "left", "2r" => "right" ) }
 sub layout_prop { "opt_navbar_pos" }
 sub cats { qw( clean cool ) }
 sub designer { "Martin Atkins" }

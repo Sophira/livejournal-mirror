@@ -1,7 +1,7 @@
 package LJ::S2Theme::lickable;
 use base qw(LJ::S2Theme);
 
-sub layouts { qw( 2r ) }
+sub layouts { ( "2r" => 1 ) }
 sub cats { qw( cool illustrated modern ) }
 sub designer { "Martin Atkins" }
 

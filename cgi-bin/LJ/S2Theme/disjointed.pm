@@ -1,7 +1,7 @@
 package LJ::S2Theme::disjointed;
 use base qw(LJ::S2Theme);
 
-sub layouts { qw( 2lnh 2rnh ) }
+sub layouts { ( "2lnh" => "left", "2rnh" => "right" ) }
 sub layout_prop { "sidebar_align" }
 sub cats { qw( cool modern ) }
 

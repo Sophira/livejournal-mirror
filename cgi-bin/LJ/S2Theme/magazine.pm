@@ -1,7 +1,6 @@
 package LJ::S2Theme::magazine;
 use base qw(LJ::S2Theme);
 
-sub layouts { qw( 1 ) }
 sub cats { qw( clean cool ) }
 
 sub display_option_props {

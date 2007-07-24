@@ -1,7 +1,7 @@
 package LJ::S2Theme::digitalmultiplex;
 use base qw(LJ::S2Theme);
 
-sub layouts { qw( 2r ) }
+sub layouts { ( "2r" => 1 ) }
 sub cats { qw( clean dark modern ) }
 sub desginer { "Jesse Proulx" }
 sub linklist_support_tab { "Sidebar" }

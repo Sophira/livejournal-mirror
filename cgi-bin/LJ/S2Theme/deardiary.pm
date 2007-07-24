@@ -1,7 +1,7 @@
 package LJ::S2Theme::deardiary;
 use base qw(LJ::S2Theme);
 
-sub layouts { qw( 2l ) }
+sub layouts { ( "2l" => 1 ) }
 sub cats { qw( warm illustrated modern pattern ) }
 sub designer { "Martin Atkins" }
 

@@ -1,7 +1,7 @@
 package LJ::S2Theme::haven;
 use base qw(LJ::S2Theme);
 
-sub layouts { qw( 2l 2r ) }
+sub layouts { ( "2l" => "left", "2r" => "right" ) }
 sub layout_prop { "sidebar_position" }
 sub cats { qw( clean modern ) }
 sub designer { "Jesse Proulx" }
