@@ -3532,6 +3532,15 @@ sub can_manage {
     return LJ::can_manage($u, $target);
 }
 
+# return the user's timezone based on the prop if it's defined, otherwise best guess
+sub timezone {
+    my $u = shift;
+
+    my $offset = 0;
+    LJ::get_timezone($u, \$offset);
+    return $offset;
+}
+
 package LJ;
 
 use Carp;

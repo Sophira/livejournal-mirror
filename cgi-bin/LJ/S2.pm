@@ -2505,6 +2505,61 @@ sub weekdays
     return [ 1..7 ];  # FIXME: make this conditionally monday first: [ 2..7, 1 ]
 }
 
+sub journal_current_datetime {
+    my ($ctx) = @_;
+
+    my $ret = { '_type' => 'DateTime' };
+
+    my $r = Apache->request;
+    my $u = LJ::load_userid($r->notes("journalid"));
+    return $ret unless $u;
+
+    # turn the timezone offset number into a four character string (plus '-' if negative)
+    # e.g. -1000, 0700, 0430
+    my $timezone = $u->timezone;
+
+    my $partial_hour = "00";
+    if ($timezone =~ /(\.\d+)/) {
+        $partial_hour = $1*60;
+    }
+
+    my $neg = $timezone =~ /-/ ? 1 : 0;
+    my $hour = sprintf("%02d", abs(int($timezone))); # two character hour
+    $hour = $neg ? "-$hour" : "$hour";
+    $timezone = $hour . $partial_hour;
+
+    my $now = DateTime->now( time_zone => $timezone );
+    $ret->{year} = $now->year;
+    $ret->{month} = $now->month;
+    $ret->{day} = $now->day;
+    $ret->{hour} = $now->hour;
+    $ret->{min} = $now->minute;
+    $ret->{sec} = $now->second;
+
+    # DateTime.pm's dayofweek is 1-based/Mon-Sun, but S2's is 1-based/Sun-Sat,
+    # so first we make DT's be 0-based/Sun-Sat, then shift it up to 1-based.
+    $ret->{_dayofweek} = ($now->day_of_week % 7) + 1;
+
+    return $ret;
+}
+
+sub style_is_active {
+    my ($ctx) = @_;
+    my $layoutid = $ctx->[S2::LAYERLIST]->[1];
+    my $themeid = $ctx->[S2::LAYERLIST]->[2];
+    my $pub = LJ::S2::get_public_layers();
+
+    my $layout_is_active = LJ::run_hook("layer_is_active", $pub->{$layoutid}->{uniq});
+    return 0 unless !defined $layout_is_active || $layout_is_active;
+
+    if (defined $themeid) {
+        my $theme_is_active = LJ::run_hook("layer_is_active", $pub->{$themeid}->{uniq});
+        return 0 unless !defined $theme_is_active || $theme_is_active;
+    }
+
+    return 1;
+}
+
 sub set_handler
 {
     my ($ctx, $hook, $stmts) = @_;
