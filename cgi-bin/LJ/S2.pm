@@ -1207,10 +1207,15 @@ sub load_layer
     my $db = ref $_[0] ? shift : LJ::S2::get_s2_reader();
     my $lid = shift;
 
+    my $layerid = $LJ::S2::REQ_CACHE_LAYER_ID{$lid};
+    return $layerid if $layerid;
+
     my $ret = $db->selectrow_hashref("SELECT s2lid, b2lid, userid, type ".
                                      "FROM s2layers WHERE s2lid=?", undef,
                                      $lid);
     die $db->errstr if $db->err;
+    $LJ::S2::REQ_CACHE_LAYER_ID{$lid} = $ret;
+
     return $ret;
 }
 
