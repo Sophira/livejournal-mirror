@@ -1878,6 +1878,12 @@ widget.journaltitles.journaltitle=Journal Title:
 
 widget.journaltitles.title=1. Edit Titles
 
+widget.layoutchooser.desc=Choose the page layout of your journal.
+
+widget.layoutchooser.layout.apply=Apply Layout
+
+widget.layoutchooser.title=3. Choose a Layout
+
 widget.qotd.answer=Answer
 
 widget.qotd.entry.subject=Writer's Block
