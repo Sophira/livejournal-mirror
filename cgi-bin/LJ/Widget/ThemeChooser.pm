@@ -317,6 +317,9 @@ sub js {
                 getextra: Customize.getExtra,
                 filter_available: Customize.filter_available,
             });
+            Customize.LayoutChooser.updateContent({
+                user: Customize.username,
+            });
         },
         onRefresh: function (data) {
             this.initWidget();
