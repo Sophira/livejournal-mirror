@@ -146,9 +146,10 @@ sub load_all_s2_props {
 
     my %s2_style = LJ::S2::get_style($u, "verify");
 
-    unless ($s2_style{'user'}) {
-        $s2_style{'user'} = LJ::S2::create_layer($u->{userid}, $s2_style{'layout'}, "user");
-        die "Could not generate user layer" unless $s2_style{'user'};
+    unless ($style->{layer}->{user}) {
+        $style->{layer}->{user} = LJ::S2::create_layer($u->{userid}, $style->{layer}->{layout}, "user");
+        die "Could not generate user layer" unless $style->{layer}->{user};
+        $s2_style{user} = $style->{layer}->{user};
     }
 
     LJ::cmize::s2_implicit_style_create($u, %s2_style);
