@@ -113,6 +113,185 @@ sub get_layout_name {
     return $layout_name;
 }
 
+sub get_layerids {
+    my $class = shift;
+    my $style = shift;
+
+    my $dbh = LJ::get_db_writer();
+    my $layer = LJ::S2::load_layer($dbh, $style->{'layer'}->{'user'});
+    my $lyr_layout = LJ::S2::load_layer($dbh, $layer->{'b2lid'});
+    die "Layout layer for this $layer->{'type'} layer not found." unless $lyr_layout;
+    my $lyr_core = LJ::S2::load_layer($dbh, $lyr_layout->{'b2lid'});
+    die "Core layer for layout not found." unless $lyr_core;
+
+    my @layers;
+    push @layers, ([ 'core' => $lyr_core->{'s2lid'} ],
+                   [ 'i18nc' => $style->{'layer'}->{'i18nc'} ],
+                   [ 'layout' => $lyr_layout->{'s2lid'} ],
+                   [ 'i18n' => $style->{'layer'}->{'i18n'} ]);
+    if ($layer->{'type'} eq "user" && $style->{'layer'}->{'theme'}) {
+        push @layers, [ 'theme' => $style->{'layer'}->{'theme'} ];
+    }
+    push @layers, [ $layer->{'type'} => $layer->{'s2lid'} ];
+
+    my @layerids = grep { $_ } map { $_->[1] } @layers;
+
+    return @layerids;
+}
+
+sub load_all_s2_props {
+    my $class = shift;
+    my $u = shift;
+    my $style = shift;
+
+    my %s2_style = LJ::S2::get_style($u, "verify");
+
+    unless ($s2_style{'user'}) {
+        $s2_style{'user'} = LJ::S2::create_layer($u->{userid}, $s2_style{'layout'}, "user");
+        die "Could not generate user layer" unless $s2_style{'user'};
+    }
+
+    LJ::cmize::s2_implicit_style_create($u, %s2_style);
+
+    my $dbh = LJ::get_db_writer();
+    my $layer = LJ::S2::load_layer($dbh, $style->{'layer'}->{'user'});
+
+    # if the b2lid of this layer has been remapped to a new layerid
+    # then update the b2lid mapping for this layer
+    my $b2lid = $layer->{b2lid};
+    if ($b2lid && $LJ::S2LID_REMAP{$b2lid}) {
+        LJ::S2::b2lid_remap($u, $style->{'layer'}->{'user'}, $b2lid);
+        $layer->{b2lid} = $LJ::S2LID_REMAP{$b2lid};
+    }
+
+    die "Layer belongs to another user. $layer->{userid} vs $u->{userid}" unless $layer->{'userid'} == $u->{'userid'};
+    die "Layer isn't of type user or theme." unless $layer->{'type'} eq "user" || $layer->{'type'} eq "theme";
+
+    my @layerids = $class->get_layerids($style);
+    LJ::S2::load_layers(@layerids);
+
+    # load the language and layout choices for core.
+    my %layerinfo;
+    LJ::S2::load_layer_info(\%layerinfo, \@layerids);
+
+    return;
+}
+
+sub save_s2_props {
+    my $class = shift;
+    my $u = shift;
+    my $style = shift;
+    my $post = shift;
+    my %opts = @_;
+
+    my $dbh = LJ::get_db_writer();
+    my $layer = LJ::S2::load_layer($dbh, $style->{'layer'}->{'user'});
+    my $layerid = $layer->{'s2lid'};
+
+    if ($opts{remove}) {
+        my %s2_style = LJ::S2::get_style($u, "verify");
+
+        LJ::S2::delete_layer($s2_style{'user'});
+        $s2_style{'user'} = LJ::S2::create_layer($u->{userid}, $s2_style{'layout'}, "user");
+        LJ::S2::set_style_layers($u, $u->{'s2_style'}, "user", $s2_style{'user'});
+        $layerid = $s2_style{'user'};
+    } else {
+        my $lyr_layout = LJ::S2::load_layer($dbh, $layer->{'b2lid'});
+        die "Layout layer for this $layer->{'type'} layer not found." unless $lyr_layout;
+        my $lyr_core = LJ::S2::load_layer($dbh, $lyr_layout->{'b2lid'});
+        die "Core layer for layout not found." unless $lyr_core;
+
+        $lyr_layout->{'uniq'} = $dbh->selectrow_array("SELECT value FROM s2info WHERE s2lid=? AND infokey=?",
+                                                  undef, $lyr_layout->{'s2lid'}, "redist_uniq");
+
+        my %override;
+        foreach my $prop (S2::get_properties($lyr_layout->{'s2lid'}))
+        {
+            $prop = S2::get_property($lyr_core->{'s2lid'}, $prop)
+                unless ref $prop;
+            next unless ref $prop;
+            next if $prop->{'noui'};
+            my $name = $prop->{'name'};
+            next unless LJ::S2::can_use_prop($u, $lyr_layout->{'uniq'}, $name);
+
+            my %prop_values = $class->get_s2_prop_values($name, $style);
+            my $prop_value = defined $post->{$name} ? $post->{$name} : $prop_values{override};
+            next if $prop_value eq $prop_values{existing};
+            $override{$name} = [ $prop, $prop_value ];
+        }
+
+        if (LJ::S2::layer_compile_user($layer, \%override)) {
+            # saved
+        } else {
+            my $error = LJ::last_error();
+            die "Error saving layer: $error";
+        }
+    }
+    LJ::S2::load_layers($layerid);
+
+    return;
+}
+
+# returns hash with existing (parent) prop value and override (user layer) prop value
+sub get_s2_prop_values {
+    my $class = shift;
+    my $prop_name = shift;
+    my $style = shift;
+
+    my $dbh = LJ::get_db_writer();
+    my $layer = LJ::S2::load_layer($dbh, $style->{'layer'}->{'user'});
+
+    # figure out existing value (if there was no user/theme layer)
+    my $existing;
+    my @layerids = $class->get_layerids($style);
+    foreach my $lid (reverse @layerids) {
+        next if $lid == $layer->{'s2lid'};
+        $existing = S2::get_set($lid, $prop_name);
+        last if defined $existing;
+    }
+
+    if (ref $existing eq "HASH") { $existing = $existing->{'as_string'}; }
+
+#    if ($type eq "bool") {
+#        $prop->{'values'} ||= "1|Yes|0|No";
+#    }
+
+#    my %values = split(/\|/, $prop->{'values'});
+#    my $existing_display = defined $values{$existing} ?
+#        $values{$existing} : $existing;
+
+#    $existing_display = LJ::eall($existing_display);
+
+    my $override = S2::get_set($layer->{'s2lid'}, $prop_name);
+    my $had_override = defined $override;
+    $override = $existing unless defined $override;
+
+    if (ref $override eq "HASH") { $override = $override->{'as_string'}; }
+
+    return ( existing => $existing, override => $override );
+}
+
+sub propgroup_name {
+    my $class = shift;
+    my $gname = shift;
+    my $style = shift;
+
+    my $dbh = LJ::get_db_writer();
+    my $layer = LJ::S2::load_layer($dbh, $style->{'layer'}->{'user'});
+    my $lyr_layout = LJ::S2::load_layer($dbh, $layer->{'b2lid'});
+    die "Layout layer for this $layer->{'type'} layer not found." unless $lyr_layout;
+    my $lyr_core = LJ::S2::load_layer($dbh, $lyr_layout->{'b2lid'});
+    die "Core layer for layout not found." unless $lyr_core;
+
+    foreach my $lid ($style->{'layer'}->{'i18n'}, $lyr_layout->{'s2lid'}, $style->{'layer'}->{'i18nc'}, $lyr_core->{'s2lid'}) {
+        next unless $lid;
+        my $name = S2::get_property_group_name($lid, $gname);
+        return LJ::ehtml($name) if $name;
+    }
+    return "Misc" if $gname eq "misc";
+    return $gname;
+}
+
 sub get_cats {
     return (
         all => {
