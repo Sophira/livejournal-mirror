@@ -169,7 +169,7 @@ sub designer { "Chris Vannoy" }
 
 package LJ::S2Theme::stylecontest::the_late_show;
 use base qw(LJ::S2Theme::stylecontest);
-sub cats { qw( warm illustrated media ) }
+sub cats { qw( warm illustrated media featured ) }
 sub designer { "Liz Lubowitz" }
 
 package LJ::S2Theme::stylecontest::the_road_to_october;
