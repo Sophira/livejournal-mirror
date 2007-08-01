@@ -75,6 +75,20 @@ sub render_body {
 
     LJ::run_hook("modify_theme_list", \@themes, user => $u, cat => $cat);
 
+    # remove any themes from the array that are not defined or whose layout or theme is not active
+    for (my $i = 0; $i < @themes; $i++) {
+        my $layout_is_active = LJ::run_hook("layer_is_active", $themes[$i]->layout_uniq);
+        my $theme_is_active = LJ::run_hook("layer_is_active", $themes[$i]->uniq);
+
+        unless ((defined $themes[$i]) &&
+            (!defined $layout_is_active || $layout_is_active) &&
+            (!defined $theme_is_active || $theme_is_active)) {
+
+            splice(@themes, $i, 1);
+            $i--; # we just removed an element from @themes
+        }
+    }
+
     my $current_theme = LJ::Customize->get_current_theme($u);
     my $index_of_first_theme = $num_per_page * ($page - 1);
     my $index_of_last_theme = ($num_per_page * $page) - 1;
