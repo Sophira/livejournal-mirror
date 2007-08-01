@@ -38,6 +38,9 @@ body<=
 
     if (LJ::did_post()) {
         if ($POST{nextpage}) {
+            return "<?h1 $ML{'Error'} h1?><?p $ML{'error.invalidform'} p?>"
+                unless LJ::check_form_auth();
+
             return BML::redirect("$LJ::SITEROOT/customize2/options.bml");
         }
         my @errors = LJ::Widget->handle_post(\%POST, qw(JournalTitles ThemeChooser ThemeNav LayoutChooser AdLayout));
@@ -89,6 +92,7 @@ body<=
     $ret .= "</div><!-- end .layout-selector-wrapper' -->";
 
     $ret .= "<form method='POST'><div class='theme-customize'>";
+    $ret .= LJ::form_auth();
     $ret .= LJ::html_submit('nextpage', $ML{'.btn.nextpage'});
     $ret .= "</div>";
     $ret .= "</form>";
