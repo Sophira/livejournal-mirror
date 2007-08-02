@@ -94,7 +94,7 @@ sub render_body {
 
     $ret .= "<ul class='theme-nav theme-nav-small nostyle'>";
     $ret .= "<li class='first'><a href='$LJ::SITEROOT/customize/advanced/'>" . $class->ml('widget.themenav.developer') . "</a></li>";
-    $ret .= "<li class='last'><a href='$LJ::SITEROOT/customize2/switch_system.bml'>" . $class->ml('widget.themenav.switchtos1') . "</a></li>";
+    $ret .= "<li class='last'><a href='$LJ::SITEROOT/customize2/switch_system.bml$getextra'>" . $class->ml('widget.themenav.switchtos1') . "</a></li>";
     $ret .= "</ul>";
 
     $ret .= "</div>";

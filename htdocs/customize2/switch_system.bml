@@ -13,6 +13,8 @@ body<=
     return LJ::bad_input($ML{'error.invalidauth'})
         unless $u;
 
+    my $getextra = $authas ne $remote->user ? "?authas=$authas" : "";
+
     if (LJ::did_post()) {
         return "<?h1 $ML{'Error'} h1?><?p $ML{'error.invalidform'} p?>"
             unless LJ::check_form_auth();
@@ -20,11 +22,11 @@ body<=
         if ($POST{s2}) {
             $u->set_prop('stylesys', 2);
             $u->set_prop('s1_confirmed', 0);
-            return BML::redirect("$LJ::SITEROOT/customize2/");
+            return BML::redirect("$LJ::SITEROOT/customize2/$getextra");
         } elsif ($POST{s1}) {
             $u->set_prop('stylesys', 1);
             $u->set_prop('s1_confirmed', time());
-            return BML::redirect("$LJ::SITEROOT/customize2/s1/");
+            return BML::redirect("$LJ::SITEROOT/customize2/s1/$getextra");
         }
     }
 
