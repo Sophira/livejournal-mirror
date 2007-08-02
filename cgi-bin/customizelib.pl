@@ -228,14 +228,18 @@ sub get_moodtheme_select_list
 sub js_redirect
 {
     my $POST = shift;
+    my %opts = @_;
+
     my %redirect = (
                     "display_index" => "index.bml",
                     "display_style" => "style.bml",
                     "display_options" => "options.bml",
                     "display_advanced" => "advanced.bml",
                     );
+
+    my $url_root = $opts{s1only} ? "$LJ::SITEROOT/customize2/s1/" : "$LJ::SITEROOT/customize/";
     if ($POST->{"action:redir"} ne "" && $redirect{$POST->{"action:redir"}}) {
-        BML::redirect("/customize/" . $redirect{$POST->{"action:redir"}});
+        BML::redirect("$url_root$redirect{$POST->{'action:redir'}}$opts{getextra}");
     }
 }
 
@@ -302,18 +306,30 @@ sub display_current_summary
 # Common HTML for links on top of tabs
 sub html_tablinks
 {
-    my ($page, $getextra) = @_;
+    my ($page, $getextra, %opts) = @_;
     my $ret;
 
-    my %strings = (
-                   "index" => "Basics",
-                   "style" => "Look and Feel",
-                   "options" => "Custom Options",
-                   "advanced" => "Advanced",
-                   );
+    my %strings;
+    my @tabs;
+
+    if ($opts{s1only}) {
+        %strings = (
+            "index" => "Visual Options",
+            "advanced" => "Advanced",
+        );
+        @tabs = qw( index advanced );
+    } else {
+        %strings = (
+            "index" => "Basics",
+            "style" => "Look and Feel",
+            "options" => "Custom Options",
+            "advanced" => "Advanced",
+        );
+        @tabs = qw( index style options advanced );
+    }
 
     $ret .= "<ul id='Tabs'>";
-    foreach my $tab ( "index", "style", "options", "advanced" ) {
+    foreach my $tab (@tabs) {
         if ($page eq $tab) {
             $ret .= "<li class='SelectedTab'>$strings{$tab}</li>";
         } else {
