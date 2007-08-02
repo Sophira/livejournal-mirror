@@ -1868,7 +1868,11 @@ widget.gettingstarted.userpics.note=You have no userpics.
 
 widget.journaltitles.btn=Save
 
+widget.journaltitles.cancel=cancel
+
 widget.journaltitles.desc=These titles appear in your journal and in your profile.
+
+widget.journaltitles.edit=edit
 
 widget.journaltitles.friendspagetitle=Friends Page Title:
 

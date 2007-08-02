@@ -26,7 +26,7 @@ sub render_body {
         $ret .= "<label>" . $class->ml("widget.journaltitles.$id") . "</label> ";
         $ret .= "<span id='${id}_view'>";
         $ret .= "<strong>" . $u->prop($id) . "</strong> ";
-        $ret .= "<a href='' class='theme-title-control' id='${id}_edit'>edit</a>";
+        $ret .= "<a href='' class='theme-title-control' id='${id}_edit'>" . $class->ml('widget.journaltitles.edit') . "</a>";
         $ret .= "</span>";
 
         $ret .= "<span id='${id}_modify'>";
@@ -41,7 +41,7 @@ sub render_body {
         $ret .= $class->html_hidden( which_title => $id );
         $ret .= $class->html_hidden({ name => "user", value => $u->id, id => "${id}_user" });
         $ret .= $class->html_submit($class->ml('widget.journaltitles.btn')) . " ";
-        $ret .= "<a href='' class='theme-title-control' id='${id}_cancel'>cancel</a>";
+        $ret .= "<a href='' class='theme-title-control' id='${id}_cancel'>" . $class->ml('widget.journaltitles.cancel') . "</a>";
         $ret .= "</span></p>";
 
         $ret .= $class->end_form;
