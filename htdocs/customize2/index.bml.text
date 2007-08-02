@@ -2,8 +2,6 @@
 
 .btn.nextpage=Customize Selected Theme ->
 
-.desc=This is where you can change the look of your journal.
-
 .switcher.btn=Go
 
 .switcher.label=Switch to:
