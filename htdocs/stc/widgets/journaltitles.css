@@ -9,6 +9,9 @@
 .theme-titles input.text {
     float: left;
 }
+.theme-titles-content {
+    padding-left: 10px;
+}
 .theme-title-control {
     font-size: 11px;
 }

@@ -17,6 +17,7 @@ sub render_body {
 
     my $ret;
     $ret .= "<h2 class='widget-header'>" . $class->ml('widget.journaltitles.title') . "</h2>";
+    $ret .= "<div class='theme-titles-content'>";
     $ret .= "<p class='detail'>" . $class->ml('widget.journaltitles.desc') . " " . LJ::help_icon('journal_titles') . "</p>";
 
     foreach my $id (qw( journaltitle journalsubtitle friendspagetitle )) {
@@ -46,6 +47,8 @@ sub render_body {
 
         $ret .= $class->end_form;
     }
+
+    $ret .= "</div>";
 
     return $ret;
 }

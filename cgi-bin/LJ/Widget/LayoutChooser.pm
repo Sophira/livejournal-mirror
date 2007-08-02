@@ -20,6 +20,7 @@ sub render_body {
 
     my $ret;
     $ret .= "<h2 class='widget-header'>" . $class->ml('widget.layoutchooser.title') . "</h2>";
+    $ret .= "<div class='layout-content'>";
     $ret .= "<p class='detail'>" . $class->ml('widget.layoutchooser.desc') . "</p>";
 
     if (eval "use LJ::Widget::AdLayout; 1;") {
@@ -75,6 +76,8 @@ sub render_body {
         }
         $ret .= "</div><!-- end .theme-item -->";
     }
+
+    $ret .= "</div>";
 
     return $ret;
 }
