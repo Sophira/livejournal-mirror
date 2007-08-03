@@ -305,6 +305,20 @@ sub s2_upsell {
     return $ret;
 }
 
+# wrapper around LJ::cmize::validate_moodthemeid
+sub validate_moodthemeid {
+    my $class = shift;
+
+    return LJ::cmize::validate_moodthemeid(@_);
+}
+
+# wrapper around LJ::cmize::get_moodtheme_select_list
+sub get_moodtheme_select_list {
+    my $class = shift;
+
+    return LJ::cmize::get_moodtheme_select_list(@_);
+}
+
 sub get_cats {
     return (
         all => {

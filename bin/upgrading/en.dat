@@ -1890,6 +1890,18 @@ widget.layoutchooser.layout.apply=Apply Layout
 
 widget.layoutchooser.title=3. Choose a Layout
 
+widget.moodthemechooser.desc=Mood themes are small icons that describe your mood or the mood of a post. Select from a variety of faces and characters.
+
+widget.moodthemechooser.forcetheme=use this mood theme on my friends page
+
+widget.moodthemechooser.links.allthemes=preview all mood themes
+
+widget.moodthemechooser.links.customthemes=edit/create custom mood themes
+
+widget.moodthemechooser.title=Mood Themes
+
+widget.moodthemechooser.viewtheme=view all
+
 widget.qotd.answer=Answer
 
 widget.qotd.entry.subject=Writer's Block

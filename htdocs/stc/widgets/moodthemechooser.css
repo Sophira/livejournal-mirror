@@ -1,0 +1,24 @@
+.moodtheme-links {
+    margin-top: 10px !important;
+}
+
+.moodtheme-links li {
+    background: url(/img/arrow-double-black.gif) no-repeat 0 50%;
+    padding-left: 12px;
+}
+
+.moodtheme-form {
+    float: left;
+}
+
+.moodtheme-preview {
+    float: left;
+    padding: 5px;
+    margin-left: 20px;
+    background-color: #ecf6ff;
+    border: 1px solid #c7e0f6;
+}
+
+.moodtheme-img {
+    margin: 0 5px;
+}
