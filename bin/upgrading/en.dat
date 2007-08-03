@@ -1822,6 +1822,8 @@ widget.currenttheme.options.change=Change colors, images, CSS, mood themes, and 
 
 widget.currenttheme.options.layout=Change page layout
 
+widget.currenttheme.options.newtheme=Select a different theme
+
 widget.currenttheme.specialdesc=<a [[aopts]]><em>Special</em></a> by [[designer]]
 
 widget.currenttheme.title=[[user]]'s Current Theme

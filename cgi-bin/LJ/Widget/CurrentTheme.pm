@@ -19,6 +19,7 @@ sub render_body {
     my $getextra = $opts{getextra};
     my $getsep = $getextra ? "&" : "?";
     my $filterarg = $opts{filter_available} ? "&filter_available=1" : "";
+    my $no_theme_chooser = defined $opts{no_theme_chooser} ? $opts{no_theme_chooser} : 0;
 
     my $theme = LJ::Customize->get_current_theme($u);
     my $userlay = LJ::S2::get_layers_of_user($u);
@@ -49,8 +50,12 @@ sub render_body {
     $ret .= "<div class='theme-current-links'>";
     $ret .= $class->ml('widget.currenttheme.options');
     $ret .= "<ul class='nostyle'>";
-    $ret .= "<li><a href='$LJ::SITEROOT/customize2/options.bml$getextra'>" . $class->ml('widget.currenttheme.options.change') . "</a></li>";
-    $ret .= "<li><a href='$LJ::SITEROOT/customize2/$getextra#layout'>" . $class->ml('widget.currenttheme.options.layout') . "</a></li>";
+    if ($no_theme_chooser) {
+        $ret .= "<li><a href='$LJ::SITEROOT/customize2/$getextra'>" . $class->ml('widget.currenttheme.options.newtheme') . "</a></li>";
+    } else {
+        $ret .= "<li><a href='$LJ::SITEROOT/customize2/options.bml$getextra'>" . $class->ml('widget.currenttheme.options.change') . "</a></li>";
+        $ret .= "<li><a href='$LJ::SITEROOT/customize2/$getextra#layout'>" . $class->ml('widget.currenttheme.options.layout') . "</a></li>";
+    }
     $ret .= "</ul>";
     $ret .= "</div><!-- end .theme-current-links -->";
     $ret .= "</div><!-- end .theme-current-content -->";
