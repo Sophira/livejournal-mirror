@@ -18,6 +18,7 @@ sub render_body {
 
     my $getextra = $opts{getextra} ? $opts{getextra} : "";
     my $preview_moodthemeid = defined $opts{preview_moodthemeid} ? $opts{preview_moodthemeid} : $u->{moodthemeid};
+    my $forcemoodtheme = defined $opts{forcemoodtheme} ? $opts{forcemoodtheme} : $u->{opt_forcemoodtheme} eq 'Y';
 
     my $ret = "<fieldset><legend>" . $class->ml('widget.moodthemechooser.title') . "</legend></fieldset>";
     $ret .= "<p class='detail'>" . $class->ml('widget.moodthemechooser.desc') . " " . LJ::help_icon('mood_themes') . "</p>";
@@ -34,7 +35,7 @@ sub render_body {
     $ret .= $class->html_check(
         name => 'opt_forcemoodtheme',
         id => 'opt_forcemoodtheme',
-        selected => $u->{opt_forcemoodtheme} eq 'Y',
+        selected => $forcemoodtheme,
     );
     $ret .= "<label for='opt_forcemoodtheme'>" . $class->ml('widget.moodthemechooser.forcetheme') . "</label>";
 
@@ -97,10 +98,14 @@ sub js {
             DOM.addEventListener($('moodtheme_dropdown'), "change", function (evt) { self.previewMoodTheme(evt) });
         },
         previewMoodTheme: function (evt) {
+            var opt_forcemoodtheme = 0;
+            if ($('opt_forcemoodtheme').checked) opt_forcemoodtheme = 1;
+
             this.updateContent({
                 user: Customize.username,
                 getextra: Customize.getExtra,
                 preview_moodthemeid: $('moodtheme_dropdown').value,
+                forcemoodtheme: opt_forcemoodtheme,
             });
         },
         onRefresh: function (data) {
