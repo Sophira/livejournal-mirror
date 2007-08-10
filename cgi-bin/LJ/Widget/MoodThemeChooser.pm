@@ -46,20 +46,38 @@ sub render_body {
     $ret .= "</ul>";
     $ret .= "</div>";
 
+    my $moodtheme_extra = LJ::run_hook("mood_theme_extra_content", $u, \@themes);
+    my $show_special = $moodtheme_extra ? "special" : "nospecial";
+
     LJ::load_mood_theme($preview_moodthemeid);
     my @show_moods = ('happy', 'sad', 'angry', 'tired');
 
     if ($preview_moodthemeid) {
-        $ret .= "<div class='moodtheme-preview'>";
+        my $count = 0;
+
+        $ret .= "<div class='moodtheme-preview moodtheme-preview-$show_special'>";
+        $ret .= "<table>";
+        $ret .= "<tr>" unless $moodtheme_extra;
         foreach my $mood (@show_moods) {
             my %pic;
             if (LJ::get_mood_picture($preview_moodthemeid, LJ::mood_id($mood), \%pic)) {
-                $ret .= "<img class='moodtheme-img' align='absmiddle' alt='$mood' src=\"$pic{pic}\" width='$pic{w}' height='$pic{h}' />";
+                $ret .= "<tr>" if $moodtheme_extra && $count % 2 == 0;
+                $ret .= "<td><img class='moodtheme-img' align='absmiddle' alt='$mood' src=\"$pic{pic}\" width='$pic{w}' height='$pic{h}' /><br />$mood</td>";
+                $ret .= "</tr>" if $moodtheme_extra && $count % 2 != 0;
+                $count++;
             }
         }
-        $ret .= "<a href='$LJ::SITEROOT/moodlist.bml?moodtheme=$preview_moodthemeid'>" . $class->ml('widget.moodthemechooser.viewtheme') . "</a>";
+        if ($moodtheme_extra) {
+            $ret .= "<tr><td colspan='2'>";
+        } else {
+            $ret .= "<td>";
+        }
+        $ret .= "<p><a href='$LJ::SITEROOT/moodlist.bml?moodtheme=$preview_moodthemeid'>" . $class->ml('widget.moodthemechooser.viewtheme') . "</a></p>";
+        $ret .= "</td></tr></table>";
         $ret .= "</div>";
     }
+
+    $ret .= $moodtheme_extra;
 
     return $ret;
 }
