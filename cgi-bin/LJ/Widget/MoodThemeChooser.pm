@@ -20,7 +20,8 @@ sub render_body {
     my $preview_moodthemeid = defined $opts{preview_moodthemeid} ? $opts{preview_moodthemeid} : $u->{moodthemeid};
     my $forcemoodtheme = defined $opts{forcemoodtheme} ? $opts{forcemoodtheme} : $u->{opt_forcemoodtheme} eq 'Y';
 
-    my $ret = "<fieldset><legend>" . $class->ml('widget.moodthemechooser.title') . "</legend></fieldset>";
+    my $ret = "<fieldset><legend>" . $class->ml('widget.moodthemechooser.title') . "</legend>";
+    $ret .= "</fieldset>" if $u->prop('stylesys') == 2;
     $ret .= "<p class='detail'>" . $class->ml('widget.moodthemechooser.desc') . " " . LJ::help_icon('mood_themes') . "</p>";
 
     my @themes = LJ::Customize->get_moodtheme_select_list($u);
@@ -38,6 +39,7 @@ sub render_body {
         selected => $forcemoodtheme,
     );
     $ret .= "<label for='opt_forcemoodtheme'>" . $class->ml('widget.moodthemechooser.forcetheme') . "</label>";
+    $ret .= $class->html_hidden( user => $u->user );
 
     my $journalarg = $getextra ? "?journal=" . $u->user : "";
     $ret .= "<ul class='moodtheme-links nostyle'>";
@@ -78,6 +80,8 @@ sub render_body {
     }
 
     $ret .= $moodtheme_extra;
+
+    $ret .= "</fieldset>" unless $u->prop('stylesys') == 2;
 
     return $ret;
 }
