@@ -1902,6 +1902,36 @@ widget.moodthemechooser.title=Mood Themes
 
 widget.moodthemechooser.viewtheme=view all
 
+widget.navstripchooser.colors=In addition, you can customize the color of the navigation strip.
+
+widget.navstripchooser.desc=This small toolbar is at the top of journal pages and provides access to quick links, filtering options, and management settings.
+
+widget.navstripchooser.option.color.control_strip_bgcolor=background color:
+
+widget.navstripchooser.option.color.control_strip_bordercolor=border color:
+
+widget.navstripchooser.option.color.control_strip_fgcolor=text color:
+
+widget.navstripchooser.option.color.control_strip_linkcolor=link color:
+
+widget.navstripchooser.option.color.custom=Custom colors
+
+widget.navstripchooser.option.color.dark=Dark gray gradient
+
+widget.navstripchooser.option.color.layout_default=Default layout colors
+
+widget.navstripchooser.option.color.light=Light gray gradient
+
+widget.navstripchooser.option.color.no_gradient=without background gradient
+
+widget.navstripchooser.option.onjournal=Always show on my journal/community
+
+widget.navstripchooser.option.onothers=Always show on any journal or community I view
+
+widget.navstripchooser.title=Navigation Strip
+
+widget.navstripchooser.upgradetos2=<a [[aopts]]><strong>Switch to S2</strong></a> and you'll be able to use custom colors for the navigation strip.
+
 widget.qotd.answer=Answer
 
 widget.qotd.entry.subject=Writer's Block
