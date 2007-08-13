@@ -109,15 +109,12 @@ body<=
         }
 
 
-        ### Mood Icons ###
+        ### Mood Icons and Navigation Strip ###
 
-        # validate moodthemeid
-        # mood theme, make sure they're allowed to use it
-        my $moodthemeid = LJ::cmize::validate_moodthemeid($u, $POST{'moodthemeid'});
-        $update{'moodthemeid'} = $moodthemeid;
-        $update{'opt_forcemoodtheme'} = $POST{'opt_forcemoodtheme'} ? "Y" : "N";
+        @errors = LJ::Widget->handle_post(\%POST, qw(MoodThemeChooser NavStripChooser));
+        return LJ::bad_input(@errors) if @errors;
 
-        
+
         ### Show Community Userpics ###
         
         $u->set_prop("opt_usesharedpic", $POST{'opt_usesharedpic'});
@@ -211,8 +208,6 @@ body<=
         LJ::cmize::js_redirect(\%POST, s1only => 1, getextra => $getextra);
         $saved_msg .= "Your settings have been saved. <a href='" . $u->journal_base() . "'>View your Journal</a>.";
     }
-
-    my $ret;
 
     my $ad =  LJ::ads( type => 'app', orient => 'BML-App-Customize' );
     if ($ad) {
@@ -333,22 +328,12 @@ body<=
 
     ### Mood Icons ###
 
-    $ret .= "<fieldset><legend>Mood Icons</legend>";
-    $ret .= "<?p Mood themes are small icons that describe your mood or the mood of a post. Select from a variety of faces and characters, or create your own <a href='$LJ::SITEROOT/manage/moodthemes.bml'>custom mood themes</a>. p?>";
-    $ret .= "<div style='margin-left: 30px; margin-bottom: 20px;'>";
-    $ret .= "<b>Select mood icon set: </b>";
+    $ret .= LJ::Widget::MoodThemeChooser->render( user => $u, getextra => $getextra );
 
-    my @themes = LJ::cmize::get_moodtheme_select_list($u);
-    $ret .= LJ::html_select({ 'name' => 'moodthemeid', 'selected' => $u->{'moodthemeid'} },
-                              map { $_->{'moodthemeid'}, $_->{'name'} } @themes) . "\n";
-    $ret .= "<noscript>" . LJ::html_submit('save:moodtheme', $ML{'.change'}) . " </noscript>"
-        if $u->prop('stylesys') == 2;
-    $ret .= "(<a href=\"$LJ::SITEROOT/moodlist.bml?journal=$u->{'user'}\" target='samples'>Samples</a>)\n";
-    $ret .= "<br />" . LJ::html_check({ 'type' => 'check', 'name' => 'opt_forcemoodtheme',
-                                        'id' => 'opt_forcemoodtheme',
-                                        'selected' => $u->{'opt_forcemoodtheme'} eq 'Y' }) . "\n";
-    $ret .= "<label for='opt_forcemoodtheme'>View this mood theme on all of your friends' posts</label>";
-    $ret .= "</div></fieldset>";
+
+    ### Navigation Strip ###
+
+    $ret .= LJ::Widget::NavStripChooser->render( user => $u, getextra => $getextra );
 
 
     ### Show Community Userpic ###
