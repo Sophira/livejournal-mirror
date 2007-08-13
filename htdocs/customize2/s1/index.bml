@@ -4,7 +4,7 @@ body<=
 {
     use strict;
     use vars qw(%GET %POST $title $headextra @errors @warnings);
-    LJ::need_res(qw( stc/customize.css js/customize.js js/colorpicker.js ));
+    LJ::need_res(qw( stc/customize.css js/customize.js js/colorpicker.js js/customize2.js ));
 
     $title = "Journal Display";
 
@@ -328,7 +328,9 @@ body<=
 
     ### Mood Icons ###
 
-    $ret .= LJ::Widget::MoodThemeChooser->render( user => $u, getextra => $getextra );
+    my $mood_theme_chooser = LJ::Widget::MoodThemeChooser->new;
+    $headextra .= $mood_theme_chooser->wrapped_js;
+    $ret .= $mood_theme_chooser->render( user => $u, getextra => $getextra );
 
 
     ### Navigation Strip ###
