@@ -41,17 +41,15 @@ sub render_body {
         my $style = LJ::S2::load_style($u->prop('s2_style'));
         die "Style not found." unless $style && $style->{userid} == $u->id;
 
-        LJ::Customize->load_all_s2_props($u, $style);
- 
         if ($layout_prop) {
-            my %prop_values = LJ::Customize->get_s2_prop_values($layout_prop, $style);
+            my %prop_values = LJ::Customize->get_s2_prop_values($layout_prop, $u, $style);
             $prop_value = $prop_values{override};
         }
 
         # for layouts that have a separate prop that turns off the sidebar, use the value of that
         # prop instead if the sidebar is set to be off (false/0).
         if ($show_sidebar_prop) {
-            my %prop_values = LJ::Customize->get_s2_prop_values($show_sidebar_prop, $style);
+            my %prop_values = LJ::Customize->get_s2_prop_values($show_sidebar_prop, $u, $style);
             $prop_value = $prop_values{override} if $prop_values{override} == 0;
         }
     }

@@ -61,13 +61,11 @@ sub render_body {
         my $style = LJ::S2::load_style($u->prop('s2_style'));
         die "Style not found." unless $style && $style->{userid} == $u->id;
 
-        LJ::Customize->load_all_s2_props($u, $style);
-
-        %colors_values = LJ::Customize->get_s2_prop_values("custom_control_strip_colors", $style);
-        %bgcolor_values = LJ::Customize->get_s2_prop_values("control_strip_bgcolor", $style);
-        %fgcolor_values = LJ::Customize->get_s2_prop_values("control_strip_fgcolor", $style);
-        %bordercolor_values = LJ::Customize->get_s2_prop_values("control_strip_bordercolor", $style);
-        %linkcolor_values = LJ::Customize->get_s2_prop_values("control_strip_linkcolor", $style);
+        %colors_values = LJ::Customize->get_s2_prop_values("custom_control_strip_colors", $u, $style);
+        %bgcolor_values = LJ::Customize->get_s2_prop_values("control_strip_bgcolor", $u, $style);
+        %fgcolor_values = LJ::Customize->get_s2_prop_values("control_strip_fgcolor", $u, $style);
+        %bordercolor_values = LJ::Customize->get_s2_prop_values("control_strip_bordercolor", $u, $style);
+        %linkcolor_values = LJ::Customize->get_s2_prop_values("control_strip_linkcolor", $u, $style);
 
         unless ($colors_values{override} eq "off") {
             $color_selected = "layout_default";

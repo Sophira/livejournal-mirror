@@ -144,6 +144,11 @@ sub load_all_s2_props {
     my $u = shift;
     my $style = shift;
 
+    my $styleid = $style->{styleid};
+
+    # return if props have already been loaded in this request
+    return if $LJ::REQ_GLOBAL{s2props}->{$styleid};
+
     my %s2_style = LJ::S2::get_style($u, "verify");
 
     unless ($style->{layer}->{user}) {
@@ -175,6 +180,8 @@ sub load_all_s2_props {
     my %layerinfo;
     LJ::S2::load_layer_info(\%layerinfo, \@layerids);
 
+    $LJ::REQ_GLOBAL{s2props}->{$styleid} = 1;
+
     return;
 }
 
@@ -184,6 +191,8 @@ sub save_s2_props {
     my $style = shift;
     my $post = shift;
     my %opts = @_;
+
+    $class->load_all_s2_props($u, $style);
 
     my $dbh = LJ::get_db_writer();
     my $layer = LJ::S2::load_layer($dbh, $style->{'layer'}->{'user'});
@@ -215,7 +224,7 @@ sub save_s2_props {
             my $name = $prop->{'name'};
             next unless LJ::S2::can_use_prop($u, $lyr_layout->{'uniq'}, $name);
 
-            my %prop_values = $class->get_s2_prop_values($name, $style);
+            my %prop_values = $class->get_s2_prop_values($name, $u, $style);
             my $prop_value = defined $post->{$name} ? $post->{$name} : $prop_values{override};
             next if $prop_value eq $prop_values{existing};
             $override{$name} = [ $prop, $prop_value ];
@@ -237,7 +246,10 @@ sub save_s2_props {
 sub get_s2_prop_values {
     my $class = shift;
     my $prop_name = shift;
+    my $u = shift;
     my $style = shift;
+
+    $class->load_all_s2_props($u, $style);
 
     my $dbh = LJ::get_db_writer();
     my $layer = LJ::S2::load_layer($dbh, $style->{'layer'}->{'user'});
@@ -272,10 +284,72 @@ sub get_s2_prop_values {
     return ( existing => $existing, override => $override );
 }
 
+sub get_propgroups {
+    my $class = shift;
+    my $u = shift;
+    my $style = shift;
+
+    $class->load_all_s2_props($u, $style);
+
+    my $dbh = LJ::get_db_writer();
+    my $layer = LJ::S2::load_layer($dbh, $style->{'layer'}->{'user'});
+    my $lyr_layout = LJ::S2::load_layer($dbh, $layer->{'b2lid'});
+    die "Layout layer for this $layer->{'type'} layer not found." unless $lyr_layout;
+    my $lyr_core = LJ::S2::load_layer($dbh, $lyr_layout->{'b2lid'});
+    die "Core layer for layout not found." unless $lyr_core;
+
+    my %prop;  # name hashref, deleted when added to a category
+    my @propnames;
+    foreach my $prop (S2::get_properties($lyr_layout->{'s2lid'})) {
+        unless (ref $prop) {
+            $prop = S2::get_property($lyr_core->{'s2lid'}, $prop);
+            next unless ref $prop;
+        }
+        $prop{$prop->{'name'}} = $prop;
+        push @propnames, $prop->{'name'};
+    }
+
+    my @groups = S2::get_property_groups($lyr_layout->{'s2lid'});
+    my $misc_group;
+    my %groupprops;  # gname -> [ propname ]
+    my %propgroup;   # pname -> gname;
+
+    foreach my $gname (@groups) {
+        if ($gname eq "misc" || $gname eq "other") { $misc_group = $gname; }
+        foreach my $pname (S2::get_property_group_props($lyr_layout->{'s2lid'}, $gname)) {
+            my $prop = $prop{$pname};
+            next if ! $prop || $propgroup{$pname};
+            $propgroup{$pname} = $gname;
+            push @{$groupprops{$gname}}, $pname;
+        }
+    }
+    # put unsorted props into an existing or new unsorted/misc group
+    if (@groups) {
+        my @unsorted;
+        foreach my $pname (@propnames) {
+            my $prop = $prop{$pname};
+            next if ! $prop || $propgroup{$pname};
+            push @unsorted, $pname;
+        }
+        if (@unsorted) {
+            unless ($misc_group) {
+                $misc_group = "misc";
+                push @groups, "misc";
+            }
+            push @{$groupprops{$misc_group}}, @unsorted;
+        }
+    }
+
+    return ( groups => \@groups, groupprops => \%groupprops, propgroup => \%propgroup );
+}
+
 sub propgroup_name {
     my $class = shift;
     my $gname = shift;
+    my $u = shift;
     my $style = shift;
+
+    $class->load_all_s2_props($u, $style);
 
     my $dbh = LJ::get_db_writer();
     my $layer = LJ::S2::load_layer($dbh, $style->{'layer'}->{'user'});
