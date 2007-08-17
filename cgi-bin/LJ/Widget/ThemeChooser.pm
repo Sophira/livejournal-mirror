@@ -111,9 +111,11 @@ sub render_body {
 
         # figure out the type(s) of theme this is so we can modify the output accordingly
         my %theme_types;
-        $theme_types{current} = 1 if
-            (defined $theme->themeid && ($theme->themeid == $current_theme->themeid)) ||
-            (!defined $theme->themeid && ($theme->layoutid == $current_theme->layoutid));
+        if ($theme->themeid) {
+            $theme_types{current} = 1 if $theme->themeid == $current_theme->themeid;
+        } elsif (!$theme->themeid && !$current_theme->themeid) {
+            $theme_types{current} = 1 if $theme->layoutid == $current_theme->layoutid;
+        }
         $theme_types{upgrade} = 1 if !$filter_available && !$theme->available_to($u);
         $theme_types{special} = 1 if LJ::run_hook("layer_is_special", $theme->uniq);
 
