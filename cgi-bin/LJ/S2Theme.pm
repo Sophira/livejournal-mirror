@@ -423,6 +423,7 @@ sub layout_uniq {
 
     return $self->{layout_uniq};
 }
+*is_system_layout = \&layout_uniq; # if the theme's layout has a uniq, then it's a system layout
 
 sub is_custom {
     my $self = shift;

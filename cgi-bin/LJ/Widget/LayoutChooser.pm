@@ -54,25 +54,27 @@ sub render_body {
         }
     }
 
-    foreach my $layout (sort keys %layouts) {
-        my $current = (!$layout_prop) || ($layout_prop && $layouts{$layout} eq $prop_value) ? 1 : 0;
-        my $current_class = $current ? " current" : "";
+    unless (!$current_theme->is_system_layout) {
+        foreach my $layout (sort keys %layouts) {
+            my $current = (!$layout_prop) || ($layout_prop && $layouts{$layout} eq $prop_value) ? 1 : 0;
+            my $current_class = $current ? " current" : "";
 
-        $ret .= "<div class='layout-item$current_class'>";
-        $ret .= "<img src='$LJ::IMGPREFIX/customize/layouts/$layout.png' class='layout-preview' />";
-        $ret .= "<p class='layout-desc'>$layout_names{$layout}</p>";
-        unless ($current) {
-            $ret .= $class->start_form( class => "layout-form" );
-            $ret .= $class->html_hidden(
-                user => $u->user,
-                layout_choice => $layout,
-                layout_prop => $layout_prop,
-                show_sidebar_prop => $show_sidebar_prop,
-            );
-            $ret .= $class->html_submit( "apply" => $class->ml('widget.layoutchooser.layout.apply'), { raw => "class='layout-button'" });
-            $ret .= $class->end_form;
+            $ret .= "<div class='layout-item$current_class'>";
+            $ret .= "<img src='$LJ::IMGPREFIX/customize/layouts/$layout.png' class='layout-preview' />";
+            $ret .= "<p class='layout-desc'>$layout_names{$layout}</p>";
+            unless ($current) {
+                $ret .= $class->start_form( class => "layout-form" );
+                $ret .= $class->html_hidden(
+                    user => $u->user,
+                    layout_choice => $layout,
+                    layout_prop => $layout_prop,
+                    show_sidebar_prop => $show_sidebar_prop,
+                );
+                $ret .= $class->html_submit( "apply" => $class->ml('widget.layoutchooser.layout.apply'), { raw => "class='layout-button'" });
+                $ret .= $class->end_form;
+            }
+            $ret .= "</div><!-- end .theme-item -->";
         }
-        $ret .= "</div><!-- end .theme-item -->";
     }
 
     $ret .= "</div>";
