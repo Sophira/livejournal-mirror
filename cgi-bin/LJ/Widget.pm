@@ -159,9 +159,19 @@ sub post_fields_by_widget {
     return \%per_widget;
 }
 
+sub post_fields_of_widget {
+    my $class = shift;
+    my $widget = shift;
+    my $post = shift() || \%BMLCodeBlock::POST;
+
+    my $errors = [];
+    my $per_widget = LJ::Widget->post_fields_by_widget( post => $post, widgets => [ $widget ], errors => $errors );
+    return $per_widget->{$widget} || {};
+}
+
 sub post_fields {
     my $class = shift;
-    my $post = shift;
+    my $post = shift() || \%BMLCodeBlock::POST;
 
     my @widgets = ( $class->subclass );
     my $errors = [];
