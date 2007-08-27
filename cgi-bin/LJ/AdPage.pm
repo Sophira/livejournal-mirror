@@ -195,12 +195,13 @@ sub adcalls_for_location {
 
     my $ret = "";
     foreach my $adunit (@adunits) {
-        $ret .= LJ::ads(
-                        type   => 'app',
-                        orient => 
+        my $adcall = LJ::AdCall->new
+            ( page => $self, unit => $adunit );
 
+        $ret .= $adcall->render;
     }
 
+    return $ret;
 }
 
 sub conf {

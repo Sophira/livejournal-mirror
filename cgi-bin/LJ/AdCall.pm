@@ -12,19 +12,54 @@ use strict;
 
 sub new {
     my $class = shift;
-    my %opts  = shift;
+    my %opts  = @_;
+
+    my $page = $opts{page};
 
     my $self = {
-        
+        page => $page,
+        unit => $opts{unit},
     };
 
-    return bless $self, $class;
+    die "no page for adcall" unless $self->{page};
+    die "no unit for adcall" unless $self->{unit};
+
+    # should we defer to a different class for this adcall?
+    if (my $other_class = LJ::run_hook('alternate_adcall_class', $page->for_u)) {
+        bless $self, $other_class;
+        return $self;
+    }
+
+    bless $self, $class;
+    return $self;
+}
+
+sub page {
+    my $self = shift;
+    return $self->{page};
+}
+
+sub unit {
+    my $self = shift;
+    return $self->{unit};
 }
 
 sub render {
     my $self = shift;
 
-    return "";
+    my $adcall_url = $self->adcall_url;
+
+    return $self->render_url($adcall_url);
+}
+
+sub construct_url {
+    my $self = shift;
+
+}
+
+sub render_url {
+    my $self = shift;
+
 }
 
 sub should_render {
