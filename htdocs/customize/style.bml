@@ -257,7 +257,7 @@ body<=
                     }
                     $style{'i18nc'} = $i18nc;
                     $style{'i18n'} = $i18n;
-                    LJ::cmize::s2_implicit_style_create($u);
+                    LJ::cmize::s2_implicit_style_create($u, %style);
                 }
             } elsif ($POST{'save:moodtheme'}) {
                 # special case for moodthemes, which is caught below
