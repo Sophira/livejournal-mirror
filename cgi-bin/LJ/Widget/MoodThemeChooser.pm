@@ -95,10 +95,20 @@ sub handle_post {
     $u = LJ::load_user($u) unless LJ::isu($u);
     die "Invalid user." unless LJ::isu($u);
 
+    my $post_fields_of_parent = LJ::Widget->post_fields_of_widget("CustomizeTheme");
+    my ($given_moodthemeid, $given_forcemoodtheme);
+    if ($post_fields_of_parent->{reset}) {
+        $given_moodthemeid = 1;
+        $given_forcemoodtheme = 0;
+    } else {
+        $given_moodthemeid = $post->{moodthemeid};
+        $given_forcemoodtheme = $post->{opt_forcemoodtheme};
+    }
+
     my %update;
-    my $moodthemeid = LJ::Customize->validate_moodthemeid($u, $post->{moodthemeid});
+    my $moodthemeid = LJ::Customize->validate_moodthemeid($u, $given_moodthemeid);
     $update{moodthemeid} = $moodthemeid;
-    $update{opt_forcemoodtheme} = $post->{opt_forcemoodtheme} ? "Y" : "N";
+    $update{opt_forcemoodtheme} = $given_forcemoodtheme ? "Y" : "N";
 
     # update 'user' table
     foreach (keys %update) {

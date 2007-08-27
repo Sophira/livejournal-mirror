@@ -187,20 +187,37 @@ sub handle_post {
     $u = LJ::load_user($u) unless LJ::isu($u);
     die "Invalid user." unless LJ::isu($u);
 
-    my $color = $post->{control_strip_color} || "dark";
+    my %override;
+    my $post_fields_of_parent = LJ::Widget->post_fields_of_widget("CustomizeTheme");
+    my ($given_control_strip_color, $given_show_control_strip, $given_view_control_strip);
+    if ($post_fields_of_parent->{reset}) {
+        $given_control_strip_color = "dark";
+        $given_show_control_strip = 1;
+        $given_view_control_strip = 1;
+        $override{control_strip_bgcolor} = "";
+        $override{control_strip_fgcolor} = "";
+        $override{control_strip_bordercolor} = "";
+        $override{control_strip_linkcolor} = "";
+    } else {
+        $given_control_strip_color = $post->{control_strip_color};
+        $given_show_control_strip = $post->{show_control_strip};
+        $given_view_control_strip = $post->{view_control_strip};
+    }
+
+    my $color = $given_control_strip_color || "dark";
     my $color_to_store = $color eq "light" ? "light" : "dark"; # we can only store dark or light in the user props
 
-    $post->{show_control_strip} = $post->{show_control_strip} ? $color_to_store : 'off_explicit';
-    $post->{view_control_strip} = $post->{view_control_strip} ? $color_to_store : 'off_explicit';
+    my $props;
+    $props->{show_control_strip} = $given_show_control_strip ? $color_to_store : 'off_explicit';
+    $props->{view_control_strip} = $given_view_control_strip ? $color_to_store : 'off_explicit';
 
     my @uprops = qw( show_control_strip view_control_strip );
     foreach my $uprop (@uprops) {
-        my $eff_val = $post->{$uprop}; # effective value, since 0 isn't stored
+        my $eff_val = $props->{$uprop}; # effective value, since 0 isn't stored
         $eff_val = "" unless $eff_val;
         $u->set_prop($uprop, $eff_val);
     }
 
-    my %override;
     if ($color ne "layout_default" && $color ne "custom") {
         $override{custom_control_strip_colors} = "off";
     } else {
