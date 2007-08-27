@@ -81,20 +81,8 @@ sub apply_theme {
 # wrapper around LJ::cmize::s2_implicit_style_create
 sub implicit_style_create {
     my $class = shift;
-    my ($opts, $u, %style);
 
-    # this is because the arguments aren't static
-    # old callers don't pass in an options hashref, so we create a blank one
-    if (ref $_[0] && ref $_[1]) {
-        ($opts, $u) = (shift, shift);
-    } else {
-        ($opts, $u) = ({}, shift);
-    }
-
-    # everything else is part of the style hash
-    %style = ( @_ );
-
-    return LJ::cmize::s2_implicit_style_create($opts, $u, %style);
+    return LJ::cmize::s2_implicit_style_create(@_);
 }
 
 # given a layout id, get the layout's name
@@ -157,7 +145,7 @@ sub load_all_s2_props {
         $s2_style{user} = $style->{layer}->{user};
     }
 
-    LJ::cmize::s2_implicit_style_create($u, %s2_style);
+    $class->implicit_style_create($u, %s2_style);
 
     my $dbh = LJ::get_db_writer();
     my $layer = LJ::S2::load_layer($dbh, $style->{'layer'}->{'user'});
