@@ -185,6 +185,8 @@ sub load_all_s2_props {
     return;
 }
 
+# passing the opt "remove" will revert all submitted props in $post to their default values
+# passing the opt "delete_layer" will delete the entire user layer
 sub save_s2_props {
     my $class = shift;
     my $u = shift;
@@ -198,45 +200,56 @@ sub save_s2_props {
     my $layer = LJ::S2::load_layer($dbh, $style->{'layer'}->{'user'});
     my $layerid = $layer->{'s2lid'};
 
-    if ($opts{remove}) {
+    if ($opts{delete_layer}) {
         my %s2_style = LJ::S2::get_style($u, "verify");
 
         LJ::S2::delete_layer($s2_style{'user'});
         $s2_style{'user'} = LJ::S2::create_layer($u->{userid}, $s2_style{'layout'}, "user");
         LJ::S2::set_style_layers($u, $u->{'s2_style'}, "user", $s2_style{'user'});
         $layerid = $s2_style{'user'};
-    } else {
-        my $lyr_layout = LJ::S2::load_layer($dbh, $layer->{'b2lid'});
-        die "Layout layer for this $layer->{'type'} layer not found." unless $lyr_layout;
-        my $lyr_core = LJ::S2::load_layer($dbh, $lyr_layout->{'b2lid'});
-        die "Core layer for layout not found." unless $lyr_core;
 
-        $lyr_layout->{'uniq'} = $dbh->selectrow_array("SELECT value FROM s2info WHERE s2lid=? AND infokey=?",
-                                                  undef, $lyr_layout->{'s2lid'}, "redist_uniq");
+        LJ::S2::load_layers($layerid);
 
-        my %override;
-        foreach my $prop (S2::get_properties($lyr_layout->{'s2lid'}))
-        {
-            $prop = S2::get_property($lyr_core->{'s2lid'}, $prop)
-                unless ref $prop;
-            next unless ref $prop;
-            next if $prop->{'noui'};
-            my $name = $prop->{'name'};
-            next unless LJ::S2::can_use_prop($u, $lyr_layout->{'uniq'}, $name);
-
-            my %prop_values = $class->get_s2_prop_values($name, $u, $style);
-            my $prop_value = defined $post->{$name} ? $post->{$name} : $prop_values{override};
-            next if $prop_value eq $prop_values{existing};
-            $override{$name} = [ $prop, $prop_value ];
-        }
-
-        if (LJ::S2::layer_compile_user($layer, \%override)) {
-            # saved
-        } else {
-            my $error = LJ::last_error();
-            die "Error saving layer: $error";
-        }
+        return;
     }
+
+    my $lyr_layout = LJ::S2::load_layer($dbh, $layer->{'b2lid'});
+    die "Layout layer for this $layer->{'type'} layer not found." unless $lyr_layout;
+    my $lyr_core = LJ::S2::load_layer($dbh, $lyr_layout->{'b2lid'});
+    die "Core layer for layout not found." unless $lyr_core;
+
+    $lyr_layout->{'uniq'} = $dbh->selectrow_array("SELECT value FROM s2info WHERE s2lid=? AND infokey=?",
+                                              undef, $lyr_layout->{'s2lid'}, "redist_uniq");
+
+    my %override;
+    foreach my $prop (S2::get_properties($lyr_layout->{'s2lid'}))
+    {
+        $prop = S2::get_property($lyr_core->{'s2lid'}, $prop)
+            unless ref $prop;
+        next unless ref $prop;
+        next if $prop->{'noui'};
+        my $name = $prop->{'name'};
+        next unless LJ::S2::can_use_prop($u, $lyr_layout->{'uniq'}, $name);
+
+        my %prop_values = $class->get_s2_prop_values($name, $u, $style);
+
+        my $prop_value;
+        if ($opts{remove}) {
+            $prop_value = defined $post->{$name} ? $prop_values{existing} : $prop_values{override};
+        } else {
+            $prop_value = defined $post->{$name} ? $post->{$name} : $prop_values{override};
+        }
+        next if $prop_value eq $prop_values{existing};
+        $override{$name} = [ $prop, $prop_value ];
+    }
+
+    if (LJ::S2::layer_compile_user($layer, \%override)) {
+        # saved
+    } else {
+        my $error = LJ::last_error();
+        die "Error saving layer: $error";
+    }
+
     LJ::S2::load_layers($layerid);
 
     return;
@@ -264,16 +277,6 @@ sub get_s2_prop_values {
     }
 
     if (ref $existing eq "HASH") { $existing = $existing->{'as_string'}; }
-
-#    if ($type eq "bool") {
-#        $prop->{'values'} ||= "1|Yes|0|No";
-#    }
-
-#    my %values = split(/\|/, $prop->{'values'});
-#    my $existing_display = defined $values{$existing} ?
-#        $values{$existing} : $existing;
-
-#    $existing_display = LJ::eall($existing_display);
 
     my $override = S2::get_set($layer->{'s2lid'}, $prop_name);
     my $had_override = defined $override;
@@ -340,7 +343,7 @@ sub get_propgroups {
         }
     }
 
-    return ( groups => \@groups, groupprops => \%groupprops, propgroup => \%propgroup );
+    return ( props => \%prop, groups => \@groups, groupprops => \%groupprops, propgroup => \%propgroup );
 }
 
 sub propgroup_name {
@@ -475,6 +478,68 @@ sub get_layouts {
         '2rnh' => LJ::Lang::ml('customize.layouts.2rnh'),
         '3l'   => LJ::Lang::ml('customize.layouts.3l'),
         '3m'   => LJ::Lang::ml('customize.layouts.3m'),
+    );
+}
+
+sub get_propgroup_subheaders {
+    return (
+        page => LJ::Lang::ml('customize.propgroup_subheaders.page'),
+        navigation => LJ::Lang::ml('customize.propgroup_subheaders.navigation'),
+        navigation_box => LJ::Lang::ml('customize.propgroup_subheaders.navigation_box'),
+        text => LJ::Lang::ml('customize.propgroup_subheaders.text'),
+        title => LJ::Lang::ml('customize.propgroup_subheaders.title'),
+        title_box => LJ::Lang::ml('customize.propgroup_subheaders.title_box'),
+        top_bar => LJ::Lang::ml('customize.propgroup_subheaders.top_bar'),
+        header => LJ::Lang::ml('customize.propgroup_subheaders.header'),
+        tabs_and_headers => LJ::Lang::ml('customize.propgroup_subheaders.tabs_and_headers'),
+        header_bar => LJ::Lang::ml('customize.propgroup_subheaders.header_bar'),
+        icon => LJ::Lang::ml('customize.propgroup_subheaders.icon'),
+        sidebar => LJ::Lang::ml('customize.propgroup_subheaders.sidebar'),
+        caption_bar => LJ::Lang::ml('customize.propgroup_subheaders.caption_bar'),
+        entry => LJ::Lang::ml('customize.propgroup_subheaders.entry'),
+        comment => LJ::Lang::ml('customize.propgroup_subheaders.comment'),
+        sidebox => LJ::Lang::ml('customize.propgroup_subheaders.sidebox'),
+        links_sidebox => LJ::Lang::ml('customize.propgroup_subheaders.links_sidebox'),
+        tags_sidebox => LJ::Lang::ml('customize.propgroup_subheaders.tags_sidebox'),
+        multisearch_sidebox => LJ::Lang::ml('customize.propgroup_subheaders.multisearch_sidebox'),
+        free_text_sidebox => LJ::Lang::ml('customize.propgroup_subheaders.free_text_sidebox'),
+        hotspot_area => LJ::Lang::ml('customize.propgroup_subheaders.hotspot_area'),
+        calendar => LJ::Lang::ml('customize.propgroup_subheaders.calendar'),
+        component => LJ::Lang::ml('customize.propgroup_subheaders.component'),
+        setup => LJ::Lang::ml('customize.propgroup_subheaders.setup'),
+        ordering => LJ::Lang::ml('customize.propgroup_subheaders.ordering'),
+        custom => LJ::Lang::ml('customize.propgroup_subheaders.custom'),
+    );
+}
+
+sub get_propgroup_subheaders_order {
+    return qw(
+        page
+        navigation
+        navigation_box
+        text
+        title
+        title_box
+        top_bar
+        header
+        tabs_and_headers
+        header_bar
+        icon
+        sidebar
+        caption_bar
+        entry
+        comment
+        sidebox
+        links_sidebox
+        tags_sidebox
+        multisearch_sidebox
+        free_text_sidebox
+        hotspot_area
+        calendar
+        component
+        setup
+        ordering
+        custom
     );
 }
 
