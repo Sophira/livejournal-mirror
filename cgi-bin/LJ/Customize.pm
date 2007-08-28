@@ -85,6 +85,57 @@ sub implicit_style_create {
     return LJ::cmize::s2_implicit_style_create(@_);
 }
 
+# passing the opt "reset" will revert the language layers to default
+sub save_language {
+    my $class = shift;
+    my $u = shift;
+    my $langcode = shift;
+    my %opts = @_;
+
+    my %style = LJ::S2::get_style($u, "verify");
+    my $pub = LJ::S2::get_public_layers();
+    my $userlay = LJ::S2::get_layers_of_user($u);
+
+    if ($opts{reset}) {
+        $style{i18nc} = $style{i18n} = 0;
+        $class->implicit_style_create($u, %style);
+        return;
+    }
+
+    unless ($langcode eq 'custom') {
+        my @langs = LJ::S2::get_layout_langs($pub, $style{'layout'});
+        my ($i18n, $i18nc);
+        # scan for an i18n user layer
+        foreach (values %$userlay) {
+            last if
+                $_->{'b2lid'} == $style{'layout'} &&
+                $_->{'type'} eq 'i18n' &&
+                $_->{'langcode'} eq $langcode &&
+                ($i18n = $_->{'s2lid'});
+        }
+        # scan for i18nc public layer and i18n layer if necessary
+        foreach (values %$pub) {
+            last if $i18nc && $i18n;
+            next if
+                ! $i18nc &&
+                $_->{'type'} eq 'i18nc' &&
+                $_->{'langcode'} eq $langcode &&
+                ($i18nc = $_->{'s2lid'});
+            next if
+                ! $i18n &&
+                $_->{'b2lid'} == $style{'layout'} &&
+                $_->{'type'} eq 'i18n' &&
+                $_->{'langcode'} eq $langcode &&
+                ($i18n = $_->{'s2lid'});
+        }
+        $style{'i18nc'} = $i18nc;
+        $style{'i18n'} = $i18n;
+        $class->implicit_style_create($u, %style);
+    }
+
+    return;
+}
+
 # given a layout id, get the layout's name
 sub get_layout_name {
     my $class = shift;
@@ -173,7 +224,7 @@ sub load_all_s2_props {
     return;
 }
 
-# passing the opt "remove" will revert all submitted props in $post to their default values
+# passing the opt "reset" will revert all submitted props in $post to their default values
 # passing the opt "delete_layer" will delete the entire user layer
 sub save_s2_props {
     my $class = shift;
@@ -222,7 +273,7 @@ sub save_s2_props {
         my %prop_values = $class->get_s2_prop_values($name, $u, $style);
 
         my $prop_value;
-        if ($opts{remove}) {
+        if ($opts{reset}) {
             $prop_value = defined $post->{$name} ? $prop_values{existing} : $prop_values{override};
         } else {
             $prop_value = defined $post->{$name} ? $post->{$name} : $prop_values{override};
