@@ -335,6 +335,7 @@ sub js {
             });
             Customize.LayoutChooser.updateContent({
                 user: Customize.username,
+                ad_layout_id: $('ad_layout_id').value,
             });
         },
         onRefresh: function (data) {

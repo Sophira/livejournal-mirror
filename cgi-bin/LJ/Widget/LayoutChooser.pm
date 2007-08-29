@@ -16,6 +16,7 @@ sub render_body {
     $u = LJ::load_user($u) unless LJ::isu($u);
     die "Invalid user." unless LJ::isu($u);
 
+    my $ad_layout_id = defined $opts{ad_layout_id} ? $opts{ad_layout_id} : 0;
     my $headextra = $opts{headextra};
 
     my $ret;
@@ -24,9 +25,11 @@ sub render_body {
     $ret .= "<p class='detail'>" . $class->ml('widget.layoutchooser.desc') . "</p>";
 
     if (eval "use LJ::Widget::AdLayout; 1;") {
-        my $ad_layout = LJ::Widget::AdLayout->new;
+        my $ad_layout = LJ::Widget::AdLayout->new( id => $ad_layout_id );
+        $ad_layout_id = $ad_layout->{id} unless $ad_layout_id;
         $$headextra .= $ad_layout->wrapped_js( page_js_obj => "Customize" ) if $headextra;
-        $ret .= $ad_layout->render(user => $u);
+
+        $ret .= $ad_layout->render( user => $u );
     }
 
     # Column option
@@ -77,6 +80,7 @@ sub render_body {
         }
     }
 
+    $ret .= $class->html_hidden({ name => "ad_layout_id", value => $ad_layout_id, id => "ad_layout_id" });
     $ret .= "</div>";
 
     return $ret;
@@ -133,8 +137,12 @@ sub js {
                 layout_choice: form.Widget_LayoutChooser_layout_choice.value,
                 layout_prop: form.Widget_LayoutChooser_layout_prop.value,
                 show_sidebar_prop: form.Widget_LayoutChooser_show_sidebar_prop.value,
+                ad_layout_id: $('ad_layout_id').value,
             });
             Event.stop(evt);
+        },
+        onData: function (data) {
+            LiveJournal.run_hook("update_other_widgets", "LayoutChooser");
         },
         onRefresh: function (data) {
             this.initWidget();
