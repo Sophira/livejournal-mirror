@@ -263,6 +263,8 @@ sub js {
         initWidget: function () {
             var self = this;
 
+            if (!$('control_strip_color_layout_default')) return;
+
             self.hideSubDivs();
             if ($('control_strip_color_layout_default').checked) this.showSubDiv("layout_default_subdiv");
             if ($('control_strip_color_custom').checked) this.showSubDiv("custom_subdiv");
