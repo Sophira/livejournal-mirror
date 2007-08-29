@@ -34,7 +34,14 @@ h2.widget-header {
 }
 
 form.theme-switcher {
-    position: absolute;
-    right: 25px;
-    top: 5px;
+    text-align: right;
+    margin-bottom: 10px;
+}
+
+.one-percent {
+    height: 1%;
+}
+.customize-wrapper {
+    clear: both;
+    position: relative;
 }
