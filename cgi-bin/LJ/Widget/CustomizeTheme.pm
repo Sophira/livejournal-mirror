@@ -55,7 +55,7 @@ sub render_body {
 
     ### Navigation ###
 
-    $ret .= "<ul class='customize-nav nostyle'>";
+    $ret .= "<ul class='customize-nav nostyle' id='customize_theme_nav_links'>";
     $ret .= "<li" . $nav_class->("display") . "><a class='customize-nav-group' href='$LJ::SITEROOT/customize2/options.bml$getextra'>" . $class->ml('widget.customizetheme.nav.display') . "</a>";
     $ret .= "<ul>";
     $ret .= "<li>" . $class->ml('widget.customizetheme.nav.display.moodthemes') . "</li>";
@@ -120,8 +120,8 @@ sub render_body {
     $ret .= "<div class='customize-content'>";
 
     $ret .= "<div class='customize-buttons'>";
-    $ret .= $class->html_submit( save => $class->ml('widget.customizetheme.btn.save'), { raw => "class='customize-button'" }) . " ";
-    $ret .= $class->html_submit( reset => $class->ml('widget.customizetheme.btn.reset'), { raw => "class='customize-button'" });
+    $ret .= $class->html_submit( save => $class->ml('widget.customizetheme.btn.save'), { raw => "class='customize-button'" } ) . " ";
+    $ret .= $class->html_submit( reset => $class->ml('widget.customizetheme.btn.reset'), { raw => "class='customize-button' id='reset_btn_top'" } );
     $ret .= "</div>";
 
     # Display Group
@@ -191,7 +191,7 @@ sub render_body {
     elsif ($group eq "linkslist") {
         $ret .= "<div id='linkslist-group' class='customize-group pkg'>";
         $ret .= "<fieldset><legend>" . $class->ml('widget.customizetheme.linkslist') . "</legend></fieldset>";
-        $ret .= "<a href='$LJ::SITEROOT/manage/links.bml'>" . $class->ml('widget.customizetheme.linkslist.manage') . "</a>";
+        $ret .= "<a href='$LJ::SITEROOT/manage/links.bml$getextra'>" . $class->ml('widget.customizetheme.linkslist.manage') . "</a>";
         $ret .= "</div>";
     }
 
@@ -228,8 +228,8 @@ sub render_body {
     }
 
     $ret .= "<div class='customize-buttons'>";
-    $ret .= $class->html_submit( save => $class->ml('widget.customizetheme.btn.save'), { raw => "class='customize-button'" }) . " ";
-    $ret .= $class->html_submit( reset => $class->ml('widget.customizetheme.btn.reset'), { raw => "class='customize-button'" });
+    $ret .= $class->html_submit( save => $class->ml('widget.customizetheme.btn.save'), { raw => "class='customize-button'" } ) . " ";
+    $ret .= $class->html_submit( reset => $class->ml('widget.customizetheme.btn.reset'), { raw => "class='customize-button' id='reset_btn_bottom'" } );
     $ret .= "</div>";
 
     $ret .= "</div><!-- end .customize-content -->";
@@ -238,6 +238,66 @@ sub render_body {
     $ret .= $class->end_form;
 
     return $ret;
+}
+
+sub js {
+    q [
+        initWidget: function () {
+            var self = this;
+
+            // confirmation when reseting the form
+            DOM.addEventListener($('reset_btn_top'), "click", function (evt) { self.confirmReset(evt) });
+            DOM.addEventListener($('reset_btn_bottom'), "click", function (evt) { self.confirmReset(evt) });
+
+            self.form_changed = false;
+
+            // capture onclicks on the nav links to confirm form saving
+            var links = $('customize_theme_nav_links').getElementsByTagName('a');
+            for (var i = 0; i < links.length; i++) {
+                if (links[i].href != "") {
+                    DOM.addEventListener(links[i], "click", function (evt) { self.navclick_save(evt) })
+                }
+            }
+
+            // register all form changes to confirm them later
+            var selects = $('customize-form').getElementsByTagName('select');
+            for (var i = 0; i < selects.length; i++) {
+                DOM.addEventListener(selects[i], "change", function (evt) { self.form_change() });
+            }
+            var inputs = $('customize-form').getElementsByTagName('input');
+            for (var i = 0; i < inputs.length; i++) {
+                DOM.addEventListener(inputs[i], "change", function (evt) { self.form_change() });
+            }
+            var textareas = $('customize-form').getElementsByTagName('textarea');
+            for (var i = 0; i < textareas.length; i++) {
+                DOM.addEventListener(textareas[i], "change", function (evt) { self.form_change() });
+            }
+        },
+        confirmReset: function (evt) {
+            if (! confirm("Are you sure you want to reset all changes on this page to their defaults?")) {
+                Event.stop(evt);
+            }
+        },
+        navclick_save: function (evt) {
+            var confirmed = false;
+            if (this.form_changed == false) {
+                return true;
+            } else {
+                confirmed = confirm("Save your changes?");
+            }
+
+            if (confirmed) {
+                $('customize-form').submit();
+            }
+        },
+        form_change: function () {
+            if (this.form_changed == true) { return; }
+            this.form_changed = true;
+        },
+        onRefresh: function (data) {
+            this.initWidget();
+        },
+    ];
 }
 
 1;
