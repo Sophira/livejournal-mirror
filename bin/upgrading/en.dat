@@ -2024,6 +2024,24 @@ widget.recentcomments.title=Journal Comments
 
 widget.recentcomments.viewall=More
 
+widget.s2propgroup.collapse=collapse all
+
+widget.s2propgroup.expand=expand all
+
+widget.s2propgroup.language.custom=(Custom)
+
+widget.s2propgroup.language.default=(Default)
+
+widget.s2propgroup.language.label=Language
+
+widget.s2propgroup.language.note=This only affects theme-provided text. Your entries will not automatically be translated.
+
+widget.s2propgroup.linkslisttab=See the "[[name]]" page for links list options.
+
+widget.s2propgroup.presentation.additional=Additional Options
+
+widget.s2propgroup.presentation.basic=Basic Options
+
 widget.search.aim=AIM
 
 widget.search.email=Email
