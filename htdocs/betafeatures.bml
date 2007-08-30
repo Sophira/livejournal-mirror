@@ -13,16 +13,26 @@ body<=
 
     if (LJ::did_post()) {
         my @errors = LJ::Widget->handle_post(\%POST, qw(BetaFeature));
-        $ret .= LJ::bad_input(@errors) if @errors;
+        if (@errors) {
+            $ret .= LJ::bad_input(@errors);
+        } else {
+            # refresh the page after saving so that the user will see activated features immediately
+            return BML::redirect("$LJ::SITEROOT/betafeatures.bml");
+        }
     }
 
+    my $body_ret;
+    my $now = time();
     if (keys %LJ::BETA_FEATURES) {
-        foreach my $feature (keys %LJ::BETA_FEATURES) {
-            $ret .= LJ::Widget::BetaFeature->render( feature => $feature, u => $remote );
+        my @beta_features = sort { $LJ::BETA_FEATURES{$b}->{start_time} <=> $LJ::BETA_FEATURES{$a}->{start_time} } keys %LJ::BETA_FEATURES;
+        foreach my $feature (@beta_features) {
+            if ($LJ::BETA_FEATURES{$feature}->{start_time} <= $now && $LJ::BETA_FEATURES{$feature}->{end_time} > $now) {
+                $body_ret .= LJ::Widget::BetaFeature->render( feature => $feature, u => $remote );
+            }
         }
-    } else {
-        $ret .= "<?p $ML{'.nofeatures'} p?>";
     }
+
+    $ret .= $body_ret ? $body_ret : "<?p $ML{'.nofeatures'} p?>";
 
     my $news = LJ::load_user('news');
     $ret .= "<?p " . BML::ml('.staytuned', {'news' => $news->ljuser_display}) . " p?>" if $news;
