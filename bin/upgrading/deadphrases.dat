@@ -575,3 +575,10 @@ general /htdocs/register.bml.new.userpics
 
 general widget.qotd.title
 general widget.sitemessages.title
+
+general widget.betafeature.homepage2007.cantadd
+general widget.betafeature.homepage2007.expired
+general widget.betafeature.homepage2007.notstarted
+general widget.betafeature.homepage2007.off
+general widget.betafeature.homepage2007.on
+general widget.betafeature.homepage2007.title
