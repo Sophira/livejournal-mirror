@@ -26,11 +26,6 @@
     font-family: verdana;
     vertical-align: baseline;
 }
-.customize-nav {
-    float: left;
-    width: 135px;
-    background-color: #ECF6FF;
-}
 .customize-content {
     padding: 0 15px 25px 15px;
     margin: 0 0 15px 134px;
@@ -77,6 +72,11 @@
     text-align: middle;
 }
 
+.customize-nav {
+    float: left;
+    width: 135px;
+    background-color: #ECF6FF;
+}
 .customize-nav li a {
     text-decoration: none;
     display: block;
@@ -96,13 +96,6 @@
     margin: 0;
     font-size: 11px;
     border-right: 1px solid #C7E0F6;
-}
-.customize-nav li li a {
-    font-weight: normal;
-    color: #000 !important;
-    border-right: none;
-    padding: 0;
-    margin: 0;
 }
 .customize-nav li.on a,
 .customize-nav li.on ul {
