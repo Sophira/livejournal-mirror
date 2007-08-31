@@ -118,8 +118,6 @@ sub render_body {
         }
     }
 
-    $ret .= $class->html_hidden( user => $u->user );
-
     return $ret;
 }
 
@@ -323,9 +321,11 @@ sub handle_post {
     my $post = shift;
     my %opts = @_;
 
-    my $u = $post->{user} || LJ::get_remote();
-    $u = LJ::load_user($u) unless LJ::isu($u);
-    die "Invalid user." unless LJ::isu($u);
+    my $remote = LJ::get_remote();
+    my $get_args = LJ::Widget->get_args;
+    my $authas = $get_args->{authas} || $remote->user;
+    my $u = LJ::get_authas_user($authas);
+    die "Invalid user." unless $u;
 
     my $style = LJ::S2::load_style($u->prop('s2_style'));
     die "Style not found." unless $style && $style->{userid} == $u->id;

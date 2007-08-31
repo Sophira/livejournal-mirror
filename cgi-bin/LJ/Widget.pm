@@ -179,6 +179,11 @@ sub post_fields {
     return $per_widget->{$class->subclass} || {};
 }
 
+sub get_args {
+    my $class = shift;
+    return \%BMLCodeBlock::GET;
+}
+
 sub handle_post {
     my $class   = shift;
     my $post    = shift;
