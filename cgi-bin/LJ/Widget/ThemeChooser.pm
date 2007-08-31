@@ -160,7 +160,7 @@ sub render_body {
         } else {
             $preview_redirect_url = "$LJ::SITEROOT/customize2/preview_redirect.bml?user=" . $u->id . "&layoutid=" . $theme->layoutid;
         }
-        $ret .= "<a href='$preview_redirect_url' class='theme-preview-link' title='" . $class->ml('widget.themechooser.theme.preview') . "'>";
+        $ret .= "<a href='$preview_redirect_url' target='_blank' class='theme-preview-link' title='" . $class->ml('widget.themechooser.theme.preview') . "'>";
 
         $ret .= "<img src='$LJ::IMGPREFIX/customize/preview-theme.gif' class='theme-preview-image' /></a>";
         $ret .= $theme_icons;
