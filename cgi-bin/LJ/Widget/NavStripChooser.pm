@@ -284,7 +284,7 @@ sub js {
         },
         onRefresh: function (data) {
             this.initWidget();
-        },
+        }
     ];
 }
 

@@ -295,6 +295,7 @@ sub js {
                     DOM.addEventListener(filter_link, "click", function (evt) { Customize.ThemeNav.filterThemes(evt, "page", getArgs["page"]) });
                 } else {
                     for (var arg in getArgs) {
+                        if (!getArgs.hasOwnProperty(arg)) continue;
                         if (arg == "authas" || arg == "filter_available") continue;
                         DOM.addEventListener(filter_link, "click", function (evt) { Customize.ThemeNav.filterThemes(evt, arg, getArgs[arg]) });
                         break;
@@ -313,7 +314,7 @@ sub js {
             this.doPost({
                 user: Customize.username,
                 apply_themeid: form.Widget_ThemeChooser_apply_themeid.value,
-                apply_layoutid: form.Widget_ThemeChooser_apply_layoutid.value,
+                apply_layoutid: form.Widget_ThemeChooser_apply_layoutid.value
             });
             Event.stop(evt);
         },
@@ -326,21 +327,21 @@ sub js {
                 filter_available: Customize.filter_available,
                 page: Customize.page,
                 getextra: Customize.getExtra,
-                theme_chooser_id: $('theme_chooser_id').value,
+                theme_chooser_id: $('theme_chooser_id').value
             });
             Customize.CurrentTheme.updateContent({
                 user: Customize.username,
                 getextra: Customize.getExtra,
-                filter_available: Customize.filter_available,
+                filter_available: Customize.filter_available
             });
             Customize.LayoutChooser.updateContent({
                 user: Customize.username,
-                ad_layout_id: $('ad_layout_id').value,
+                ad_layout_id: $('ad_layout_id').value
             });
         },
         onRefresh: function (data) {
             this.initWidget();
-        },
+        }
     ];
 }
 

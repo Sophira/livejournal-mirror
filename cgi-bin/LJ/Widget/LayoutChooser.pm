@@ -137,7 +137,7 @@ sub js {
                 layout_choice: form.Widget_LayoutChooser_layout_choice.value,
                 layout_prop: form.Widget_LayoutChooser_layout_prop.value,
                 show_sidebar_prop: form.Widget_LayoutChooser_show_sidebar_prop.value,
-                ad_layout_id: $('ad_layout_id').value,
+                ad_layout_id: $('ad_layout_id').value
             });
             Event.stop(evt);
         },
@@ -146,7 +146,7 @@ sub js {
         },
         onRefresh: function (data) {
             this.initWidget();
-        },
+        }
     ];
 }
 

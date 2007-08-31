@@ -137,12 +137,12 @@ sub js {
                 user: Customize.username,
                 getextra: Customize.getExtra,
                 preview_moodthemeid: $('moodtheme_dropdown').value,
-                forcemoodtheme: opt_forcemoodtheme,
+                forcemoodtheme: opt_forcemoodtheme
             });
         },
         onRefresh: function (data) {
             this.initWidget();
-        },
+        }
     ];
 }
 

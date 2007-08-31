@@ -190,6 +190,7 @@ sub js {
             filter_links.forEach(function (filter_link) {
                 var getArgs = LiveJournal.parseGetArgs(filter_link.href);
                 for (var arg in getArgs) {
+                    if (!getArgs.hasOwnProperty(arg)) continue;
                     if (arg == "authas" || arg == "filter_available") continue;
                     DOM.addEventListener(filter_link, "click", function (evt) { self.filterThemes(evt, arg, getArgs[arg]) });
                     break;
@@ -221,7 +222,7 @@ sub js {
                 filter_available: Customize.filter_available,
                 page: Customize.page,
                 getextra: Customize.getExtra,
-                theme_chooser_id: $('theme_chooser_id').value,
+                theme_chooser_id: $('theme_chooser_id').value
             });
 
             Event.stop(evt);
@@ -229,7 +230,7 @@ sub js {
         onRefresh: function (data) {
             this.initWidget();
             Customize.ThemeChooser.initWidget();
-        },
+        }
     ];
 }
 
