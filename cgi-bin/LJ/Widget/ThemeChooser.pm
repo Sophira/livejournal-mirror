@@ -37,29 +37,22 @@ sub render_body {
     my @getargs;
     my @themes;
     if ($cat eq "all") {
-        $ret .= "<h3>" . $class->ml('widget.themechooser.header.all') . "</h3>";
         push @getargs, "cat=all";
         @themes = LJ::S2Theme->load_all($u);
     } elsif ($cat eq "custom") {
-        $ret .= "<h3>" . $class->ml('widget.themechooser.header.custom') . "</h3>";
         push @getargs, "cat=custom";
         @themes = LJ::S2Theme->load_by_user($u);
     } elsif ($cat) {
-        $ret .= "<h3>$cats{$cat}->{text}</h3>";
         push @getargs, "cat=$cat";
         @themes = LJ::S2Theme->load_by_cat($cat);
     } elsif ($layoutid) {
-        my $layout_name = LJ::Customize->get_layout_name($layoutid, user => $u);
-        $ret .= "<h3>$layout_name</h3>";
         push @getargs, "layoutid=$layoutid";
         @themes = LJ::S2Theme->load_by_layoutid($layoutid, $u);
     } elsif ($designer) {
         $designer = LJ::durl($designer);
-        $ret .= "<h3>$designer</h3>";
         push @getargs, "designer=$designer";
         @themes = LJ::S2Theme->load_by_designer($designer);
     } else { # category is "featured"
-        $ret .= "<h3>$cats{featured}->{text}</h3>";
         @themes = LJ::S2Theme->load_by_cat("featured");
     }
 
@@ -94,8 +87,6 @@ sub render_body {
     my $index_of_last_theme = ($num_per_page * $page) - 1;
     my @themes_this_page = @themes[$index_of_first_theme..$index_of_last_theme];
 
-    $ret .= "<p class='detail'>" . $class->ml('widget.themechooser.desc') . "</p>";
-
     $ret .= "<ul class='theme-paging theme-paging-top nostyle'>";
     $ret .= $class->print_paging(
         themes => \@themes,
@@ -106,6 +97,24 @@ sub render_body {
     );
     $ret .= "</ul>";
 
+    if ($cat eq "all") {
+        $ret .= "<h3>" . $class->ml('widget.themechooser.header.all') . "</h3>";
+    } elsif ($cat eq "custom") {
+        $ret .= "<h3>" . $class->ml('widget.themechooser.header.custom') . "</h3>";
+    } elsif ($cat) {
+        $ret .= "<h3>$cats{$cat}->{text}</h3>";
+    } elsif ($layoutid) {
+        my $layout_name = LJ::Customize->get_layout_name($layoutid, user => $u);
+        $ret .= "<h3>$layout_name</h3>";
+    } elsif ($designer) {
+        $ret .= "<h3>$designer</h3>";
+    } else { # category is "featured"
+        $ret .= "<h3>$cats{featured}->{text}</h3>";
+    }
+
+    $ret .= "<p class='detail'>" . $class->ml('widget.themechooser.desc') . "</p>";
+
+    $ret .= "<div class='themes-area'>";
     foreach my $theme (@themes_this_page) {
         next unless defined $theme;
 
@@ -185,6 +194,7 @@ sub render_body {
         }
         $ret .= "</div><!-- end .theme-item -->";
     }
+    $ret .= "</div>";
 
     $ret .= "<ul class='theme-paging theme-paging-bottom nostyle'>";
     $ret .= $class->print_paging(

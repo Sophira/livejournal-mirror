@@ -109,14 +109,10 @@
     left: 0px;
 }
 .theme-paging {
-    position: absolute;
-    right: 0;
-}
-.theme-paging-top {
-    top: 0;
+    float: right;
 }
 .theme-paging-bottom {
-    bottom: 0;
+    clear: both;
 }
 .theme-paging li {
     float: left;
