@@ -313,11 +313,16 @@ sub js {
                 }
             });
 
-            var apply_forms = DOM.getElementsByClassName(document, "theme-form");
-
             // add event listeners to all of the apply theme forms
+            var apply_forms = DOM.getElementsByClassName(document, "theme-form");
             apply_forms.forEach(function (form) {
                 DOM.addEventListener(form, "submit", function (evt) { self.applyTheme(evt, form) });
+            });
+
+            // add event listeners to the preview links
+            var preview_links = DOM.getElementsByClassName(document, "theme-preview-link");
+            preview_links.forEach(function (preview_link) {
+                DOM.addEventListener(preview_link, "click", function (evt) { self.previewTheme(evt, preview_link.href) });
             });
         },
         applyTheme: function (evt, form) {
@@ -348,6 +353,10 @@ sub js {
                 user: Customize.username,
                 ad_layout_id: $('ad_layout_id').value
             });
+        },
+        previewTheme: function (evt, href) {
+            window.open(href, 'theme_preview', 'resizable=yes,status=yes,toolbar=no,location=no,menubar=no,scrollbars=yes');
+            Event.stop(evt);
         },
         onRefresh: function (data) {
             this.initWidget();
