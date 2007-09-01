@@ -95,18 +95,21 @@
     display: none;
     position: absolute;
     top: -24px;
-    left: -9999px;
+    left: 0px;
     font-size: 11px;
     text-align: center;
     width: 138px;
-    background-color: #fff;
     padding: 3px;
     z-index: 101;
 }
+.theme-time:hover,
+.theme-upgrade-icon:hover {
+    border: 0;
+}
 .theme-upgrade-icon:hover .theme-upgrade-level,
 .theme-time:hover span.theme-availability {
-    display: block !important;
-    left: 0px;
+    display: block;
+    background-color: #fff;
 }
 .theme-paging {
     float: right;

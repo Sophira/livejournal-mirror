@@ -1,3 +1,17 @@
+.appwidget-moodthemechooser fieldset {
+    width: 100%;
+    float: right;
+}
+.appwidget-moodthemechooser[class] fieldset {
+    width: auto;
+    float: none;
+}
+.appwidget-moodthemechooser .detail {
+    float: left;
+}
+.appwidget-moodthemechooser .detail[class] {
+    float: none;
+}
 .moodtheme-links {
     margin-top: 10px !important;
 }
