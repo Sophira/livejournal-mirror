@@ -52,7 +52,7 @@ sub end_form {
 # -- not a page logic decision
 sub should_render {
     my $class = shift;
-    return $class->is_disabled ? 0 : 1;
+    return 1;
 }
 
 sub render {
@@ -64,6 +64,7 @@ sub render {
     my $css_subclass = lc($subclass);
     my %opt_hash = @opts;
 
+    return "" if $class->is_disabled;
     return "" unless $class->should_render;
 
     my $ret = "<div class='appwidget appwidget-$css_subclass' id='LJWidget_$widget_id'>\n";
