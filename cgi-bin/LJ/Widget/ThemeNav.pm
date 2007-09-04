@@ -159,9 +159,10 @@ sub handle_post {
     my $post = shift;
     my %opts = @_;
 
-    # get query string and remove filter_available from it if it's there
+    # get query string and remove filter_available and page from it if they're there
     my $q_string = BML::get_query_string();
     $q_string =~ s/&?filter_available=\d//g;
+    $q_string =~ s/&?page=\d//g;
     $q_string =~ s/^&//;
 
     my $url;
@@ -212,6 +213,10 @@ sub js {
                 } else {
                     Customize.filter_available = 0;
                 }
+
+                // need to go back to page 1 if the filter was switched because
+                // the current page may no longer have any themes to show on it
+                Customize.page = 1;
             } else if (key != "page") {
                 Customize.resetFilters();
             }
