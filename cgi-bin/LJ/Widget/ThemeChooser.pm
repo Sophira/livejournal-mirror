@@ -189,7 +189,10 @@ sub render_body {
                 apply_themeid => $theme->themeid,
                 apply_layoutid => $theme->layoutid,
             );
-            $ret .= $class->html_submit( "apply" => $class->ml('widget.themechooser.theme.apply'), { raw => "class='theme-button'" });
+            $ret .= $class->html_submit(
+                apply => $class->ml('widget.themechooser.theme.apply'),
+                { raw => "class='theme-button' id='theme_btn_" . $theme->layoutid . $theme->themeid . "'" },
+            );
             $ret .= $class->end_form;
         }
         $ret .= "</div><!-- end .theme-item -->";
@@ -326,12 +329,17 @@ sub js {
             });
         },
         applyTheme: function (evt, form) {
+            var given_themeid = form.Widget_ThemeChooser_apply_themeid.value;
+            var given_layoutid = form.Widget_ThemeChooser_apply_layoutid.value;
+
             this.doPost({
                 user: Customize.username,
-                apply_themeid: form.Widget_ThemeChooser_apply_themeid.value,
-                apply_layoutid: form.Widget_ThemeChooser_apply_layoutid.value
+                apply_themeid: given_themeid,
+                apply_layoutid: given_layoutid
             });
             Event.stop(evt);
+
+            Customize.elementHourglass($("theme_btn_" + given_layoutid + given_themeid));
         },
         onData: function (data) {
             Customize.ThemeNav.updateContent({
@@ -359,6 +367,7 @@ sub js {
             Event.stop(evt);
         },
         onRefresh: function (data) {
+            Customize.hideHourglass();
             this.initWidget();
         }
     ];

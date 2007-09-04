@@ -41,7 +41,10 @@ sub render_body {
         ) . " ";
         $ret .= $class->html_hidden( which_title => $id );
         $ret .= $class->html_hidden({ name => "user", value => $u->id, id => "${id}_user" });
-        $ret .= $class->html_submit($class->ml('widget.journaltitles.btn')) . " ";
+        $ret .= $class->html_submit(
+            save => $class->ml('widget.journaltitles.btn'),
+            { raw => "id='save_btn_$id'" },
+        ) . " ";
         $ret .= "<a href='' class='theme-title-control' id='${id}_cancel'>" . $class->ml('widget.journaltitles.cancel') . "</a>";
         $ret .= "</span></p>";
 
@@ -81,9 +84,11 @@ sub js {
         saveTitle: function (e, id) {
             this.userid = $(id + "_user").value;
             this.doPostAndUpdateContent({which_title: id, title_value: $(id).value, user: this.userid});
-            Event.stop(e); // prevent the page from posting without AJAX
+            Event.stop(e);
+            Customize.elementHourglass($("save_btn_" + id));
         },
         onRefresh: function (data) {
+            Customize.hideHourglass();
             this.initWidget();
             JournalTitle.init();
         }

@@ -73,7 +73,10 @@ sub render_body {
                     layout_prop => $layout_prop,
                     show_sidebar_prop => $show_sidebar_prop,
                 );
-                $ret .= $class->html_submit( "apply" => $class->ml('widget.layoutchooser.layout.apply'), { raw => "class='layout-button'" });
+                $ret .= $class->html_submit(
+                    apply => $class->ml('widget.layoutchooser.layout.apply'),
+                    { raw => "class='layout-button' id='layout_btn_$layout'" },
+                );
                 $ret .= $class->end_form;
             }
             $ret .= "</div><!-- end .theme-item -->";
@@ -132,19 +135,24 @@ sub js {
             });
         },
         applyLayout: function (evt, form) {
+            var given_layout_choice = form.Widget_LayoutChooser_layout_choice.value;
+
             this.doPostAndUpdateContent({
                 user: Customize.username,
-                layout_choice: form.Widget_LayoutChooser_layout_choice.value,
+                layout_choice: given_layout_choice,
                 layout_prop: form.Widget_LayoutChooser_layout_prop.value,
                 show_sidebar_prop: form.Widget_LayoutChooser_show_sidebar_prop.value,
                 ad_layout_id: $('ad_layout_id').value
             });
             Event.stop(evt);
+
+            Customize.elementHourglass($("layout_btn_" + given_layout_choice));
         },
         onData: function (data) {
             LiveJournal.run_hook("update_other_widgets", "LayoutChooser");
         },
         onRefresh: function (data) {
+            Customize.hideHourglass();
             this.initWidget();
         }
     ];

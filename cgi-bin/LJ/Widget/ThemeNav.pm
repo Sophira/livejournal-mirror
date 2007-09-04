@@ -238,6 +238,11 @@ sub js {
             });
 
             Event.stop(evt);
+
+            Customize.cursorHourglass(evt);
+        },
+        onData: function (data) {
+            Customize.hideHourglass();
         },
         onRefresh: function (data) {
             this.initWidget();

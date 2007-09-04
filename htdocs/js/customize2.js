@@ -8,6 +8,7 @@ Customize.init = function () {
     Customize.filter_available = 0;
     Customize.page = 1;
     Customize.getExtra = "";
+    Customize.hourglass = null;
 
     var pageGetArgs = LiveJournal.parseGetArgs(document.location.href);
 
@@ -42,6 +43,34 @@ Customize.resetFilters = function () {
     Customize.layoutid = 0;
     Customize.designer = "";
     Customize.page = 1;
+}
+
+Customize.cursorHourglass = function (evt) {
+    var pos = DOM.getAbsoluteCursorPosition(evt);
+    if (!pos) return;
+
+    if (!Customize.hourglass) {
+        Customize.hourglass = new Hourglass();
+        Customize.hourglass.init();
+        Customize.hourglass.hourglass_at(pos.x, pos.y);
+    }
+}
+
+Customize.elementHourglass = function (element) {
+    if (!element) return;
+
+    if (!Customize.hourglass) {
+        Customize.hourglass = new Hourglass();
+        Customize.hourglass.init();
+        Customize.hourglass.hourglass_at_widget(element);
+    }
+}
+
+Customize.hideHourglass = function () {
+    if (Customize.hourglass) {
+        Customize.hourglass.hide();
+        Customize.hourglass = null;
+    }
 }
 
 LiveJournal.register_hook("page_load", Customize.init);
