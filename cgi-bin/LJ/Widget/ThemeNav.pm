@@ -188,12 +188,19 @@ sub js {
 
             // add event listeners to all of the category links
             filter_links.forEach(function (filter_link) {
+                var evt_listener_added = 0;
                 var getArgs = LiveJournal.parseGetArgs(filter_link.href);
                 for (var arg in getArgs) {
                     if (!getArgs.hasOwnProperty(arg)) continue;
                     if (arg == "authas" || arg == "filter_available") continue;
                     DOM.addEventListener(filter_link, "click", function (evt) { self.filterThemes(evt, arg, getArgs[arg]) });
+                    evt_listener_added = 1;
                     break;
+                }
+
+                // if there was no listener added to a link, add it without any args (for the 'featured' category)
+                if (!evt_listener_added) {
+                    DOM.addEventListener(filter_link, "click", function (evt) { self.filterThemes(evt, "", "") });
                 }
             });
         },
