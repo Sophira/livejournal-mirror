@@ -82,7 +82,7 @@ body<=
     my $layout_chooser = LJ::Widget::LayoutChooser->new;
     $headextra .= $layout_chooser->wrapped_js( page_js_obj => "Customize" );
     $ret .= "<a name='layout'></a>";
-    $ret .= "<div class='layout-selector-wrapper'>";
+    $ret .= "<div class='layout-selector-wrapper pkg'>";
     $ret .= $layout_chooser->render(
         user => $u,
         headextra => \$headextra,
