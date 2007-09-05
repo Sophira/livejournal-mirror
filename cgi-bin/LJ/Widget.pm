@@ -188,6 +188,8 @@ sub get_effective_remote {
     my $class = shift;
 
     my $remote = LJ::get_remote();
+    die "Must log in." unless $remote;
+
     my $get_args = LJ::Widget->get_args;
     my $authas = $get_args->{authas} || $remote->user;
     my $u = LJ::get_authas_user($authas);
