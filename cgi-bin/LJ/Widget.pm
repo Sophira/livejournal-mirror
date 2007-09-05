@@ -184,6 +184,18 @@ sub get_args {
     return \%BMLCodeBlock::GET;
 }
 
+sub get_effective_remote {
+    my $class = shift;
+
+    my $remote = LJ::get_remote();
+    my $get_args = LJ::Widget->get_args;
+    my $authas = $get_args->{authas} || $remote->user;
+    my $u = LJ::get_authas_user($authas);
+    die "Invalid user." unless $u;
+
+    return $u;
+}
+
 sub handle_post {
     my $class   = shift;
     my $post    = shift;
