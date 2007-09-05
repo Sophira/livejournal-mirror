@@ -20,13 +20,15 @@
     width: 135px;
     background-color: #ECF6FF;
 }
-.theme-nav li a {
+.theme-nav li a,
+.theme-nav-small li {
     text-decoration: none;
     display: block;
     padding: 3px 6px;
     border-right: 1px solid #C7E0F6;
 }
-.theme-nav li a:hover {
+.theme-nav li a:hover,
+.theme-nav-small li a:hover {
     text-decoration: underline;
 }
 .theme-nav li.on a {
@@ -35,10 +37,12 @@
     font-weight: bold;
     background: #fff url(/img/customize/nav-on-arrow.gif) no-repeat right 50%;
 }
-.theme-nav li a:visited {
+.theme-nav li a:visited,
+.theme-nav-small a:visited {
     color: #00c;
 }
-* html .theme-nav li a {
+* html .theme-nav li a,
+* html .theme-nav-small li a {
     display: inline-block;
     width: 123px;
 }
@@ -58,6 +62,7 @@
 .theme-nav-small li.last a {
     padding-bottom: 15px !important;
 }
-.theme-nav-small li {
+.theme-nav-small li a {
+    text-decoration: none;
     font-size: 11px;
 }

@@ -92,8 +92,9 @@ sub render_body {
 
     $ret .= "<div class='theme-nav-separator'><hr /></div>";
 
-    $ret .= "<ul class='theme-nav theme-nav-small nostyle'>";
-    $ret .= "<li class='first'><a href='$LJ::SITEROOT/customize/advanced/'>" . $class->ml('widget.themenav.developer') . "</a></li>";
+    $ret .= "<ul class='theme-nav-small nostyle'>";
+    $ret .= "<li class='first'><a href='$LJ::SITEROOT/customize/advanced/'>" . $class->ml('widget.themenav.developer') . "</a>";
+    $ret .= LJ::run_hook('customize_advanced_area_upsell', $u) . "</li>";
     $ret .= "<li class='last'><a href='$LJ::SITEROOT/customize2/switch_system.bml$getextra'>" . $class->ml('widget.themenav.switchtos1') . "</a></li>";
     $ret .= "</ul>";
 
