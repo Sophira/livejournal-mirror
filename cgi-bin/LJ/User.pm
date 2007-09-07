@@ -7032,6 +7032,25 @@ sub get_remote
     return $u;
 }
 
+# returns either $remote or the authenticated user that $remote is working with
+sub get_effective_remote {
+    my $authas_arg = shift || "authas";
+
+    return undef unless LJ::is_web_context();
+
+    my $remote = LJ::get_remote();
+    return undef unless $remote;
+
+    my $authas = $remote->user;
+    my $args = Apache->request->args;
+    if ($args =~ /$authas_arg=([^&]+)/) {
+        $authas = $1;
+    }
+    return $remote if $authas eq $remote->user;
+
+    return LJ::get_authas_user($authas);
+}
+
 # returns URL we have to bounce the remote user to in order to
 # get their domain cookie
 sub remote_bounce_url {
