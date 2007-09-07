@@ -95,7 +95,7 @@ sub render_body {
             my %prop_is_in_subheader = map { $_ => 1 } @subheader_props;
 
             foreach my $prop_name (@$groupprops) {
-                next if $class->skip_prop($props->{$prop_name}, $prop_name, theme => $theme);
+                next if $class->skip_prop($props->{$prop_name}, $prop_name, theme => $theme, user => $u, style => $style);
                 next unless $prop_is_in_subheader{$prop_name};
 
                 # need to print the header inside the foreach because we don't want it printed if
@@ -176,10 +176,6 @@ sub skip_prop {
     if ($theme) {
         return 1 if $prop_name eq $theme->layout_prop;
         return 1 if $prop_name eq $theme->show_sidebar_prop;
-        if ($theme->layout_uniq eq "cuteness/layout") {
-            return 1 if $prop_name eq "face";
-            return 1 if $prop_name eq "text_page_title";
-        }
     }
 
     return 1 if $prop_name eq "custom_control_strip_colors";
@@ -187,6 +183,9 @@ sub skip_prop {
     return 1 if $prop_name eq "control_strip_fgcolor";
     return 1 if $prop_name eq "control_strip_bordercolor";
     return 1 if $prop_name eq "control_strip_linkcolor";
+
+    my $hook_rv = LJ::run_hook("skip_prop_override", $prop_name, user => $opts{user}, theme => $theme, style => $opts{style});
+    return $hook_rv if $hook_rv;
 
     return 0;
 }
