@@ -44,9 +44,8 @@
                );
 
     # make sure that we're working with the right user
-    my $u;
-    if ($POST{_for_user}) {
-        $u = LJ::get_authas_user($POST{_for_user});
+    if ($POST{authas}) {
+        my $u = LJ::get_authas_user($POST{authas});
         die "Invalid user." unless $u;
     }
 

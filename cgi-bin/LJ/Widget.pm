@@ -34,16 +34,21 @@ sub start_form {
 
     my $eopts = "";
     my $ehtml = $opts{noescape} ? 0 : 1;
-    foreach my $attr (grep { ! /^(noescape)$/ && ! /^(for_user)$/ } keys %opts) {
+    foreach my $attr (grep { ! /^(noescape)$/ && ! /^(authas)$/ } keys %opts) {
         $eopts .= " $attr=\"" . ($ehtml ? LJ::ehtml($opts{$attr}) : $opts{$_}) . "\"";
     }
 
-    my $u = $opts{for_user};
-    my $for_user = $u->user if $u;
+    my $u = $opts{authas};
+    my $authas = $u->user if $u;
 
     my $ret = "<form method='POST'$eopts>";
     $ret .= LJ::form_auth();
-    $ret .= $class->html_hidden( _for_user => $for_user ) if $for_user;
+
+    if ($authas && !$LJ::REQ_GLOBAL{widget_authas_form}) {
+        $ret .= $class->html_hidden({ name => "authas", value => $authas, id => "_widget_authas" });
+        $LJ::REQ_GLOBAL{widget_authas_form} = 1;
+    }
+
     return $ret;
 };
 

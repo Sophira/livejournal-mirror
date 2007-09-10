@@ -107,6 +107,10 @@ LJWidget = new Class(Object, {
 
         params["auth_token"]  = this.authToken;
 
+        if ($('_widget_authas')) {
+            params["authas"] = $('_widget_authas').value;
+        }
+
         var reqOpts = {
             method:  "POST",
             data:    HTTPReq.formEncoded(params),
