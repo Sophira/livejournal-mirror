@@ -20,7 +20,7 @@ sub render_body {
     my $props = $opts{props};
     my $propgroup = $opts{propgroup};
     my $groupprops = $opts{groupprops};
-    return "" unless $props && $propgroup && $groupprops;
+    return "" unless ($props && $propgroup && $groupprops) || $opts{show_lang_chooser};
 
     my $style = LJ::S2::load_style($u->prop('s2_style'));
     die "Style not found." unless $style && $style->{userid} == $u->id;
@@ -58,16 +58,22 @@ sub render_body {
         $ret .= "</table>";
 
         $count = 1; # reset counter
-        $ret .= "<div class='subheader subheader-presentation on' id='subheader__presentation__additional'>" . $class->ml('widget.s2propgroup.presentation.additional') . "</div>";
-        $ret .= "<table cellspacing='0' class='prop-list' id='proplist__presentation__additional'>";
+        my $header_printed = 0;
         foreach my $prop_name (@$groupprops) {
             next if $class->skip_prop($props->{$prop_name}, $prop_name, props_to_skip => \%is_basic_prop, theme => $theme);
 
+            # need to print the header inside the foreach because we don't want it printed if
+            # there's no props in this group that are also in this subheader
+            unless ($header_printed) {
+                $ret .= "<div class='subheader subheader-presentation on' id='subheader__presentation__additional'>" . $class->ml('widget.s2propgroup.presentation.additional') . "</div>";
+                $ret .= "<table cellspacing='0' class='prop-list' id='proplist__presentation__additional'>";
+            }
+            $header_printed = 1;
             $row_class = $count % 2 == 0 ? " graybg" : "";
             $ret .= $class->output_prop($props->{$prop_name}, $prop_name, $row_class, $u, $style, $theme);
             $count++;
         }
-        $ret .= "</table>";
+        $ret .= "</table>" if $header_printed;
     } else {
         my %subheaders = LJ::Customize->get_propgroup_subheaders;
 
@@ -167,7 +173,9 @@ sub skip_prop {
     my $props_to_skip = $opts{props_to_skip};
     my $theme = $opts{theme};
 
-    return 1 if !$prop && $prop_name ne "linklist_support";
+    if (!$prop) {
+        return 1 unless $prop_name eq "linklist_support" && $theme && $theme->linklist_support_tab;
+    }
 
     return 1 if $prop->{noui};
 
