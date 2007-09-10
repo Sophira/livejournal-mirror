@@ -114,6 +114,7 @@ sub get_effective_search_user {
 
     foreach my $key (keys %$post) {
         next unless $key =~ /^(?:search_user)_(\d+)/;
+        next unless $post->{"search_user_$1"};
         return $post->{"search_user_$1"};
     }
     return '';
