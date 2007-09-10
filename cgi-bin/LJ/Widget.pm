@@ -34,12 +34,16 @@ sub start_form {
 
     my $eopts = "";
     my $ehtml = $opts{noescape} ? 0 : 1;
-    foreach my $attr (grep { ! /^(noescape)$/ } keys %opts) {
+    foreach my $attr (grep { ! /^(noescape)$/ && ! /^(for_user)$/ } keys %opts) {
         $eopts .= " $attr=\"" . ($ehtml ? LJ::ehtml($opts{$attr}) : $opts{$_}) . "\"";
     }
 
+    my $u = $opts{for_user};
+    my $for_user = $u->user if $u;
+
     my $ret = "<form method='POST'$eopts>";
     $ret .= LJ::form_auth();
+    $ret .= $class->html_hidden( _for_user => $for_user ) if $for_user;
     return $ret;
 };
 

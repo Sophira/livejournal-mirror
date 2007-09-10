@@ -43,6 +43,13 @@
                auth_token    => $auth_token,    # generate new auth token for future requests
                );
 
+    # make sure that we're working with the right user
+    my $u;
+    if ($POST{_for_user}) {
+        $u = LJ::get_authas_user($POST{_for_user});
+        die "Invalid user." unless $u;
+    }
+
     if (delete $POST{_widget_post}) {
         # just a normal post request, handle it and then return status
         # bypass auth checking, we already checked the ajax auth token

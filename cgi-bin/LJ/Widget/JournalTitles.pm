@@ -11,8 +11,8 @@ sub render_body {
     my $class = shift;
     my %opts = @_;
 
-    my $u = $opts{user} || LJ::get_remote();
-    $u = LJ::load_userid($u) unless LJ::isu($u);
+    my $u = $opts{_for_user} || LJ::get_effective_remote();
+    $u = LJ::load_user($u) unless LJ::isu($u);
     die "Invalid user." unless LJ::isu($u);
 
     my $ret;
@@ -21,7 +21,7 @@ sub render_body {
     $ret .= "<p class='detail'>" . $class->ml('widget.journaltitles.desc') . " " . LJ::help_icon('journal_titles') . "</p>";
 
     foreach my $id (qw( journaltitle journalsubtitle friendspagetitle )) {
-        $ret .= $class->start_form( id => "${id}_form" );
+        $ret .= $class->start_form( id => "${id}_form", for_user => $u );
 
         $ret .= "<p>";
         $ret .= "<label>" . $class->ml("widget.journaltitles.$id") . "</label> ";
@@ -40,7 +40,6 @@ sub render_body {
             raw => "class='text'",
         ) . " ";
         $ret .= $class->html_hidden( which_title => $id );
-        $ret .= $class->html_hidden({ name => "user", value => $u->id, id => "${id}_user" });
         $ret .= $class->html_submit(
             save => $class->ml('widget.journaltitles.btn'),
             { raw => "id='save_btn_$id'" },
@@ -61,8 +60,8 @@ sub handle_post {
     my $post = shift;
     my %opts = @_;
 
-    my $u = $post->{user} || LJ::get_remote();
-    $u = LJ::load_userid($u) unless LJ::isu($u);
+    my $u = $post->{_for_user} || LJ::get_effective_remote();
+    $u = LJ::load_user($u) unless LJ::isu($u);
     die "Invalid user." unless LJ::isu($u);
 
     my $eff_val = LJ::text_trim($post->{title_value}, 0, LJ::std_max_length());
@@ -82,8 +81,11 @@ sub js {
             DOM.addEventListener($("friendspagetitle_form"), "submit", function (e) { self.saveTitle(e, "friendspagetitle") });
         },
         saveTitle: function (e, id) {
-            this.userid = $(id + "_user").value;
-            this.doPostAndUpdateContent({which_title: id, title_value: $(id).value, user: this.userid});
+            this.doPostAndUpdateContent({
+                which_title: id,
+                title_value: $(id).value,
+                _for_user: $(id + "_form").Widget_JournalTitles__for_user.value
+            });
             Event.stop(e);
             Customize.elementHourglass($("save_btn_" + id));
         },
