@@ -38,15 +38,18 @@ sub start_form {
         $eopts .= " $attr=\"" . ($ehtml ? LJ::ehtml($opts{$attr}) : $opts{$_}) . "\"";
     }
 
-    my $u = $opts{authas};
-    my $authas = $u->user if $u;
-
     my $ret = "<form method='POST'$eopts>";
     $ret .= LJ::form_auth();
 
-    if ($authas && !$LJ::REQ_GLOBAL{widget_authas_form}) {
-        $ret .= $class->html_hidden({ name => "authas", value => $authas, id => "_widget_authas" });
-        $LJ::REQ_GLOBAL{widget_authas_form} = 1;
+    if ($class->authas) {
+        my $u = $opts{authas} || $BMLCodeBlock::GET{authas} || $BMLCodeBlock::POST{authas};
+        $u = LJ::load_user($u) unless LJ::isu($u);
+        my $authas = $u->user if LJ::isu($u);
+
+        if ($authas && !$LJ::REQ_GLOBAL{widget_authas_form}) {
+            $ret .= $class->html_hidden({ name => "authas", value => $authas, id => "_widget_authas" });
+            $LJ::REQ_GLOBAL{widget_authas_form} = 1;
+        }
     }
 
     return $ret;
@@ -193,6 +196,16 @@ sub get_args {
     return \%BMLCodeBlock::GET;
 }
 
+sub get_effective_remote {
+    my $class = shift;
+
+    if ($class->authas) {
+        return LJ::get_effective_remote();
+    }
+
+    return LJ::get_remote();
+}
+
 sub handle_post {
     my $class   = shift;
     my $post    = shift;
@@ -260,6 +273,9 @@ sub js { '' }
 
 # override to return a true value if this widget accept AJAX posts
 sub ajax { 0 }
+
+# override in subclasses that support authas authentication
+sub authas { 0 }
 
 # instance method to return javascript for this widget
 # "page_js_obj" opt:

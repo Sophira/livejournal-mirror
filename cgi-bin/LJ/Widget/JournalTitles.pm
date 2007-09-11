@@ -5,13 +5,14 @@ use base qw(LJ::Widget);
 use Carp qw(croak);
 
 sub ajax { 1 }
+sub authas { 1 }
 sub need_res { qw( stc/widgets/journaltitles.css js/widgets/journaltitles.js ) }
 
 sub render_body {
     my $class = shift;
     my %opts = @_;
 
-    my $u = LJ::get_effective_remote();
+    my $u = $class->get_effective_remote();
     die "Invalid user." unless LJ::isu($u);
 
     my $ret;
@@ -20,7 +21,7 @@ sub render_body {
     $ret .= "<p class='detail'>" . $class->ml('widget.journaltitles.desc') . " " . LJ::help_icon('journal_titles') . "</p>";
 
     foreach my $id (qw( journaltitle journalsubtitle friendspagetitle )) {
-        $ret .= $class->start_form( id => "${id}_form", authas => $u );
+        $ret .= $class->start_form( id => "${id}_form" );
 
         $ret .= "<p>";
         $ret .= "<label>" . $class->ml("widget.journaltitles.$id") . "</label> ";
@@ -59,7 +60,7 @@ sub handle_post {
     my $post = shift;
     my %opts = @_;
 
-    my $u = LJ::get_effective_remote();
+    my $u = $class->get_effective_remote();
     die "Invalid user." unless LJ::isu($u);
 
     my $eff_val = LJ::text_trim($post->{title_value}, 0, LJ::std_max_length());

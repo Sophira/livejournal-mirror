@@ -45,8 +45,12 @@
 
     # make sure that we're working with the right user
     if ($POST{authas}) {
-        my $u = LJ::get_authas_user($POST{authas});
-        die "Invalid user." unless $u;
+        if ($widget_class->authas) {
+            my $u = LJ::get_authas_user($POST{authas});
+            return $err->("Invalid user.") unless $u;
+        } else {
+            return $err->("Widget does not support authas authentication.");
+        }
     }
 
     if (delete $POST{_widget_post}) {
