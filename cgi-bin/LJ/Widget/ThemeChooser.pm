@@ -6,17 +6,18 @@ use Carp qw(croak);
 use Class::Autouse qw( LJ::S2Theme LJ::Customize );
 
 sub ajax { 1 }
+sub authas { 1 }
 sub need_res { qw( stc/widgets/themechooser.css ) }
 
 sub render_body {
     my $class = shift;
     my %opts = @_;
 
-    my $u = $opts{user} || LJ::get_remote();
-    $u = LJ::load_user($u) unless LJ::isu($u);
+    my $u = $class->get_effective_remote();
     die "Invalid user." unless LJ::isu($u);
 
-    my $getextra = $opts{getextra};
+    my $remote = LJ::get_remote();
+    my $getextra = $u->user ne $remote->user ? "?authas=" . $u->user : "";
     my $getsep = $getextra ? "&" : "?";
 
     # filter criteria
@@ -185,7 +186,6 @@ sub render_body {
         } else { # apply theme form
             $ret .= $class->start_form( class => "theme-form" );
             $ret .= $class->html_hidden(
-                user => $u->user,
                 apply_themeid => $theme->themeid,
                 apply_layoutid => $theme->layoutid,
             );
@@ -268,8 +268,7 @@ sub handle_post {
     my $post = shift;
     my %opts = @_;
 
-    my $u = $post->{user} || LJ::get_remote();
-    $u = LJ::load_user($u) unless LJ::isu($u);
+    my $u = $class->get_effective_remote();
     die "Invalid user." unless LJ::isu($u);
 
     my $themeid = $post->{apply_themeid}+0;
@@ -333,7 +332,6 @@ sub js {
             var given_layoutid = form.Widget_ThemeChooser_apply_layoutid.value;
 
             this.doPost({
-                user: Customize.username,
                 apply_themeid: given_themeid,
                 apply_layoutid: given_layoutid
             });
@@ -343,22 +341,17 @@ sub js {
         },
         onData: function (data) {
             Customize.ThemeNav.updateContent({
-                user: Customize.username,
                 cat: Customize.cat,
                 layoutid: Customize.layoutid,
                 designer: Customize.designer,
                 filter_available: Customize.filter_available,
                 page: Customize.page,
-                getextra: Customize.getExtra,
                 theme_chooser_id: $('theme_chooser_id').value
             });
             Customize.CurrentTheme.updateContent({
-                user: Customize.username,
-                getextra: Customize.getExtra,
                 filter_available: Customize.filter_available
             });
             Customize.LayoutChooser.updateContent({
-                user: Customize.username,
                 ad_layout_id: $('ad_layout_id').value
             });
         },

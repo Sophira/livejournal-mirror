@@ -6,18 +6,20 @@ use Carp qw(croak);
 use Class::Autouse qw( LJ::Customize );
 
 sub ajax { 1 }
+sub authas { 1 }
 sub need_res { qw( stc/widgets/currenttheme.css ) }
 
 sub render_body {
     my $class = shift;
     my %opts = @_;
 
-    my $u = $opts{user} || LJ::get_remote();
-    $u = LJ::load_user($u) unless LJ::isu($u);
+    my $u = $class->get_effective_remote();
     die "Invalid user." unless LJ::isu($u);
 
-    my $getextra = $opts{getextra};
+    my $remote = LJ::get_remote();
+    my $getextra = $u->user ne $remote->user ? "?authas=" . $u->user : "";
     my $getsep = $getextra ? "&" : "?";
+
     my $filterarg = $opts{filter_available} ? "&filter_available=1" : "";
     my $no_theme_chooser = defined $opts{no_theme_chooser} ? $opts{no_theme_chooser} : 0;
 

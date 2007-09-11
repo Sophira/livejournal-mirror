@@ -6,14 +6,14 @@ use Carp qw(croak);
 use Class::Autouse qw( LJ::Customize );
 
 sub ajax { 1 }
+sub authas { 1 }
 sub need_res { qw( stc/widgets/layoutchooser.css ) }
 
 sub render_body {
     my $class = shift;
     my %opts = @_;
 
-    my $u = $opts{user} || LJ::get_remote();
-    $u = LJ::load_user($u) unless LJ::isu($u);
+    my $u = $class->get_effective_remote();
     die "Invalid user." unless LJ::isu($u);
 
     my $ad_layout_id = defined $opts{ad_layout_id} ? $opts{ad_layout_id} : 0;
@@ -29,7 +29,7 @@ sub render_body {
         $ad_layout_id = $ad_layout->{id} unless $ad_layout_id;
         $$headextra .= $ad_layout->wrapped_js( page_js_obj => "Customize" ) if $headextra;
 
-        $ret .= $ad_layout->render( user => $u );
+        $ret .= $ad_layout->render;
     }
 
     # Column option
@@ -68,7 +68,6 @@ sub render_body {
             unless ($current) {
                 $ret .= $class->start_form( class => "layout-form" );
                 $ret .= $class->html_hidden(
-                    user => $u->user,
                     layout_choice => $layout,
                     layout_prop => $layout_prop,
                     show_sidebar_prop => $show_sidebar_prop,
@@ -94,8 +93,7 @@ sub handle_post {
     my $post = shift;
     my %opts = @_;
 
-    my $u = $post->{user} || LJ::get_remote();
-    $u = LJ::load_user($u) unless LJ::isu($u);
+    my $u = $class->get_effective_remote();
     die "Invalid user." unless LJ::isu($u);
 
     my %override;
@@ -138,7 +136,6 @@ sub js {
             var given_layout_choice = form.Widget_LayoutChooser_layout_choice.value;
 
             this.doPostAndUpdateContent({
-                user: Customize.username,
                 layout_choice: given_layout_choice,
                 layout_prop: form.Widget_LayoutChooser_layout_prop.value,
                 show_sidebar_prop: form.Widget_LayoutChooser_show_sidebar_prop.value,

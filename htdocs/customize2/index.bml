@@ -54,13 +54,13 @@ body<=
     my $current_theme = LJ::Widget::CurrentTheme->new;
     $headextra .= $current_theme->wrapped_js( page_js_obj => "Customize" );
     $ret .= "<div class='theme-current pkg'>";
-    $ret .= $current_theme->render( user => $u, getextra => $getextra, filter_available => $filter_available );
+    $ret .= $current_theme->render( filter_available => $filter_available );
     $ret .= "</div><!-- end .theme-current -->";
 
     my $journal_titles = LJ::Widget::JournalTitles->new;
     $headextra .= $journal_titles->wrapped_js;
     $ret .= "<div class='theme-titles pkg'>";
-    $ret .= $journal_titles->render( user => $u );
+    $ret .= $journal_titles->render;
     $ret .= "</div><!-- end .theme-titles -->";
     $ret .= "<br />";
 
@@ -68,14 +68,12 @@ body<=
     $headextra .= $theme_nav->wrapped_js( page_js_obj => "Customize" );
     $ret .= "<div class='theme-selector-wrapper pkg'>";
     $ret .= $theme_nav->render(
-        user => $u,
         cat => $cat,
         layoutid => $layoutid,
         designer => $designer,
         filter_available => $filter_available,
         page => $page,
         headextra => \$headextra,
-        getextra => $getextra,
     );
     $ret .= "</div><!-- end .theme-selector-wrapper -->";
 
@@ -83,10 +81,7 @@ body<=
     $headextra .= $layout_chooser->wrapped_js( page_js_obj => "Customize" );
     $ret .= "<a name='layout'></a>";
     $ret .= "<div class='layout-selector-wrapper pkg'>";
-    $ret .= $layout_chooser->render(
-        user => $u,
-        headextra => \$headextra,
-    );
+    $ret .= $layout_chooser->render( headextra => \$headextra );
     $ret .= "</div><!-- end .layout-selector-wrapper' -->";
 
     $ret .= "<form method='POST'><div class='theme-customize'>";

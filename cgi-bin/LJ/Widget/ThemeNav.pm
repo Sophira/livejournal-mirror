@@ -6,19 +6,21 @@ use Carp qw(croak);
 use Class::Autouse qw( LJ::Customize );
 
 sub ajax { 1 }
+sub authas { 1 }
 sub need_res { qw( stc/widgets/themenav.css ) }
 
 sub render_body {
     my $class = shift;
     my %opts = @_;
 
-    my $u = $opts{user} || LJ::get_remote();
-    $u = LJ::load_user($u) unless LJ::isu($u);
+    my $u = $class->get_effective_remote();
     die "Invalid user." unless LJ::isu($u);
 
     my $theme_chooser_id = defined $opts{theme_chooser_id} ? $opts{theme_chooser_id} : 0;
     my $headextra = $opts{headextra};
-    my $getextra = $opts{getextra};
+
+    my $remote = LJ::get_remote();
+    my $getextra = $u->user ne $remote->user ? "?authas=" . $u->user : "";
     my $getsep = $getextra ? "&" : "?";
 
     # filter criteria
@@ -102,13 +104,11 @@ sub render_body {
 
     $ret .= $class->html_hidden({ name => "theme_chooser_id", value => $theme_chooser_id, id => "theme_chooser_id" });
     $ret .= $theme_chooser->render(
-        user => $u,
         cat => $cat,
         layoutid => $layoutid,
         designer => $designer,
         filter_available => $filter_available,
         page => $page,
-        getextra => $getextra,
     );
 
     return $ret;
@@ -228,13 +228,11 @@ sub js {
             if (key == "page") Customize.page = value;
 
             this.updateContent({
-                user: Customize.username,
                 cat: Customize.cat,
                 layoutid: Customize.layoutid,
                 designer: Customize.designer,
                 filter_available: Customize.filter_available,
                 page: Customize.page,
-                getextra: Customize.getExtra,
                 theme_chooser_id: $('theme_chooser_id').value
             });
 
