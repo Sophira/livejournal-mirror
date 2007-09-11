@@ -6,17 +6,16 @@ use Carp qw(croak);
 use Class::Autouse qw( LJ::Customize );
 
 sub ajax { 1 }
+sub authas { 1 }
 sub need_res { qw( stc/widgets/navstripchooser.css js/colorpicker.js ) }
 
 sub render_body {
     my $class = shift;
     my %opts = @_;
 
-    my $u = $opts{user} || LJ::get_remote();
-    $u = LJ::load_user($u) unless LJ::isu($u);
+    my $u = $class->get_effective_remote();
     die "Invalid user." unless LJ::isu($u);
 
-    my $getextra = $opts{getextra} ? $opts{getextra} : "";
     my $preview_moodthemeid = defined $opts{preview_moodthemeid} ? $opts{preview_moodthemeid} : $u->{moodthemeid};
 
     my $ret = "<fieldset><legend>" . $class->ml('widget.navstripchooser.title') . "</legend>";
@@ -168,7 +167,6 @@ sub render_body {
         $ret .= "</div>";
     }
     $ret .= "</table>";
-    $ret .= $class->html_hidden( user => $u->user );
 
     if ($u->prop('stylesys') != 2) {
         $ret .= "<p>" . $class->ml('widget.navstripchooser.upgradetos2', {'aopts' => "href='$LJ::SITEROOT/customize2/switch_system.bml'"}) . "</p>";
@@ -183,8 +181,7 @@ sub handle_post {
     my $post = shift;
     my %opts = @_;
 
-    my $u = $post->{user} || LJ::get_remote();
-    $u = LJ::load_user($u) unless LJ::isu($u);
+    my $u = $class->get_effective_remote();
     die "Invalid user." unless LJ::isu($u);
 
     my %override;

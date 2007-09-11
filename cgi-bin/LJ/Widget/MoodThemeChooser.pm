@@ -6,17 +6,20 @@ use Carp qw(croak);
 use Class::Autouse qw( LJ::Customize );
 
 sub ajax { 1 }
+sub authas { 1 }
 sub need_res { qw( stc/widgets/moodthemechooser.css ) }
 
 sub render_body {
     my $class = shift;
     my %opts = @_;
 
-    my $u = $opts{user} || LJ::get_remote();
-    $u = LJ::load_user($u) unless LJ::isu($u);
+    my $u = $class->get_effective_remote();
     die "Invalid user." unless LJ::isu($u);
 
-    my $getextra = $opts{getextra} ? $opts{getextra} : "";
+    my $remote = LJ::get_remote();
+    my $getextra = $u->user ne $remote->user ? "?authas=" . $u->user : "";
+    my $getsep = $getextra ? "&" : "?";
+
     my $preview_moodthemeid = defined $opts{preview_moodthemeid} ? $opts{preview_moodthemeid} : $u->{moodthemeid};
     my $forcemoodtheme = defined $opts{forcemoodtheme} ? $opts{forcemoodtheme} : $u->{opt_forcemoodtheme} eq 'Y';
 
@@ -39,7 +42,6 @@ sub render_body {
         selected => $forcemoodtheme,
     );
     $ret .= "<label for='opt_forcemoodtheme'>" . $class->ml('widget.moodthemechooser.forcetheme') . "</label>";
-    $ret .= $class->html_hidden( user => $u->user );
 
     my $journalarg = $getextra ? "?journal=" . $u->user : "";
     $ret .= "<ul class='moodtheme-links nostyle'>";
@@ -91,8 +93,7 @@ sub handle_post {
     my $post = shift;
     my %opts = @_;
 
-    my $u = $post->{user} || LJ::get_remote();
-    $u = LJ::load_user($u) unless LJ::isu($u);
+    my $u = $class->get_effective_remote();
     die "Invalid user." unless LJ::isu($u);
 
     my $post_fields_of_parent = LJ::Widget->post_fields_of_widget("CustomizeTheme");
@@ -134,8 +135,6 @@ sub js {
             if ($('opt_forcemoodtheme').checked) opt_forcemoodtheme = 1;
 
             this.updateContent({
-                user: Customize.username,
-                getextra: Customize.getExtra,
                 preview_moodthemeid: $('moodtheme_dropdown').value,
                 forcemoodtheme: opt_forcemoodtheme
             });

@@ -47,13 +47,13 @@ body<=
     my $current_theme = LJ::Widget::CurrentTheme->new;
     $headextra .= $current_theme->wrapped_js( page_js_obj => "Customize" );
     $ret .= "<div class='theme-current pkg'>";
-    $ret .= $current_theme->render( user => $u, getextra => $getextra, no_theme_chooser => 1 );
+    $ret .= $current_theme->render( no_theme_chooser => 1 );
     $ret .= "</div><!-- end .theme-current -->";
 
     my $journal_titles = LJ::Widget::JournalTitles->new;
     $headextra .= $journal_titles->wrapped_js;
     $ret .= "<div class='theme-titles pkg'>";
-    $ret .= $journal_titles->render( user => $u );
+    $ret .= $journal_titles->render;
     $ret .= "</div><!-- end .theme-titles -->";
     $ret .= "<br />";
 
@@ -61,9 +61,7 @@ body<=
     $headextra .= $customize_theme->wrapped_js( page_js_obj => "Customize" );
     $ret .= "<div class='customize-wrapper one-percent'>";
     $ret .= $customize_theme->render(
-        user => $u,
         group => $group,
-        getextra => $getextra,
         headextra => \$headextra,
     );
     $ret .= "</div><!-- end .customize-wrapper -->";

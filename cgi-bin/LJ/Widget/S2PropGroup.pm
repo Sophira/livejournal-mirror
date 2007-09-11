@@ -5,17 +5,15 @@ use base qw(LJ::Widget);
 use Carp qw(croak);
 use Class::Autouse qw( LJ::Customize );
 
+sub authas { 1 }
 sub need_res { qw( stc/widgets/s2propgroup.css js/colorpicker.js ) }
 
 sub render_body {
     my $class = shift;
     my %opts = @_;
 
-    my $u = $opts{user} || LJ::get_remote();
-    $u = LJ::load_user($u) unless LJ::isu($u);
+    my $u = $class->get_effective_remote();
     die "Invalid user." unless LJ::isu($u);
-
-    my $getextra = $opts{getextra} ? $opts{getextra} : "";
 
     my $props = $opts{props};
     my $propgroup = $opts{propgroup};
@@ -328,10 +326,7 @@ sub handle_post {
     my $post = shift;
     my %opts = @_;
 
-    my $remote = LJ::get_remote();
-    my $get_args = LJ::Widget->get_args;
-    my $authas = $get_args->{authas} || $remote->user;
-    my $u = LJ::get_authas_user($authas);
+    my $u = $class->get_effective_remote();
     die "Invalid user." unless $u;
 
     my $style = LJ::S2::load_style($u->prop('s2_style'));

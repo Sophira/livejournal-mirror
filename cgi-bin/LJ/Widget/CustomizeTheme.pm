@@ -5,20 +5,21 @@ use base qw(LJ::Widget);
 use Carp qw(croak);
 use Class::Autouse qw( LJ::Customize );
 
+sub authas { 1 }
 sub need_res { qw( stc/widgets/customizetheme.css ) }
 
 sub render_body {
     my $class = shift;
     my %opts = @_;
 
-    my $u = $opts{user} || LJ::get_remote();
-    $u = LJ::load_user($u) unless LJ::isu($u);
+    my $u = $class->get_effective_remote();
     die "Invalid user." unless LJ::isu($u);
 
-    my $getextra = $opts{getextra} ? $opts{getextra} : "";
-    my $headextra = $opts{headextra};
+    my $remote = LJ::get_remote();
+    my $getextra = $u->user ne $remote->user ? "?authas=" . $u->user : "";
     my $getsep = $getextra ? "&" : "?";
 
+    my $headextra = $opts{headextra};
     my $group = $opts{group} ? $opts{group} : "display";
 
     my $ret;
@@ -135,17 +136,11 @@ sub render_body {
         $$headextra .= $nav_strip_chooser->wrapped_js( page_js_obj => "Customize" );
 
         $ret .= "<div class='pkg'>";
-        $ret .= $mood_theme_chooser->render(
-            user => $u,
-            getextra => $getextra,
-        );
+        $ret .= $mood_theme_chooser->render;
         $ret .= "</div>";
 
         $ret .= "<div class='pkg'>";
-        $ret .= $nav_strip_chooser->render(
-            user => $u,
-            getextra => $getextra,
-        );
+        $ret .= $nav_strip_chooser->render;
         $ret .= "</div>";
 
         my $s2_propgroup = LJ::Widget::S2PropGroup->new;
@@ -153,8 +148,6 @@ sub render_body {
 
         $ret .= "<div class='pkg'>";
         $ret .= $s2_propgroup->render(
-            user => $u,
-            getextra => $getextra,
             props => $groups{props},
             propgroup => "presentation",
             groupprops => $groups{groupprops}->{presentation},
@@ -175,8 +168,6 @@ sub render_body {
 
             $ret .= "<div class='pkg'>";
             $ret .= $s2_propgroup->render(
-                user => $u,
-                getextra => $getextra,
                 props => $groups{props},
                 propgroup => $propgroup,
                 groupprops => $groups{groupprops}->{$propgroup},
@@ -202,8 +193,6 @@ sub render_body {
 
         $ret .= "<div id='customcss-group' class='customize-group pkg'>";
         $ret .= $s2_propgroup->render(
-            user => $u,
-            getextra => $getextra,
             props => $groups{props},
             propgroup => "customcss",
             groupprops => $groups{groupprops}->{customcss},
@@ -218,8 +207,6 @@ sub render_body {
 
         $ret .= "<div id='$group-group' class='customize-group pkg'>";
         $ret .= $s2_propgroup->render(
-            user => $u,
-            getextra => $getextra,
             props => $groups{props},
             propgroup => $group,
             groupprops => $groups{groupprops}->{$group},
