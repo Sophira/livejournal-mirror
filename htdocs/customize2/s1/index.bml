@@ -232,8 +232,8 @@ body<=
         $ret .= "</div>";
     }
 
-    $ret .= "<div id='CurrentTabMain'><form id='display_form' method='post' action='$LJ::SITEROOT/customize2/s1/?authas=$authas'>";
-    $ret .= LJ::form_auth();
+    $ret .= "<div id='CurrentTabMain'>";
+    $ret .= LJ::Widget::MoodThemeChooser->start_form( id => 'display_form' );
 
     ### Journal Titles ###
 
@@ -330,12 +330,12 @@ body<=
 
     my $mood_theme_chooser = LJ::Widget::MoodThemeChooser->new;
     $headextra .= $mood_theme_chooser->wrapped_js;
-    $ret .= $mood_theme_chooser->render( user => $u, getextra => $getextra );
+    $ret .= $mood_theme_chooser->render;
 
 
     ### Navigation Strip ###
 
-    $ret .= LJ::Widget::NavStripChooser->render( user => $u, getextra => $getextra );
+    $ret .= LJ::Widget::NavStripChooser->render;
 
 
     ### Show Community Userpic ###
@@ -368,7 +368,8 @@ body<=
 
 
     $ret .= LJ::cmize::html_save();
-    $ret .= "</form></div></div>";
+    $ret .= LJ::Widget::MoodThemeChooser->end_form;
+    $ret .= "</div></div>";
 
     return $ret;
 }
