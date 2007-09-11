@@ -1,21 +1,14 @@
 var Customize = new Object();
 
 Customize.init = function () {
-    Customize.username = "";
     Customize.cat = "";
     Customize.layoutid = 0;
     Customize.designer = "";
     Customize.filter_available = 0;
     Customize.page = 1;
-    Customize.getExtra = "";
     Customize.hourglass = null;
 
     var pageGetArgs = LiveJournal.parseGetArgs(document.location.href);
-
-    if (pageGetArgs["authas"]) {
-        Customize.username = pageGetArgs["authas"];
-        Customize.getExtra = "?authas=" + Customize.username;
-    }
 
     if (pageGetArgs["cat"]) {
         Customize.cat = pageGetArgs["cat"];
