@@ -74,7 +74,7 @@ sub render_body {
     my $print_style_header = 0;
     foreach my $g (keys %style_groups) {
         if ($has_group{$g} &&
-            LJ::Widget::S2PropGroup->should_render( user => $u, props => $groups{props}, groupprops => $groups{groupprops}->{$g} )) {
+            LJ::Widget::S2PropGroup->group_exists_with_props( user => $u, props => $groups{props}, groupprops => $groups{groupprops}->{$g} )) {
 
             $print_style_header = 1;
             last;

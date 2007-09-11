@@ -353,13 +353,10 @@ sub handle_post {
     return;
 }
 
-# don't render the widget if the propgroup has no props to display
-sub should_render {
+# return if the propgroup has props to display or not
+sub group_exists_with_props {
     my $class = shift;
     my %opts = @_;
-
-    # just render if no opts were passed
-    return 1 unless keys %opts;
 
     my $u = $opts{user};
     my $props = $opts{props};
