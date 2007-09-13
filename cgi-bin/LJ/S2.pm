@@ -971,6 +971,8 @@ sub delete_user_style
     $u->do("DELETE FROM s2stylelayers2 WHERE userid=? AND styleid=?", undef,
            $u->{userid}, $styleid);
 
+    LJ::MemCache::delete([$styleid, "s2s:$styleid"]);
+
     return 1;
 }
 
@@ -979,13 +981,10 @@ sub rename_user_style
     my ($u, $styleid, $name) = @_;
     return 1 unless $styleid;
     my $dbh = LJ::get_db_writer();
-    return 0 unless $dbh && $u->writer;
+    return 0 unless $dbh;
 
-    foreach my $t (qw(s2styles s2stylelayers)) {
-        $dbh->do("UPDATE $t SET name=? WHERE styleid=?", undef, $name, $styleid)
-    }
-    $u->do("UPDATE s2stylelayers2 SET name=? WHERE userid=? AND styleid=?", undef,
-           $name, $u->id, $styleid);
+    $dbh->do("UPDATE s2styles SET name=? WHERE styleid=? AND userid=?", undef, $name, $styleid, $u->id);
+    LJ::MemCache::delete([$styleid, "s2s:$styleid"]);
 
     return 1;
 }
