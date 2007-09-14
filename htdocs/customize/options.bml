@@ -55,8 +55,8 @@ body<=
     {
         BML::set_language_scope("/customize/index.bml");
 
-        $style = LJ::S2::load_style($u->prop('s2_style'));
-        return $err->("Style not found.") unless $style && $style->{'userid'} == $u->{'userid'};
+        # make sure there's a style set and load it
+        my $style = LJ::Customize->verify_and_load_style($u);
 
         unless ($style->{layer}->{user}) {
             $style->{layer}->{user} = LJ::S2::create_layer($u->{userid}, $style->{layer}->{layout}, "user");

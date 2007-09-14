@@ -28,13 +28,13 @@ body<=
         }
     }
 
-    # lazy migration of style name
-    LJ::Customize->migrate_current_style($u);
-
     my $group = $GET{group} ? $GET{group} : "display";
 
-    my $style = LJ::S2::load_style($u->prop('s2_style'));
-    die "Style not found." unless $style && $style->{userid} == $u->id;
+    # make sure there's a style set and load it
+    my $style = LJ::Customize->verify_and_load_style($u);
+
+    # lazy migration of style name
+    LJ::Customize->migrate_current_style($u);
 
     my $ret;
 

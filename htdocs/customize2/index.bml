@@ -28,6 +28,9 @@ body<=
         }
     }
 
+    # make sure there's a style set and load it
+    my $style = LJ::Customize->verify_and_load_style($u);
+
     # lazy migration of style name
     LJ::Customize->migrate_current_style($u);
 

@@ -78,6 +78,25 @@ sub apply_theme {
     $class->implicit_style_create($u, %style);
 }
 
+# if there's no style set, load the default style and set it as the current theme
+# return the current style
+sub verify_and_load_style {
+    my $class = shift;
+    my $u = shift;
+
+    my $style = LJ::S2::load_style($u->prop('s2_style'));
+
+    unless ($style && $style->{'userid'} == $u->{'userid'}) {
+        my $theme = LJ::S2Theme->load_by_uniq($LJ::DEFAULT_STYLE->{theme});
+        $theme = LJ::S2Theme->load_default_of($LJ::DEFAULT_STYLE->{layout}) unless $theme;
+
+        LJ::Customize->apply_theme($u, $theme);
+        $style = LJ::S2::load_style($u->prop('s2_style')); # reload style
+    }
+
+    return $style;
+}
+
 # migrates current style name from wizard-layoutname to wizard-layoutname/themename, if needed
 sub migrate_current_style {
     my $class = shift;
