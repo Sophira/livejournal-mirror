@@ -78,6 +78,25 @@ sub apply_theme {
     $class->implicit_style_create($u, %style);
 }
 
+# migrates current style name from wizard-layoutname to wizard-layoutname/themename, if needed
+sub migrate_current_style {
+    my $class = shift;
+    my $u = shift;
+
+    my $s2style = LJ::S2::load_style($u->prop('s2_style'), skip_layer_load => 1);
+    my $theme = $class->get_current_theme($u);
+
+    my $style_name_old = $theme->old_style_name_for_theme;
+    my $style_name_new = $theme->new_style_name_for_theme;
+
+    # migrate only if there's a need to
+    if ($s2style->{name} eq $style_name_old) {
+        LJ::S2::rename_user_style($u, $s2style->{styleid}, $style_name_new);
+    }
+
+    return;
+}
+
 # wrapper around LJ::cmize::s2_implicit_style_create
 sub implicit_style_create {
     my $class = shift;

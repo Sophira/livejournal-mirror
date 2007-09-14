@@ -28,6 +28,9 @@ body<=
         }
     }
 
+    # lazy migration of style name
+    LJ::Customize->migrate_current_style($u);
+
     my $group = $GET{group} ? $GET{group} : "display";
 
     my $style = LJ::S2::load_style($u->prop('s2_style'));

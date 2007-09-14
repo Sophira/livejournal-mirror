@@ -28,6 +28,9 @@ body<=
         }
     }
 
+    # lazy migration of style name
+    LJ::Customize->migrate_current_style($u);
+
     my $cat = defined $GET{cat} ? $GET{cat} : "";
     my $layoutid = defined $GET{layoutid} ? $GET{layoutid} : 0;
     my $designer = defined $GET{designer} ? $GET{designer} : "";

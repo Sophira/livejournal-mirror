@@ -33,6 +33,11 @@ body<=
 
     LJ::run_hook("alt_customizepage_redirect", getextra => $getextra);
 
+    if ($u->prop('stylesys') == 2) {
+        # lazy migration of style name
+        LJ::Customize->migrate_current_style($u);
+    }
+
     # Return strings
     my $ret; my $saved_msg; my $err_msg;
 

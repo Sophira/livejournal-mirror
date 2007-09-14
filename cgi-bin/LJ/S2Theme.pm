@@ -449,14 +449,28 @@ sub available_to {
     return LJ::S2::can_use_layer($u, $self->uniq) && LJ::S2::can_use_layer($u, $self->layout_uniq);
 }
 
+# wizard-layoutname
+sub old_style_name_for_theme {
+    my $self = shift;
+
+    return "wizard-" . ((split("/", $self->uniq))[0] || $self->layoutid);
+}
+
+# wizard-layoutname/themename
+sub new_style_name_for_theme {
+    my $self = shift;
+
+    return "wizard-" . ($self->uniq || $self->themeid || $self->layoutid);
+}
+
 # find the appropriate styleid for this theme
 # if a style for the layout but not the theme exists, rename it to match the theme
 sub get_styleid_for_theme {
     my $self = shift;
     my $u = shift;
 
-    my $style_name_old = "wizard-" . ((split("/", $self->uniq))[0] || $self->layoutid); # wizard-layoutname
-    my $style_name_new = "wizard-" . ($self->uniq || $self->themeid || $self->layoutid); # wizard-layoutname/themename
+    my $style_name_old = $self->old_style_name_for_theme;
+    my $style_name_new = $self->new_style_name_for_theme;
 
     my $userstyles = LJ::S2::load_user_styles($u);
     foreach my $styleid (keys %$userstyles) {
