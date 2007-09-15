@@ -6,7 +6,7 @@ use Carp qw(croak);
 
 sub ajax { 1 }
 sub authas { 1 }
-sub need_res { qw( stc/widgets/journaltitles.css js/widgets/journaltitles.js ) }
+sub need_res { qw( stc/widgets/journaltitles.css ) }
 
 sub render_body {
     my $class = shift;
@@ -75,22 +75,70 @@ sub js {
         initWidget: function () {
             var self = this;
 
-            DOM.addEventListener($("journaltitle_form"), "submit", function (e) { self.saveTitle(e, "journaltitle") });
-            DOM.addEventListener($("journalsubtitle_form"), "submit", function (e) { self.saveTitle(e, "journalsubtitle") });
-            DOM.addEventListener($("friendspagetitle_form"), "submit", function (e) { self.saveTitle(e, "friendspagetitle") });
+            // store current field values
+            self.journaltitle_value = $("journaltitle").value;
+            self.journalsubtitle_value = $("journalsubtitle").value;
+            self.friendspagetitle_value = $("friendspagetitle").value;
+
+            // show view mode
+            $("journaltitle_view").style.display = "inline";
+            $("journalsubtitle_view").style.display = "inline";
+            $("friendspagetitle_view").style.display = "inline";
+            $("journaltitle_cancel").style.display = "inline";
+            $("journalsubtitle_cancel").style.display = "inline";
+            $("friendspagetitle_cancel").style.display = "inline";
+            $("journaltitle_modify").style.display = "none";
+            $("journalsubtitle_modify").style.display = "none";
+            $("friendspagetitle_modify").style.display = "none";
+
+            // set up edit links
+            DOM.addEventListener($("journaltitle_edit"), "click", function (evt) { self.editTitle(evt, "journaltitle") });
+            DOM.addEventListener($("journalsubtitle_edit"), "click", function (evt) { self.editTitle(evt, "journalsubtitle") });
+            DOM.addEventListener($("friendspagetitle_edit"), "click", function (evt) { self.editTitle(evt, "friendspagetitle") });
+
+            // set up cancel links
+            DOM.addEventListener($("journaltitle_cancel"), "click", function (evt) { self.cancelTitle(evt, "journaltitle") });
+            DOM.addEventListener($("journalsubtitle_cancel"), "click", function (evt) { self.cancelTitle(evt, "journalsubtitle") });
+            DOM.addEventListener($("friendspagetitle_cancel"), "click", function (evt) { self.cancelTitle(evt, "friendspagetitle") });
+
+            // set up save forms
+            DOM.addEventListener($("journaltitle_form"), "submit", function (evt) { self.saveTitle(evt, "journaltitle") });
+            DOM.addEventListener($("journalsubtitle_form"), "submit", function (evt) { self.saveTitle(evt, "journalsubtitle") });
+            DOM.addEventListener($("friendspagetitle_form"), "submit", function (evt) { self.saveTitle(evt, "friendspagetitle") });
         },
-        saveTitle: function (e, id) {
+        editTitle: function (evt, id) {
+            $(id + "_modify").style.display = "inline";
+            $(id + "_view").style.display = "none";
+
+            Event.stop(evt);
+        },
+        cancelTitle: function (evt, id) {
+            $(id + "_modify").style.display = "none";
+            $(id + "_view").style.display = "inline";
+
+            // reset appropriate field to default
+            if (id == "journaltitle") {
+                $("journaltitle").value = this.journaltitle_value;
+            } else if (id == "journalsubtitle") {
+                $("journalsubtitle").value = this.journalsubtitle_value;
+            } else if (id == "friendspagetitle") {
+                $("friendspagetitle").value = this.friendspagetitle_value;
+            }
+
+            Event.stop(evt);
+        },
+        saveTitle: function (evt, id) {
             this.doPostAndUpdateContent({
                 which_title: id,
                 title_value: $(id).value
             });
-            Event.stop(e);
+
+            Event.stop(evt);
             Customize.elementHourglass($("save_btn_" + id));
         },
         onRefresh: function (data) {
             Customize.hideHourglass();
             this.initWidget();
-            JournalTitle.init();
         }
     ];    
 }
