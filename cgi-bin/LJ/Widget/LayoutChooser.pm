@@ -134,6 +134,8 @@ sub js {
         },
         applyLayout: function (evt, form) {
             var given_layout_choice = form.Widget_LayoutChooser_layout_choice.value;
+            $("layout_btn_" + given_layout_choice).disabled = true;
+            DOM.addClassName($("layout_btn_" + given_layout_choice), "layout-button-disabled");
 
             this.doPostAndUpdateContent({
                 layout_choice: given_layout_choice,
@@ -141,15 +143,13 @@ sub js {
                 show_sidebar_prop: form.Widget_LayoutChooser_show_sidebar_prop.value,
                 ad_layout_id: $('ad_layout_id').value
             });
-            Event.stop(evt);
 
-            Customize.elementHourglass($("layout_btn_" + given_layout_choice));
+            Event.stop(evt);
         },
         onData: function (data) {
             LiveJournal.run_hook("update_other_widgets", "LayoutChooser");
         },
         onRefresh: function (data) {
-            Customize.hideHourglass();
             this.initWidget();
         }
     ];

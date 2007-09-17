@@ -128,16 +128,16 @@ sub js {
             Event.stop(evt);
         },
         saveTitle: function (evt, id) {
+            $("save_btn_" + id).disabled = true;
+
             this.doPostAndUpdateContent({
                 which_title: id,
                 title_value: $(id).value
             });
 
             Event.stop(evt);
-            Customize.elementHourglass($("save_btn_" + id));
         },
         onRefresh: function (data) {
-            Customize.hideHourglass();
             this.initWidget();
         }
     ];    

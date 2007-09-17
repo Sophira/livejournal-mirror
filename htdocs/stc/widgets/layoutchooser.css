@@ -6,6 +6,9 @@
     border-bottom: 2px solid #447C33;
     border-right: 2px solid #447C33;
 }
+.layout-item .layout-button-disabled {
+    background: #88CD73;
+}
 .layout-item {
     position: relative;
     float: left;

@@ -330,14 +330,15 @@ sub js {
         applyTheme: function (evt, form) {
             var given_themeid = form.Widget_ThemeChooser_apply_themeid.value;
             var given_layoutid = form.Widget_ThemeChooser_apply_layoutid.value;
+            $("theme_btn_" + given_layoutid + given_themeid).disabled = true;
+            DOM.addClassName($("theme_btn_" + given_layoutid + given_themeid), "theme-button-disabled");
 
             this.doPost({
                 apply_themeid: given_themeid,
                 apply_layoutid: given_layoutid
             });
-            Event.stop(evt);
 
-            Customize.elementHourglass($("theme_btn_" + given_layoutid + given_themeid));
+            Event.stop(evt);
         },
         onData: function (data) {
             Customize.ThemeNav.updateContent({
@@ -360,7 +361,6 @@ sub js {
             Event.stop(evt);
         },
         onRefresh: function (data) {
-            Customize.hideHourglass();
             this.initWidget();
         }
     ];

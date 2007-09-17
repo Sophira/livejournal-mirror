@@ -69,6 +69,9 @@
     border-bottom: 2px solid #447C33;
     border-right: 2px solid #447C33;
 }
+.theme-item .theme-button-disabled {
+    background: #88CD73;
+}
 .theme-item .theme-icons {
     position: absolute;
     left: 13px;
