@@ -110,6 +110,19 @@ sub js {
             $(id + "_modify").style.display = "inline";
             $(id + "_view").style.display = "none";
 
+            // cancel any other titles that are being edited since
+            // we only want one title in edit mode at a time
+            if (id == "journaltitle") {
+                this.cancelTitle(evt, "journalsubtitle");
+                this.cancelTitle(evt, "friendspagetitle");
+            } else if (id == "journalsubtitle") {
+                this.cancelTitle(evt, "journaltitle");
+                this.cancelTitle(evt, "friendspagetitle");
+            } else if (id == "friendspagetitle") {
+                this.cancelTitle(evt, "journaltitle");
+                this.cancelTitle(evt, "journalsubtitle");
+            }
+
             Event.stop(evt);
         },
         cancelTitle: function (evt, id) {
