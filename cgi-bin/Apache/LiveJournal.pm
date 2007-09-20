@@ -1315,6 +1315,11 @@ sub journal_content
     my $before_body_close = "";
     LJ::run_hooks("insert_html_before_body_close", \$before_body_close);
     LJ::run_hooks("insert_html_before_journalctx_body_close", \$before_body_close);
+    {
+        my $journalu = LJ::load_user($user);
+        my $graphicpreviews_obj = LJ::graphicpreviews_obj();
+        $before_body_close .= $graphicpreviews_obj->render($journalu);
+    }
     $html =~ s!</body>!$before_body_close</body>! if $before_body_close;
 
     my $do_gzip = $LJ::DO_GZIP && $LJ::OPTMOD_ZLIB;
