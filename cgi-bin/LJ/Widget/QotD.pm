@@ -96,8 +96,7 @@ sub qotd_display_embed {
             }
 
             my $qid = $q->{qid};
-            my $answers_link = LJ::run_hook('show_qotd_extra_text', $remote) ? 
-                qq{<a href="$LJ::SITEROOT/misc/latestqotd.bml?qid=$qid">View other answers</a>} : '';
+            my $answers_link = qq{<a href="$LJ::SITEROOT/misc/latestqotd.bml?qid=$qid">View other answers</a>};
 
             my $answer_link = "";
             unless ($opts{no_answer_link}) {
@@ -143,19 +142,20 @@ sub qotd_display {
                     if $from_u;
             }
 
+            $ret .= "<table><tr><td>";
+            my $viewanswers = " <br /><a href=\"$LJ::SITEROOT/misc/latestqotd.bml?qid=$q->{qid}\">View Answers</a>";
+
+            $ret .= "$text " .
+                $class->answer_link($q, user => $opts{user}, button_disabled => $opts{form_disabled}) .
+                "$viewanswers";
             if ($q->{img_url}) {
                 if ($q->{link_url}) {
-                    $ret .= "<a href='$q->{link_url}'><img src='$q->{img_url}' class='qotd-img' alt='' /></a>";
+                    $ret .= "</td><td><a href='$q->{link_url}'><img src='$q->{img_url}' class='qotd-img' alt='' /></a>";
                 } else {
-                    $ret .= "<img src='$q->{img_url}' class='qotd-img' alt='' />";
+                    $ret .= "</td><td><img src='$q->{img_url}' class='qotd-img' alt='' />";
                 }
             }
-            my $viewanswers = LJ::run_hook('show_qotd_extra_text', $remote) ?
-                " <br /><a href=\"$LJ::SITEROOT/misc/latestqotd.bml?qid=$q->{qid}\">View Answers</a>" : '';
-
-            $ret .= "<p>$text " .
-                $class->answer_link($q, user => $opts{user}, button_disabled => $opts{form_disabled}) .
-                "$viewanswers</p>";
+            $ret .= "</td></tr></table>";
 
             my $suggest = "<a href='mailto:feedback\@livejournal.com'>Suggestions</a>";
             $ret .= "<p class='detail'><span class='suggestions'>$suggest</span>$from_text$extra_text&nbsp;</p>";
