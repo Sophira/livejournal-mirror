@@ -31,9 +31,4 @@ sub ident {
     return $self->{ident};
 }
 
-sub ident {
-    my $self = shift;
-    return $self->{ident};
-}
-
 1;

@@ -10,6 +10,8 @@ package LJ::AdCall;
 
 use strict;
 
+LJ::ModuleLoader->autouse_subclasses('LJ::AdCall');
+
 sub new {
     my $class = shift;
     my %opts  = @_;
@@ -30,7 +32,9 @@ sub new {
         return $self;
     }
 
-    bless $self, $class;
+    # use configured adcall_class, or fall back to stub
+    my $adcall_class = $LJ::ADCALL_CLASS || $class;
+    bless $self, $adcall_class;
     return $self;
 }
 
@@ -47,19 +51,13 @@ sub unit {
 sub render {
     my $self = shift;
 
-    my $adcall_url = $self->adcall_url;
-
-    return $self->render_url($adcall_url);
+    return '';
 }
 
-sub construct_url {
+sub adcall_url {
     my $self = shift;
 
-}
-
-sub render_url {
-    my $self = shift;
-
+    return '';
 }
 
 sub should_render {
@@ -73,3 +71,5 @@ sub need_res {
 
     return qw();
 }
+
+1;

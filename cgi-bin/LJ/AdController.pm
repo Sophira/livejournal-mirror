@@ -24,15 +24,16 @@ package LJ::AdController;
 #
 # my $adcall = LJ::AdCall->new($u, $adunit);
 #
-# my $adconfig = LJ::AdConfig->new($u);
+# my $adconfig = LJ::AdConf->new($u);
 # $adconfig->want_for_page;
 
 use strict;
 use Class::Autouse qw(
-                      LJ::AdPage
-                      LJ::AdLocation
-                      LJ::AdUnit
                       LJ::AdCall
+                      LJ::AdLocation
+                      LJ::AdPage
+                      LJ::AdPolicy
+                      LJ::AdUnit
                       );
 
 sub new {
@@ -77,10 +78,9 @@ sub render_adcalls {
     my $adlocation = $opts{location};
     
     my $adpage = $self->page;
-    my @adunits = $adpage->adunits_for_location($adlocation);
 
     # build adcalls
-    my @adcalls = LJ::AdCall->new_for_adunits($self->for_u, adunits => \@adunits);
+    my @adcalls = $adpage->adcalls_for_location($adlocation);
 
     my $ret = "";
     foreach my $adcall (@adcalls) {
@@ -90,17 +90,12 @@ sub render_adcalls {
     return $ret;
 }
 
-# locations:  [ $adlocation1, $adlocation2 ]
-# want_units: { $adlocation => $want_ct }
-sub allocate_adunits {
-    my $class = shift;
-    my %opts = @_;
+sub should_show_ads {
+    my $self = shift;
 
-    my $locations  = delete $opts{locations}  || [];
-    my $want_units = delete $opts{want_units} || {};
-
-    my %alloc_map = (); # location > [ unit1, unit2 ]
-
+    my $adpage = $self->page;
+    my $adpolicy = LJ::AdPolicy->new;
+    return $adpolicy->should_show_ads($adpage)? 1 : 0;
 }
 
 1;

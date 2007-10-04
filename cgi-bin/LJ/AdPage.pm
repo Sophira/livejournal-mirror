@@ -43,6 +43,33 @@ sub is_valid_ident {
     return $self->conf ? 1 : 0;
 }
 
+sub context {
+    my $self = shift;
+
+    my $context = $self->conf('context');
+    unless ($context eq 'app' || $context eq 'journal') {
+        die "invalid context for page: $context";
+    }
+
+    return $context;
+}
+
+sub target {
+    my $self = shift;
+
+    my $target = $self->conf('target');
+    unless ($target eq 'user' || $target eq 'journal') {
+        die "invalid target for page: $target";
+    }
+
+    return $target;
+}
+
+sub show_logged_out {
+    my $self = shift;
+    return $self->conf('show_logged_out') ? 1 : 0;
+}
+
 sub supported_locations {
     my $self = shift;
 
@@ -116,7 +143,6 @@ sub build_adunit_map {
             if ($term_str eq $want_str) {
                 return $self->adunit_map($adlocation->ident => $accept_term);
             }
-
         }
     }
 
@@ -184,7 +210,7 @@ sub adunits_for_location {
 
     my $adunit_map = $self->adunit_map;
     my $for_u = $self->for_u;
-    return map { LJ::AadUnit->new( for_u => $for_u, ident => $_ ) } @{$adunit_map->{$adlocation} || []};
+    return map { LJ::AdUnit->new( for_u => $for_u, ident => $_ ) } @{$adunit_map->{$adlocation} || []};
 }
 
 sub adcalls_for_location {
@@ -193,15 +219,16 @@ sub adcalls_for_location {
 
     my @adunits = $self->adunits_for_location($adlocation);
 
-    my $ret = "";
+    my @adcalls = ();
     foreach my $adunit (@adunits) {
         my $adcall = LJ::AdCall->new
             ( page => $self, unit => $adunit );
+        #print "adcall: $adcall\n";
 
-        $ret .= $adcall->render;
+        push @adcalls, $adcall;
     }
 
-    return $ret;
+    return @adcalls;
 }
 
 sub conf {
