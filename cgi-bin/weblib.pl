@@ -2918,7 +2918,7 @@ LOGIN_BAR
         $ret .= "</td>";
     }
 
-    $ret .= LJ::run_hook('add_extra_cells_in_controlstrip');
+    LJ::run_hooks('add_extra_cells_in_controlstrip', \$ret);
 
     return "<table id='lj_controlstrip' cellpadding='0' cellspacing='0'><tr valign='top'>$ret</tr></table>";
 }
