@@ -6339,7 +6339,7 @@ sub add_friend
 
             push @jobs, TheSchwartz::Job->new(
                                               funcname => "LJ::Worker::FriendChange",
-                                              arg      => [$fid, 'add', $userid],
+                                              arg      => [$userid, 'add', $fid],
                                               ) unless $LJ::DISABLED{'friendchange-schwartz'};
 
             $sclient->insert_jobs(@jobs) if @jobs;
@@ -6393,7 +6393,7 @@ sub remove_friend {
 
             push @jobs, TheSchwartz::Job->new(
                                               funcname => "LJ::Worker::FriendChange",
-                                              arg      => [$fid, 'del', $userid],
+                                              arg      => [$userid, 'del', $fid],
                                               ) unless $LJ::DISABLED{'friendchange-schwartz'};
 
             $sclient->insert_jobs(@jobs);
