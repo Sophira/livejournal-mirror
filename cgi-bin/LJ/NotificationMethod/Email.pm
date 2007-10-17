@@ -4,8 +4,7 @@ use strict;
 use Carp qw/ croak /;
 use base 'LJ::NotificationMethod';
 
-use lib "$ENV{LJHOME}/cgi-bin";
-require "weblib.pl";
+require "$ENV{LJHOME}/cgi-bin/weblib.pl";
 
 sub can_digest { 1 };
 
