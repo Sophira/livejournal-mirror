@@ -246,26 +246,59 @@ sub print_paging {
     my $url = "$LJ::SITEROOT/customize/$getextra$getsep$q_string$q_sep";
 
     my $ret;
-    if ($page - 1 >= 1) {
-        $ret .= "<li class='first'><a href='${url}page=" . ($page - 1) . "' class='theme-page'>&lt;</a></li>";
-    }
-    if ($page - $page_padding > 1) {
-        $ret .= "<li><a href='${url}page=1' class='theme-page'>1</a></li><li>&hellip;</li>";
-    }
-    for (my $i = $start_page; $i <= $end_page; $i++) {
-        my $li_class = " class='on'" if $i == $page;
-        if ($i == $page) {
-            $ret .= "<li$li_class>$i</li>";
+
+    $ret .= "<div class='theme-paging theme-paging-$location'>";
+    unless ($page == 1 && $max_page == 1) {
+        if ($page - 1 >= 1) {
+            $ret .= "<span class='item'><a href='${url}page=1' class='theme-page'>&lt;&lt;</a></span>";
+            $ret .= "<span class='item'><a href='${url}page=" . ($page - 1) . "' class='theme-page'>&lt;</a></span>";
         } else {
-            $ret .= "<li$li_class><a href='${url}page=$i' class='theme-page'>$i</a></li>";
+            $ret .= "<span class='item'>&lt;&lt;</span>";
+            $ret .= "<span class='item'>&lt;</span>";
         }
+
+        my @pages;
+        foreach my $pagenum (1 .. $max_page) {
+            push @pages, $pagenum, $pagenum;
+        }
+        my $currentpage = LJ::Widget::ThemeNav->html_select(
+            { name => "page",
+            id => "page_dropdown_$location",
+            selected => $page, },
+            @pages,
+        );
+
+        $ret .= $class->start_form;
+        $ret .= "<span class='item'>" . $class->ml('widget.themechooser.page') . " ";
+        $ret .= $class->ml('widget.themechooser.page.maxpage', { currentpage => $currentpage, maxpage => $max_page }) . " ";
+        $ret .= LJ::Widget::ThemeNav->html_submit( page_dropdown_submit => $class->ml('widget.themechooser.btn.page'), { id => "page_dropdown_btn_$location" }) . "</span>";
+        $ret .= $class->end_form;
+
+        if ($page + 1 <= $max_page) {
+            $ret .= "<span class='item'><a href='${url}page=" . ($page + 1) . "' class='theme-page'>&gt;</a></span>";
+            $ret .= "<span class='item'><a href='${url}page=$max_page' class='theme-page'>&gt;&gt;</a></span>";
+        } else {
+            $ret .= "<span class='item'>&gt;</span>";
+            $ret .= "<span class='item'>&gt;&gt;</span>";
+        }
+
+        $ret .= "<span class='item'>|</span>";
     }
-    if ($page + $page_padding < $max_page) {
-        $ret .= "<li>&hellip;</li><li><a href='${url}page=$max_page' class='theme-page'>$max_page</a></li>";
-    }
-    if ($page + 1 <= $max_page) {
-        $ret .= "<li class='last'><a href='${url}page=" . ($page + 1) . "' class='theme-page'>&gt;</a></li>";
-    }
+
+    my @shows = qw( 6 6 12 12 24 24 48 48 96 96 all All );
+
+    $ret .= $class->start_form;
+    $ret .= "<span class='item'>" . $class->ml('widget.themechooser.show') . " ";
+    $ret .= LJ::Widget::ThemeNav->html_select(
+        { name => "show",
+        id => "show_dropdown_$location",
+        selected => $show, },
+        @shows,
+    ) . " ";
+    $ret .= LJ::Widget::ThemeNav->html_submit( show_dropdown_submit => $class->ml('widget.themechooser.btn.show'), { id => "show_dropdown_btn_$location" }) . "</span>";
+    $ret .= $class->end_form;
+
+    $ret .= "</div>";
 
     return $ret;
 }
