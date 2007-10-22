@@ -27,13 +27,14 @@ sub render_body {
     my $search = defined $opts{search} ? $opts{search} : "";
     my $filter_available = defined $opts{filter_available} ? $opts{filter_available} : 0;
     my $page = defined $opts{page} ? $opts{page} : 1;
+    my $show = defined $opts{show} ? $opts{show} : 12;
 
     my $filterarg = $filter_available ? "&filter_available=1" : "";
+    my $showarg = $show != 12 ? "&show=$opts{show}" : "";
 
     my $viewing_featured = !$cat && !$layoutid && !$designer;
 
     my %cats = LJ::Customize->get_cats;
-    my $num_per_page = 12;
     my $ret .= "<div class='theme-selector-content pkg'>";
 
     my @getargs;
@@ -65,6 +66,10 @@ sub render_body {
         @themes = LJ::S2Theme->filter_available($u, @themes);
     }
 
+    if ($show != 12) {
+        push @getargs, "show=$show";
+    }
+
     @themes = LJ::Customize->remove_duplicate_themes(@themes);
 
     # sort themes with custom at the end, then alphabetically
@@ -89,19 +94,9 @@ sub render_body {
     }
 
     my $current_theme = LJ::Customize->get_current_theme($u);
-    my $index_of_first_theme = $num_per_page * ($page - 1);
-    my $index_of_last_theme = ($num_per_page * $page) - 1;
+    my $index_of_first_theme = $show ne "all" ? $show * ($page - 1) : 0;
+    my $index_of_last_theme = $show ne "all" ? ($show * $page) - 1 : scalar @themes - 1;
     my @themes_this_page = @themes[$index_of_first_theme..$index_of_last_theme];
-
-    $ret .= "<ul class='theme-paging theme-paging-top nostyle'>";
-    $ret .= $class->print_paging(
-        themes => \@themes,
-        num_per_page => $num_per_page,
-        page => $page,
-        getargs => \@getargs,
-        getextra => $getextra,
-    );
-    $ret .= "</ul>";
 
     if ($cat eq "all") {
         $ret .= "<h3>" . $class->ml('widget.themechooser.header.all') . "</h3>";
@@ -119,6 +114,15 @@ sub render_body {
     } else { # category is "featured"
         $ret .= "<h3>$cats{featured}->{text}</h3>";
     }
+
+    $ret .= $class->print_paging(
+        themes => \@themes,
+        show => $show,
+        page => $page,
+        getargs => \@getargs,
+        getextra => $getextra,
+        location => "top",
+    );
 
     $ret .= "<div class='themes-area'>";
     foreach my $theme (@themes_this_page) {
@@ -174,11 +178,11 @@ sub render_body {
         $ret .= "<img src='$LJ::IMGPREFIX/customize/preview-theme.gif' class='theme-preview-image' /></a>";
         $ret .= $theme_icons;
 
-        my $layout_link = "<a href='$LJ::SITEROOT/customize/$getextra${getsep}layoutid=" . $theme->layoutid . "$filterarg' class='theme-layout'><em>$theme_layout_name</em></a>";
-        my $special_link_opts = "href='$LJ::SITEROOT/customize/$getextra${getsep}cat=special$filterarg' class='theme-cat'";
+        my $layout_link = "<a href='$LJ::SITEROOT/customize/$getextra${getsep}layoutid=" . $theme->layoutid . "$filterarg$showarg' class='theme-layout'><em>$theme_layout_name</em></a>";
+        my $special_link_opts = "href='$LJ::SITEROOT/customize/$getextra${getsep}cat=special$filterarg$showarg' class='theme-cat'";
         $ret .= "<p class='theme-desc'>";
         if ($theme_designer) {
-            my $designer_link = "<a href='$LJ::SITEROOT/customize/$getextra${getsep}designer=" . LJ::eurl($theme_designer) . "$filterarg' class='theme-designer'>$theme_designer</a>";
+            my $designer_link = "<a href='$LJ::SITEROOT/customize/$getextra${getsep}designer=" . LJ::eurl($theme_designer) . "$filterarg$showarg' class='theme-designer'>$theme_designer</a>";
             if ($theme_types{special}) {
                 $ret .= $class->ml('widget.themechooser.theme.specialdesc', {'aopts' => $special_link_opts, 'designer' => $designer_link});
             } else {
@@ -205,19 +209,18 @@ sub render_body {
         }
         $ret .= "</div><!-- end .theme-item -->";
     }
-    $ret .= "</div>";
+    $ret .= "</div><!-- end .themes-area --->";
 
-    $ret .= "<ul class='theme-paging theme-paging-bottom nostyle'>";
+    $ret .= "</div><!-- end .theme-selector-content -->";
+
     $ret .= $class->print_paging(
         themes => \@themes,
-        num_per_page => $num_per_page,
+        show => $show,
         page => $page,
         getargs => \@getargs,
         getextra => $getextra,
+        location => "bottom",
     );
-    $ret .= "</ul>";
-
-    $ret .= "</div><!-- end .theme-selector-content -->";
 
     return $ret;
 }
@@ -228,14 +231,10 @@ sub print_paging {
 
     my $themes = $opts{themes};
     my $page = $opts{page};
-    my $num_per_page = $opts{num_per_page};
+    my $show = $opts{show};
+    my $location = $opts{location};
 
-    my $max_page = POSIX::ceil(scalar(@$themes) / $num_per_page) || 1;
-    return "" if $page == 1 && $max_page == 1;
-
-    my $page_padding = 2; # number of pages to show on either side of the current page
-    my $start_page = $page - $page_padding > 1 ? $page - $page_padding : 1;
-    my $end_page = $page + $page_padding < $max_page ? $page + $page_padding : $max_page;
+    my $max_page = $show ne "all" ? POSIX::ceil(scalar(@$themes) / $show) || 1 : 1;
 
     my $getargs = $opts{getargs};
     my $getextra = $opts{getextra};
@@ -301,6 +300,18 @@ sub js {
         initWidget: function () {
             var self = this;
 
+            if ($('page_dropdown_btn_top'))
+                $('page_dropdown_btn_top').style.display = "none";
+
+            if ($('page_dropdown_btn_bottom'))
+                $('page_dropdown_btn_bottom').style.display = "none";
+
+            if ($('show_dropdown_btn_top'))
+                $('show_dropdown_btn_top').style.display = "none";
+
+            if ($('show_dropdown_btn_bottom'))
+                $('show_dropdown_btn_bottom').style.display = "none";
+
             var filter_links = DOM.getElementsByClassName(document, "theme-cat");
             filter_links = filter_links.concat(DOM.getElementsByClassName(document, "theme-layout"));
             filter_links = filter_links.concat(DOM.getElementsByClassName(document, "theme-designer"));
@@ -316,7 +327,7 @@ sub js {
                 } else {
                     for (var arg in getArgs) {
                         if (!getArgs.hasOwnProperty(arg)) continue;
-                        if (arg == "authas" || arg == "filter_available") continue;
+                        if (arg == "authas" || arg == "filter_available" || arg == "show") continue;
                         DOM.addEventListener(filter_link, "click", function (evt) { Customize.ThemeNav.filterThemes(evt, arg, getArgs[arg]) });
                         break;
                     }
@@ -334,6 +345,12 @@ sub js {
             preview_links.forEach(function (preview_link) {
                 DOM.addEventListener(preview_link, "click", function (evt) { self.previewTheme(evt, preview_link.href) });
             });
+
+            // add event listener to the page and show dropdowns
+            DOM.addEventListener($('page_dropdown_top'), "change", function (evt) { Customize.ThemeNav.filterThemes(evt, "page", $('page_dropdown_top').value) });
+            DOM.addEventListener($('page_dropdown_bottom'), "change", function (evt) { Customize.ThemeNav.filterThemes(evt, "page", $('page_dropdown_bottom').value) });
+            DOM.addEventListener($('show_dropdown_top'), "change", function (evt) { Customize.ThemeNav.filterThemes(evt, "show", $('show_dropdown_top').value) });
+            DOM.addEventListener($('show_dropdown_bottom'), "change", function (evt) { Customize.ThemeNav.filterThemes(evt, "show", $('show_dropdown_bottom').value) });
         },
         applyTheme: function (evt, form) {
             var given_themeid = form["Widget[ThemeChooser]_apply_themeid"].value + "";
@@ -357,10 +374,12 @@ sub js {
                 search: Customize.search,
                 filter_available: Customize.filter_available,
                 page: Customize.page,
+                show: Customize.show,
                 theme_chooser_id: $('theme_chooser_id').value
             });
             Customize.CurrentTheme.updateContent({
-                filter_available: Customize.filter_available
+                filter_available: Customize.filter_available,
+                show: Customize.show
             });
             Customize.LayoutChooser.updateContent({
                 ad_layout_id: $('ad_layout_id').value
