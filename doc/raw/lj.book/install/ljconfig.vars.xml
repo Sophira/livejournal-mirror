@@ -3,10 +3,9 @@
   <para>
     Each <literal>$LJ::</literal> variable is explained below.  There are two types:
     user-configurable ones and those that are automatically set and interesting only
-    to people extending the &lj; code.
+    to people extending the LiveJournal code.
   </para>
 
   &lj.install.ljconfig.vars.gen;
   
 </section>
-

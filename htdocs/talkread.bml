@@ -334,33 +334,20 @@ my $old_url = 0;
  ###
  if ($item->{'subject'}) {
      my $subject = $item->{'subject'};
-     if ($GET{'nohtml'}) {
-         # quote all non-LJ tags
-         $subject =~ s{<(?!/?lj)(.*?)>} {&lt;$1&gt;}gi;
-     }
      LJ::CleanHTML::clean_subject(\$subject);
      BML::ebml(\$subject);
      $ret .= "<font face='Arial,Helvetica' size='+1'><i><b>$subject</b></i></font><br />\n";
  }
 
-
-  if ($GET{'nohtml'}) {
-      # quote all non-LJ tags
-      $event =~ s{<(?!/?lj)(.*?)>} {&lt;$1&gt;}gi;
-  }
  $ret .= $event;
  $ret .= "</div>";
 
  $ret .= "<br style='clear: both' /><hr width='100%' size='2' align='center' />";
 
- my $qotd = 0;
- $qotd = $entry->is_special_qotd_entry if $entry;
-
  my $ad = LJ::ad_display(type   => 'journal',
                          orient => 'Journal-Indiv-Entry',
                          user   => $u->user,
                          use_wrapper => 0,
-                         interests_extra => $qotd ? "qotd" : "",
                          );
 
  if ($ad) {
@@ -609,12 +596,7 @@ my $old_url = 0;
                                                               'anon_comment' => (!$pu || $pu->{'journaltype'} eq 'I'),
                                                           });
              BML::ebml(\$post->{'body'});
-             my $event = $post->{'body'};
-             if ($GET{'nohtml'}) {
-                 # quote all non-LJ tags
-                 $event =~ s{<(?!/?lj)(.*?)>} {&lt;$1&gt;}gi;
-             }
-             $ret .= $event;
+             $ret .= $post->{'body'};
 
              $ret .= "<p style='margin: 0.7em 0 0.2em 0'><font size='-2'>";
 

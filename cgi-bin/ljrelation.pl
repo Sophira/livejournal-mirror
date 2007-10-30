@@ -30,7 +30,7 @@ sub is_friend
 # <LJFUNC>
 # name: LJ::is_banned
 # des: Checks to see if a user is banned from a journal.
-# returns: boolean; 1 if "user" is banned from "journal"
+# returns: boolean; 1 iff "user" is banned from "journal"
 # args: user, journal
 # des-user: User hashref or userid.
 # des-journal: Journal hashref or userid.
@@ -80,12 +80,11 @@ sub get_groupmask
 
 # <LJFUNC>
 # name: LJ::get_reluser_id
-# des: for [dbtable[reluser2]], numbers 1 - 31999 are reserved for
-#      livejournal stuff, whereas numbers 32000-65535 are used for local sites.
-# info: If you wish to add your own hooks to this, you should define a
-#       hook "get_reluser_id" in ljlib-local.pl. No reluser2 [special[reluserdefs]]
-#        types can be a single character, those are reserved for
-#        the [dbtable[reluser]] table, so we don't have namespace problems.
+# des: for reluser2, numbers 1 - 31999 are reserved for livejournal stuff, whereas
+#       numbers 32000-65535 are used for local sites.  if you wish to add your
+#       own hooks to this, you should define a hook "get_reluser_id" in ljlib-local.pl
+#       no reluser2 types can be a single character, those are reserved for the
+#       reluser table so we don't have namespace problems.
 # args: type
 # des-type: the name of the type you're trying to access, e.g. "hide_comm_assoc"
 # returns: id of type, 0 means it's not a reluser2 type
@@ -108,8 +107,8 @@ sub get_reluser_id {
 #      which user 'userid' participates on the left side (is the source of the
 #      relationship).
 # args: db?, userid, type
-# des-userid: userid or a user hash to load relationship information for.
-# des-type: type of the relationship
+# arg-userid: userid or a user hash to load relationship information for.
+# arg-type: type of the relationship
 # returns: reference to an array of userids
 # </LJFUNC>
 sub load_rel_user
@@ -137,11 +136,11 @@ sub load_rel_user
 # name: LJ::load_rel_user_cache
 # des: Loads user relationship information of the type 'type' where user
 #      'targetid' participates on the left side (is the source of the relationship)
-#      trying memcache first.  The results from this sub should be
-#      <strong>treated as inaccurate and out of date</strong>.
+#      trying memcache first.  The results from this sub should be TREATED AS
+#      INACCURATE AND OUT OF DATE.
 # args: userid, type
-# des-userid: userid or a user hash to load relationship information for.
-# des-type: type of the relationship
+# arg-userid: userid or a user hash to load relationship information for.
+# arg-type: type of the relationship
 # returns: reference to an array of userids
 # </LJFUNC>
 sub load_rel_user_cache
@@ -172,8 +171,8 @@ sub load_rel_user_cache
 #      which user 'targetid' participates on the right side (is the target of the
 #      relationship).
 # args: db?, targetid, type
-# des-targetid: userid or a user hash to load relationship information for.
-# des-type: type of the relationship
+# arg-targetid: userid or a user hash to load relationship information for.
+# arg-type: type of the relationship
 # returns: reference to an array of userids
 # </LJFUNC>
 sub load_rel_target
@@ -199,11 +198,11 @@ sub load_rel_target
 
 # <LJFUNC>
 # name: LJ::_get_rel_memcache
-# des: Helper function: returns memcached value for a given (userid, targetid, type) triple, if valid.
+# des: Helper function: returns memcached value for a given (userid, targetid, type) triple, if valid
 # args: userid, targetid, type
-# des-userid: source userid, nonzero
-# des-targetid: target userid, nonzero
-# des-type: type (reluser) or typeid (rel2) of the relationship
+# arg-userid: source userid, nonzero
+# arg-targetid: target userid, nonzero
+# arg-type: type (reluser) or typeid (rel2) of the relationship
 # returns: undef on failure, 0 or 1 depending on edge existence
 # </LJFUNC>
 sub _get_rel_memcache {
@@ -242,9 +241,9 @@ sub _get_rel_memcache {
 # name: LJ::_set_rel_memcache
 # des: Helper function: sets memcache values for a given (userid, targetid, type) triple
 # args: userid, targetid, type
-# des-userid: source userid, nonzero
-# des-targetid: target userid, nonzero
-# des-type: type (reluser) or typeid (rel2) of the relationship
+# arg-userid: source userid, nonzero
+# arg-targetid: target userid, nonzero
+# arg-type: type (reluser) or typeid (rel2) of the relationship
 # returns: 1 on success, undef on failure
 # </LJFUNC>
 sub _set_rel_memcache {
@@ -275,9 +274,9 @@ sub _set_rel_memcache {
 # name: LJ::check_rel
 # des: Checks whether two users are in a specified relationship to each other.
 # args: db?, userid, targetid, type
-# des-userid: source userid, nonzero; may also be a user hash.
-# des-targetid: target userid, nonzero; may also be a user hash.
-# des-type: type of the relationship
+# arg-userid: source userid, nonzero; may also be a user hash.
+# arg-targetid: target userid, nonzero; may also be a user hash.
+# arg-type: type of the relationship
 # returns: 1 if the relationship exists, 0 otherwise
 # </LJFUNC>
 sub check_rel
@@ -329,9 +328,9 @@ sub check_rel
 # name: LJ::set_rel
 # des: Sets relationship information for two users.
 # args: dbs?, userid, targetid, type
-# des-userid: source userid, or a user hash
-# des-targetid: target userid, or a user hash
-# des-type: type of the relationship
+# arg-userid: source userid, or a user hash
+# arg-targetid: target userid, or a user hash
+# arg-type: type of the relationship
 # returns: 1 if set succeeded, otherwise undef
 # </LJFUNC>
 sub set_rel
@@ -374,12 +373,12 @@ sub set_rel
 # <LJFUNC>
 # name: LJ::set_rel_multi
 # des: Sets relationship edges for lists of user tuples.
-# args: edges
-# des-edges: array of arrayrefs of edges to set: [userid, targetid, type]
-#             Where:
-#              userid: source userid, or a user hash;
-#               targetid: target userid, or a user hash;
-#                type: type of the relationship
+# args: @edges
+# arg-edges: array of arrayrefs of edges to set: [userid, targetid, type]
+#            Where:
+#               userid: source userid, or a user hash
+#               targetid: target userid, or a user hash
+#               type: type of the relationship
 # returns: 1 if all sets succeeded, otherwise undef
 # </LJFUNC>
 sub set_rel_multi {
@@ -389,9 +388,9 @@ sub set_rel_multi {
 # <LJFUNC>
 # name: LJ::clear_rel_multi
 # des: Clear relationship edges for lists of user tuples.
-# args: edges
-# des-edges: array of arrayrefs of edges to clear: [userid, targetid, type]
-#             Where:
+# args: @edges
+# arg-edges: array of arrayrefs of edges to clear: [userid, targetid, type]
+#            Where:
 #               userid: source userid, or a user hash
 #               targetid: target userid, or a user hash
 #               type: type of the relationship
@@ -527,15 +526,14 @@ sub _mod_rel_multi
 # <LJFUNC>
 # name: LJ::clear_rel
 # des: Deletes a relationship between two users or all relationships of a particular type
-#      for one user, on either side of the relationship.
-# info: One of userid,targetid -- bit not both -- may be '*'. In that case,
-#       if, say, userid is '*', then all relationship edges with target equal to
-#       targetid and of the specified type are deleted.
-#       If both userid and targetid are numbers, just one edge is deleted.
+#      for one user, on either side of the relationship. One of userid,targetid -- bit not
+#      both -- may be '*'. In that case, if, say, userid is '*', then all relationship
+#      edges with target equal to targetid and of the specified type are deleted.
+#      If both userid and targetid are numbers, just one edge is deleted.
 # args: dbs?, userid, targetid, type
-# des-userid: source userid, or a user hash, or '*'
-# des-targetid: target userid, or a user hash, or '*'
-# des-type: type of the relationship
+# arg-userid: source userid, or a user hash, or '*'
+# arg-targetid: target userid, or a user hash, or '*'
+# arg-type: type of the relationship
 # returns: 1 if clear succeeded, otherwise undef
 # </LJFUNC>
 sub clear_rel

@@ -3,8 +3,6 @@
 
 use strict;
 
-# FIXME This needs updating. Does not work with LJ::Console, which superseded console.pl.
-
 unless (-d $ENV{'LJHOME'}) {
     die "\$LJHOME not set.\n";
 }

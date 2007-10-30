@@ -345,11 +345,6 @@ sub can_send {
     my $ou = $self->_orig_u;
     my $ru = $self->_rcpt_u;
 
-    # Can't send to yourself
-    if ($ou->equals($ru)) {
-        push @$errors, "Stop trying to message yourself, we're not that kind of service";
-    }
-
     # Can only send to other individual users
     unless ($ru->is_person || $ru->is_identity) {
         push @$errors, "Message can only be sent to individual user, not " . $ru->ljuser_display;
@@ -700,9 +695,9 @@ sub typemap {
 }
 
 # <LJFUNC>
-# name: LJ::mark_as_spam
+# name: mark_as_spam
 # class: web
-# des: Copies a message into the global [dbtable[spamreports]] table.
+# des: Copies a message into the global spamreports table
 # returns: 1 for success, 0 for failure
 # </LJFUNC>
 sub mark_as_spam {

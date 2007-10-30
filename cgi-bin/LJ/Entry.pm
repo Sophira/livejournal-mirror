@@ -26,12 +26,10 @@ use Carp qw/ croak /;
 #    security:   "public", "private", "usemask", loaded if _loaded_row
 #    allowmask:  if _loaded_row
 #    posterid:   if _loaded_row
-#    comments:   arrayref of comment objects on this entry
 
-#    _loaded_text:     loaded subject/text
-#    _loaded_row:      loaded log2 row
-#    _loaded_props:    loaded props
-#    _loaded_comments: loaded comments
+#    _loaded_text:   loaded subject/text
+#    _loaded_row:    loaded log2 row
+#    _loaded_props:  loaded props
 
 my %singletons = (); # journalid->jitemid->singleton
 
@@ -44,7 +42,7 @@ sub reset_singletons {
 # class: entry
 # des: Gets a journal entry.
 # args: uuserid, opts
-# des-uuserid: A user id or user object ($u ) to load the entry for.
+# des-uobj: A user id or $u to load the entry for.
 # des-opts: Hash of optional keypairs.
 #           'jitemid' => a journal itemid (no anum)
 #           'ditemid' => display itemid (a jitemid << 8 + anum)
@@ -417,38 +415,24 @@ sub set_prop {
 sub _load_comments
 {
     my $self = shift;
-    return 1 if $self->{_loaded_comments};
+    $self->{'comments'} =
+      ( $self->{'_loaded'} && ! $self->{'props'}->{'replycount'} )
+      ? undef
+      : LJ::Talk::get_talk_data( $self->{'u'}, 'L', $self->{'jitemid'} );
 
-    # need to load using talklib API
-    my $comment_ref = LJ::Talk::get_talk_data($self->journal, 'L', $self->jitemid);
-    die "unable to load comment data for entry"
-        unless ref $comment_ref;
-
-    # instantiate LJ::Comment singletons and set them on our $self
-    # -- members were filled in to the LJ::Comment singleton during the talklib call,
-    #    so we'll just re-instantiate here and rely on the fact that the singletons
-    #    already exist and have db rows absorbed into them
-    $self->set_comment_list
-        ( map { LJ::Comment->new( $self->journal, jtalkid => $_->{talkid}) }
-          values %$comment_ref );
+    my $comments = LJ::get_talktext2( $self->{'u'}, keys %{ $self->{'comments'} } );
+    foreach (keys %$comments) {
+        $self->{'comments'}->{$_}->{'subject'} = $comments->{$_}[0];
+        $self->{'comments'}->{$_}->{'event'}   = $comments->{$_}[1];
+    }
 
     return $self;
 }
 
-sub comment_list {
+sub comments {
     my $self = shift;
-    $self->_load_comments unless $self->{_loaded_comments};
-    return @{$self->{comments}};
-}
-
-sub set_comment_list {
-    my $self = shift;
-    return 1 unless @_;
-
-    $self->{comments} = \@_;
-    $self->{_loaded_comments} = 1;
-
-    return 1;
+    $self->_load_comments unless $self->{comments};
+    return $self->{comments};
 }
 
 sub reply_count {
@@ -1006,25 +990,6 @@ sub adult_content {
     my $self = shift;
 
     return $self->prop('adult_content');
-}
-
-sub qotdid {
-    my $self = shift;
-
-    return $self->prop('qotdid');
-}
-
-sub is_special_qotd_entry {
-    my $self = shift;
-
-    my $qotdid = $self->qotdid;
-    my $poster = $self->poster;
-
-    if ($qotdid && $poster && LJ::run_hook("show_qotd_title_change", $poster)) {
-        return 1;
-    }
-
-    return 0;
 }
 
 package LJ;
@@ -1822,7 +1787,7 @@ sub delete_entry
 # <LJFUNC>
 # name: LJ::mark_entry_as_spam
 # class: web
-# des: Copies an entry in a community into the global [dbtable[spamreports]] table.
+# des: Copies an entry in a community into the global spamreports table
 # args: journalu_uid, jitemid
 # des-journalu: User object of journal (community) entry was posted in, or the userid of it.
 # des-jitemid: ID of this entry.
@@ -1970,7 +1935,7 @@ sub get_logtext2
 # info: The returned URL may have an ampersand in it.  In an HTML/XML attribute,
 #       these must first be escaped by, say, [func[LJ::ehtml]].  This
 #       function doesn't return it pre-escaped because the caller may
-#       use it in, say, a plain-text e-mail message.
+#       use it in, say, a plain-text email message.
 # args: u, itemid, anum?
 # des-itemid: Itemid of entry to link to.
 # des-anum: If present, $u is assumed to be on a cluster and itemid is assumed
@@ -1992,15 +1957,12 @@ sub item_link
 # <LJFUNC>
 # name: LJ::expand_embedded
 # class:
-# des: Used for expanding embedded content like polls, for entries.
-# info: The u-object of the journal in question transmits to the function
-#       and its hooks.
-# args: u, ditemid, remote, eventref, opts?
-# des-eventref:
-# des-opst:
+# des:
+# info:
+# args:
+# des-:
 # returns:
 # </LJFUNC>
-
 sub expand_embedded
 {
     &nodb;
@@ -2012,7 +1974,7 @@ sub expand_embedded
 
 # <LJFUNC>
 # name: LJ::item_toutf8
-# des: convert one item's subject, text and props to UTF-8.
+# des: convert one item's subject, text and props to UTF8.
 #      item can be an entry or a comment (in which cases props can be
 #      left empty, since there are no 8bit talkprops).
 # args: u, subject, text, props

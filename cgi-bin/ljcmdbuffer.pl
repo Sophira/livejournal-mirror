@@ -25,7 +25,7 @@ package LJ::Cmdbuffer;
 
 # <LJFUNC>
 # name: LJ::Cmdbuffer::flush
-# des: Flush up to 500 rows of a given command type from the [dbtable[cmdbuffer]] table.
+# des: flush up to 500 rows of a given command type from the cmdbuffer table
 # args: dbh, db, cmd, userid?
 # des-dbh: master database handle
 # des-db: database cluster master
@@ -142,11 +142,11 @@ sub LJ::Cmdbuffer::flush
 
 # <LJFUNC>
 # name: LJ::Cmdbuffer::get_property
-# des: Get a property of an async job type, either built-in or site-specific.
+# des: get a property of an async job type, either built-in or site-specific
 # args: cmd, prop
 # des-cmd: a registered async job type
 # des-prop: the property name to look up
-# returns: Value of property (whatever it may be) on success; undef on failure.
+# returns: value of property (whatever it may be) on success, undef on failure
 # </LJFUNC>
 sub get_property {
     my ($cmd, $prop) = @_;

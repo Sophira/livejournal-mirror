@@ -5,9 +5,9 @@ use strict;
 # name: LJ::load_userpics
 # des: Loads a bunch of userpic at once.
 # args: dbarg?, upics, idlist
-# des-upics: hashref to load pictures into, keys being the picids.
+# des-upics: hashref to load pictures into, keys being the picids
 # des-idlist: [$u, $picid] or [[$u, $picid], [$u, $picid], +] objects
-#             also supports deprecated old method, of an array ref of picids.
+# also supports depreciated old method of an array ref of picids
 # </LJFUNC>
 sub load_userpics
 {
@@ -150,11 +150,11 @@ sub load_userpics
 # <LJFUNC>
 # name: LJ::expunge_userpic
 # des: Expunges a userpic so that the system will no longer deliver this userpic.  If
-#      your site has off-site caching or something similar, you can also define a hook
-#      "expunge_userpic" which will be called with a picid and userid when a pic is
-#      expunged.
+#   your site has off-site caching or something similar, you can also define a hook
+#   "expunge_userpic" which will be called with a picid and userid when a pic is
+#   expunged.
 # args: u, picid
-# des-picid: ID of the picture to expunge.
+# des-picid: Id of the picture to expunge.
 # des-u: User object
 # returns: undef on error, or the userid of the picture owner on success.
 # </LJFUNC>
@@ -207,7 +207,7 @@ sub expunge_userpic {
 
 # <LJFUNC>
 # name: LJ::activate_userpics
-# des: Wrapper around LJ::User->activate_userpics for compatibility.
+# des: Wrapper around LJ::User->activate_userpics for compatability
 # args: uuserid
 # returns: undef on failure 1 on success
 # </LJFUNC>
@@ -227,20 +227,21 @@ sub activate_userpics
 
 # <LJFUNC>
 # name: LJ::get_userpic_info
-# des: Given a user, gets their userpic information.
+# des: Given a user gets their user picture info
 # args: uuid, opts (optional)
-# des-uuid: userid, or user object.
-# des-opts: hash of options, 'load_comments'.
-# returns: hash of userpicture information;
-#          for efficiency, we store the userpic structures
-#          in memcache in a packed format.
-# info: memory format:
-#       [
-#       version number of format,
-#       userid,
-#       "packed string", which expands to an array of {width=>..., ...}
-#       "packed string", which expands to { 'kw1' => id, 'kw2' => id, ...}
-#       ]
+# des-u: user object or userid
+# des-opts: hash of options, 'load_comments'
+# returns: hash of userpicture information
+# for efficiency, we store the userpic structures
+# in memcache in a packed format.
+#
+# memory format:
+# [
+#   version number of format,
+#   userid,
+#   "packed string", which expands to an array of {width=>..., ...}
+#   "packed string", which expands to { 'kw1' => id, 'kw2' => id, ...}
+# ]
 # </LJFUNC>
 
 sub get_userpic_info
@@ -432,9 +433,9 @@ sub get_userpic_info
 
 # <LJFUNC>
 # name: LJ::get_pic_from_keyword
-# des: Given a userid and keyword, returns the pic row hashref.
+# des: Given a userid and keyword, returns the pic row hashref
 # args: u, keyword
-# des-keyword: The keyword of the userpic to fetch.
+# des-keyword: The keyword of the userpic to fetch
 # returns: hashref of pic row found
 # </LJFUNC>
 sub get_pic_from_keyword
@@ -495,37 +496,26 @@ sub get_picid_from_keyword
 sub get_upf_scaled {
     my @args = @_;
 
-    my $gc = LJ::gearman_client();
-
-    # no gearman, do this in-process
-    return LJ::_get_upf_scaled(@args)
-        unless $gc;
-
-    # invoke gearman
-    my $u = LJ::get_remote()
-        or die "No remote user";
-    unshift @args, "userid" => $u->id;
-
-    my $result;
-    my $arg = Storable::nfreeze(\@args);
-    my $task = Gearman::Task->new('lj_upf_resize', \$arg,
-                                  {
-                                      uniq => '-',
-                                      on_complete => sub {
-                                          my $res = shift;
-                                          return unless $res;
-                                          $result = Storable::thaw($$res);
-                                      }
+    if (my $gc = LJ::gearman_client()) {
+        # if gearman, kick off a gearman job and block until we get a result.
+        my $u = LJ::get_remote()
+            or die "No remote user";
+        unshift @args, "userid" => $u->{userid};
+        my $result = $gc->do_task('lj_upf_resize',
+                                  Storable::nfreeze(\@args), {
+                                      uniq => '-',   # merge on the arguments
                                   });
 
-    my $ts = $gc->new_task_set();
-    $ts->add_task($task);
-    $ts->wait(timeout => 15); # 15 sec timeout;
-
-    # job failed ... error reporting?
-    die "Could not resize image down\n" unless $result;
-
-    return $result;
+        if (!$result) {
+            die "Could not resize image down\n";
+            # job failed... error reporting?
+        } else {
+            return Storable::thaw($$result);
+        }
+    } else {
+        # just do it and return if no gearman
+        return LJ::_get_upf_scaled(@args);
+    }
 }
 
 # actual method
@@ -662,4 +652,3 @@ sub _get_upf_scaled
 
 
 1;
-

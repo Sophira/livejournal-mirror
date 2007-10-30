@@ -61,8 +61,9 @@ body<=
         return $ret;
     }
 
-    my $remote = LJ::get_remote();
+    my $remote;
     if ($tminfo->{'security'} ne "all") {
+        $remote = LJ::get_remote();
         my $andbefriend;
         if ($tminfo->{'security'} eq "friends") {
             $andbefriend = " ".$ML{'.error.notloggedin.notfriend'};
@@ -82,13 +83,6 @@ body<=
                 return $ret;
             }
         }
-    }
-
-    if ($remote && $u->has_banned($remote)) {
-        $ret .= "<?h1 $ML{'.error.banned.head'} h1?><?p ".
-            BML::ml('.error.banned.text', { user => $u->ljuser_display })." p?>";
-        add_footer();
-        return $ret;
     }
 
     ###### authorized.

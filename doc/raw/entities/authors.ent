@@ -4,7 +4,7 @@
   <surname>Proulx</surname>
   <affiliation>
     <address>
-      <email>dev@livejournal.com</email>
+      <email>jproulx@livejournal.com</email>
     </address>
   </affiliation>
 </author>
@@ -16,21 +16,8 @@
   <surname>Fitzpatrick</surname>
   <affiliation>
     <address>
-      <email>dev@livejournal.com</email>
+      <email>bradfitz@livejournal.com</email>
     </address>
   </affiliation>
 </author>
 ">
-
-<!ENTITY author.potolo "
-<author>
-  <firstname>Richard</firstname>
-  <surname></surname>
-<othername>potolo</othername>
-  <affiliation>
-    <address>
-    </address>
-  </affiliation>
-</author>
-">
-

@@ -3,7 +3,7 @@
     <title>Database Schema</title>
   </partinfo>
   <title>Database Schema</title>
-  <partintro id="partintro.ljp.db">
+  <partintro>
     <para>
       This is the complete database layout (schema) documentation.
     </para>

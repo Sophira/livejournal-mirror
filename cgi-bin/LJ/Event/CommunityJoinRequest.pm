@@ -29,13 +29,8 @@ sub requestor {
 
 sub authurl {
     my $self = shift;
-
-    # we need to force the authaction from the master db; otherwise, replication
-    # delays could cause this to fail initially
-    my $arg = "targetid=". $self->requestor->id;
-    my $auth = LJ::get_authaction($self->comm->id, "comm_join_request", $arg, { force => 1 })
+    my $auth = LJ::get_authaction($self->comm->id, "comm_join_request", "targetid=". $self->requestor->id)
         or die "Unable to fetch authcode";
-
     return "$LJ::SITEROOT/approve/" . $auth->{aaid} . "." . $auth->{authcode};
 }
 

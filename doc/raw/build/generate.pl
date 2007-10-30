@@ -1,9 +1,10 @@
 #!/usr/bin/perl
+#
 
 use strict;
 use Getopt::Long;
 
-my $XSL_VERSION_RECOMMENDED = "1.71.0";
+my $XSL_VERSION_RECOMMENDED = "1.55.0";
 
 my $opt_clean;
 my ($opt_myxsl, $opt_getxsl, $opt_single);
@@ -15,18 +16,16 @@ exit 1 unless GetOptions('clean' => \$opt_clean,
 
 my $home = $ENV{'LJHOME'};
 require "$home/cgi-bin/ljlib.pl";
-$ENV{'XML_CATALOG_FILES'} = $LJ::CATALOG_FILES || "/usr/share/xml/docbook/schema/dtd/4.4/catalog.xml";
+$ENV{'SGML_CATALOG_FILES'} = $LJ::CATALOG_FILES || "/usr/share/sgml/docbook/dtd/xml/4.1/docbook.cat";
 
-unless (-e $ENV{'XML_CATALOG_FILES'}) {
-    die "Catalog files don't exist.  Either set \$LJ::CATALOG_FILES, install docbook-xml (on Debian), or symlink $ENV{'XML_CATALOG_FILES'} to XML DocBook 4.4's catalog.xml.";
+unless (-e $ENV{'SGML_CATALOG_FILES'}) {
+    die "Catalog files don't exist.  Either set \$LJ::CATALOG_FILES, install docbook-xml (on Debian), or symlink $ENV{'SGML_CATALOG_FILES'} to XML DocBook 4.1's docbook.cat.";
 }
 
-die "One or more of Siteroot, Domain, or Admin e-mail not set" unless $LJ::SITEROOT;
-open F, "> $home/doc/raw/entities/prevar.gen.ent" or die "Can't open prevar.gen.ent : $!";
+die "Siteroot not set" unless $LJ::SITEROOT;
+open F, "> $home/doc/raw/entities/pregen.ent" or die "Can't open pregen.ent : $!";
 {
     print F "<!ENTITY siteroot '$LJ::SITEROOT'>\n";
-    print F "<!ENTITY domain '$LJ::DOMAIN'>\n";
-    print F "<!ENTITY adminemail '$LJ::ADMIN_EMAIL'>\n";
 }
 close F;
 
@@ -34,7 +33,7 @@ if ($opt_getxsl) {
     chdir "$home/doc/raw/build" or die "Where is build dir?";
     unlink "xsl-docbook.tar.gz";
     my $fetched =  0;
-    my $url = "http://code.sixapart.com/svn/ljdocbook/trunk/dist/xsl/xsl-docbook.tar.gz";
+    my $url = "http://www.livejournal.org/misc/xsl-docbook.tar.gz";
     my @fetcher = ([ 'wget', "wget $url", ],
                    [ 'lynx', "lynx -source $url > xsl-docbook.tar.gz", ],
                    [ 'GET', "GET $url > xsl-docbook.tar.gz", ]);
@@ -52,7 +51,7 @@ if ($opt_getxsl) {
             join(", ", map { $_->[0] } @fetcher) . "\n";
     }
     system("tar", "zxvf", "xsl-docbook.tar.gz")
-        and die "Error extracting xsl-docbook.tar.gz; GNU tar installed?\n";
+        and die "Error extracting xsl-doxbook.tar.gz; have GNU tar?\n";
 }
 
 my $output_dir = "$home/htdocs/doc/server";
@@ -61,9 +60,9 @@ my $XSL = "$docraw_dir/build/xsl-docbook";
 my $stylesheet = "$XSL/html/chunk.xsl";
 open (F, "$XSL/VERSION");
 my $XSL_VERSION;
-{
-    local $/ = undef; my $file = <F>;
-$XSL_VERSION = $1 if $file =~ /Version>(.+?)\</;
+{ 
+    local $/ = undef; my $file = <F>; 
+    $XSL_VERSION = $1 if $file =~ /VERSION.+\>(.+?)\</;
 }
 close F;
 my $download;
@@ -78,19 +77,21 @@ if ($XSL_VERSION && $XSL_VERSION ne $XSL_VERSION_RECOMMENDED && ! $opt_myxsl) {
 }
 if (! $XSL_VERSION) {
     print "\nDocBook XSL not found at $XSL.\n\nEither symlink that dir to the right ";
-    print "place (preferably at version $XSL_VERSION_RECOMMENDED),\nor re-run with --getxsl ";
+    print "place (preferrably at version $XSL_VERSION_RECOMMENDED),\nor re-run with --getxsl ";
     print "for me to do it for you.\n\n";
     exit 1;
 }
+
+
 
 chdir "$docraw_dir/build" or die;
 
 print "Generating API reference\n";
 system("api/api2db.pl --exclude=BML:: --book=ljp > $docraw_dir/ljp.book/api/api.gen.xml")
-    and die "Error generating General API reference.\n";
+    and die "Errror generating General API reference.\n";
 system("api/api2db.pl --include=BML:: --book=bml > $docraw_dir/bml.book/api.gen.xml")
-    and die "Error generating BML API reference.\n";
-
+    and die "Errror generating BML API reference.\n";
+ 
 print "Generating DB Schema reference\n";
 chdir "$docraw_dir/build/db" or die;
 system("./dbschema.pl > dbschema.gen.xml")
@@ -106,7 +107,7 @@ unlink "dbschema.gen.xml";
 print "Generating XML-RPC protocol reference\n";
 chdir "$docraw_dir/build/protocol" or die;
 system("xsltproc", "-o", "$docraw_dir/ljp.book/csp/xml-rpc/protocol.gen.xml",
-       "xml-rpc2db.xsl", "xmlrpc.xml")
+       "xml-rpc2db.xsl", "xmlrpc.xml") 
     and die "Error processing protocol reference.\n";
 
 print "Generating Flat protocol reference\n";
@@ -122,7 +123,10 @@ chdir "$docraw_dir/build/priv" or die;
 system("./priv2db.pl > $docraw_dir/lj.book/admin/privs.ref.gen.xml")
     and die "Error generating privilege list\n";
 
-#  [placemkr] consoleref gen. removed. breaks now console.pl superseded by LJ::Console
+print "Generating Console Command Reference\n";
+chdir "$docraw_dir/build/console" or die;
+system("./console2db.pl > $docraw_dir/lj.book/admin/console.ref.gen.xml")
+    and die "Error generating console reference\n";
 
 print "Generating Capability Class Reference\n";
 chdir "$docraw_dir/build/caps" or die;
@@ -164,19 +168,18 @@ if (-e "$docraw_dir/build/style.css") {
         and die "Error copying stylesheet.\n";
 }
 
-system("xsltproc --nonet $cssparam ".
+system("xsltproc --nonet --catalogs $cssparam ".
        "$docraw_dir/build/chunk.xsl $docraw_dir/index.xml")
     and die "Error generating chunked HTML.\n";
 
-# FIXME: This is meant to build manual as single HTML page.
-if ($opt_single) {
-    system("xsltproc --nonet --output manual.html $cssparam ".
+if ($opt_single) 
+{
+    system("xsltproc --nonet --catalogs --output manual.html $cssparam ".
        "$docraw_dir/build/nochunk.xsl $docraw_dir/index.xml")
     and die "Error generating single HTML.\n";
 }
 
 if ($opt_clean) {
-    print "Removing auto-generated files\n";
-    system("find $docraw_dir -name '*.gen.*' -type f -print0 \| xargs -0 rm -f");
+    print "Removing Auto-generated files\n";
+    system("find $docraw_dir -name '*.gen.*' -exec rm {} \;");
 }
-

@@ -1554,7 +1554,7 @@ set linked_stylesheet = "";
 property string custom_css {
     des = "Custom stylesheet";
     note = "If you'd like to add custom CSS to this style, enter it here.";
-    cols = 50;
+    cols = 80;
     rows = 20;
     string_mode = "css";
 }
@@ -1694,12 +1694,7 @@ if ($bordercolor) {
         if ($bordercolor) {
 """
 
-#lj_controlstrip_user,
-#lj_controlstrip_userlinks,
-#lj_controlstrip_actionlinks,
-#lj_controlstrip_search,
-#lj_controlstrip_login,
-#lj_controlstrip_loggedout_userpic {
+#lj_controlstrip_user, #lj_controlstrip_userlinks, #lj_controlstrip_login, #lj_controlstrip_loggedout_userpic {
     border-right: 1px solid $*control_strip_bordercolor;
 }
 

@@ -158,9 +158,11 @@ sub link_bar
         push @linkele, $mlink->("$LJ::SITEROOT/manage/subscriptions/entry.bml?${jargent}itemid=$itemid", $img_key);
     }
 
-    if ($remote && $remote->can_flag_content( from => $up, content => "entry" )) {
-        my $flag_url = LJ::ContentFlag->adult_flag_url(LJ::Entry->new($u, ditemid => $itemid));
-        push @linkele, $mlink->($flag_url, 'flag');
+    if (LJ::is_enabled("content_flag")) {
+        if ($remote && $remote->can_flag_content( from => $up, content => "entry" )) {
+            my $flag_url = LJ::ContentFlag->adult_flag_url(LJ::Entry->new($u, ditemid => $itemid));
+            push @linkele, $mlink->($flag_url, 'flag');
+        }
     }
 
 
@@ -315,17 +317,17 @@ sub check_viewable
 
 # <LJFUNC>
 # name: LJ::Talk::can_delete
-# des: Determines if a user can delete a comment or entry: You can
+# des: Determines if a user can delete a comment or entry.  Basically, you can
 #       delete anything you've posted.  You can delete anything posted in something
 #       you own (i.e. a comment in your journal, a comment to an entry you made in
 #       a community).  You can also delete any item in an account you have the
 #       "A"dministration edge for.
 # args: remote, u, up, userpost
-# des-remote: User object we're checking access of.  From [func[LJ::get_remote]].
+# des-remote: User object we're checking access of.  From LJ::get_remote.
 # des-u: Username or object of the account the thing is located in.
 # des-up: Username or object of person who owns the parent of the thing.  (I.e. the poster
 #           of the entry a comment is in.)
-# des-userpost: Username (<strong>not</strong> object) of person who posted the item.
+# des-userpost: Username (NOT object) of person who posted the item.
 # returns: Boolean indicating whether remote is allowed to delete the thing
 #           specified by the other options.
 # </LJFUNC>
@@ -366,13 +368,13 @@ sub can_unfreeze {
 
 # <LJFUNC>
 # name: LJ::Talk::screening_level
-# des: Determines the screening level of a particular post given the relevant information.
+# des: Determines the screening level of a particular post given the relevent information.
 # args: journalu, jitemid
 # des-journalu: User object of the journal the post is in.
 # des-jitemid: Itemid of the post.
 # returns: Single character that indicates the screening level.  Undef means don't screen
-#          anything, 'A' means screen All, 'R' means screen Anonymous (no-remotes), 'F' means
-#          screen non-friends.
+#       anything, 'A' means screen All, 'R' means screen Anonymous (no-remotes), 'F' means
+#       screen non-friends.
 # </LJFUNC>
 sub screening_level {
     my ($journalu, $jitemid) = @_;
@@ -404,16 +406,16 @@ sub update_commentalter {
 # name: LJ::Talk::get_comments_in_thread
 # class: web
 # des: Gets a list of comment ids that are contained within a thread, including the
-#      comment at the top of the thread.  You can also limit this to only return comments
-#      of a certain state.
+#   comment at the top of the thread.  You can also limit this to only return comments
+#   of a certain state.
 # args: u, jitemid, jtalkid, onlystate, screenedref
 # des-u: user object of user to get comments from
 # des-jitemid: journal itemid to get comments from
 # des-jtalkid: journal talkid of comment to use as top of tree
 # des-onlystate: if specified, return only comments of this state (e.g. A, F, S...)
 # des-screenedref: if provided and an array reference, will push on a list of comment
-#                   ids that are being returned and are screened (mostly for use in deletion so you can
-#                   unscreen the comments)
+#   ids that are being returned and are screened (mostly for use in deletion so you can
+#   unscreen the comments)
 # returns: undef on error, array reference of jtalkids on success
 # </LJFUNC>
 sub get_comments_in_thread {
@@ -497,8 +499,7 @@ sub delete_thread {
 # des-u: Userid or user object to delete comment from.
 # des-jitemid: Journal itemid of item to delete comment from.
 # des-jtalkid: Journal talkid of the comment to delete.
-# des-state: Optional. If you know it, provide the state
-#            of the comment being deleted, else we load it.
+# des-state?: if you know it, provide the state of the comment being deleted, else we load it
 # returns: 1 on success; undef on error
 # </LJFUNC>
 sub delete_comment {
@@ -568,8 +569,8 @@ sub unfreeze_thread {
 # name: LJ::Talk::freeze_comments
 # class: web
 # des: Freezes comments.  This is the internal helper function called by
-#      freeze_thread/unfreeze_thread.  Use those if you wish to freeze or
-#      unfreeze a thread.  This function just freezes specific comments.
+#   freeze_thread/unfreeze_thread.  Use those if you wish to freeze or
+#   unfreeze a thread.  This function just freezes specific comments.
 # args: u, nodetype, nodeid, unfreeze, ids
 # des-u: Userid or object of user to manipulate comments in.
 # des-nodetype: Nodetype of the thing containing the specified ids.  Typically "L".
@@ -669,7 +670,7 @@ sub unscreen_comment {
     return;
 }
 
-# retrieves data from the talk2 table (but preferably memcache)
+# retrieves data from the talk2 table (but preferrably memcache)
 # returns a hashref (key -> { 'talkid', 'posterid', 'datepost', 'datepost_unix',
 #                             'parenttalkid', 'state' } , or undef on failure
 sub get_talk_data
@@ -691,12 +692,6 @@ sub get_talk_data
     # if it seems necessary.
     my $rp_memkey = $nodetype eq "L" ? [$u->{'userid'}, "rp:$u->{'userid'}:$nodeid"] : undef;
     my $rp_count = $rp_memkey ? LJ::MemCache::get($rp_memkey) : 0;
-
-    # hook for tests to count memcache gets
-    if ($LJ::_T_GET_TALK_DATA_MEMCACHE) {
-        $LJ::_T_GET_TALK_DATA_MEMCACHE->();
-    }
-
     my $rp_ourcount = 0;
     my $fixup_rp = sub {
         return unless $nodetype eq "L";
@@ -717,7 +712,6 @@ sub get_talk_data
 
     my $make_comment_singleton = sub {
         my ($jtalkid, $row) = @_;
-        return 1 unless $nodetype eq 'L';
 
         # at this point we have data for this comment loaded in memory
         # -- instantiate an LJ::Comment object as a singleton and absorb
@@ -729,22 +723,6 @@ sub get_talk_data
         $comment->absorb_row(%$row);
 
         return 1;
-    };
-
-    # This is a bit tricky.  Since we just loaded and instantiated all comment singletons for this
-    # entry (journalid, jitemid) we'll instantiate a skeleton LJ::Entry object (probably a singleton
-    # used later in this request anyway) and let it know that its comments are already loaded
-    my $set_entry_cache = sub {
-        return 1 unless $nodetype eq 'L';
-        
-        my $entry = LJ::Entry->new($u, jitemid => $nodeid);
-
-        # find all singletons that LJ::Comment knows about, then grep for the ones we've set in
-        # this get_talk_data call (ones for this userid / nodeid)
-        my @comments_for_entry = 
-            grep { $_->journalid == $u->{userid} && $_->nodeid == $nodeid } LJ::Comment->all_singletons;
-        
-        $entry->set_comment_list(@comments_for_entry);
     };
 
     my $memcache_good = sub {
@@ -774,9 +752,6 @@ sub get_talk_data
             $rp_ourcount++ if $state eq "A" || $state eq "F";
         }
         $fixup_rp->();
-
-        # set cache in LJ::Entry object for this set of comments
-        $set_entry_cache->();
 
         return $ret;
     };
@@ -835,9 +810,6 @@ sub get_talk_data
     $dbcr->selectrow_array("SELECT RELEASE_LOCK(?)", undef, $lockkey);
 
     $fixup_rp->();
-
-    # set cache in LJ::Entry object for this set of comments
-    $set_entry_cache->();
 
     return $ret;
 }
@@ -1745,7 +1717,7 @@ LOGIN
 # <LJFUNC>
 # name: LJ::record_anon_comment_ip
 # class: web
-# des: Records the IP address of an anonymous comment.
+# des: Records the IP address of an anonymous comment
 # args: journalu, jtalkid, ip
 # des-journalu: User object of journal comment was posted in.
 # des-jtalkid: ID of this comment.
@@ -1767,7 +1739,7 @@ sub record_anon_comment_ip {
 # <LJFUNC>
 # name: LJ::mark_comment_as_spam
 # class: web
-# des: Copies a comment into the global [dbtable[spamreports]] table.
+# des: Copies a comment into the global spamreports table
 # args: journalu, jtalkid
 # des-journalu: User object of journal comment was posted in.
 # des-jtalkid: ID of this comment.
@@ -1816,7 +1788,7 @@ sub mark_comment_as_spam {
 # <LJFUNC>
 # name: LJ::Talk::get_talk2_row
 # class: web
-# des: Gets a row of data from [dbtable[talk2]].
+# des: Gets a row of data from talk2.
 # args: dbcr, journalid, jtalkid
 # des-dbcr: Database handle to read from.
 # des-journalid: Journal id that comment is posted in.
@@ -1834,9 +1806,9 @@ sub get_talk2_row {
 # <LJFUNC>
 # name: LJ::Talk::get_talk2_row_multi
 # class: web
-# des: Gets multiple rows of data from [dbtable[talk2]].
+# des: Gets multiple rows of data from talk2.
 # args: items
-# des-items: Array of arrayrefs; each arrayref: [ journalu, jtalkid ].
+# des-items: Array of arrayrefs; each arrayref: [ journalu, jtalkid ]
 # returns: Array of hashrefs of row data, or undef on error.
 # </LJFUNC>
 sub get_talk2_row_multi {
@@ -2642,12 +2614,10 @@ sub enter_comment {
     if ($journalu->{'opt_logcommentips'} eq "A" ||
         ($journalu->{'opt_logcommentips'} eq "S" && $comment->{usertype} ne "user"))
     {
-        if (LJ::is_web_context()) {
-            my $ip = BML::get_remote_ip();
-            my $forwarded = BML::get_client_header('X-Forwarded-For');
-            $ip = "$forwarded, via $ip" if $forwarded && $forwarded ne $ip;
-            $talkprop{'poster_ip'} = $ip;
-        }
+        my $ip = BML::get_remote_ip();
+        my $forwarded = BML::get_client_header('X-Forwarded-For');
+        $ip = "$forwarded, via $ip" if $forwarded && $forwarded ne $ip;
+        $talkprop{'poster_ip'} = $ip;
     }
 
     # remove blank/0 values (defaults)
@@ -3483,4 +3453,3 @@ EOM
 }
 
 1;
-
