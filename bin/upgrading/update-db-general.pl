@@ -2952,6 +2952,36 @@ CREATE TABLE persistent_queue (
 )
 EOC
 
+# global table for verticals
+register_tablecreate("vertical", <<'EOC');
+CREATE TABLE vertical (
+   vertid INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+   name VARCHAR(255),
+   createtime INT UNSIGNED NOT NULL,
+   lastfetch INT UNSIGNED,
+   # what else ?
+
+   UNIQUE KEY (name)
+)
+EOC
+
+# FIXME: need vertical_props
+# -- blacklists
+# -- whitelists
+# -- sync info
+
+register_tablecreate("vertical_entries", <<'EOC');
+CREATE TABLE vertical_entries (
+   vertid INT UNSIGNED NOT NULL,
+   instime INT UNSIGNED NOT NULL,
+   journalid INT UNSIGNED NOT NULL,
+   jitemid INT UNSIGNED NOT NULL,
+
+   PRIMARY KEY (vertid, journalid, jitemid)
+)
+EOC
+
+
 # NOTE: new table declarations go here
 
 ### changes
