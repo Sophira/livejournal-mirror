@@ -70,6 +70,8 @@ sub new
     croak("can't supply both itemid and ditemid")
         if defined $opts{ditemid} && defined $opts{jitemid};
 
+    # FIXME: don't store $u in here, or at least call LJ::load_userids() on all singletons
+    #        if LJ::want_user() would have been called
     $self->{u}       = LJ::want_user($uuserid) or croak("invalid user/userid parameter");
 
     $self->{anum}    = delete $opts{anum};
@@ -438,7 +440,7 @@ sub _load_comments
 sub comment_list {
     my $self = shift;
     $self->_load_comments unless $self->{_loaded_comments};
-    return @{$self->{comments} || []};
+    return @{$self->{comments}};
 }
 
 sub set_comment_list {

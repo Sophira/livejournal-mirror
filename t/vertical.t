@@ -9,6 +9,10 @@ use LJ::Test qw(memcache_stress temp_user);
 
 my $u = temp_user();
 
+sub gen_name {
+    join(":", "t", time(), LJ::rand_chars(20));
+}
+
 sub run_tests {
 
     # constructor tests
@@ -35,8 +39,7 @@ sub run_tests {
     {
         my $v;
 
-        my $gen_name = sub { join(":", "t", time(), LJ::rand_chars(20)) };
-        my $name = $gen_name->();
+        my $name = gen_name();
         
         $v = eval { LJ::Vertical->create };
         like($@, qr/wrong number of arguments/, "create: no arguments");
@@ -73,7 +76,7 @@ sub run_tests {
             ok($v->name eq $name, "name matches creation  name");
 
             { # test name, set_name
-                my $new_name = $gen_name->();
+                my $new_name = gen_name();
                 my $rv = $v->set_name($new_name);
                 ok($rv eq $new_name && $v->name eq $new_name, "set new name okay");
             }
@@ -87,17 +90,53 @@ sub run_tests {
                 ok($v->createtime == $new_time, "new createtime okay");
             }
 
-            # FIXME: more accessors? ... they all use the same code
-
             # clean up after ourselves
             $v->delete_and_purge;
         }
     }
+
+
+    # add entries and retrieve them in chunks
+    {
+        my $v = LJ::Vertical->create( name => gen_name() );
+
+        # post some entries
+        my @entry_objs = ();
+        foreach (1..10) {
+            push @entry_objs, $u->t_post_fake_entry;
+        }
+
+        my $rv = $v->add_entries(@entry_objs);
+        ok($rv, "added entries to LJ::Vertical");
+
+        my @recent_entries = $v->recent_entries; # moves iterator
+        ok(@recent_entries == @{$v->{entries}} && @recent_entries == @entry_objs, "loaded recent entries");
+
+        $v->recent_entries;
+        ok(@{$v->{entries}} == @entry_objs, "reloaded recent entries");
+
+        #warn LJ::D(\@recent_entries);
+
+        #foreach my $entry ($v->entries( start => 0, limit => 100)) {
+            # do something, doesn't change iterator
+        #}
+
+        #while (my $entry = $v->next_entry) {
+            # do something, advances iterator
+        #}
+
+        #my $entry = $v->first_entry; # doesn't advance iterator
+
+
+        # clean up
+        $v->delete_and_purge;
+    }
+
 }
 
-memcache_stress {
+#memcache_stress {
     run_tests();
-};
+#};
 
 1;
 

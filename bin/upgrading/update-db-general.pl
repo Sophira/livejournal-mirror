@@ -2977,7 +2977,8 @@ CREATE TABLE vertical_entries (
    journalid INT UNSIGNED NOT NULL,
    jitemid INT UNSIGNED NOT NULL,
 
-   PRIMARY KEY (vertid, journalid, jitemid)
+   PRIMARY KEY (vertid, journalid, jitemid),
+   INDEX (vertid, instime)
 )
 EOC
 
