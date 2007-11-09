@@ -104,13 +104,40 @@ sub create {
         if %opts;
     
     my $dbh = LJ::get_db_writer()
-        or die "unable to contact global db master to load vertical";
+        or die "unable to contact global db master to create vertical";
 
     $dbh->do("INSERT INTO vertical SET name=?, createtime=UNIX_TIMESTAMP()",
              undef, $self->{name});
     die $dbh->errstr if $dbh->err;
 
     return LJ::Vertical->new( vertid => $dbh->{mysql_insertid} );
+}
+
+sub load_by_id {
+    my $class = shift;
+
+    return $class->new( vertid => shift );
+}
+
+sub load_by_name {
+    my $class = shift;
+    my $name = shift;
+
+    my $dbh = LJ::get_db_writer()
+        or die "unable to contact global db master to load vertical";
+
+    my $sth = $dbh->prepare("SELECT * FROM vertical WHERE name = ?");
+    $sth->execute($name);
+    die $dbh->errstr if $dbh->err;
+
+    if (my $row = $sth->fetchrow_hashref) {
+        my $v = LJ::Vertical->new( vertid => $row->{vertid} );
+        $v->absorb_row($row);
+
+        return $v;
+    }
+
+    die "vertical name not in database";
 }
 
 #
