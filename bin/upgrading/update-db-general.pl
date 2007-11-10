@@ -3675,6 +3675,51 @@ register_alter(sub {
                  "AFTER hide_helpers");
     }
 
+    if (keys %LJ::VERTICAL_TREE && table_relevant("vertical")) {
+        my @vertical_names = keys %LJ::VERTICAL_TREE;
+
+
+        # get all of the verticals currently in the db
+        my $sth = $dbh->prepare("SELECT name FROM vertical");
+        $sth->execute();
+
+        my @rows;
+        while (my $row = $sth->fetchrow_hashref) {
+            push @rows, $row;
+        }
+
+
+        # remove any verticals from the db that aren't in the config hash
+        my %verts_to_remove;
+        foreach my $row (@rows) {
+            $verts_to_remove{$row->{name}} = 1 unless $LJ::VERTICAL_TREE{$row->{name}};
+        }
+
+        if (keys %verts_to_remove) {
+            my @string_verts = map { "'$_'" } keys %verts_to_remove;
+            my $vert_sql = join(',', @string_verts);
+            do_sql("DELETE FROM vertical WHERE name IN ($vert_sql)");
+        }
+
+
+        # add any verticals to the db that are in the config hash (and aren't there already)
+        my %verts_in_db = map { $_->{name} => 1 } @rows;
+
+        my %verts_to_add;
+        foreach my $name (@vertical_names) {
+            $verts_to_add{$name} = 1 unless $verts_in_db{$name};
+        }
+
+        if (keys %verts_to_add) {
+            my @vert_sql_values;
+            foreach my $vert (keys %verts_to_add) {
+                push @vert_sql_values, "('$vert',UNIX_TIMESTAMP())";
+            }
+            my $vert_sql = join(',', @vert_sql_values);
+            do_sql("INSERT INTO vertical (name, createtime) VALUES $vert_sql");
+        }
+    }
+
 });
 
 

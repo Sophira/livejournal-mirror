@@ -37,12 +37,8 @@ sub run_tests {
         $v = eval { LJ::Vertical->load_by_id(1) };
         isa_ok($v, "LJ::Vertical", "load_by_id: successful instantiation");
 
-        LJ::Vertical->create( name => "music" );
         $v = eval { LJ::Vertical->load_by_name("music") };
         isa_ok($v, "LJ::Vertical", "load_by_name: successful instantiation");
-
-        # clean up after ourselves
-        $v->delete_and_purge;
     }
 
     # creating a vertical
