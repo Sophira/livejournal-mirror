@@ -484,6 +484,26 @@ sub entry_singletons {
     return map { LJ::Entry->new($_->[0], jitemid => $_->[1]) } @_;
 }
 
+sub children {
+    my $self = shift;
+
+    my $children = $LJ::VERTICAL_TREE{$self->name}->{children};
+    my @child_verticals = map { LJ::Vertical->load_by_name($_) } @$children;
+
+    return @child_verticals ? @child_verticals : ();
+}
+
+# right now a vertical has only one parent, but we don't
+# want to assume that it will always be that way
+sub parents {
+    my $self = shift;
+
+    my $parents = $LJ::VERTICAL_TREE{$self->name}->{parents};
+    my @parent_verticals = map { LJ::Vertical->load_by_name($_) } @$parents;
+
+    return @parent_verticals ? @parent_verticals : ();
+}
+
 sub _get_set {
     my $self = shift;
     my $key  = shift;
