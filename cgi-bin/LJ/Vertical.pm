@@ -140,6 +140,27 @@ sub load_by_name {
     die "vertical name not in database";
 }
 
+sub load_all {
+    my $class = shift;
+
+    my $dbh = LJ::get_db_writer()
+        or die "unable to contact global db master to load vertical";
+
+    my $sth = $dbh->prepare("SELECT * FROM vertical");
+    $sth->execute;
+    die $dbh->errstr if $dbh->err;
+
+    my @verticals;
+    while (my $row = $sth->fetchrow_hashref) {
+        my $v = LJ::Vertical->new( vertid => $row->{vertid} );
+        $v->absorb_row($row);
+
+        push @verticals, $v;
+    }
+
+    return @verticals;
+}
+
 #
 # Singleton accessors and helper methods
 #
@@ -411,6 +432,37 @@ sub add_entry {
 }
 *add_entries = \&add_entry;
 
+sub remove_entry {
+    my $self = shift;
+    my @entries = @_;
+
+    die "parameters must all be LJ::Entry object"
+        if grep { ! ref $_ || ! $_->isa("LJ::Entry") } @entries;
+
+    # remove entries from the db listing for this vertical
+    my $dbh = LJ::get_db_writer()
+        or die "unable to contact global db master to load vertical";
+
+    my $bind = join(" OR ", map { "(vertid = ? AND journalid = ? AND jitemid = ?)" } @entries);
+    my @vals = map { $self->{vertid}, $_->journalid, $_->jitemid } @entries;
+
+    $dbh->do("DELETE FROM vertical_entries WHERE $bind", undef, @vals);
+    die $dbh->errstr if $dbh->err;
+
+    # FIXME: lazily clean over time?
+
+    # clear memcache for entries so changes will be reflected on next read
+    $self->clear_entries_memcache;
+
+    # remove entries from current LJ::Vertical object in memory
+    if ($self->{_loaded_entries}) {
+        # FIXME: Do this!
+    }
+
+    return 1;
+}
+*remove_entries = \&remove_entry;
+
 sub entries {
     my $self = shift;
     my %opts = @_;
@@ -502,6 +554,27 @@ sub parents {
     my @parent_verticals = map { LJ::Vertical->load_by_name($_) } @$parents;
 
     return @parent_verticals ? @parent_verticals : ();
+}
+
+# returns the time that a given entry was added to this vertical, or 0 if it doesn't exist
+sub entry_insert_time {
+    my $self = shift;
+    my $entry = shift;
+
+    die "Invalid entry." unless $entry && $entry->valid;
+
+    my $dbh = LJ::get_db_writer()
+        or die "unable to contact global db master to load vertical";
+
+    my $sth = $dbh->prepare("SELECT instime FROM vertical_entries WHERE vertid = ? AND journalid = ? AND jitemid = ?");
+    $sth->execute($self->vertid, $entry->journalid, $entry->jitemid);
+    die $dbh->errstr if $dbh->err;
+
+    if (my $row = $sth->fetchrow_hashref) {
+        return $row->{instime};
+    }
+
+    return 0;
 }
 
 sub _get_set {
