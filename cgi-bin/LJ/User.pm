@@ -4392,6 +4392,31 @@ sub third_party_notify_list_remove {
     return 1;
 }
 
+sub opt_exclude_from_verticals {
+    my $u = shift;
+
+    my $prop_val = $u->prop('opt_exclude_from_verticals');
+
+    return $prop_val if $prop_val =~ /^(?:journal|community|both)$/;
+    return "none";
+}
+
+sub set_opt_exclude_from_verticals {
+    my $u = shift;
+    my $val = shift;
+
+    # only set the "none" value if the prop is currently set to something (explicit off)
+    if ($val ne "none" || ($val eq "none" && $u->prop('opt_exclude_from_verticals'))) {
+        if ($val =~ /^(?:none|journal|community|both)$/) {
+            $u->set_prop( opt_exclude_from_verticals => $val );
+        } else {
+            $u->set_prop( opt_exclude_from_verticals => undef );
+        }
+    }
+
+    return;
+}
+
 package LJ;
 
 use Carp;

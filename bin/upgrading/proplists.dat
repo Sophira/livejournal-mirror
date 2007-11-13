@@ -510,6 +510,14 @@ userproplist.opt_embedplaceholders:
   multihomed: 0
   prettyname: Use Placeholders for lj-template embedded objects
 
+userproplist.opt_exclude_from_verticals:
+  cldversion: 4
+  datatype: char
+  des: User option for whether their entries should be excluded from verticals.  Can be set to "none" (explicit off), "journal" entries, "community" entries, or "both".  Undef = "none", but not explicit.
+  indexed: 0
+  multihomed: 0
+  prettyname: User Option to Exclude from Verticals
+
 userproplist.opt_exclude_stats:
   cldversion: 4
   datatype: bool

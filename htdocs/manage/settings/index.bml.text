@@ -52,6 +52,8 @@
 
 .fn.searchincl=Search inclusion
 
+.fn.verticalincl=Site Explore Area Inclusion
+
 .fn.viewingadult=Viewing Adult Content
 
 .fn.weblogs=Weblogs.com
@@ -165,6 +167,18 @@
 .success.next.viewing=Change your viewing options
 
 .title=Viewing Options
+
+.verticalincl=Minimize your journal entries' inclusion in site explore areas and search result pages.
+
+.verticalincl.select.both=Exclude all entries that I post in my journal or any community
+
+.verticalincl.select.community=Exclude only entries that I post in communities
+
+.verticalincl.select.journal=Exclude only entries that I post in my journal
+
+.verticalincl.select.none=Do not exclude any of my entries
+
+.verticalincl.text=Journal entries posted private or Friends-only are automatically excluded.
 
 .viewingadult=Collapse adult-oriented material written by other users:
 
