@@ -1028,6 +1028,42 @@ sub is_special_qotd_entry {
     return 0;
 }
 
+sub should_be_in_verticals {
+    my $self = shift;
+
+    my $poster = $self->poster;
+    my $journal = $self->journal;
+    my $poster_is_journal = $poster->equals($journal) ? 1 : 0;
+
+    my $hook_rv = LJ::run_hook("entry_should_be_in_verticals", $self);
+    return 0 if defined $hook_rv && !$hook_rv;
+
+    # poster cannot be banned by an admin
+    return 0 if $poster->prop('exclude_from_verticals');
+
+    # poster can't have chosen to be excluded
+    return 0 if $poster->opt_exclude_from_verticals eq "both";
+    if ($poster_is_journal) {
+        return 0 if $poster->opt_exclude_from_verticals eq "journal";
+    } else {
+        return 0 if $poster->opt_exclude_from_verticals eq "community";
+    }
+
+    # poster and journal both must be at least one week old
+    my $one_week = 60*60*24*7;
+    unless ($poster_is_journal) {
+        return 0 unless time() - $journal->timecreate >= $one_week;
+    }
+    return 0 unless time() - $poster->timecreate >= $one_week;
+
+    # entry must be public
+    return 0 unless $self->security eq "public";
+
+    # TODO: Length checks and content flagging checks
+
+    return 1;
+}
+
 package LJ;
 
 use Class::Autouse qw (
