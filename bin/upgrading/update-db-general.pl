@@ -3680,30 +3680,24 @@ register_alter(sub {
 
 
         # get all of the verticals currently in the db
-        my $sth = $dbh->prepare("SELECT name FROM vertical");
-        $sth->execute();
-
-        my @rows;
-        while (my $row = $sth->fetchrow_hashref) {
-            push @rows, $row;
-        }
+        my $verts = $dbh->selectcol_arrayref("SELECT name FROM vertical");
 
 
         # remove any verticals from the db that aren't in the config hash
-        my %verts_to_remove;
-        foreach my $row (@rows) {
-            $verts_to_remove{$row->{name}} = 1 unless $LJ::VERTICAL_TREE{$row->{name}};
+        my @verts_to_remove;
+        foreach my $name (@$verts) {
+            push @verts_to_remove, $name unless $LJ::VERTICAL_TREE{$name};
         }
 
-        if (keys %verts_to_remove) {
-            my @string_verts = map { "'$_'" } keys %verts_to_remove;
+        if (@verts_to_remove) {
+            my @string_verts = map { "'$_'" } @verts_to_remove;
             my $vert_sql = join(',', @string_verts);
             do_sql("DELETE FROM vertical WHERE name IN ($vert_sql)");
         }
 
 
         # add any verticals to the db that are in the config hash (and aren't there already)
-        my %verts_in_db = map { $_->{name} => 1 } @rows;
+        my %verts_in_db = map { $_ => 1 } @$verts;
 
         my %verts_to_add;
         foreach my $name (@vertical_names) {
