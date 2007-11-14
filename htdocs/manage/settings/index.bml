@@ -300,21 +300,18 @@ _code?>
         $ret .= "</td></tr>\n";
 
         # Vertical Inclusion
-        my @vertical_options = (
-            none => $ML{'.verticalincl.select.none'},
-            journal => $ML{'.verticalincl.select.journal'},
-            community => $ML{'.verticalincl.select.community'},
-            both => $ML{'.verticalincl.select.both'},
-        );
-        $ret .= "<tr><td class='field_name'>$ML{'.fn.verticalincl'}</td>\n<td>";
-        $ret .= "<label for='opt_exclude_from_verticals'>$ML{'.verticalincl'}</label><br />\n";
-        $ret .= "<span class='helper'>$ML{'.verticalincl.text'}</span><br />\n";
-        $ret .= LJ::html_select({
-            name => 'opt_exclude_from_verticals',
-            id => 'opt_exclude_from_verticals',
-            selected => $u->opt_exclude_from_verticals,
-        }, @vertical_options);
-        $ret .= "</td></tr>\n";
+        unless ($u->is_comm) {
+            $ret .= "<tr><td class='field_name'>$ML{'.fn.verticalincl'}</td>\n<td>";
+            $ret .= LJ::html_check({
+                type => 'check',
+                name => 'opt_exclude_from_verticals',
+                id => 'opt_exclude_from_verticals',
+                selected => $u->opt_exclude_from_verticals eq "none" ? 0 : 1,
+            });
+            $ret .= " <label for='opt_exclude_from_verticals'>$ML{'.verticalincl'}</label><br />\n";
+            $ret .= "<span class='helper'>$ML{'.verticalincl.text'}</span>";
+            $ret .= "</td></tr>\n";
+        }
 
         # Weblogs.com
         unless ($LJ::DISABLED{'weblogs_com'}) {
@@ -587,7 +584,8 @@ _code?>
             }
         }
 
-        $u->set_opt_exclude_from_verticals($POST{opt_exclude_from_verticals});
+        $u->set_opt_exclude_from_verticals($POST{opt_exclude_from_verticals})
+            unless $u->is_comm;
 
         LJ::run_hook('set_third_party_notify_options', $u, \%POST);
         LJ::run_hook('set_extra_privacy_options', $u, \%POST);

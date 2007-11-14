@@ -4397,7 +4397,7 @@ sub opt_exclude_from_verticals {
 
     my $prop_val = $u->prop('opt_exclude_from_verticals');
 
-    return $prop_val if $prop_val =~ /^(?:journal|community|both)$/;
+    return $prop_val if $prop_val =~ /^(?:entries)$/;
     return "none";
 }
 
@@ -4406,13 +4406,10 @@ sub set_opt_exclude_from_verticals {
     my $val = shift;
 
     # only set the "none" value if the prop is currently set to something (explicit off)
-    if ($val ne "none" || ($val eq "none" && $u->prop('opt_exclude_from_verticals'))) {
-        if ($val =~ /^(?:none|journal|community|both)$/) {
-            $u->set_prop( opt_exclude_from_verticals => $val );
-        } else {
-            $u->set_prop( opt_exclude_from_verticals => undef );
-        }
-    }
+    my $prop_val = $val ? "entries" : undef;
+    $prop_val = "none" if !$val && $u->prop('opt_exclude_from_verticals');
+
+    $u->set_prop( opt_exclude_from_verticals => $prop_val );
 
     return;
 }

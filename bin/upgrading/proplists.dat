@@ -513,7 +513,7 @@ userproplist.opt_embedplaceholders:
 userproplist.opt_exclude_from_verticals:
   cldversion: 4
   datatype: char
-  des: User option for whether their entries should be excluded from verticals.  Can be set to "none" (explicit off), "journal" entries, "community" entries, or "both".  Undef = "none", but not explicit.
+  des: User option for whether their entries should be excluded from verticals.  Can be set to "none" (explicit off) or "entries".  Undef = "none", but not explicit.
   indexed: 0
   multihomed: 0
   prettyname: User Option to Exclude from Verticals
