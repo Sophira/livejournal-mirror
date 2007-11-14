@@ -42,12 +42,12 @@ sub render_body {
         if (@verticals > 1) {
             $ret .= $class->html_select(
                 name => 'verticals',
-                list => [ map { $_->vertid, ucfirst $_->name } @verticals ],
+                list => [ map { $_->vertid, $LJ::VERTICAL_TREE{$_->name}->{display_name} } @verticals ],
                 multiple => 'multiple',
                 size => 5,
             );
         } else {
-            $ret .= "<strong>" . ucfirst $verticals[0]->name . "</strong>";
+            $ret .= "<strong>" . $LJ::VERTICAL_TREE{$verticals[0]->name}->{display_name} . "</strong>";
             $ret .= $class->html_hidden( verticals => $verticals[0]->vertid );
         }
         $ret .= "</td></tr>";
