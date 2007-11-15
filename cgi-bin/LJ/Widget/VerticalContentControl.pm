@@ -91,6 +91,8 @@ sub handle_post {
     my $post = shift;
     my %opts = @_;
 
+    my $remote = LJ::get_remote();
+
     my $action;
     if ($post->{add}) {
         $action = "add";
@@ -112,10 +114,15 @@ sub handle_post {
         die "At least one vertical must be selected." unless $post->{verticals};
 
         my @verticals = split('\0', $post->{verticals});
+        my @vert_names;
         foreach my $vertid (@verticals) {
             my $v = LJ::Vertical->load_by_id($vertid);
+            push @vert_names, $v->name;
             $action eq "add" ? $v->add_entry($entry) : $v->remove_entry($entry);
         }
+
+        my $vert_list = join(", ", @vert_names);
+        LJ::statushistory_add($entry->journal, $remote, "vertical moderation", "$action to/from $vert_list (entry " . $entry->ditemid . ")");
     } elsif ($action eq "view") {
         my @verticals = keys %LJ::VERTICAL_TREE;
 
