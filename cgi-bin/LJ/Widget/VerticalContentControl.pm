@@ -23,8 +23,8 @@ sub render_body {
             @verticals = LJ::Vertical->load_all;
         } else {
             foreach my $vert (keys %LJ::VERTICAL_TREE) {
-                if (LJ::check_priv($remote, "vertical", $vert)) {
-                    my $v = LJ::Vertical->load_by_name($vert);
+                my $v = LJ::Vertical->load_by_name($vert);
+                if ($v->remote_is_moderator) {
                     push @verticals, $v;
                 }
             }
@@ -117,6 +117,9 @@ sub handle_post {
         my @vert_names;
         foreach my $vertid (@verticals) {
             my $v = LJ::Vertical->load_by_id($vertid);
+            die "You cannot perform this action." if $action eq "add" && !$v->remote_is_moderator;
+            die "You cannot perform this action." if $action eq "remove" && !$v->remote_can_remove_entry($entry);
+
             push @vert_names, $v->name;
             $action eq "add" ? $v->add_entry($entry) : $v->remove_entry($entry);
         }
@@ -128,6 +131,7 @@ sub handle_post {
 
         foreach my $vert (@verticals) {
             my $v = LJ::Vertical->load_by_name($vert);
+            die "You cannot perform this action." unless $v->remote_is_moderator;
 
             if ($v->entry_insert_time($entry)) {
                 push @verts, $v;
