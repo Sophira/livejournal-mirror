@@ -2190,3 +2190,21 @@ widget.themenav.switchtos1=Switch to old style system (S1)
 
 widget.themenav.title=2. Select a New Theme
 
+widget.verticalentries.injournal=in [[user]]
+
+widget.verticalentries.nocomments=No comments
+
+widget.verticalentries.nosubject=(no subject)
+
+widget.verticalentries.posttime=posted [[posttime]]
+
+widget.verticalentries.remove.alt=Remove From [[verticalname]]
+
+widget.verticalentries.remove.confirm=Are you sure that you want to remove this entry from [[verticalname]]?
+
+widget.verticalentries.replycount=[[count]] [[?count|comment|comments]]
+
+widget.verticalentries.tags=Tags:
+
+widget.verticalentries.title=Recent Posts in [[verticalname]]
+

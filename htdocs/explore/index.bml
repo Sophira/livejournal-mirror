@@ -1,0 +1,39 @@
+<?page
+body<=
+<?_code
+{
+    use strict;
+    use vars qw(%GET %POST $windowtitle $headextra @errors @warnings);
+
+    $windowtitle = $ML{'.title'};
+
+    my $name = $GET{name};
+    return "Invalid vertical name." unless exists $LJ::VERTICAL_TREE{$name};
+
+    $windowtitle = $LJ::VERTICAL_TREE{$name}->{display_name};
+
+    LJ::Widget->handle_post(\%POST, qw(VerticalContentControl));
+
+    my $ret;
+    $ret .= "<h1>" . $LJ::VERTICAL_TREE{$name}->{display_name} . "</h1>";
+
+    my (@children, @parents);
+    foreach my $child (@{$LJ::VERTICAL_TREE{$name}->{children}}) {
+        push @children, "<a href='$LJ::SITEROOT/explore/?name=$child'>$LJ::VERTICAL_TREE{$child}->{display_name}</a>";
+    }
+    foreach my $parent (@{$LJ::VERTICAL_TREE{$name}->{parents}}) {
+        push @parents, "<a href='$LJ::SITEROOT/explore/?name=$parent'>$LJ::VERTICAL_TREE{$parent}->{display_name}</a>";
+    }
+    $ret .= "<p class='children'>" . join(" | ", @children) . "</p>" if @children;
+    $ret .= "<p class='parents'>" . join(" | ", @parents) . "</p>" if @parents;
+
+    $ret .= LJ::Widget::VerticalEntries->render( name => $name, page => 1 );
+    return $ret;
+}
+_code?>
+<=body
+windowtitle=><?_code return $windowtitle; _code?>
+head<=
+<?_code return $headextra; _code?>
+<=head
+page?>

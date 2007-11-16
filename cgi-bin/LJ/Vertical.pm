@@ -578,6 +578,31 @@ sub entry_insert_time {
     return 0;
 }
 
+sub remote_can_remove_entry {
+    my $self = shift;
+    my $entry = shift;
+
+    my $remote = LJ::get_remote();
+    return $self->user_can_remove_entry($remote, $entry);
+}
+
+sub user_can_remove_entry {
+    my $self = shift;
+    my $u = shift;
+    my $entry = shift;
+
+    return 1 if $u->equals($entry->poster);
+    return 1 if $self->user_is_moderator($u);
+    return 0;
+}
+
+sub user_is_moderator {
+    my $self = shift;
+    my $u = shift;
+
+    return LJ::check_priv($u, "vertical", $self->name) ? 1 : 0;
+}
+
 sub _get_set {
     my $self = shift;
     my $key  = shift;
