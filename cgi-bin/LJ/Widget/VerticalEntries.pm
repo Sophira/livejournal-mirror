@@ -14,10 +14,8 @@ sub render_body {
     my $name = $opts{name};
     my $page = $opts{page} ? $opts{page} : 1;
 
-    die "Invalid vertical name." unless exists $LJ::VERTICAL_TREE{$name};
-
-    my $display_name = $LJ::VERTICAL_TREE{$name}->{display_name};
-    my $vertical = LJ::Vertical->load_by_name($name);
+    my $vertical = LJ::Vertical->load_by_name($name) or die "Invalid vertical name.";
+    my $display_name = $vertical->display_name;
 
     my $ret;
 

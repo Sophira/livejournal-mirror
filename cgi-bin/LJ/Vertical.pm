@@ -119,6 +119,8 @@ sub load_by_id {
     return $class->new( vertid => shift );
 }
 
+# returns a vertical object of the vertical with the given name,
+# or undef if a vertical with that name doesn't exist
 sub load_by_name {
     my $class = shift;
     my $name = shift;
@@ -137,7 +139,7 @@ sub load_by_name {
         return $v;
     }
 
-    die "vertical name not in database";
+    return undef;
 }
 
 sub load_all {
@@ -555,6 +557,12 @@ sub parents {
     my @parent_verticals = map { LJ::Vertical->load_by_name($_) } @$parents;
 
     return @parent_verticals ? @parent_verticals : ();
+}
+
+sub display_name {
+    my $self = shift;
+
+    return $LJ::VERTICAL_TREE{$self->name}->{display_name};
 }
 
 # returns the time that a given entry was added to this vertical, or 0 if it doesn't exist

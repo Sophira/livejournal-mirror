@@ -8,21 +8,21 @@ body<=
     $windowtitle = $ML{'.title'};
 
     my $name = $GET{name};
-    return "Invalid vertical name." unless exists $LJ::VERTICAL_TREE{$name};
+    my $vertical = LJ::Vertical->load_by_name($name) or return "Invalid vertical name.";
 
-    $windowtitle = $LJ::VERTICAL_TREE{$name}->{display_name};
+    $windowtitle = $vertical->display_name;
 
     LJ::Widget->handle_post(\%POST, qw(VerticalContentControl));
 
     my $ret;
-    $ret .= "<h1>" . $LJ::VERTICAL_TREE{$name}->{display_name} . "</h1>";
+    $ret .= "<h1>" . $vertical->display_name . "</h1>";
 
     my (@children, @parents);
-    foreach my $child (@{$LJ::VERTICAL_TREE{$name}->{children}}) {
-        push @children, "<a href='$LJ::SITEROOT/explore/?name=$child'>$LJ::VERTICAL_TREE{$child}->{display_name}</a>";
+    foreach my $child ($vertical->children) {
+        push @children, "<a href='$LJ::SITEROOT/explore/?name=" . $child->name . "'>" . $child->display_name . "</a>";
     }
-    foreach my $parent (@{$LJ::VERTICAL_TREE{$name}->{parents}}) {
-        push @parents, "<a href='$LJ::SITEROOT/explore/?name=$parent'>$LJ::VERTICAL_TREE{$parent}->{display_name}</a>";
+    foreach my $parent ($vertical->parents) {
+        push @parents, "<a href='$LJ::SITEROOT/explore/?name=" . $parent->name . "'>" . $parent->display_name . "</a>";
     }
     $ret .= "<p class='children'>" . join(" | ", @children) . "</p>" if @children;
     $ret .= "<p class='parents'>" . join(" | ", @parents) . "</p>" if @parents;

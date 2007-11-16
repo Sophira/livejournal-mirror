@@ -30,7 +30,7 @@ body<=
                 @$verticals = sort { $a cmp $b } @$verticals;
                 $ret .= "<?p <strong>Entry is in the following vertical(s):</strong> p?><?p ";
                 foreach my $v (@$verticals) {
-                    $ret .= $LJ::VERTICAL_TREE{$v->name}->{display_name} . "<br />";
+                    $ret .= $v->display_name . "<br />";
                 }
                 $ret .= " p?>";
             } else {
