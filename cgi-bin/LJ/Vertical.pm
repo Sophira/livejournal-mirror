@@ -535,8 +535,7 @@ sub first_entry {
 sub entry_singletons {
     my $self = shift;
 
-    my $users = LJ::load_userids(map { $_->[0] } @_);
-    return map { LJ::Entry->new($users->{$_->[0]}, jitemid => $_->[1]) } @_;
+    return map { LJ::Entry->new($_->[0], jitemid => $_->[1]) } @_; 
 }
 
 sub children {
