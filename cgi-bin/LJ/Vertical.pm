@@ -522,14 +522,16 @@ sub recent_entries {
 sub next_entry {
     my $self = shift;
 
-    # return next, then advance iterator
-    return $self->entries( start => $self->{_iter_idx}++, limit => 1 );
+    # return next entry, then advance iterator
+    my @entries = $self->entries( start => $self->{_iter_idx}++, limit => 1 );
+    return $entries[0];
 }
 
 sub first_entry {
     my $self = shift;
 
-    return $self->entries( start => 0, limit => 1 );
+    my @entries = $self->entries( start => 0, limit => 1 );
+    return $entries[0];
 }
 
 sub entry_singletons {
