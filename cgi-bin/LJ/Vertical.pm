@@ -615,7 +615,7 @@ sub user_can_remove_entry {
     my $u = shift;
     my $entry = shift;
 
-    return 1 if $u->equals($entry->poster);
+    return 1 if $u && $u->equals($entry->poster);
     return 1 if $self->user_is_moderator($u);
     return 0;
 }
