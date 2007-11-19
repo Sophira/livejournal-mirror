@@ -229,6 +229,28 @@ sub absorb_entries {
     return 1;
 }
 
+sub purge_entries {
+    my ($self, $entries, $window_max) = @_;
+
+    # remove given entries from our in-object arrayref
+    my @current_entries = @{$self->{entries}};
+    for (my $i = 0; $i < @current_entries; $i++) {
+        my $current_entry = $current_entries[$i];
+        foreach my $entry_to_remove (@$entries) {
+            if ($current_entry->[0] == $entry_to_remove->[0] && $current_entry->[1] == $entry_to_remove->[1]) {
+                splice(@current_entries, $i, 1);
+                $i--; # we just removed an element from @current_entries
+            }
+        }
+    }
+    $self->{entries} = \@current_entries;
+
+    # update _loaded_entries to reflect removed data
+    $self->{_loaded_entries} = $window_max;
+
+    return 1; 
+}
+
 sub preload_rows {
     my $self = shift;
     return 1 if $self->{_loaded_row};
@@ -427,7 +449,11 @@ sub add_entry {
 
     # add entries to current LJ::Vertical object in memory
     if ($self->{_loaded_entries}) {
-        $self->absorb_entries([ map { $_->journalid, $_->jitemid } @entries ], $self->{_loaded_entries} + @entries);
+        my @entries_to_absorb;
+        foreach my $entry (@entries) {
+            push @entries_to_absorb, [ $entry->journalid, $entry->jitemid ];
+        }
+        $self->absorb_entries(\@entries_to_absorb, $self->{_loaded_entries} + @entries);
     }
 
     return 1;
@@ -458,7 +484,11 @@ sub remove_entry {
 
     # remove entries from current LJ::Vertical object in memory
     if ($self->{_loaded_entries}) {
-        # FIXME: Do this!
+        my @entries_to_purge;
+        foreach my $entry (@entries) {
+            push @entries_to_purge, [ $entry->journalid, $entry->jitemid ];
+        }
+        $self->purge_entries(\@entries_to_purge, $self->{_loaded_entries} - @entries);
     }
 
     return 1;
