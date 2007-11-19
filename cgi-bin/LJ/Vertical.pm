@@ -519,6 +519,21 @@ sub recent_entries {
     return $self->entries( start => 0, limit => $RECENT_ENTRY_LIMIT );
 }
 
+# returns only the valid entries from the entries that recent_entries returns
+sub recent_valid_entries {
+    my $self = shift;
+
+    my @valid_entries;
+    foreach my $entry ($self->recent_entries) {
+        next unless defined $entry && $entry->valid;
+        next unless $entry->should_be_in_verticals;
+
+        push @valid_entries, $entry;
+    }
+
+    return @valid_entries;
+}
+
 sub next_entry {
     my $self = shift;
 

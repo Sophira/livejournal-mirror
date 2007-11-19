@@ -2204,6 +2204,10 @@ widget.verticalentries.remove.confirm=Are you sure that you want to remove this 
 
 widget.verticalentries.replycount=[[count]] [[?count|comment|comments]]
 
+widget.verticalentries.skip.next=Next [[num]]
+
+widget.verticalentries.skip.previous=Previous [[num]]
+
 widget.verticalentries.tags=Tags:
 
 widget.verticalentries.title=Recent Posts in [[verticalname]]
