@@ -84,7 +84,7 @@ sub print_entry {
     # subject
     $ret .= "<p class='subject'><a href='" . $entry->url . "'><strong>";
     $ret .= $entry->subject_text || "<em>" . $class->ml('widget.verticalentries.nosubject') . "</em>";
-    $ret .= "</strong></a>";
+    $ret .= "</strong></a></p>";
 
     # remove from vertical button
     if ($vertical->remote_can_remove_entry($entry)) {
@@ -98,7 +98,6 @@ sub print_entry {
         $ret .= " <input type='image' src='$LJ::IMGPREFIX/btn_del.gif' alt='$btn_alt' title='$btn_alt' />";
         $ret .= LJ::Widget::VerticalContentControl->end_form;
     }
-    $ret .= "</p>";
 
     # entry text
     $ret .= "<p class='event'>" . substr(LJ::strip_html($entry->event_text), 0, 400) . " &hellip;</p>";
