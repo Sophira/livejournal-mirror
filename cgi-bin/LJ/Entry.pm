@@ -1037,6 +1037,10 @@ sub should_be_in_verticals {
     my $hook_rv = LJ::run_hook("entry_should_be_in_verticals", $self);
     return 0 if defined $hook_rv && !$hook_rv;
 
+    # poster and journal must be visible
+    return 0 unless $poster->is_visible;
+    return 0 unless $journal->is_visible;
+
     # poster and journal cannot be banned by an admin
     return 0 if $poster->prop('exclude_from_verticals');
     return 0 if $journal->prop('exclude_from_verticals');
