@@ -497,7 +497,7 @@ sub remove_entry {
 }
 *remove_entries = \&remove_entry;
 
-sub entries {
+sub entries_raw {
     my $self = shift;
     my %opts = @_;
 
@@ -533,6 +533,22 @@ sub entries {
     return $self->entry_singletons(@{$self->{entries}}[$start..$entry_idx]);
 }
 
+sub entries {
+    my $self = shift;
+
+    my @entries = $self->entries_raw(@_);
+
+    my @valid_entries;
+    foreach my $entry (@entries) {
+        next unless defined $entry && $entry->valid;
+        next unless $entry->should_be_in_verticals;
+
+        push @valid_entries, $entry;
+    }
+
+    return @valid_entries;
+}
+
 sub loaded_entry_ct {
     my $self = shift;
 
@@ -546,17 +562,7 @@ sub recent_entries {
     $self->{_iter_idx} = $RECENT_ENTRY_LIMIT;
 
     # now return next $RECENT_ENTRY_LIMIT -- but only the entries that we should show
-    my @entries = $self->entries( start => 0, limit => $RECENT_ENTRY_LIMIT );
-
-    my @valid_entries;
-    foreach my $entry (@entries) {
-        next unless defined $entry && $entry->valid;
-        next unless $entry->should_be_in_verticals;
-
-        push @valid_entries, $entry;
-    }
-
-    return @valid_entries;
+    return $self->entries( start => 0, limit => $RECENT_ENTRY_LIMIT );
 }
 
 sub next_entry {

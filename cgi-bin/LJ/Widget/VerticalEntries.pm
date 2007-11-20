@@ -12,31 +12,27 @@ sub render_body {
     my %opts = @_;
 
     my $name = $opts{name};
-    my $skip = defined $opts{skip} ? $opts{skip} : 0;
-    my $entries_per_page = $opts{entries_per_page} ? $opts{entries_per_page} : 10;
+    my $skip = $opts{skip} > 0 ? $opts{skip} : 0;
+    my $entries_per_page = $opts{entries_per_page} > 0 ? $opts{entries_per_page} : 10;
+    my $max_pages = $opts{max_pages} > 0 ? $opts{max_pages} : 10;
 
     my $vertical = LJ::Vertical->load_by_name($name) or die "Invalid vertical name.";
 
     my $ret;
 
-    my @valid_entries = $vertical->recent_entries;
-    my $index_of_first_entry = $skip;
-    my $index_of_last_entry = $skip + $entries_per_page - 1;
-    my @entries_this_page = @valid_entries[$index_of_first_entry..$index_of_last_entry];
+    my @entries_this_page = $vertical->entries( start => $skip, limit => $skip + $entries_per_page - 1 );
 
     my $title_displayed = 0;
     my $count = 0;
     foreach my $entry (@entries_this_page) {
-        last unless defined $entry; # can assume that if we hit an undef entry, we're done
-
         $ret .= $class->print_entry( entry => $entry, vertical => $vertical, title_displayed => \$title_displayed );
         $count++;
     }
 
     my $skip_back = $skip + $entries_per_page;
     my $skip_forward = $skip - $entries_per_page;
-    my $show_skip_back = $count == $entries_per_page ? 1 : 0;
-    my $show_skip_forward = $skip_forward >= 0 ? 1 : 0;
+    my $show_skip_back = $skip / $entries_per_page + 1 < $max_pages;
+    my $show_skip_forward = $skip_forward >= 0;
 
     $ret .= "<p class='skiplinks'>" if $show_skip_back || $show_skip_forward;
     if ($show_skip_back) {
