@@ -125,12 +125,14 @@ sub load_by_name {
     my $class = shift;
     my $name = shift;
 
-    my $dbh = LJ::get_db_writer()
-        or die "unable to contact global db master to load vertical";
+    # FIXME: Could optimize by storing a name => id mapping
 
-    my $sth = $dbh->prepare("SELECT * FROM vertical WHERE name = ?");
+    my $dbr = LJ::get_db_reader()
+        or die "unable to contact global db reader to load vertical";
+
+    my $sth = $dbr->prepare("SELECT * FROM vertical WHERE name = ?");
     $sth->execute($name);
-    die $dbh->errstr if $dbh->err;
+    die $dbr->errstr if $dbr->err;
 
     if (my $row = $sth->fetchrow_hashref) {
         my $v = LJ::Vertical->new( vertid => $row->{vertid} );
@@ -145,12 +147,12 @@ sub load_by_name {
 sub load_all {
     my $class = shift;
 
-    my $dbh = LJ::get_db_writer()
-        or die "unable to contact global db master to load vertical";
+    my $dbr = LJ::get_db_reader()
+        or die "unable to contact global db reader to load vertical";
 
-    my $sth = $dbh->prepare("SELECT * FROM vertical");
+    my $sth = $dbr->prepare("SELECT * FROM vertical");
     $sth->execute;
-    die $dbh->errstr if $dbh->err;
+    die $dbr->errstr if $dbr->err;
 
     my @verticals;
     while (my $row = $sth->fetchrow_hashref) {
@@ -296,7 +298,7 @@ sub preload_rows {
     }
 
     # weird, vertids that we coulnd't find in memcache or db?
-    warn "unknown vertical(s): " . join(",", keys %need) if %need;
+    die "unknown vertical(s): " . join(",", keys %need) if %need;
 
     # now memcache and request cache are both updated, we're done
     return 1;
@@ -516,9 +518,7 @@ sub entries {
     # FIXME: make all of this a bit cleaner... methods for some of this complex logic
 
     # ensure that we've retrieved entries through need_ct
-    unless ($self->{_loaded_entries} >= $need_ct) {
-        $self->load_entries( limit => $need_ct );
-    }
+    $self->load_entries( limit => $need_ct );
 
     # not enough entries?
     my $loaded_entry_ct = $self->loaded_entry_ct;
