@@ -545,16 +545,11 @@ sub recent_entries {
     # reset iterator to end of list which was just fetched, so ->next_entry will be the next from here
     $self->{_iter_idx} = $RECENT_ENTRY_LIMIT;
 
-    # now return next $RECENT_ENTRY_LIMIT
-    return $self->entries( start => 0, limit => $RECENT_ENTRY_LIMIT );
-}
-
-# returns only the valid entries from the entries that recent_entries returns
-sub recent_valid_entries {
-    my $self = shift;
+    # now return next $RECENT_ENTRY_LIMIT -- but only the entries that we should show
+    my @entries = $self->entries( start => 0, limit => $RECENT_ENTRY_LIMIT );
 
     my @valid_entries;
-    foreach my $entry ($self->recent_entries) {
+    foreach my $entry (@entries) {
         next unless defined $entry && $entry->valid;
         next unless $entry->should_be_in_verticals;
 

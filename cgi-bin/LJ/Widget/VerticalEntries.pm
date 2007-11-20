@@ -18,7 +18,7 @@ sub render_body {
 
     my $ret;
 
-    my @valid_entries = $vertical->recent_valid_entries;
+    my @valid_entries = $vertical->recent_entries;
     my $entries_per_page = 10;
     my $index_of_first_entry = $skip;
     my $index_of_last_entry = $skip + $entries_per_page - 1;
