@@ -13,13 +13,13 @@ sub render_body {
 
     my $name = $opts{name};
     my $skip = defined $opts{skip} ? $opts{skip} : 0;
+    my $entries_per_page = $opts{entries_per_page} ? $opts{entries_per_page} : 10;
 
     my $vertical = LJ::Vertical->load_by_name($name) or die "Invalid vertical name.";
 
     my $ret;
 
     my @valid_entries = $vertical->recent_entries;
-    my $entries_per_page = 10;
     my $index_of_first_entry = $skip;
     my $index_of_last_entry = $skip + $entries_per_page - 1;
     my @entries_this_page = @valid_entries[$index_of_first_entry..$index_of_last_entry];
