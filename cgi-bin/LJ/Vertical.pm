@@ -37,6 +37,7 @@ my $DB_ENTRY_CHUNK       = 1_000; # rows to fetch per quety
 #
 
 my %singletons = (); # vertid => singleton
+my @vert_cols = qw( vertid name createtime lastfetch );
 
 #
 # Constructors
@@ -116,7 +117,10 @@ sub create {
 sub load_by_id {
     my $class = shift;
 
-    return $class->new( vertid => shift );
+    my $v = $class->new( vertid => shift );
+    $v->preload_rows;
+
+    return $v;
 }
 
 # returns a vertical object of the vertical with the given name,
@@ -125,39 +129,52 @@ sub load_by_name {
     my $class = shift;
     my $name = shift;
 
-    # FIXME: Could optimize by storing a name => id mapping
+    return undef unless $name;
 
-    my $dbr = LJ::get_db_reader()
-        or die "unable to contact global db reader to load vertical";
+    my $dbh = LJ::get_db_writer()
+        or die "unable to contact global db master to load vertical";
 
-    my $sth = $dbr->prepare("SELECT * FROM vertical WHERE name = ?");
-    $sth->execute($name);
-    die $dbr->errstr if $dbr->err;
-
-    if (my $row = $sth->fetchrow_hashref) {
-        my $v = LJ::Vertical->new( vertid => $row->{vertid} );
-        $v->absorb_row($row);
+    # check memcache for data
+    my $memval = LJ::MemCache::get($class->memkey_vertname($name));
+    if ($memval) {
+        my $v = $class->new( vertid => $memval->{vertid} );
+        $v->absorb_row($memval);
 
         return $v;
     }
 
+    # not in memcache; load from db
+    my $sth = $dbh->prepare("SELECT * FROM vertical WHERE name = ?");
+    $sth->execute($name);
+    die $dbh->errstr if $dbh->err;
+
+    if (my $row = $sth->fetchrow_hashref) {
+        my $v = $class->new( vertid => $row->{vertid} );
+        $v->absorb_row($row);
+        $v->set_memcache;
+
+        return $v;
+    }
+
+    # name does not exist in db
     return undef;
 }
 
 sub load_all {
     my $class = shift;
 
-    my $dbr = LJ::get_db_reader()
-        or die "unable to contact global db reader to load vertical";
+    my $dbh = LJ::get_db_writer()
+        or die "unable to contact global db master to load vertical";
 
-    my $sth = $dbr->prepare("SELECT * FROM vertical");
+    my $sth = $dbh->prepare("SELECT * FROM vertical");
     $sth->execute;
-    die $dbr->errstr if $dbr->err;
+    die $dbh->errstr if $dbh->err;
 
     my @verticals;
     while (my $row = $sth->fetchrow_hashref) {
         my $v = LJ::Vertical->new( vertid => $row->{vertid} );
         $v->absorb_row($row);
+        $v->set_memcache;
 
         push @verticals, $v;
     }
@@ -189,14 +206,41 @@ sub unloaded_singletons {
 # Loaders
 #
 
-sub memkey {
+sub memkey_vertid {
     my $self = shift;
+    my $id = shift;
+
+    return [ $id, "vert:$id" ] if $id;
     return [ $self->{vertid}, "vert:$self->{vertid}" ];
+}
+
+sub memkey_vertname {
+    my $self = shift;
+    my $name = shift;
+
+    return [ $name, "vertname:$name" ] if $name;
+    return [ $self->{name}, "vertname:$self->{name}" ];
+}
+
+sub set_memcache {
+    my $self = shift;
+
+    return unless $self->{_loaded_row};
+
+    my $val = { map { $_ => $self->{$_} } @vert_cols };
+    LJ::MemCache::set( $self->memkey_vertid => $val );
+    LJ::MemCache::set( $self->memkey_vertname => $val );
+
+    return;
 }
 
 sub clear_memcache {
     my $self = shift;
-    return LJ::MemCache::delete($self->memkey);
+
+    LJ::MemCache::delete($self->memkey_vertid);
+    LJ::MemCache::delete($self->memkey_vertname);
+
+    return;
 }
 
 sub entries_memkey {
@@ -213,7 +257,7 @@ sub clear_entries_memcache {
 sub absorb_row {
     my ($self, $row) = @_;
 
-    $self->{$_} = $row->{$_} foreach qw(name createtime lastfetch);
+    $self->{$_} = $row->{$_} foreach @vert_cols;
     $self->{_loaded_row} = 1;
 
     return 1;
@@ -260,7 +304,7 @@ sub preload_rows {
     my @to_load = $self->unloaded_singletons;
     my %need = map { $_->{vertid} => $_ } @to_load;
 
-    my @mem_keys = map { $_->memkey } @to_load;
+    my @mem_keys = map { $_->memkey_vertid } @to_load;
     my $memc = LJ::MemCache::get_multi(@mem_keys);
 
     # now which of the objects to load did we get a memcache key for?
@@ -286,18 +330,18 @@ sub preload_rows {
         # what singleton does this DB row represent?
         my $obj = $need{$row->{vertid}};
 
-        # set in memcache
-        LJ::MemCache::set($obj->memkey => $row);
-
         # and update singleton (request cache)
         $obj->absorb_row($row);
+
+        # set in memcache
+        $obj->set_memcache;
 
         # and delete from %need for error reporting
         delete $need{$obj->{vertid}};
 
     }
 
-    # weird, vertids that we coulnd't find in memcache or db?
+    # weird, vertids that we couldn't find in memcache or db?
     die "unknown vertical(s): " . join(",", keys %need) if %need;
 
     # now memcache and request cache are both updated, we're done

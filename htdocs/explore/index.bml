@@ -29,7 +29,7 @@ body<=
     $ret .= "<p class='children'>" . join(" | ", @children) . "</p>" if @children;
     $ret .= "<p class='parents'>" . join(" | ", @parents) . "</p>" if @parents;
 
-    $ret .= LJ::Widget::VerticalEntries->render( name => $name, skip => $skip );
+    $ret .= LJ::Widget::VerticalEntries->render( vertical => $vertical, skip => $skip );
     return $ret;
 }
 _code?>

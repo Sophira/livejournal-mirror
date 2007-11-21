@@ -11,12 +11,14 @@ sub render_body {
     my $class = shift;
     my %opts = @_;
 
-    my $name = $opts{name};
+    my $vertical = $opts{vertical};
+    die "Invalid vertical object passed to widget." unless $vertical;
+
     my $skip = $opts{skip} > 0 ? $opts{skip} : 0;
     my $entries_per_page = $opts{entries_per_page} > 0 ? $opts{entries_per_page} : 10;
     my $max_pages = $opts{max_pages} > 0 ? $opts{max_pages} : 10;
 
-    my $vertical = LJ::Vertical->load_by_name($name) or die "Invalid vertical name.";
+    my $name = $vertical->name;
 
     my $ret;
 
