@@ -16,8 +16,16 @@ body<=
 
     LJ::Widget->handle_post(\%POST, qw(VerticalContentControl));
 
+    # multiple parents can be defined, but just use the first one for the nav
+    my @parents = $vertical->parents;
+    my $parent = $parents[0];
+
     my $ret;
-    $ret .= "<h1>" . $vertical->display_name . "</h1>";
+    $ret .= "<h1>";
+    if ($parent) {
+        $ret .= "<a href='$LJ::SITEROOT/explore/?name=" . $parent->name . "'><strong>" . $parent->display_name . "</strong></a> &gt; ";
+    }
+    $ret .= $vertical->display_name . "</h1>";
 
     my (@children, @siblings);
     foreach my $child ($vertical->children) {
