@@ -19,15 +19,28 @@ body<=
     my $ret;
     $ret .= "<h1>" . $vertical->display_name . "</h1>";
 
-    my (@children, @parents);
+    my (@children, @siblings);
     foreach my $child ($vertical->children) {
         push @children, "<a href='$LJ::SITEROOT/explore/?name=" . $child->name . "'>" . $child->display_name . "</a>";
     }
-    foreach my $parent ($vertical->parents) {
-        push @parents, "<a href='$LJ::SITEROOT/explore/?name=" . $parent->name . "'>" . $parent->display_name . "</a>";
+    foreach my $sibling ($vertical->siblings( include_self => 1 )) {
+        my $el;
+        if ($sibling->equals($vertical)) {
+            $el .= "<strong>";
+        } else {
+            $el .= "<a href='$LJ::SITEROOT/explore/?name=" . $sibling->name . "'>";
+        }
+        $el .= $sibling->display_name;
+        if ($sibling->equals($vertical)) {
+            $el .= "</strong>";
+        } else {
+            $el .= "</a>";
+        }
+
+        push @siblings, $el;
     }
     $ret .= "<p class='children'>" . join(" | ", @children) . "</p>" if @children;
-    $ret .= "<p class='parents'>" . join(" | ", @parents) . "</p>" if @parents;
+    $ret .= "<p class='siblings'>" . join(" | ", @siblings) . "</p>" if @siblings;
 
     $ret .= LJ::Widget::VerticalEntries->render( vertical => $vertical, skip => $skip );
     return $ret;

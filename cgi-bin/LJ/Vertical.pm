@@ -650,6 +650,22 @@ sub parents {
     return @parent_verticals ? @parent_verticals : ();
 }
 
+sub siblings {
+    my $self = shift;
+    my %opts = @_;
+
+    my $include_self = $opts{include_self} ? 1 : 0;
+
+    my @sibling_verticals;
+    foreach my $parent ($self->parents) {
+        foreach my $child ($parent->children) {
+            push @sibling_verticals, $child if $include_self || !$child->equals($self);
+        }
+    }
+
+    return @sibling_verticals ? @sibling_verticals : ();
+}
+
 sub display_name {
     my $self = shift;
 
@@ -707,6 +723,13 @@ sub user_is_moderator {
     my $u = shift;
 
     return LJ::check_priv($u, "vertical", $self->name) || $LJ::IS_DEV_SERVER ? 1 : 0;
+}
+
+sub equals {
+    my $self = shift;
+    my $other = shift;
+
+    return $self->vertid == $other->vertid ? 1 : 0;
 }
 
 sub _get_set {
