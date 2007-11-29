@@ -1061,6 +1061,41 @@ sub should_be_in_verticals {
     return 1;
 }
 
+sub verticals_list {
+    my $self = shift;
+
+    my @verticals = split(/\s*,\s*/, $self->prop("verticals_list"));
+    return @verticals ? @verticals : ();
+}
+
+sub add_to_vertical {
+    my $self = shift;
+    my $vertname = shift;
+
+    my @verticals = $self->verticals_list;
+    return 1 if grep { $_ eq $vertname } @verticals;
+
+    push @verticals, $vertname;
+    my $newval = join(",", @verticals);
+    $self->set_prop( verticals_list => $newval );
+
+    return 1;
+}
+
+sub remove_from_vertical {
+    my $self = shift;
+    my $vertname = shift;
+
+    my @verticals = $self->verticals_list;
+    my @newkeys = grep { $_ ne $vertname } @verticals;
+    return 1 if @newkeys == @verticals;
+
+    my $newval = join(",", @newkeys);
+    $self->set_prop( verticals_list => $newval );
+
+    return 1;
+}
+
 package LJ;
 
 use Class::Autouse qw (

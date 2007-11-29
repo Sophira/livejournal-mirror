@@ -493,6 +493,11 @@ sub add_entry {
     # clear memcache for entries so changes will be reflected on next read
     $self->clear_entries_memcache;
 
+    # mark these entries as being in this vertical
+    foreach my $entry (@entries) {
+        $entry->add_to_vertical($self->name);
+    }
+
     # add entries to current LJ::Vertical object in memory
     if ($self->{_loaded_entries}) {
         my @entries_to_absorb;
@@ -527,6 +532,11 @@ sub remove_entry {
 
     # clear memcache for entries so changes will be reflected on next read
     $self->clear_entries_memcache;
+
+    # mark these entries as not being in this vertical
+    foreach my $entry (@entries) {
+        $entry->remove_from_vertical($self->name);
+    }
 
     # remove entries from current LJ::Vertical object in memory
     if ($self->{_loaded_entries}) {
