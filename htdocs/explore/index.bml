@@ -23,20 +23,20 @@ body<=
     my $ret;
     $ret .= "<h1>";
     if ($parent) {
-        $ret .= "<a href='$LJ::SITEROOT/explore/?name=" . $parent->name . "'><strong>" . $parent->display_name . "</strong></a> &gt; ";
+        $ret .= "<a href='" . $parent->url . "'><strong>" . $parent->display_name . "</strong></a> &gt; ";
     }
     $ret .= $vertical->display_name . "</h1>";
 
     my (@children, @siblings);
     foreach my $child ($vertical->children) {
-        push @children, "<a href='$LJ::SITEROOT/explore/?name=" . $child->name . "'>" . $child->display_name . "</a>";
+        push @children, "<a href='" . $child->url . "'>" . $child->display_name . "</a>";
     }
     foreach my $sibling ($vertical->siblings( include_self => 1 )) {
         my $el;
         if ($sibling->equals($vertical)) {
             $el .= "<strong>";
         } else {
-            $el .= "<a href='$LJ::SITEROOT/explore/?name=" . $sibling->name . "'>";
+            $el .= "<a href='" . $sibling->url . "'>";
         }
         $el .= $sibling->display_name;
         if ($sibling->equals($vertical)) {

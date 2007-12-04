@@ -18,8 +18,6 @@ sub render_body {
     my $entries_per_page = $opts{entries_per_page} > 0 ? $opts{entries_per_page} : 10;
     my $max_pages = $opts{max_pages} > 0 ? $opts{max_pages} : 10;
 
-    my $name = $vertical->name;
-
     my $ret;
 
     my @entries_this_page = $vertical->entries( start => $skip, limit => $skip + $entries_per_page - 1 );
@@ -38,11 +36,11 @@ sub render_body {
 
     $ret .= "<p class='skiplinks'>" if $show_skip_back || $show_skip_forward;
     if ($show_skip_back) {
-        $ret .= "<a href='$LJ::SITEROOT/explore/?name=$name&skip=$skip_back'>&lt; " . $class->ml('widget.verticalentries.skip.previous', { num => $entries_per_page }) . "</a>";
+        $ret .= "<a href='" . $vertical->url . "&skip=$skip_back'>&lt; " . $class->ml('widget.verticalentries.skip.previous', { num => $entries_per_page }) . "</a>";
     }
     $ret .= " | " if $show_skip_back && $show_skip_forward;
     if ($show_skip_forward) {
-        my $url = $skip_forward == 0 ? "$LJ::SITEROOT/explore/?name=$name" : "$LJ::SITEROOT/explore/?name=$name&skip=$skip_forward";
+        my $url = $skip_forward == 0 ? $vertical->url : $vertical->url . "&skip=$skip_forward";
         $ret .= "<a href='$url'>" . $class->ml('widget.verticalentries.skip.next', { num => $entries_per_page }) . " &gt;</a>";
     }
     $ret .= "</p>" if $show_skip_back || $show_skip_forward;
