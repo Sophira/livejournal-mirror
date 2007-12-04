@@ -182,8 +182,10 @@ sub load_all {
     return @verticals;
 }
 
-sub load_top_level {
+sub load_for_nav {
     my $class = shift;
+
+    return @$LJ::CACHED_VERTICALS_FOR_NAV if $LJ::CACHED_VERTICALS_FOR_NAV;
 
     my @verticals;
     foreach my $vertname (keys %LJ::VERTICAL_TREE) {
@@ -193,7 +195,16 @@ sub load_top_level {
         push @verticals, $v if $v;
     }
 
-    return @verticals;
+    foreach my $v (sort { lc $a->display_name cmp lc $b->display_name } @verticals) {
+        push @$LJ::CACHED_VERTICALS_FOR_NAV, {
+            id => $v->vertid,
+            name => $v->name,
+            display_name => $v->display_name,
+            url => $v->url,
+        };
+    }
+
+    return @$LJ::CACHED_VERTICALS_FOR_NAV;
 }
 
 #
@@ -694,6 +705,12 @@ sub display_name {
     my $self = shift;
 
     return $LJ::VERTICAL_TREE{$self->name}->{display_name};
+}
+
+sub url {
+    my $self = shift;
+
+    return "$LJ::SITEROOT/explore/?name=" . $self->name;
 }
 
 # returns the time that a given entry was added to this vertical, or 0 if it doesn't exist
