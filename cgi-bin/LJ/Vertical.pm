@@ -111,7 +111,7 @@ sub create {
              undef, $self->{name});
     die $dbh->errstr if $dbh->err;
 
-    return LJ::Vertical->new( vertid => $dbh->{mysql_insertid} );
+    return $class->new( vertid => $dbh->{mysql_insertid} );
 }
 
 sub load_by_id {
@@ -172,7 +172,7 @@ sub load_all {
 
     my @verticals;
     while (my $row = $sth->fetchrow_hashref) {
-        my $v = LJ::Vertical->new( vertid => $row->{vertid} );
+        my $v = $class->new( vertid => $row->{vertid} );
         $v->absorb_row($row);
         $v->set_memcache;
 
