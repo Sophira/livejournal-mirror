@@ -1035,12 +1035,15 @@ sub should_be_in_verticals {
     my $poster = $self->poster;
     my $journal = $self->journal;
 
-    my $hook_rv = LJ::run_hook("entry_should_be_in_verticals", $self);
-    return 0 if defined $hook_rv && !$hook_rv;
+    # entry must be public
+    return 0 unless $self->security eq "public";
 
     # poster and journal must be visible
     return 0 unless $poster->is_visible;
     return 0 unless $journal->is_visible;
+
+    my $hook_rv = LJ::run_hook("entry_should_be_in_verticals", $self);
+    return 0 if defined $hook_rv && !$hook_rv;
 
     # poster and journal cannot be banned by an admin
     return 0 if $poster->prop('exclude_from_verticals');
@@ -1052,11 +1055,6 @@ sub should_be_in_verticals {
     # poster must be at least one week old
     my $one_week = 60*60*24*7;
     return 0 unless time() - $poster->timecreate >= $one_week;
-
-    # entry must be public
-    return 0 unless $self->security eq "public";
-
-    # TODO: Length checks and content flagging checks
 
     return 1;
 }
