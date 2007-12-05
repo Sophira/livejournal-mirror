@@ -1,4 +1,4 @@
-#
+
 # LiveJournal Vertical object.
 #
 
@@ -14,15 +14,17 @@ my $DB_ENTRY_CHUNK       = 1_000; # rows to fetch per quety
 
 # internal fields:
 #
-#    vertid:     id of the vertical being represented
-#    name:       text name of the vertical
-#    createtime: time when vertical was created
-#    lastfetch:  time of last fetch from vertical data source
-#    entries:    [ [ journalid, jitemid ], [ ... ], ... ] in order of preferred display
+#    vertid:                   id of the vertical being represented
+#    name:                     text name of the vertical
+#    createtime:               time when vertical was created
+#    lastfetch:                time of last fetch from vertical data source
+#    entries:                  [ [ journalid, jitemid ], [ ... ], ... ] in order of preferred display
+#    entries_filtered:         [ LJ::Entry, LJ::Entry, LJ::Entry, ... ] in order of preferred display
 #
-#    _iter_idx:       index position of iterator within $self->{entries}
-#    _loaded_row:     loaded vertical row
-#    _loaded_entries: length of window which has been queried so far
+#    _iter_idx:                index position of iterator within $self->{entries}
+#    _loaded_row:              loaded vertical row
+#    _loaded_entries:          length of window which has been queried so far
+#    _loaded_entries_filtered: length of window which has been filtered so far
 #
 # NOT IMPLEMENTED:
 #    * tree-based hierarchy of verticals
@@ -62,11 +64,15 @@ sub new
         createtime => undef,
         lastfetch  => undef,
         entries    => [],
+        entries_filtered => [],
 
         # internal flags
         _iter_idx       => 0,
         _loaded_row     => 0,
         _loaded_entries => 0,
+        _loaded_all_entries => 0,
+        _loaded_entries_filtered => 0,
+        _loaded_all_entries_filtered => 0,
     };
 
     croak("need to supply vertid") unless defined $self->{vertid};
@@ -131,9 +137,6 @@ sub load_by_name {
 
     return undef unless $name;
 
-    my $dbh = LJ::get_db_writer()
-        or die "unable to contact global db master to load vertical";
-
     # check memcache for data
     my $memval = LJ::MemCache::get($class->memkey_vertname($name));
     if ($memval) {
@@ -142,6 +145,9 @@ sub load_by_name {
 
         return $v;
     }
+
+    my $dbh = LJ::get_db_writer()
+        or die "unable to contact global db master to load vertical";
 
     # not in memcache; load from db
     my $sth = $dbh->prepare("SELECT * FROM vertical WHERE name = ?");
@@ -297,6 +303,13 @@ sub absorb_entries {
     # update _loaded_entries to reflect new data
     $self->{_loaded_entries} = $window_max;
 
+    # did we query memcache and get less than the max that can be stored there?
+    # if so then we've got all entries for this vertical
+    if (@$entries < $window_max) {
+        #print "we've loaded all entries: entries=" . @$entries . ", window_max=$window_max\n";
+        $self->{_loaded_all_entries} = 1;
+    }
+
     return 1;
 }
 
@@ -367,7 +380,7 @@ sub preload_rows {
     }
 
     # weird, vertids that we couldn't find in memcache or db?
-    die "unknown vertical(s): " . join(",", keys %need) if %need;
+    warn "unknown vertical(s): " . join(",", keys %need) if %need;
 
     # now memcache and request cache are both updated, we're done
     return 1;
@@ -388,7 +401,10 @@ sub load_entries {
     croak("unknown parameters: " . join(",", keys %opts)) if %opts;
 
     # have we already loaded what we need?
+    return 1 if $self->{_loaded_all_entries};
     return 1 if $self->{_loaded_entries} >= $want_limit;
+
+    warn "doing I/O\n";
 
     # can we get all that we need from memcache?
     # -- common case
@@ -576,6 +592,7 @@ sub remove_entry {
 }
 *remove_entries = \&remove_entry;
 
+# entries accessor w/o filter
 sub entries_raw {
     my $self = shift;
     my %opts = @_;
@@ -594,14 +611,11 @@ sub entries_raw {
     my $need_ct  = $start + $limit;
     my $need_idx = $start + $limit - 1; 
 
-    # FIXME: make all of this a bit cleaner... methods for some of this complex logic
-
     # ensure that we've retrieved entries through need_ct
     $self->load_entries( limit => $need_ct );
 
     # not enough entries?
     my $loaded_entry_ct = $self->loaded_entry_ct;
-    warn "start: $start, end: $need_idx, entries: $loaded_entry_ct\n";
     
     return () unless $loaded_entry_ct;
     return () if $start > $loaded_entry_ct - 1;
@@ -614,18 +628,94 @@ sub entries_raw {
 
 sub entries {
     my $self = shift;
+    my %opts = @_;
 
-    my @entries = $self->entries_raw(@_);
+    # start is 0-based, limit is a count
+    my $start = delete $opts{start} || 0;
+    my $limit = delete $opts{limit};
 
-    my @valid_entries;
-    foreach my $entry (@entries) {
-        next unless defined $entry && $entry->valid;
-        next unless $entry->should_be_in_verticals;
+    # how many entries will we have on success?
+    my $want_entries = $start + $limit;
 
-        push @valid_entries, $entry;
+    my @entries = ();
+
+    # see what's already in the filter cache
+    {
+        @entries = @{$self->{entries_filtered}};
+
+        # do we have all we need already?
+        #print "want: $want_entries, cache=" . @entries . ", loaded=$self->{_loaded_entries_filtered}\n";
+        if (@entries >= $want_entries || $self->{_loaded_all_entries_filtered}) {
+            $LJ::CACHED_CT++;
+            my @ret = splice(@entries, $start, $limit);
+            #print "returning splice: @ret\n";
+            return @ret;
+        }
     }
 
-    return @valid_entries;
+    # need to read through more raw entries and filter them
+    # -- start at the point where our cache left off (above)
+    
+    my $chunk_start = $self->{_loaded_entries_filtered};
+    my $chunk_max   = 0;
+    while (@entries < $want_entries) {
+        my $chunk_size = $want_entries - @entries;
+        $chunk_max = $chunk_start + $chunk_size;
+
+        $LJ::RAW_CT++;
+        my @chunk = $self->entries_raw( start => $chunk_start, limit => $chunk_size );
+
+        #print "chunk[$chunk_start,$chunk_size]: " . join(", ", map { $_->jitemid } @chunk) . "\n";
+      
+        foreach my $entry (@chunk) {
+            unless (defined $entry && $entry->valid && $entry->should_be_in_verticals) {
+                #print "entry not public: " . $entry->jitemid . "[" . $entry->security . "]\n";
+                next;
+            }
+
+            push @entries, $entry;
+
+            #print "entries: " . @entries, ", want: " . $want_entries . "\n";
+
+            # did we get all we need?
+            #last if @entries >= $want_entries;
+        }
+
+        #print "\n";
+
+        # if we didn't get the number of entries we requested, then there are no more
+        #print "chunk: " . @chunk . ", size: $chunk_size\n";
+        if (@chunk < $chunk_size) {
+            $self->{_loaded_all_entries_filtered} = 1;
+            last;
+        }
+        
+
+        # need to get the next chunk on our next iteration
+        $chunk_start += $chunk_size;
+    }
+
+    # now we're gauranteed to have loaded at least through $chunk_start entries.  store them in filter cache.
+    $self->set_filtered_cache($chunk_max, @entries);
+
+    # chop off elements we didn't care about
+    return splice(@entries, $start, $limit);
+}
+
+sub set_filtered_cache {
+    my ($self, $loaded_ct, @entries) = @_;
+    
+    $self->{_loaded_entries_filtered} = $loaded_ct;
+    @{$self->{entries_filtered}} = @entries;
+
+    #print "set: loaded_ct=$loaded_ct, entries=" . @entries . "\n";
+
+    return $loaded_ct;
+}
+
+sub get_filtered_cache {
+    my ($self, %opts) = @_;
+
 }
 
 sub loaded_entry_ct {

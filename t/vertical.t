@@ -9,6 +9,9 @@ use LJ::Test qw(memcache_stress temp_user);
 
 my $u = temp_user();
 
+# user object needs to be old, else its entries will be filtered out of verticals
+$u->{_cache_timecreate} = time() - 86400*30;
+
 sub gen_name {
     join(":", "t", time(), LJ::rand_chars(20));
 }
@@ -34,9 +37,6 @@ sub run_tests {
         $v = eval { LJ::Vertical->new( vertid => 1 ) };
         isa_ok($v, "LJ::Vertical", "new: successful instantiation");
 
-        $v = eval { LJ::Vertical->load_by_id(1) };
-        isa_ok($v, "LJ::Vertical", "load_by_id: successful instantiation");
-
         $v = eval { LJ::Vertical->load_by_name("music") };
         isa_ok($v, "LJ::Vertical", "load_by_name: successful instantiation");
     }
@@ -61,6 +61,10 @@ sub run_tests {
 
         $v = LJ::Vertical->create( name => $name );
         isa_ok($v, "LJ::Vertical", "create: successful creation");
+
+        my $created_vertid = $v->vertid;
+        $v = eval { LJ::Vertical->load_by_id( $created_vertid ) };
+        isa_ok($v, "LJ::Vertical", "load_by_id: successful instantiation");
 
         # reset singletons then load the one we just created
         {
@@ -112,32 +116,56 @@ sub run_tests {
             push @entry_objs, $u->t_post_fake_entry;
         }
 
+        # not the best set of tests, but we'll verify that the various accessor methods yield
+        # the same results in the simple case
         my $rv = $v->add_entries(@entry_objs);
         ok($rv, "added entries to LJ::Vertical");
 
         my @recent_entries = $v->recent_entries; # moves iterator
+        ok(@recent_entries > 0 && $v->{_iter_idx} >= @recent_entries, "iterator moved on recent_entries call");
+ 
+        my @entry_chunk    = $v->entries( limit => scalar(@recent_entries) );
+        is(scalar @recent_entries, scalar @entry_chunk, "Chunk yielded same as recent_entries");
 
-        # FIXME: This fails now because ->recent_entries only returns valid entries, not all entries
-        #ok(@recent_entries == @{$v->{entries}} && @recent_entries == @entry_objs, "loaded recent entries");
+        # reset iterator
+        $v->{_iter_idx} = 0;
+        my @entry_list     = map { $v->next_entry } @recent_entries;
+        is(scalar @recent_entries, scalar @entry_list, "Repeated next calls yielded same as recent_entries");
 
-        $v->recent_entries;
-        ok(@{$v->{entries}} == @entry_objs, "reloaded recent entries");
-
-        #warn LJ::D(\@recent_entries);
-
-        #foreach my $entry ($v->entries( start => 0, limit => 100)) {
-            # do something, doesn't change iterator
-        #}
-
-        #while (my $entry = $v->next_entry) {
-            # do something, advances iterator
-        #}
-
-        #my $entry = $v->first_entry; # doesn't advance iterator
-
+        ok($v->next_entry == undef, "No more entries to retrieve");
 
         # clean up
         $v->delete_and_purge;
+    }
+
+    # add entries, mark some invalid, and retrieve them in chunks
+    {
+        my $v = LJ::Vertical->create( name => gen_name() );
+
+        # post some entries
+        my @entry_objs = ();
+        my $public_ct = 0;
+        foreach (1..50) {
+
+            # 50% will be invalid for verticals
+            my $security = 'private';
+            if (rand(2) % 2 == 0) {
+                $public_ct++;
+                $security = 'public';
+            }
+
+            unshift @entry_objs, $u->t_post_fake_entry( security => $security );
+        }
+        warn "public: $public_ct\n";
+        $v->add_entries(@entry_objs);
+
+        # call ->next repeatedly until we get undef
+        my $got = grep { defined $v->next_entry } @entry_objs;
+        warn "got: $got, public: $public_ct\n";
+        ok($got == $public_ct, "got only public");
+        ok($v->next_entry == undef, "next entry is undef");
+
+
     }
 
 }
