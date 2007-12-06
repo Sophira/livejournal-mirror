@@ -1072,6 +1072,36 @@ sub should_be_in_verticals {
     my $one_week = 60*60*24*7;
     return 0 unless time() - $poster->timecreate >= $one_week;
 
+    # check content flags of the entry and the journal the entry is in
+    if (LJ::is_enabled("content_flag")) {
+        my $adult_content_entry = $self->adult_content_calculated;
+        my $adult_content_journal = $journal->adult_content_calculated;
+        my $admin_flag = $self->admin_content_flag || $journal->admin_content_flag;
+
+        # use the adult content value that is more adult of the two (entry or journal)
+        my $adult_content = "none";
+        if ($adult_content_entry eq "explicit" || $adult_content_journal eq "explicit") {
+            $adult_content = "explicit";
+        } elsif ($adult_content_entry eq "concepts" || $adult_content_journal eq "concepts") {
+            $adult_content = "concepts";
+        }
+
+        my $remote = LJ::get_remote();
+        if ($remote) {
+            my $safe_search = $remote->safe_search;
+
+            unless ($safe_search == 0) {
+                my $adult_content_flag_level = $LJ::CONTENT_FLAGS{$adult_content} ? $LJ::CONTENT_FLAGS{$adult_content}->{safe_search_level} : 0;
+                my $admin_flag_level = $LJ::CONTENT_FLAGS{$admin_flag} ? $LJ::CONTENT_FLAGS{$admin_flag}->{safe_search_level} : 0;
+
+                return 0 if $adult_content_flag_level && ($safe_search >= $adult_content_flag_level);
+                return 0 if $admin_flag_level && ($safe_search >= $admin_flag_level);
+            }
+        } else {
+            return 0 if $adult_content ne "none" || $admin_flag;
+        }
+    }
+
     return 1;
 }
 
