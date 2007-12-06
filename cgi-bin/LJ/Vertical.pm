@@ -192,7 +192,7 @@ sub load_for_nav {
     my $class = shift;
 
     my $should_see_nav = LJ::run_hook('remote_should_see_vertical_nav');
-    return undef unless !defined $should_see_nav || $should_see_nav;
+    return () unless !defined $should_see_nav || $should_see_nav;
 
     return @$LJ::CACHED_VERTICALS_FOR_NAV if $LJ::CACHED_VERTICALS_FOR_NAV;
 
