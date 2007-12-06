@@ -1764,6 +1764,8 @@ web.authas.label=Work as user:
 
 web.authas.label.comm=Work as community:
 
+web.controlstrip.btn.go=Go
+
 web.controlstrip.btn.login=Log in
 
 web.controlstrip.btn.logout=Log out
@@ -1781,6 +1783,8 @@ web.controlstrip.links.create=Create a [[sitename]] Account
 web.controlstrip.links.editcommmembers=Edit Members
 
 web.controlstrip.links.editcommprofile=Edit the Profile
+
+web.controlstrip.links.explore=Explore [[sitenameabbrev]]
 
 web.controlstrip.links.home=Home
 
@@ -1806,6 +1810,8 @@ web.controlstrip.links.popfeeds=View the Most Popular Feeds
 
 web.controlstrip.links.post=Post to Journal
 
+web.controlstrip.links.post2=Post
+
 web.controlstrip.links.postcomm=Post to this community
 
 web.controlstrip.links.recentcomments=View Recent Comments
@@ -1815,6 +1821,8 @@ web.controlstrip.links.removecomm=Stop watching this community
 web.controlstrip.links.removefeed=Remove it from your Friends Page
 
 web.controlstrip.links.viewfriendspage=View my Friends Page
+
+web.controlstrip.links.viewfriendspage2=Friends Page
 
 web.controlstrip.links.watchcomm=Watch this community
 
