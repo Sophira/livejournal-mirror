@@ -2832,7 +2832,7 @@ sub control_strip
         my $logout = "<input type='submit' value=\"$BML::ML{'web.controlstrip.btn.logout'}\" id='Logout' />";
         $ret .= "$remote_display $logout";
         $ret .= "</div></form>\n";
-        $ret .= "$links{'post_journal'}&nbsp;&nbsp; $links{'home'}&nbsp;&nbsp; $links{'view_friends_page'}";
+        $ret .= "$links{'home'}&nbsp;&nbsp; $links{'post_journal'}&nbsp;&nbsp; $links{'view_friends_page'}";
         $ret .= "</td>\n";
 
         $ret .= "<td id='lj_controlstrip_actionlinks' nowrap='nowrap'>";
