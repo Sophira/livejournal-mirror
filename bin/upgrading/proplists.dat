@@ -6,6 +6,14 @@ userproplist.ad_categories:
   multihomed: 0
   prettyname: Ad Content Categories
 
+userproplist.admin_content_flag:
+  cldversion: 4
+  datatype: char
+  des: Internal flag describing the nature of this journal, set by an admin
+  indexed: 0
+  multihomed: 0
+  prettyname: Admin Content Flag
+
 userproplist.adult_content:
   cldversion: 4
   datatype: char
@@ -889,7 +897,7 @@ userproplist.scheme_manually_set:
 userproplist.safe_search:
   cldversion: 4
   datatype: char
-  des: Safe search filtering settings (none, explicit, concepts)
+  des: Safe search filtering settings -- "none" means no filtering, otherwise it's a number, and the greater the number the more filtering occurs
   indexed: 0
   multihomed: 0
   prettyname: Safe Search Filtering
@@ -1161,6 +1169,12 @@ talkproplist.unknown8bit:
   datatype: bool
   des: True if text has 8-bit data that's not in UTF-8
   prettyname: Unknown 8-bit text
+
+logproplist.admin_content_flag:
+  datatype: char
+  des: Internal flag describing the nature of this entry, set by an admin
+  prettyname: Admin Content Flag
+  sortorder: 106
 
 logproplist.adult_content:
   datatype: char

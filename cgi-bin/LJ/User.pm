@@ -4157,7 +4157,7 @@ sub can_join_adult_comm {
     my $adultref = $opts{adultref};
     my $comm = $opts{comm} or croak "No community passed";
 
-    my $adult_content = $comm->adult_content;
+    my $adult_content = $comm->adult_content_calculated;
     $$adultref = $adult_content;
 
     if ($adult_content eq "concepts" && ($u->is_child || !$u->best_guess_age)) {
@@ -4187,29 +4187,40 @@ sub timezone {
 sub can_admin_content_flagging {
     my $u = shift;
 
+    return 0 unless LJ::is_enabled("content_flag");
     return 1 if $LJ::IS_DEV_SERVER;
     return LJ::check_priv($u, "siteadmin", "contentflag");
 }
 
-sub can_flag_content {
+sub can_see_content_flag_button {
     my $u = shift;
     my %opts = @_;
 
     return 0 unless LJ::is_enabled("content_flag");
 
+    my $content = $opts{content};
+
     # user can't flag any journal they manage nor any entry they posted
-    if (LJ::isu($opts{from})) {
-        if ($opts{content} eq "journal") {
-            return 0 if $u->can_manage($opts{from});
-        } elsif ($opts{content} eq "entry") {
-            return 0 if $u->equals($opts{from});
-        }
+    # user also can't flag non-public entries
+    if (LJ::isu($content)) {
+        return 0 if $u->can_manage($content);
+    } elsif ($content->isa("LJ::Entry")) {
+        return 0 if $u->equals($content->poster);
+        return 0 unless $content->security eq "public";
     }
 
     # user can't flag anything if their account isn't at least one month old
     my $one_month = 60*60*24*30;
     return 0 unless time() - $u->timecreate >= $one_month;
 
+    return 1;
+}
+
+sub can_flag_content {
+    my $u = shift;
+    my %opts = @_;
+
+    return 0 unless $u->can_see_content_flag_button(%opts);
     return 0 if LJ::sysban_check("contentflag", $u->user);
     return 0 unless $u->rate_check("ctflag", 1);
     return 1;
@@ -4229,6 +4240,7 @@ sub show_raw_errors {
     return 0;
 }
 
+# defined by the user
 # returns 'none', 'concepts' or 'explicit'
 sub adult_content {
     my $u = shift;
@@ -4236,6 +4248,21 @@ sub adult_content {
     my $prop_value = $u->prop('adult_content'); 
 
     return $prop_value ? $prop_value : "none";
+}
+
+# defined by an admin
+sub admin_content_flag {
+    my $u = shift;
+
+    return $u->prop('admin_content_flag');
+}
+
+# uses both user- and admin-defined props to figure out the adult content level
+sub adult_content_calculated {
+    my $u = shift;
+
+    return "explicit" if $u->admin_content_flag eq "explicit_adult";
+    return $u->adult_content;
 }
 
 sub show_graphic_previews {
@@ -4284,12 +4311,22 @@ sub hide_adult_content {
     return $prop_value ? $prop_value : "none";
 }
 
+# returns a number that represents the user's chosen search filtering level
+# 0 = no filtering
+# 1-10 = moderate filtering
+# >10 = strict filtering
 sub safe_search {
     my $u = shift;
 
     my $prop_value = $u->prop('safe_search');
 
-    return $prop_value ? $prop_value : "explicit";
+    # current user 18+ default is 0
+    # current user <18 default is 10
+    # new user default (prop value is "nu_default") is 10
+    return 0 if $prop_value eq "none";
+    return $prop_value if $prop_value && $prop_value =~ /^\d+$/;
+    return 0 if $prop_value ne "nu_default" && $u->best_guess_age && !$u->is_minor;
+    return 10;
 }
 
 # determine if the user in "for_u" should see $u in a search result
@@ -4297,18 +4334,24 @@ sub should_show_in_search_results {
     my $u = shift;
     my %opts = @_;
 
-    my $adult_content = $u->adult_content;
+    return 1 unless LJ::is_enabled("content_flag") && LJ::is_enabled("safe_search");
+
+    my $adult_content = $u->adult_content_calculated;
+    my $admin_flag = $u->admin_content_flag;
 
     my $for_u = $opts{for};
     unless (LJ::isu($for_u)) {
-        return $adult_content eq "explicit" ? 0 : 1;
+        return $adult_content ne "none" || $admin_flag ? 0 : 1;
     }
 
     my $safe_search = $for_u->safe_search;
+    return 1 if $safe_search == 0;
 
-    return 1 if $safe_search eq "none";
-    return 1 if $adult_content eq "none";
-    return 0 if $adult_content eq "explicit" || ($adult_content eq "concepts" && $safe_search eq "concepts");
+    my $adult_content_flag_level = $LJ::CONTENT_FLAGS{$adult_content} ? $LJ::CONTENT_FLAGS{$adult_content}->{safe_search_level} : 0;
+    my $admin_flag_level = $LJ::CONTENT_FLAGS{$admin_flag} ? $LJ::CONTENT_FLAGS{$admin_flag}->{safe_search_level} : 0;
+
+    return 0 if $adult_content_flag_level && ($safe_search >= $adult_content_flag_level);
+    return 0 if $admin_flag_level && ($safe_search >= $admin_flag_level);
     return 1;
 }
 
