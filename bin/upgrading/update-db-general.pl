@@ -2982,6 +2982,15 @@ CREATE TABLE vertical_entries (
 )
 EOC
 
+register_tablecreate("vertical_rules", <<'EOC');
+CREATE TABLE vertical_rules (
+   vertid INT UNSIGNED NOT NULL,
+   rules BLOB,
+
+   PRIMARY KEY (vertid)
+)
+EOC
+
 
 # NOTE: new table declarations go here
 

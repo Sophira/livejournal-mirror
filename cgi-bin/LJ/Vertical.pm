@@ -20,11 +20,13 @@ my $DB_ENTRY_CHUNK       = 1_000; # rows to fetch per quety
 #    lastfetch:                time of last fetch from vertical data source
 #    entries:                  [ [ journalid, jitemid ], [ ... ], ... ] in order of preferred display
 #    entries_filtered:         [ LJ::Entry, LJ::Entry, LJ::Entry, ... ] in order of preferred display
+#    rules:                    { whitelist => [ [ score1, data1 ], [ score2, data2 ], ... ], blacklist => [ ... ] }
 #
 #    _iter_idx:                index position of iterator within $self->{entries}
 #    _loaded_row:              loaded vertical row
 #    _loaded_entries:          length of window which has been queried so far
 #    _loaded_entries_filtered: length of window which has been filtered so far
+#    _loaded_rules:            loaded 'rules' row?
 #
 # NOT IMPLEMENTED:
 #    * tree-based hierarchy of verticals
@@ -65,6 +67,7 @@ sub new
         lastfetch  => undef,
         entries    => [],
         entries_filtered => [],
+        rules => { whitelist => [], blacklist => [] },
 
         # internal flags
         _iter_idx       => 0,
@@ -73,6 +76,7 @@ sub new
         _loaded_all_entries => 0,
         _loaded_entries_filtered => 0,
         _loaded_all_entries_filtered => 0,
+        _loaded_rules => 0,
     };
 
     croak("need to supply vertid") unless defined $self->{vertid};
@@ -256,6 +260,14 @@ sub memkey_vertname {
     return [ $self->{name}, "vertname:$self->{name}" ];
 }
 
+sub memkey_rules {
+    my $self = shift;
+    my $id = shift;
+
+    return [ $id, "vertrules:$id" ] if $id;
+    return [ $self->{vertid}, "vertrules:$self->{vertid}" ];
+}
+
 sub set_memcache {
     my $self = shift;
 
@@ -312,6 +324,15 @@ sub absorb_entries {
         #print "we've loaded all entries: entries=" . @$entries . ", window_max=$window_max\n";
         $self->{_loaded_all_entries} = 1;
     }
+
+    return 1;
+}
+
+sub absorb_rules {
+    my ($self, $rules) = @_;
+
+    $self->{rules} = $rules;
+    $self->{_loaded_rules} = 1;
 
     return 1;
 }
@@ -386,6 +407,112 @@ sub preload_rows {
     warn "unknown vertical(s): " . join(",", keys %need) if %need;
 
     # now memcache and request cache are both updated, we're done
+    return 1;
+}
+
+sub rules {
+    my $self = shift;
+
+    unless ($self->{_loaded_rules}) {
+        $self->load_rules;
+    }
+
+    return $self->{rules};
+}
+
+sub rules_whitelist {
+    my $self = shift;
+
+    return @{$self->rules->{whitelist}};
+}
+
+sub rules_blacklist {
+    my $self = shift;
+
+    return @{$self->rules->{blacklist}};
+}
+
+# usage: $v->set_rules( whitelist => $text, blacklist => $text );
+#        $v->set_rules( $full_hashref );
+sub set_rules {
+    my $self = shift;
+
+    my $to_set = {};
+
+    # did they pass in named pairs?
+    if (@_ > 1) {
+        my %opts = @_;
+        $to_set->{whitelist} = $self->parse_rules(\$opts{whitelist});
+        $to_set->{blacklist} = $self->parse_rules(\$opts{blacklist});
+    } else {
+        $to_set = shift;
+        croak "invalid rules hashref"
+            unless ref $to_set->{whitelist} && ref $to_set->{blacklist};
+    }
+
+    my $dbh = LJ::get_db_writer()
+        or die "Unable to contact global db writer for vertical rules";
+
+    $dbh->do("REPLACE INTO vertical_rules SET vertid=?, rules=?",
+             undef, $self->vertid, Storable::nfreeze($to_set));
+
+    LJ::MemCache::delete($self->memkey_rules);
+
+    $self->absorb_rules($to_set);
+
+    return 1;
+}
+
+sub parse_rules {
+    my $self = shift;
+    my $textref = shift;
+
+    # caller can also pass a scalar if they like
+    $textref = \$textref unless ref $textref;
+
+    my @array_ret = ();
+    foreach my $line (split(/\n+/, $$textref)) {
+        unless ($line =~ /^\s*(0*\.\d+)?\s*(\S+)\s*$/) {
+            die "invalid line: $line\n";
+        }
+
+        my ($score, $rule) = ($1, $2);
+        push @array_ret => [ $score, $rule ];
+    }
+
+    return \@array_ret;
+}
+
+sub load_rules {
+    my $self = shift;
+
+    return 1 if $self->{_loaded_rules};
+
+    # memcache contains storable object, but that will be thawed on return from MemCache::get
+    my $memkey = $self->memkey_rules;
+    my $memval = LJ::MemCache::get($memkey);
+    return $memval if $memval;
+
+    my $dbh = LJ::get_db_writer()
+        or die "Unable to contact global db writer for vertical rules";
+
+    # db contains storable object
+    my $rules = $dbh->selectrow_array("SELECT rules FROM vertical_rules WHERE vertid=?",
+                                      undef, $self->vertid);
+    die $dbh->errstr if $dbh->err;
+
+    # if we got something, deserialize it
+    $rules = Storable::thaw($rules) if $rules;
+
+    # fill in blank rule set if there's nothing in the db
+    $rules ||= { whitelist => [], blacklist => [] };
+
+    # set storable object in memcache
+    LJ::MemCache::set($memkey, $rules);
+
+    $self->{rules} = $rules;
+    $self->{_loaded_rules} = 1;
+
     return 1;
 }
 

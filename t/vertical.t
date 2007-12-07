@@ -164,8 +164,28 @@ sub run_tests {
         warn "got: $got, public: $public_ct\n";
         ok($got == $public_ct, "got only public");
         ok($v->next_entry == undef, "next entry is undef");
+    }
 
+    # test setting, parsing, and retrieval of rules
+    {
+        my $v = LJ::Vertical->create( name => gen_name() );
 
+        ok(eq_hash($v->rules, { whitelist => [], blacklist => [] }), "rules initialized properly");
+        ok(eq_array([ $v->rules_whitelist ], []),  "rules whitelist initialized");
+        ok(eq_array([ $v->rules_blacklist ], []),  "rules blacklist initialized");
+
+        my $rv = eval { $v->set_rules({}) };
+        ok(! $rv && $@ =~ /invalid/, "can't set bogus hashref");
+
+        $rv = eval { $v->set_rules( whitelist => "foo bar") };
+        ok(! $rv && $@ =~ /invalid/, "can't set bogus whitelist line");
+
+        $rv = eval { $v->set_rules( whitelist => "0.01 Term::SomeTerm\n0.02 Term::SomeTerm\nLang::EN",
+                                    blacklist => "0.30 Term::BadTerm" ) };
+        ok($rv && eq_array([ $v->rules_whitelist ], [ [ "0.01", "Term::SomeTerm" ], [ "0.02", "Term::SomeTerm" ], [ undef, "Lang::EN" ] ]),
+           "set valid whitelist");
+        ok($rv && eq_array([ $v->rules_blacklist ], [ [ "0.30", "Term::BadTerm" ] ]), 
+           "set valid blacklist");
     }
 
 }
