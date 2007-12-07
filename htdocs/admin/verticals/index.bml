@@ -36,10 +36,12 @@ body<=
             } else {
                 $ret .= "<?p <strong>Entry does not exist in any verticals.</strong> p?>";
             }
+        } elsif ($post_ret{action} eq "rules") {
+            $ret .= "<?p <strong>Vertical rules updated!</strong> p?>";
         }
     }
 
-    $ret .= LJ::Widget::VerticalContentControl->render( get => \%GET );
+    $ret .= LJ::Widget::VerticalContentControl->render( get => \%GET, post => LJ::Widget::VerticalContentControl->post_fields(\%POST) );
 
     return $ret;
 }

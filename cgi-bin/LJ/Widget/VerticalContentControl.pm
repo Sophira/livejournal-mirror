@@ -12,27 +12,15 @@ sub render_body {
     my %opts = @_;
 
     my $get = $opts{get};
+    my $post = $opts{post};
 
     my $action = $get->{action};
-    my $remote = LJ::get_remote();
     my $ret;
 
+    my @verticals = $class->verticals_remote_can_moderate;
+    return "You do not have access to any verticals." unless @verticals;
+
     if ($action eq "add" || $action eq "remove") {
-        my @verticals;
-        if (LJ::check_priv($remote, "vertical", "*") || $LJ::IS_DEV_SERVER) {
-            @verticals = LJ::Vertical->load_all;
-        } else {
-            foreach my $vert (keys %LJ::VERTICAL_TREE) {
-                my $v = LJ::Vertical->load_by_name($vert);
-                if ($v->remote_is_moderator) {
-                    push @verticals, $v;
-                }
-            }
-        }
-
-        return "" unless @verticals;
-        @verticals = sort { $a->name cmp $b->name } @verticals;
-
         $ret .= $class->start_form;
 
         $ret .= "<table border='0'>";
@@ -76,14 +64,102 @@ sub render_body {
         $ret .= "<a href='$LJ::SITEROOT/admin/verticals/'>Return to Options List</a></td></tr>";
 
         $ret .= $class->end_form;
+    } elsif ($action eq "rules") {
+        my $vertical_name = $get->{vertical_name};
+        return "You must define a vertical name." unless $vertical_name;
+
+        my $vertical_obj;
+        foreach my $v (@verticals) {
+            if ($v->name eq $vertical_name) {
+                $vertical_obj = $v;
+                last;
+            }
+        }
+
+        return "You do not have permission to define the rules of this vertical." unless $vertical_obj;
+
+        my $whitelist = $class->rules_array_to_string($vertical_obj->rules_whitelist);
+        my $blacklist = $class->rules_array_to_string($vertical_obj->rules_blacklist);
+
+        if ($post && keys %$post) {
+            $whitelist = $post->{whitelist_rules};
+            $blacklist = $post->{blacklist_rules};
+        }
+
+        $ret .= $class->start_form;
+        $ret .= "<p>Define <strong>whitelist</strong> rules for vertical <strong>" . $vertical_obj->display_name . "</strong>:<br />";
+        $ret .= $class->html_textarea(
+            name => "whitelist_rules",
+            value => $whitelist,
+            rows => 15,
+            cols => 60,
+        ) . "</p>";
+
+        $ret .= "<p>Define <strong>blacklist</strong> rules for vertical <strong>" . $vertical_obj->display_name . "</strong>:<br />";
+        $ret .= $class->html_textarea(
+            name => "blacklist_rules",
+            value => $blacklist,
+            rows => 15,
+            cols => 60,
+        ) . "</p>";
+
+        $ret .= $class->html_hidden( vertical_name => $vertical_obj->name );
+        $ret .= $class->html_submit( rules => "Define Rules" );
+        $ret .= $class->end_form;
     } else {
-        $ret .= "Options:<br />";
+        $ret .= "<strong>Options:</strong><br />";
         $ret .= "<a href='$LJ::SITEROOT/admin/verticals/?action=add'>Add an entry to vertical(s)</a><br />";
         $ret .= "<a href='$LJ::SITEROOT/admin/verticals/?action=remove'>Remove an entry from vertical(s)</a><br />";
-        $ret .= "<a href='$LJ::SITEROOT/admin/verticals/?action=view'>View which vertical(s) an entry is in</a>";
+        $ret .= "<a href='$LJ::SITEROOT/admin/verticals/?action=view'>View which vertical(s) an entry is in</a><br /><br />";
+
+        $ret .= "<form method='GET'>";
+        $ret .= "Define rules for vertical: ";
+        if (@verticals > 1) {
+            $ret .= LJ::html_select({ name => 'vertical_name' }, map { $_->name, $_->display_name } @verticals);
+        } else {
+            $ret .= "<strong>" . $verticals[0]->display_name . "</strong>";
+            $ret .= LJ::html_hidden( vertical_name => $verticals[0]->name );
+        }
+        $ret .= LJ::html_hidden( action => "rules" );
+        $ret .= " " . LJ::html_submit("Go");
+        $ret .= "</form>";
     }
 
     return $ret;    
+}
+
+sub verticals_remote_can_moderate {
+    my $class = shift;
+
+    my $remote = LJ::get_remote();
+    my @verticals;
+
+    if (LJ::check_priv($remote, "vertical", "*") || $LJ::IS_DEV_SERVER) {
+        @verticals = LJ::Vertical->load_all;
+    } else {
+        foreach my $vert (keys %LJ::VERTICAL_TREE) {
+            my $v = LJ::Vertical->load_by_name($vert);
+            if ($v->remote_is_moderator) {
+                push @verticals, $v;
+            }
+        }
+    }
+
+    return sort { $a->name cmp $b->name } @verticals;
+}
+
+sub rules_array_to_string {
+    my $class = shift;
+    my @rules = @_;
+
+    my $str;
+    foreach my $rule (@rules) {
+        $str .= "$rule->[0] " if $rule->[0];
+        $str .= "$rule->[1]\n";
+    }
+    chomp $str;
+
+    return $str;
 }
 
 sub handle_post {
@@ -100,14 +176,19 @@ sub handle_post {
         $action = "remove";
     } elsif ($post->{view}) {
         $action = "view";
+    } elsif ($post->{rules}) {
+        $action = "rules";
     } else {
         die "Invalid action.";
     }
 
-    die "An entry URL must be provided." unless $post->{entry_url};
+    my $entry;
+    unless ($action eq "rules") {
+        die "An entry URL must be provided." unless $post->{entry_url};
 
-    my $entry = LJ::Entry->new_from_url($post->{entry_url});
-    die "Invalid entry URL." unless $entry && $entry->valid;
+        $entry = LJ::Entry->new_from_url($post->{entry_url});
+        die "Invalid entry URL." unless $entry && $entry->valid;
+    }
 
     my @verts;
     if ($action eq "add" || $action eq "remove") {
@@ -137,6 +218,13 @@ sub handle_post {
                 push @verts, $v;
             }
         }
+    } elsif ($action eq "rules") {
+        my $name = $post->{vertical_name};
+        my $v = LJ::Vertical->load_by_name($name);
+        die "Invalid vertical." unless $v;
+        die "You cannot define rules for this vertical." unless $v->remote_is_moderator;
+
+        $v->set_rules( whitelist => $post->{whitelist_rules}, blacklist => $post->{blacklist_rules} );
     }
 
     return ( action => $action, verticals => \@verts );
