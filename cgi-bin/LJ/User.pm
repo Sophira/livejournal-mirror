@@ -2126,7 +2126,7 @@ sub emails_visible {
         @emails = ();
     }
     if ($LJ::USER_EMAIL && $useremail_cap) {
-        unless ($u->{'opt_whatemailshow'} eq "A" || $u->{'no_mail_alias'}) {
+        unless ($u->{'opt_whatemailshow'} eq "A" || $u->prop('no_mail_alias')) {
             push @emails, "$u->{'user'}\@$LJ::USER_DOMAIN";
         }
     }
