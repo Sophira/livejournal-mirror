@@ -9,6 +9,16 @@ body<=
 
     my $name = $GET{name};
     my $skip = defined $GET{skip} ? $GET{skip} : 0;
+    my $ret;
+
+    unless ($name) {
+        my @verticals = LJ::Vertical->load_for_nav;
+        foreach my $v (@verticals) {
+            $ret .= "<a href='" . $v->{url} . "'>" . $v->{display_name} . "</a><br />";
+        }
+
+        return $ret;
+    }
 
     my $vertical = LJ::Vertical->load_by_name($name) or return "Invalid vertical name.";
 
@@ -20,7 +30,6 @@ body<=
     my @parents = $vertical->parents;
     my $parent = $parents[0];
 
-    my $ret;
     $ret .= "<h1>";
     if ($parent) {
         $ret .= "<a href='" . $parent->url . "'><strong>" . $parent->display_name . "</strong></a> &gt; ";
