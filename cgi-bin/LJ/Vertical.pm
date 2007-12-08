@@ -472,7 +472,8 @@ sub parse_rules {
 
     my @array_ret = ();
     foreach my $line (split(/\n+/, $$textref)) {
-        unless ($line =~ /^\s*(0*\.\d+)?\s*(\S+)\s*$/) {
+        $line = LJ::trim($line);
+        unless ($line =~ /^(0*\.\d+)?\s*(.+)$/) {
             die "invalid line: $line\n";
         }
 
