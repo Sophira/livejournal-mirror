@@ -567,7 +567,7 @@ sub load_entries {
     # 1: need to go back farther than memcache will go
     # 2: memcache needs to be populated
     my ($db_offset, $db_limit) = $self->calc_db_offset_and_limit($want_limit);
-    warn "query: offset=$db_offset, limit=$db_limit\n";
+    #warn "query: offset=$db_offset, limit=$db_limit\n";
 
     # now hit the db for what was left
     my $db = $populate_memcache ? LJ::get_db_writer() : LJ::get_db_reader();
