@@ -5,7 +5,7 @@ body<=
     use strict;
     use vars qw(%GET %POST $windowtitle $headextra @errors @warnings);
 
-    $windowtitle = $ML{'.title'};
+    $windowtitle = BML::ml('.title', { sitenameabbrev => $LJ::SITENAMEABBREV });
 
     my $remote = LJ::get_remote();
     return "You do not have access to this page." unless $remote && $remote->is_in_beta("verticals2007");
