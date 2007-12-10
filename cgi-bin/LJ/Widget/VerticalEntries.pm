@@ -20,18 +20,20 @@ sub render_body {
 
     my $ret;
 
-    my @entries_this_page = $vertical->entries( start => $skip, limit => $skip + $entries_per_page - 1 );
+    # get one more than we display so that we can tell if the next page will have entries or not
+    my @entries_this_page = $vertical->entries( start => $skip, limit => $entries_per_page + 1 );
+
+    # pop off the last entry if we got more than we need, since we won't display it
+    my $last_entry = pop @entries_this_page if @entries_this_page > $entries_per_page;
 
     my $title_displayed = 0;
-    my $count = 0;
     foreach my $entry (@entries_this_page) {
         $ret .= $class->print_entry( entry => $entry, vertical => $vertical, title_displayed => \$title_displayed );
-        $count++;
     }
 
     my $skip_back = $skip + $entries_per_page;
     my $skip_forward = $skip - $entries_per_page;
-    my $show_skip_back = $skip / $entries_per_page + 1 < $max_pages;
+    my $show_skip_back = defined $last_entry ? 1 : 0;
     my $show_skip_forward = $skip_forward >= 0;
 
     $ret .= "<p class='skiplinks'>" if $show_skip_back || $show_skip_forward;
