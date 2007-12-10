@@ -535,7 +535,7 @@ sub load_entries {
     return 1 if $self->{_loaded_all_entries};
     return 1 if $self->{_loaded_entries} >= $want_limit;
 
-    warn "doing I/O\n";
+    #warn "doing I/O\n";
 
     # can we get all that we need from memcache?
     # -- common case
