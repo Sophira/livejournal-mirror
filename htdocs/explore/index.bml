@@ -7,6 +7,9 @@ body<=
 
     $windowtitle = $ML{'.title'};
 
+    my $remote = LJ::get_remote();
+    return "You do not have access to this page." unless $remote && $remote->is_in_beta("verticals2007");
+
     my $name = $GET{name};
     my $skip = defined $GET{skip} ? $GET{skip} : 0;
     my $ret;
