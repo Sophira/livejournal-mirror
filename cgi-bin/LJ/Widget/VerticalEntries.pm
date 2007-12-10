@@ -70,7 +70,11 @@ sub print_entry {
     $ret .= "<table class='entry'><tr>";
 
     $ret .= "<td class='userpic'>";
-    $ret .= $entry->userpic->imgtag_lite if $entry->userpic;
+    if ($entry->userpic) {
+        $ret .= $entry->userpic->imgtag_lite;
+    } else {
+        $ret .= LJ::run_hook('no_userpic_html');
+    }
     $ret .= "<p class='poster'>" . $entry->poster->ljuser_display;
     unless ($entry->posterid == $entry->journalid) {
         $ret .= "<br />" . $class->ml('widget.verticalentries.injournal', { user => $entry->journal->ljuser_display });
