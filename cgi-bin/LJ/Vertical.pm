@@ -374,7 +374,7 @@ sub preload_rows {
         my $row = $memc->{"vert:$obj->{vertid}"};
         next unless $row;
 
-        $obj->absorb_row;
+        $obj->absorb_row($row);
         delete $need{$obj->{vertid}};
     }
 
@@ -473,11 +473,18 @@ sub parse_rules {
     my @array_ret = ();
     foreach my $line (split(/\n+/, $$textref)) {
         $line = LJ::trim($line);
-        unless ($line =~ /^(0*\.\d+)?\s*(.+)$/) {
-            die "invalid line: $line\n";
-        }
+        next unless length $line;
 
-        my ($score, $rule) = ($1, $2);
+        my ($score, @rule) = split(/\s+/, $line);
+        if (@rule) {
+            die "invalid score: $score"
+                unless $score =~ /^0*\.\d+$/;
+        } else {
+            @rule = ($score);
+            $score = undef;
+        }
+        my $rule = join(" ", @rule);
+
         push @array_ret => [ $score, $rule ];
     }
 
@@ -535,8 +542,6 @@ sub load_entries {
     return 1 if $self->{_loaded_all_entries};
     return 1 if $self->{_loaded_entries} >= $want_limit;
 
-    #warn "doing I/O\n";
-
     # can we get all that we need from memcache?
     # -- common case
     my $populate_memcache = 1;
@@ -567,7 +572,6 @@ sub load_entries {
     # 1: need to go back farther than memcache will go
     # 2: memcache needs to be populated
     my ($db_offset, $db_limit) = $self->calc_db_offset_and_limit($want_limit);
-    #warn "query: offset=$db_offset, limit=$db_limit\n";
 
     # now hit the db for what was left
     my $db = $populate_memcache ? LJ::get_db_writer() : LJ::get_db_reader();
@@ -676,7 +680,7 @@ sub add_entry {
         foreach my $entry (@entries) {
             push @entries_to_absorb, [ $entry->journalid, $entry->jitemid ];
         }
-        $self->absorb_entries(\@entries_to_absorb, $self->{_loaded_entries} + @entries);
+        $self->absorb_entries(\@entries_to_absorb, $self->{_loaded_entries} + @entries_to_absorb);
     }
 
     return 1;

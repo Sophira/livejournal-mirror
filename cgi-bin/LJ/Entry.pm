@@ -72,7 +72,7 @@ sub new
 
     # FIXME: don't store $u in here, or at least call LJ::load_userids() on all singletons
     #        if LJ::want_user() would have been called
-    $self->{u}       = LJ::want_user($uuserid) or croak("invalid user/userid parameter");
+    $self->{u}       = LJ::want_user($uuserid) or croak("invalid user/userid parameter: $uuserid");
 
     $self->{anum}    = delete $opts{anum};
     $self->{ditemid} = delete $opts{ditemid};
@@ -1069,8 +1069,10 @@ sub should_be_in_verticals {
     return 0 if $poster->opt_exclude_from_verticals eq "entries";
 
     # poster must be at least one week old
-    my $one_week = 60*60*24*7;
-    return 0 unless time() - $poster->timecreate >= $one_week;
+    unless ($LJ::_T_VERTICAL_IGNORE_TIMECREATE) {
+        my $one_week = 60*60*24*7;
+        return 0 unless time() - $poster->timecreate >= $one_week;
+    }
 
     # check content flags of the entry and the journal the entry is in
     if (LJ::is_enabled("content_flag")) {

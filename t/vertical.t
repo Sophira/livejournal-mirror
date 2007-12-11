@@ -2,6 +2,7 @@
 
 use strict;
 use Test::More 'no_plan';
+
 use lib "$ENV{LJHOME}/cgi-bin";
 require 'ljlib.pl';
 use LJ::Vertical;
@@ -9,8 +10,8 @@ use LJ::Test qw(memcache_stress temp_user);
 
 my $u = temp_user();
 
-# user object needs to be old, else its entries will be filtered out of verticals
-$u->{_cache_timecreate} = time() - 86400*30;
+# when determining if content should be in verticals, don't look at $u->timecreate
+$LJ::_T_VERTICAL_IGNORE_TIMECREATE = 1;
 
 sub gen_name {
     join(":", "t", time(), LJ::rand_chars(20));
@@ -39,6 +40,9 @@ sub run_tests {
 
         $v = eval { LJ::Vertical->load_by_name("music") };
         isa_ok($v, "LJ::Vertical", "load_by_name: successful instantiation");
+
+        # reset singletons so we don't try to lazily load vertid 1 later
+        LJ::Vertical->reset_singletons;
     }
 
     # creating a vertical
@@ -105,7 +109,6 @@ sub run_tests {
         }
     }
 
-
     # add entries and retrieve them in chunks
     {
         my $v = LJ::Vertical->create( name => gen_name() );
@@ -156,12 +159,10 @@ sub run_tests {
 
             unshift @entry_objs, $u->t_post_fake_entry( security => $security );
         }
-        warn "public: $public_ct\n";
         $v->add_entries(@entry_objs);
 
         # call ->next repeatedly until we get undef
         my $got = grep { defined $v->next_entry } @entry_objs;
-        warn "got: $got, public: $public_ct\n";
         ok($got == $public_ct, "got only public");
         ok($v->next_entry == undef, "next entry is undef");
     }
@@ -177,7 +178,7 @@ sub run_tests {
         my $rv = eval { $v->set_rules({}) };
         ok(! $rv && $@ =~ /invalid/, "can't set bogus hashref");
 
-        $rv = eval { $v->set_rules( whitelist => "foo bar") };
+        $rv = eval { $v->set_rules( whitelist => "5.3 bar") };
         ok(! $rv && $@ =~ /invalid/, "can't set bogus whitelist line");
 
         $rv = eval { $v->set_rules( whitelist => "0.01 Term::SomeTerm\n0.02 Term::SomeTerm\nLang::EN",
@@ -187,12 +188,11 @@ sub run_tests {
         ok($rv && eq_array([ $v->rules_blacklist ], [ [ "0.30", "Term::BadTerm" ] ]), 
            "set valid blacklist");
     }
-
 }
 
-#memcache_stress {
+memcache_stress {
     run_tests();
-#};
+};
 
 1;
 
