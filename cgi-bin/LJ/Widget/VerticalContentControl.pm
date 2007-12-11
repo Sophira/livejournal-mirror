@@ -86,6 +86,16 @@ sub render_body {
             $blacklist = $post->{blacklist_rules};
         }
 
+        $ret .= "<p><strong>Example Rules for Whitelist:</strong></p>";
+        $ret .= "<table cellpadding='3' border='1'>";
+        $ret .= "<tr><td><code>0.4 Life::Pets</code></td><td>entries with at least 40% certainty of the category Life::Pets will appear in this vertical</td></tr>";
+        $ret .= "<tr><td><code>Lang::EN</code></td><td>entries written in English will appear in this vertical</td></tr>";
+        $ret .= "<tr><td><code>WordCount::100</code></td><td>entries that are at least 100 words long will appear in this vertical (default is 50)</td></tr>";
+        $ret .= "</table>";
+
+        $ret .= "<p>The blacklist can use the first rule above, which does the same thing except that entries that match the defined category/ies will be excluded from this vertical.</p>";
+        $ret .= "<hr />";
+
         $ret .= $class->start_form;
         $ret .= "<p>Define <strong>whitelist</strong> rules for vertical <strong>" . $vertical_obj->display_name . "</strong>:<br />";
         $ret .= $class->html_textarea(
