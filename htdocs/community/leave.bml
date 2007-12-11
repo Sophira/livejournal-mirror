@@ -41,14 +41,8 @@
 
         # error if we're a maintainer and there are no others
         my $ismaint     = grep { $_ == $remote->{userid} } @$maintids;
-        if ($ismaint) {
-            my $othermaints = grep { $_ != $remote->{userid} } @$maintids;
-
-            return $error->($ML{'.label.lastmaintainer'}) unless $othermaints;
-
-            # log maint removal to userlog
-            $cu->log_event('maintainer_remove', { actiontarget => $remote->id, remote => $remote });
-        }
+        my $othermaints = grep { $_ != $remote->{userid} } @$maintids;
+        return $error->($ML{'.label.lastmaintainer'}) if $ismaint && !$othermaints;
 
         # remove user from community's friends list
         unless ($watching && !$memberof) {
