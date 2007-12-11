@@ -779,7 +779,6 @@ sub entries {
         @entries = @{$self->{entries_filtered}};
 
         # do we have all we need already?
-        #print "want: $want_entries, cache=" . @entries . ", loaded=$self->{_loaded_entries_filtered}\n";
         if (@entries >= $want_entries || $self->{_loaded_all_entries_filtered}) {
             $LJ::CACHED_CT++;
             my @ret = splice(@entries, $start, $limit);
@@ -800,26 +799,18 @@ sub entries {
         $LJ::RAW_CT++;
         my @chunk = $self->entries_raw( start => $chunk_start, limit => $chunk_size );
 
-        #print "chunk[$chunk_start,$chunk_size]: " . join(", ", map { $_->jitemid } @chunk) . "\n";
-      
         foreach my $entry (@chunk) {
             unless (defined $entry && $entry->valid && $entry->should_be_in_verticals) {
-                #print "entry not public: " . $entry->jitemid . "[" . $entry->security . "]\n";
                 next;
             }
 
             push @entries, $entry;
 
-            #print "entries: " . @entries, ", want: " . $want_entries . "\n";
-
             # did we get all we need?
-            #last if @entries >= $want_entries;
+            last if @entries >= $want_entries;
         }
 
-        #print "\n";
-
         # if we didn't get the number of entries we requested, then there are no more
-        #print "chunk: " . @chunk . ", size: $chunk_size\n";
         if (@chunk < $chunk_size) {
             $self->{_loaded_all_entries_filtered} = 1;
             last;
@@ -842,8 +833,6 @@ sub set_filtered_cache {
     
     $self->{_loaded_entries_filtered} = $loaded_ct;
     @{$self->{entries_filtered}} = @entries;
-
-    #print "set: loaded_ct=$loaded_ct, entries=" . @entries . "\n";
 
     return $loaded_ct;
 }
