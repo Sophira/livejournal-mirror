@@ -47,6 +47,7 @@ use Class::Autouse qw(
                       LJ::EventLogRecord
                       LJ::EventLogRecord::DeleteComment
                       LJ::GraphicPreviews
+                      LJ::Vertical
                       );
 
 # make Unicode::MapUTF8 autoload:
