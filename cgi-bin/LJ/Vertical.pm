@@ -256,8 +256,8 @@ sub memkey_vertname {
     my $self = shift;
     my $name = shift;
 
-    return "vertname:$name" if $name;
-    return "vertname:$self->{name}";
+    return [ $name, "vertname:$name" ] if $name;
+    return [ $self->{name}, "vertname:$self->{name}" ];
 }
 
 sub memkey_rules {
@@ -309,15 +309,6 @@ sub absorb_row {
     return 1;
 }
 
-sub absorb_rules {
-    my ($self, $rules) = @_;
-
-    $self->{rules} = $rules;
-    $self->{_loaded_rules} = 1;
-
-    return 1;
-}
-
 sub absorb_entries {
     my ($self, $entries, $window_max) = @_;
 
@@ -333,6 +324,15 @@ sub absorb_entries {
         #print "we've loaded all entries: entries=" . @$entries . ", window_max=$window_max\n";
         $self->{_loaded_all_entries} = 1;
     }
+
+    return 1;
+}
+
+sub absorb_rules {
+    my ($self, $rules) = @_;
+
+    $self->{rules} = $rules;
+    $self->{_loaded_rules} = 1;
 
     return 1;
 }
@@ -499,10 +499,7 @@ sub load_rules {
     # memcache contains storable object, but that will be thawed on return from MemCache::get
     my $memkey = $self->memkey_rules;
     my $memval = LJ::MemCache::get($memkey);
-    if ($memval) {
-        $self->absorb_rules($memval);
-        return 1;
-    }
+    return $memval if $memval;
 
     my $dbh = LJ::get_db_writer()
         or die "Unable to contact global db writer for vertical rules";
@@ -521,7 +518,8 @@ sub load_rules {
     # set storable object in memcache
     LJ::MemCache::set($memkey, $rules);
 
-    $self->absorb_rules($rules);
+    $self->{rules} = $rules;
+    $self->{_loaded_rules} = 1;
 
     return 1;
 }
