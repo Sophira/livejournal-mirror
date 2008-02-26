@@ -1930,6 +1930,48 @@ widget.commsofuser.viewfriendspage=View [[user]]'s Friends page
 
 widget.commsofuser.viewprofile=View [[user]]'s profile
 
+widget.createaccountnextsteps.steps=Now that your account is set up, you're ready to explore the rest of [[sitename]]. Here are some things to get you started:
+
+widget.createaccountnextsteps.steps.customize=Customize your journal further
+
+widget.createaccountnextsteps.steps.explore=Browse [[sitenameabbrev]] by categories
+
+widget.createaccountnextsteps.steps.find=Find others by interests
+
+widget.createaccountnextsteps.steps.post=Post your first entry
+
+widget.createaccountnextsteps.steps.profile=Finish editing your profile
+
+widget.createaccountnextsteps.steps.userpics=Upload userpics
+
+widget.createaccountnextsteps.title=What's Next?
+
+widget.createaccountprofile.field.bio=Tell us a little (or a lot) about yourself:
+
+widget.createaccountprofile.field.gender=Gender
+
+widget.createaccountprofile.field.interests=What are you interested in?
+
+widget.createaccountprofile.field.interests.books=Books
+
+widget.createaccountprofile.field.interests.hobbies=Hobbies
+
+widget.createaccountprofile.field.interests.moviestv=Movies/TV
+
+widget.createaccountprofile.field.interests.music=Music
+
+widget.createaccountprofile.field.interests.note=(separate multiple with commas)
+
+widget.createaccountprofile.field.interests.other=Other
+
+widget.createaccountprofile.field.location=Location
+
+widget.createaccountprofile.field.name=Name
+
+widget.createaccountprofile.info=Let others know who you are.  All fields are completely optional, but the more, the merrier.
+
+widget.createaccountprofile.title=Jump Start Your Profile
+
 widget.createaccountprogressmeter.step1=Create Account
 
 widget.createaccountprogressmeter.step2=Set Up Journal
@@ -1937,6 +1979,12 @@ widget.createaccountprogressmeter.step2=Set Up Journal
 widget.createaccountprogressmeter.step3=Upgrade
 
 widget.createaccountprogressmeter.step4=Finish
+
+widget.createaccounttheme.info=Choose from more themes later:
+
+widget.createaccounttheme.preview=Preview
+
+widget.createaccounttheme.title=Select Your Journal's Theme
 
 widget.currenttheme.desc=[[layout]] by [[designer]]
 
