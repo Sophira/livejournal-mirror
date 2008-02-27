@@ -49,7 +49,7 @@ CreateAccountProfile.doAddText = function (id) {
     var color = "#999";
     var text;
     if (id == "interests_music") {
-        text = "gwen stefani, kanye west, metal";
+        text = "the beatles, kanye west, metal";
     } else if (id == "interests_moviestv") {
         text = "lost, brad pitt, real world";
     } else if (id == "interests_books") {
