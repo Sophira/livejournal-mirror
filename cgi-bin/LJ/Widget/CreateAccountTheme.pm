@@ -26,8 +26,8 @@ sub render_body {
     $ret .= "<table cellspacing='3' cellpadding='0' align='center'>\n";
     foreach my $uniq (@LJ::CREATE_ACCOUNT_THEMES) {
         my $theme = LJ::S2Theme->load_by_uniq($uniq);
-        my $large_image = $theme->uniq;
-        $large_image =~ s/\//_/;
+        my $image_class = $theme->uniq;
+        $image_class =~ s/\//_/;
         my $name = $theme->name . ", " . $theme->layout_name;
 
         my @checked = ( checked => "checked" ) if $current_theme->uniq eq $uniq;
@@ -35,12 +35,12 @@ sub render_body {
         $ret .= "<tr>" if $count % 3 == 0;
         $ret .= "<td class='theme-box'>";
         $ret .= "<div class='theme-box-inner'>";
-        $ret .= "<label for='theme_$large_image'><img src='" . $theme->preview_imgurl . "' width='90' height='68' class='theme-image' alt='$name' title='$name' /></label><br />";
-        $ret .= "<a href='$LJ::IMGPREFIX/create/themes/$large_image.png' target='_blank' class='theme-preview-link' title='" . $class->ml('widget.createaccounttheme.preview') . "'>";
+        $ret .= "<label for='theme_$image_class'><img src='" . $theme->preview_imgurl . "' width='90' height='68' class='theme-image' alt='$name' title='$name' /></label><br />";
+        $ret .= "<a href='$LJ::SITEROOT/customize/preview_redirect.bml?themeid=" . $theme->themeid . "' target='_blank' onclick='window.open(href, \"theme_preview\", \"resizable=yes,status=yes,toolbar=no,location=no,menubar=no,scrollbars=yes\"); return false;' class='theme-preview-link' title='" . $class->ml('widget.createaccounttheme.preview') . "'>";
         $ret .= "<img src='$LJ::IMGPREFIX/customize/preview-theme.gif' class='theme-preview-image' /></a>";
         $ret .= $class->html_check(
             name => 'theme',
-            id => "theme_$large_image",
+            id => "theme_$image_class",
             type => 'radio',
             value => $uniq,
             style => "margin-bottom: 5px;",
