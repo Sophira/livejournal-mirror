@@ -5,7 +5,7 @@ use base qw(LJ::Widget);
 use Carp qw(croak);
 use Class::Autouse qw( LJ::CreatePage );
 
-sub need_res { qw( stc/widgets/createaccount.css js/widgets/createaccount.js ) }
+sub need_res { qw( stc/widgets/createaccount.css js/widgets/createaccount.js js/browserdetect.js ) }
 
 sub render_body {
     my $class = shift;

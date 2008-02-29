@@ -1948,7 +1948,7 @@ widget.createaccount.error.password.blank=You must enter a password.
 
 widget.createaccount.error.password.nomatch=Passwords do not match.
 
-widget.createaccount.error.username.inuse=Username already in use; please select a different one.
+widget.createaccount.error.username.inuse=Username already in use.
 
 widget.createaccount.error.username.mustenter=You must enter a username.
 
