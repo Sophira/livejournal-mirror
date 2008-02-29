@@ -1978,6 +1978,8 @@ widget.createaccount.field.tos=By creating a [[sitename]] account, you agree to 
 
 widget.createaccount.field.username=Username:
 
+widget.createaccount.field.username.available=Username available
+
 widget.createaccount.tip.birthdate=Required by law. No worries, you can set privacy on this after you're done creating an account.
 
 widget.createaccount.tip.captcha=If you can't read the text, type "audio" to take a sound test instead.

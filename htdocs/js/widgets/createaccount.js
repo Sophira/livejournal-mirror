@@ -17,6 +17,11 @@ CreateAccount.init = function () {
     DOM.addEventListener($('create_bday_dd'), "focus", CreateAccount.showTip.bindEventListener("create_bday_mm"));
     DOM.addEventListener($('create_bday_yyyy'), "focus", CreateAccount.showTip.bindEventListener("create_bday_mm"));
     DOM.addEventListener($('create_answer'), "focus", CreateAccount.showTip.bindEventListener("create_answer"));
+
+    if (!$('username_check')) return;
+    if (!$('username_error')) return;
+
+    DOM.addEventListener($('create_user'), "blur", CreateAccount.checkUsername);
 }
 
 CreateAccount.showTip = function (evt) {
@@ -49,6 +54,30 @@ CreateAccount.showTip = function (evt) {
         $('tips_box_arrow').style.top = y - 200 + "px";
         $('tips_box_arrow').style.display = "block";
     }
+}
+
+CreateAccount.checkUsername = function () {
+    if ($('create_user').value == "") return;
+
+    HTTPReq.getJSON({
+        url: "/tools/endpoints/checkforusername.bml?user=" + $('create_user').value,
+        method: "GET",
+        onData: function (data) {
+            if (data.error) {
+                if ($('username_error_main')) $('username_error_main').style.display = "none";
+
+                $('username_error_inner').innerHTML = data.error;
+                $('username_check').style.display = "none";
+                $('username_error').style.display = "inline";
+            } else {
+                if ($('username_error_main')) $('username_error_main').style.display = "none";
+
+                $('username_error').style.display = "none";
+                $('username_check').style.display = "inline";
+            }
+        },
+        onError: function (msg) { }
+    }); 
 }
 
 LiveJournal.register_hook("page_load", CreateAccount.init);

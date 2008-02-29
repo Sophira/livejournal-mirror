@@ -37,3 +37,8 @@
     font-weight: bold;
     padding: 5px;
 }
+
+.appwidget-createaccount #username_check,
+.appwidget-createaccount #username_error {
+    display: none;
+}

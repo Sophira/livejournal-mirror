@@ -3,6 +3,7 @@ package LJ::Widget::CreateAccount;
 use strict;
 use base qw(LJ::Widget);
 use Carp qw(croak);
+use Class::Autouse qw( LJ::CreatePage );
 
 sub need_res { qw( stc/widgets/createaccount.css js/widgets/createaccount.js ) }
 
@@ -70,7 +71,9 @@ sub render_body {
         raw => 'style="<?loginboxstyle?>"',
         value => $post->{user} || $get->{user},
     );
-    $ret .= $error_msg->('username', '<br /><span class="formitemFlag">', '</span>');
+    $ret .= " <img id='username_check' src='$LJ::IMGPREFIX/create/check.png' alt='" . $class->ml('widget.createaccount.field.username.available') . "' title='" . $class->ml('widget.createaccount.field.username.available') . "' />";
+    $ret .= $error_msg->('username', '<span id="username_error_main"><br /><span class="formitemFlag">', '</span></span>');
+    $ret .= "<span id='username_error'><br /><span id='username_error_inner' class='formitemFlag'></span></span>";
     $ret .= "</td></tr>\n";
 
     ### email
@@ -245,57 +248,9 @@ sub handle_post {
 
     my $dbh = LJ::get_db_writer();
 
-    unless ($post->{user}) {
-        $from_post{errors}->{username} = $class->ml('widget.createaccount.error.username.mustenter');
-    }
-    if ($post->{user} && !$user) {
-        $from_post{errors}->{username} = LJ::Lang::ml('error.usernameinvalid');
-    }
-    if (length $post->{user} > 15) {
-        $from_post{errors}->{username} = LJ::Lang::ml('error.usernamelong');
-    }
-
-    my $u = LJ::load_user($user);
     my $second_submit = 0;
-    my $in_use = 0;
-
-    # because these error messages overwrite each other, do these in a specific order
-    # -- rename to a purged journal
-    # -- username in use, unless it's reserved.
-
-    # do not create if this account name is purged
-    if ($u && $u->is_expunged) {
-        $from_post{errors}->{username} =  $class->ml('widget.createaccount.error.username.purged', { aopts => "href='$LJ::SITEROOT/rename/'" });
-    } elsif ($u) {
-        $in_use = 1;
-
-        if ($u->email_raw eq $post->{email}) {
-            if (LJ::login_ip_banned($u)) {
-                # brute-force possibly going on
-            } else {
-                if ($u->password eq $post->{password1}) {
-                    # okay either they double-clicked the submit button
-                    # or somebody entered an account name that already exists
-                    # with the existing password
-                    $second_submit = 1;
-                    $in_use = 0;
-                } else {
-                    LJ::handle_bad_login($u);
-                }
-            }
-        }
-    }
-
-    foreach my $re ("^system\$", @LJ::PROTECTED_USERNAMES) {
-        next unless ($user =~ /$re/);
-
-        # you can give people sharedjournal priv ahead of time to create
-        # reserved communities:
-        next if LJ::check_priv($remote, "sharedjournal", $user);
-        $from_post{errors}->{username} = $class->ml('widget.createaccount.error.username.reserved');
-    }
-
-    $from_post{errors}->{username} = $class->ml('widget.createaccount.error.username.inuse') if $in_use;
+    my $error = LJ::CreatePage->verify_username($post->{user}, post => $post, second_submit_ref => \$second_submit );
+    $from_post{errors}->{username} = $error if $error;
 
     $post->{password1} = LJ::trim($post->{password1});
     $post->{password2} = LJ::trim($post->{password2});
