@@ -18,12 +18,6 @@ CreateAccountProfile.init = function () {
     CreateAccountProfile.doAddText("interests_hobbies");
     CreateAccountProfile.doAddText("interests_other");
 
-    DOM.addEventListener($('interests_music'), "blur", CreateAccountProfile.addText.bindEventListener("interests_music"));
-    DOM.addEventListener($('interests_moviestv'), "blur", CreateAccountProfile.addText.bindEventListener("interests_moviestv"));
-    DOM.addEventListener($('interests_books'), "blur", CreateAccountProfile.addText.bindEventListener("interests_books"));
-    DOM.addEventListener($('interests_hobbies'), "blur", CreateAccountProfile.addText.bindEventListener("interests_hobbies"));
-    DOM.addEventListener($('interests_other'), "blur", CreateAccountProfile.addText.bindEventListener("interests_other"));
-
     DOM.addEventListener($('interests_music'), "focus", CreateAccountProfile.removeText.bindEventListener("interests_music"));
     DOM.addEventListener($('interests_moviestv'), "focus", CreateAccountProfile.removeText.bindEventListener("interests_moviestv"));
     DOM.addEventListener($('interests_books'), "focus", CreateAccountProfile.removeText.bindEventListener("interests_books"));
