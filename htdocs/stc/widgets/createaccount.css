@@ -42,3 +42,7 @@
 .appwidget-createaccount #username_error {
     display: none;
 }
+
+.appwidget-createaccount #username_error_inner {
+    font-weight: bold;
+}
