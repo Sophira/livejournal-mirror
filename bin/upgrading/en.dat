@@ -2036,7 +2036,7 @@ widget.createaccountprogressmeter.step1=Create Account
 
 widget.createaccountprogressmeter.step2=Set Up Journal
 
-widget.createaccountprogressmeter.step3=Upgrade
+widget.createaccountprogressmeter.step3=Upgrade (optional)
 
 widget.createaccountprogressmeter.step4=Finish
 
