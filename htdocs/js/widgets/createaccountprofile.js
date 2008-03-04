@@ -1,6 +1,7 @@
 var CreateAccountProfile = new Object();
 
 CreateAccountProfile.init = function () {
+    if (!$('js_on')) return;
     if (!$('interests_music')) return;
     if (!$('interests_moviestv')) return;
     if (!$('interests_books')) return;
@@ -11,6 +12,8 @@ CreateAccountProfile.init = function () {
     if (!$('interests_books_changed')) return;
     if (!$('interests_hobbies_changed')) return;
     if (!$('interests_other_changed')) return;
+
+    $('js_on').value = 1;
 
     CreateAccountProfile.doAddText("interests_music");
     CreateAccountProfile.doAddText("interests_moviestv");

@@ -43,7 +43,7 @@ sub render_body {
             value => $u->name_orig || "",
         );
     } else {
-        $ret .= $class->html_hidden('name_absent', 'yes');
+        $ret .= $class->html_hidden( name_absent => "yes" );
         $ret .= "<?inerr " . LJ::Lang::ml('/manage/profile/index.bml.error.invalidname2', { aopts => "href='$LJ::SITEROOT/utf8convert.bml'" }) . " inerr?>";
     }
     $ret .= $error_msg->('name', '<br /><span class="formitemFlag">', '</span>');
@@ -151,10 +151,13 @@ sub render_body {
             value => $bio,
         );
     } else {
-        $ret .= $class->html_hidden('bio_absent', 'yes');
+        $ret .= $class->html_hidden( bio_absent => "yes" );
         $ret .= "<?inerr " . LJ::Lang::ml('/manage/profile/index.bml.error.invalidbio', { aopts => "href='$LJ::SITEROOT/utf8convert.bml'" }) . " inerr?>";
     }
     $ret .= $error_msg->('bio', '<br /><span class="formitemFlag">', '</span>');
+
+    # hidden field to know if JS is on or not
+    $ret .= $class->html_hidden({ name => "js_on", value => 0, id => "js_on" });
     $ret .= "</div>";
 
     $ret .= "</div></div></div></div>";
@@ -184,11 +187,11 @@ sub handle_post {
 
     # interests
     my @interests_strings;
-    push @interests_strings, $post->{interests_music} if $post->{interests_music_changed};
-    push @interests_strings, $post->{interests_moviestv} if $post->{interests_moviestv_changed};
-    push @interests_strings, $post->{interests_books} if $post->{interests_books_changed};
-    push @interests_strings, $post->{interests_hobbies} if $post->{interests_hobbies_changed};
-    push @interests_strings, $post->{interests_other} if $post->{interests_other_changed};
+    push @interests_strings, $post->{interests_music} if !$post->{js_on} || $post->{interests_music_changed};
+    push @interests_strings, $post->{interests_moviestv} if !$post->{js_on} || $post->{interests_moviestv_changed};
+    push @interests_strings, $post->{interests_books} if !$post->{js_on} || $post->{interests_books_changed};
+    push @interests_strings, $post->{interests_hobbies} if !$post->{js_on} || $post->{interests_hobbies_changed};
+    push @interests_strings, $post->{interests_other} if !$post->{js_on} || $post->{interests_other_changed};
     my $interests_string = join(", ", @interests_strings);
     my @ints = LJ::interest_string_to_list($interests_string);
 
