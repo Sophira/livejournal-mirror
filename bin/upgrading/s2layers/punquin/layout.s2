@@ -339,10 +339,12 @@ table.standard>td {
 }
 table.standard td {
     font:              normal normal 10pt $font;
+    text-align: left;
 }
 .entry {
     border: $*entryborder_size $*entryborder_style $*border_color_entries;
 }
+
 """;
 if ($*transparent) {
 """
@@ -517,7 +519,7 @@ function print_entry (Page p, Entry e, Color bgcolor, Color fgcolor, bool hide_t
     {
         # Lots of muddled logic. Yay.
 
-        """<td valign=top align="middle" style="background-color: $bgcolor" width="100">""";
+        """<td valign=top align="center" style="background-color: $bgcolor" width="100">""";
         if ($p.view == "friends") {
             """<a href='""" + $e.journal->base_url() + """/' style="color: $fgcolor; font-weight: bold">$e.journal.username</a><br />""";
         }
@@ -743,7 +745,7 @@ function DayPage::print_body() {
     var string tnext = ehtml($*text_day_next);
 
     "<hr class='separator' width='100%' />\n";
-    "<table width='100%'><tr align='middle'>\n";
+    "<table width='100%'><tr align='center'>\n";
 
     "<td width='33%' align='left'><a href='$.prev_url'>$tprev</a></td>\n";
     "<td align='center' width='33%'>[<a href='"; print $this.journal->base_url(); "/calendar'>$*text_view_archive</a>]</td>\n";
@@ -883,24 +885,31 @@ function ReplyPage::print_body() {
     "<p class='date'>"; print $.replyto.time->date_format($*date_format); "</p>";
     "<hr class='separator' />";
 
-    "<table border='0' cellpadding='2' cellspacing='0'><tr>";
+    if ($.replyto isa Entry) {
+        var Entry en = $.replyto as Entry;
 
-    """<td valign=top align="middle" width="100">""";
-    print defined $.replyto.poster ? $.replyto.poster->as_string() : "<i>(Anonymous)</i>";
-    if (defined $.replyto.userpic) {
-        print """<img border="0" src="$.replyto.userpic.url" width="$.replyto.userpic.width" height="$.replyto.userpic.height" alt="" />""";
+        print_entry($this, $en, null Color, null Color, false);
+    } else {
+        "<table border='0' cellpadding='2' cellspacing='0'><tr>";
+
+        """<td valign=top align="center" width="100">""";
+        print defined $.replyto.poster ? $.replyto.poster->as_string() : "<i>(Anonymous)</i>";
+        if (defined $.replyto.userpic) {
+            print """<img border="0" src="$.replyto.userpic.url" width="$.replyto.userpic.width" height="$.replyto.userpic.height" alt="" />""";
+        }
+        "</td>";
+
+        "<td valign='top'><strong>"; print $.replyto.time->time_format($*time_format);
+        if ($.replyto.subject) { " - <span style='color: $*subject_color'>$.replyto.subject</span>"; }
+
+        "</strong><br />";
+
+        $.replyto->print_text(); "<br />";
+
+        "</td></tr></table>";
+        "<p align='right' class='comments'><a href='$.entry.comments.read_url'>Read Comments</a></p>";
     }
-    "</td>";
 
-    "<td valign='top'><strong>"; print $.replyto.time->time_format($*time_format);
-    if ($.replyto.subject) { " - <span style='color: $*subject_color'>$.replyto.subject</span>"; }
-
-    "</strong><br />";
-
-    $.replyto->print_text(); "<br />";
-
-    "</td></tr></table>";
-    "<p align='right' class='comments'><a href='$.entry.comments.read_url'>Read Comments</a></p>";
     "<h2 class='date'>Reply</h2>";
     "<hr class='separator' />";
     $.form->print();
