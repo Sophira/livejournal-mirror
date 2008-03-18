@@ -3,9 +3,7 @@ package LJ::Widget::CreateAccount;
 use strict;
 use base qw(LJ::Widget);
 use Carp qw(croak);
-use Class::Autouse qw( LJ::CreatePage );
-
-use Captcha::reCAPTCHA;
+use Class::Autouse qw( LJ::CreatePage Captcha::reCAPTCHA );
 
 sub need_res { qw( stc/widgets/createaccount.css js/widgets/createaccount.js js/browserdetect.js ) }
 
@@ -126,24 +124,8 @@ sub render_body {
         $ret .= "<tr valign='top'><td class='field-name'>" . $class->ml('widget.createaccount.field.captcha') . "</td>\n<td>";
 
         my $c = Captcha::reCAPTCHA->new;
-        if ($opts{clean}) {
-            $ret .= "<!-- this is a clean reCAPTCHA theme -->";
-            $ret .= $c->get_options_setter( { 'theme' => 'clean' } );
-        }
-        else{
-            $ret .= "<!-- this is a custom reCAPTCHA theme -->";
-            $ret .= $c->get_options_setter( { 'theme' => 'custom',
-                                               'custom_theme_widget' => 'recaptcha_widget' } );
-            $ret .= '<div id="recaptcha_widget" style="display:none">';
-            $ret .= '<table cellpadding="0" cellspacing="0" border="0"><tr><td style="vertical-align: bottom"><div id="recaptcha_image"></div></td>';
-            $ret .= '<td style="vertical-align: bottom"><div><a href="javascript:Recaptcha.reload()">Reload</a></div></td></tr></table>';
-            $ret .= '<span class="recaptcha_only_if_image">Type the words you see above. If you can\'t read the text, click <a href="javascript:Recaptcha.switch_type(\'audio\')">here</a> to take a sound test instead.</span>';
-            $ret .= '<span class="recaptcha_only_if_audio">Type the numbers you hear.</span>';
-            $ret .= '<br /><input type="text" id="recaptcha_response_field" name="recaptcha_response_field" />';
-            $ret .= '</div><br />';
-        }
-        $ret .= $c->get_html( $LJ::RECAPTCHA{public_key} );
-
+        $ret .= $c->get_options_setter({ theme => 'white' });
+        $ret .= $c->get_html( LJ::conf_test($LJ::RECAPTCHA{public_key}), '', 1 );
         $ret .= $error_msg->('captcha', '<br /><span class="formitemFlag">', '</span>');
         $ret .= "</td></tr>\n";
     }
@@ -192,7 +174,6 @@ sub handle_post {
     my %opts = @_;
 
     my $get = $opts{get};
-    my $form_input = $opts{post};
     my %from_post;
     my $remote = LJ::get_remote();
 
@@ -291,16 +272,16 @@ sub handle_post {
     $from_post{errors}->{email} = join(", ", @email_errors) if @email_errors;
 
     # check the captcha answer if it's turned on
-    if ($form_input->{recaptcha_response_field}) {
+    if ($LJ::HUMAN_CHECK{create} && $post->{recaptcha_response_field}) {
         my $c = Captcha::reCAPTCHA->new;
         my $result = $c->check_answer(
-            $LJ::RECAPTCHA{private_key}, $ENV{'REMOTE_ADDR'},
-            $form_input->{'recaptcha_challenge_field'}, $form_input->{'recaptcha_response_field'}
+            LJ::conf_test($LJ::RECAPTCHA{private_key}), $ENV{'REMOTE_ADDR'},
+            $post->{'recaptcha_challenge_field'}, $post->{'recaptcha_response_field'}
         );
 
        $from_post{errors}->{captcha} = $class->ml('widget.createaccount.error.captcha.invalid') unless $result->{'is_valid'} eq '1';
-    } else {
-       $from_post{errors}->{captcha} = $class->ml('widget.createaccount.error.captcha.invalid');
+    } elsif ($LJ::HUMAN_CHECK{create}) {
+        $from_post{errors}->{captcha} = $class->ml('widget.createaccount.error.captcha.invalid');
     }
 
     # create user and send email as long as the user didn't double-click submit
