@@ -1776,7 +1776,10 @@ sub DateTime_parts
 sub Tag
 {
     my ($u, $kwid, $kw) = @_;
-    return undef unless $u && $kwid && $kw;
+    # you may not require $kwid != 0, because it will produce bug in htdocs/preview/entry.bml
+    # that page coded as "@taglist = map { LJ::S2::Tag($u, 0, $_) } @taglist;" 
+    # and uses 0 as kwid for not-saved-yet tag
+    return undef unless $u && $kw;
 
     my $t = {
         _type => 'Tag',
