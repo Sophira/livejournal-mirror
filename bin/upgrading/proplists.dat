@@ -1335,3 +1335,12 @@ pollproplist2.unique:
 pollproplist2.createdate:
   des: The voter must have created their account by the date specified (Pacific time) in order to vote.  Must be in format YYYY-MM-DD, otherwise there will be no restriction.
 
+userproplist.icq_verified:
+  cldversion: 4
+  datatype: bool
+  des: Set to true if user's icq number was successfuly verified
+  indexed: 0
+  multihomed: 0
+  prettyname: Verified ICQ number flag
+
+
