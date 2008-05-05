@@ -55,7 +55,7 @@ body<=
         $u, { use_master => 1 },
         qw/ opt_whatemailshow
           country state city zip timezone
-          icq aolim yahoo msn url jabber
+          icq icq_verified aolim yahoo msn url jabber
           google_talk skype gizmo
           urlname gender opt_hidefriendofs
           sidx_bdate sidx_bday sidx_loc
@@ -358,9 +358,12 @@ body<=
 
         foreach my $p (
                        ["ljtalk", $ljtalk_title, 40],
-                       ["aolim", $ML{'.chat.aolim'}, 28], ["icq", $ML{'.chat.icquin'}, 12],
-                       ["yahoo", $ML{'.chat.yahooid'}, 33], ["msn", $ML{'.chat.msnusername'}, 60],
-                       ["jabber", $ML{'.chat.jabber'}, 60], ["google_talk", $ML{'.chat.googletalk'}, 60],
+                       ["aolim", $ML{'.chat.aolim'}, 28], 
+                       ["icq", $ML{'.chat.icquin'}, 12],
+                       ["yahoo", $ML{'.chat.yahooid'}, 33], 
+                       ["msn", $ML{'.chat.msnusername'}, 60],
+                       ["jabber", $ML{'.chat.jabber'}, 60], 
+                       ["google_talk", $ML{'.chat.googletalk'}, 60],
                        ["skype", $ML{'.chat.skype'}, 40],
                        ["gizmo", $ML{'.chat.gizmo'}, 40])
 
@@ -369,7 +372,50 @@ body<=
 
             $ret .= "<tr><td class='field_name'>$p->[1]</td><td>";
             unless ($p->[0] eq "ljtalk") {
-                $ret .= LJ::html_text({ 'name' => $p->[0], 'value' => $u->{$p->[0]}, 'size' => '20', 'maxlength' => $p->[2] });
+                my $filled_icq_field = $p->[0] eq 'icq' && length $u->{'icq'};
+                my $show_icqverify_button = $filled_icq_field && not $u->{'icq_verified'};
+                $ret .= LJ::html_text({ 
+                    'name' => $p->[0], 
+                    'value' => $u->{$p->[0]}, 
+                    'size' => '20', 
+                    'maxlength' => $p->[2] ,
+                    ($show_icqverify_button ? ('id' => 'icqnumdiv', 'raw' => 'onchange="javascript:showHideIcqVerifyButton();"') : ''),
+                });
+                
+                if ($filled_icq_field) {
+                    $ret .= $u->{'icq_verified'} ? $ML{'.icq.verified'} : $ML{'.icq.nonverified'};
+                }
+                
+                if ($show_icqverify_button) {
+                    
+                    $ret .= "<div id=\"icqverifydiv\" style=\"display:inline;\">";
+                    $ret .= LJ::html_hidden({'id' => 'icqhidden', 'value' => $u->{'icq'}, });
+                    $ret .= LJ::html_submit('verify', $ML{'.icq.verify'}, {'raw' => 'onclick="javascript:submitIcqVerifyForm(); return false;"'});
+                    $ret .= "</div>";
+                    $headextra .= '
+                        <script language="JavaScript">
+                            function submitIcqVerifyForm () {
+                                if (! document.getElementById) return false;
+                                var form = document.getElementById("icqverifyform");
+                                form.submit();
+                                return false;
+                            }
+                            
+                            function showHideIcqVerifyButton () {
+                                if (! document.getElementById) return false;
+                                var field = document.getElementById("icqnumdiv");
+                                var hidden = document.getElementById("icqhidden");
+                                var div = document.getElementById("icqverifydiv");
+                                // alert ("field " + field + ", hidden " + hidden);
+                                
+                                if (field.value != hidden.value && div.style.display != "none") {
+                                    div.style.display = "none";
+                                } else {
+                                    div.style.display = "inline";
+                                }
+                            }
+                        </script>';
+                }
             } else {
                 $ret .= $u->ljtalk_id;
                 # Don't show LJ Talk field? (opt_showljtalk)
@@ -458,6 +504,12 @@ body<=
         $ret .= "<?standout " . LJ::html_submit(undef, $ML{'.save_button'}) . " standout?>\n";
         $ret .= "</form>\n";
 
+        # we need a separate hidden form for icq verification button
+        if (length $u->{'icq'}  && ! $u->{'icq_verified'}) {
+            $ret .= "<form id='icqverifyform' method='post' action='/icq/verify.bml'>";
+            $ret .= LJ::form_auth();
+            $ret .= "</form>\n";
+        }    
         return $print_with_ad->($ret);
     }
 
@@ -662,6 +714,11 @@ body<=
             $u->gizmo_account( $POST{'gizmo'} )
                 if $u->gizmo_account ne $POST{'gizmo'};
 
+            if (exists $POST{'icq'} && $POST{'icq'} ne $u->{'icq'}) {
+                push @uprops, 'icq_verified';
+                $POST{'icq_verified'} = 0;
+            }
+
             # set userprops
             foreach my $uprop (@uprops) {
                 my $eff_val = $POST{$uprop};   # effective value, since 0 isn't stored
@@ -669,6 +726,7 @@ body<=
                 my $mem_only = $eff_val eq $u->{$uprop};
                 LJ::set_userprop($u, $uprop, $eff_val, $mem_only);
             }
+            
 
             # location or bday could've changed... (who cares about checking exactly)
             $u->invalidate_directory_record;
@@ -751,5 +809,5 @@ body<=
 }
 _code?>
 <=body
-<?_comment head=><?_code return $headextra; _code?> _comment?>
+head=><?_code return $headextra; _code?> 
 page?>

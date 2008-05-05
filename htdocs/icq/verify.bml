@@ -1,0 +1,94 @@
+<?page
+title=>ICQ Verification 
+body<=
+<?_code
+{
+    use strict;
+    use vars qw(%POST %GET $headextra @errors);
+
+    my $ret = '';
+    
+    if (LJ::did_post()) {
+        my $remote = LJ::get_remote()
+            or return '<?needlogin?>';
+    
+    
+        my $icqnum = $remote->prop('icq');
+        my $icqverified = $remote->prop('icq_verified');
+
+        unless (LJ::check_form_auth()) {
+            push @errors, $ML{'error.invalidform'};
+            return;
+        }
+
+        if ($icqverified) {
+            push @errors, 'ICQ number already verified';
+        } else {
+            if (length $icqnum) {
+                # deal with xxx-xxx-xxx
+                $icqnum =~ s/\-//g;
+                
+                if ($icqnum =~ /^\d+$/) {
+                    # check rates
+                    unless ($remote->rate_log("icqverify", 1)) {
+                        push @errors, 'ICQ verification rate exceeded';
+                    } else {
+                        # generate key or use previously generated
+                        my $aa = LJ::get_authaction($remote->id, 'icqverify', $icqnum);
+                        unless (ref $aa eq 'HASH' && length $aa->{'authcode'}) {
+                            $aa = LJ::register_authaction($remote->id, 'icqverify', $icqnum);
+                        }
+                        my $key = "$aa->{aaid}.$aa->{authcode}";
+                        my $url = "$LJ::SITEROOT/icq/verify.bml?key=$key";
+                        # send icq alert
+                        $remote->send_icq(
+                            'message' => 'Verify ICQ Number',
+                            'common_url' => $url,
+                            'icq6_action_text' => 'Click to verify',
+                            'force_send' => 1, # supress verification flag check
+                        );
+                        $ret .= "Verification link sent over icq.";
+                        $ret .= " Link in ICQ message is (just for test purposes): <a href=\"$url\">$url</a>" if $LJ::IS_DEV_SERVER;
+                    }
+                } else {
+                    push @errors, 'Invalid ICQ number';
+                }
+            } else {
+                push @errors, 'ICQ number not specified';
+            }
+        }
+    } else {
+        my $key = $GET{'key'};
+        unless (length $key) {
+            push @errors, 'Verification key is missing';
+        } else {
+            # do verify
+            my ($aaid, $authcode) = split(/\./, $key);
+            my $aa = LJ::is_valid_authaction($aaid, $authcode);
+            
+            # my $aa = LJ::get_authaction($remote->id, 'icqverify', $icqnum);
+            unless (ref $aa) {
+                push @errors, 'Validation failed (invalid key)';
+            } elsif ($aa->{'used'} eq 'N' && $aa->{'action'} eq 'icqverify') {
+                my $u = LJ::load_userid($aa->{'userid'});
+                
+                unless (LJ::isu($u)) {
+                    push @errors, 'Validation failed - specified user not found';
+                } elsif ($aa->{'arg1'} ne $u->prop('icq')) {
+                    push @errors, 'Validation failed - icq number has been changed';
+                } else {
+                    $u->set_prop('icq_verified', 1);
+                    LJ::mark_authaction_used($aa->{aaid});
+                    $ret .= "ICQ Number $aa->{arg1} has been successfuly verified for user " . $u->user;
+                }
+            } else {
+                push @errors, 'Validation failed (invalid key)';     
+            }
+        }
+    }
+    return $ret;
+}
+_code?>
+<=body
+head=><?_code return $headextra; _code?> 
+page?>

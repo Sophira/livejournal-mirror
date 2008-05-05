@@ -29,6 +29,7 @@ use Class::Autouse qw(
                       LJ::Auth
                       LJ::Jabber::Presence
                       LJ::S2
+                      LJ::ICQPartnerServer
                       IO::Socket::INET
                       Time::Local
                       LJ::Event::Befriended
@@ -3461,6 +3462,26 @@ sub jabber_is_online {
     my $u = shift;
 
     return keys %{LJ::Jabber::Presence->get_resources($u)} ? 1 : 0;
+}
+
+sub send_icq {
+    my ($self, %opts) = @_;
+
+    # croak "Can't call in web context" if LJ::is_web_context();
+    LJ::load_user_props($self, qw/ icq_verified icq /) 
+        unless exists $self->{'icq_verified'} && exists $self->{'icq'};
+    
+    if (! $self->{'icq_verified'} && ! $opts{'force_send'}) {
+        return 0;
+    }    
+
+    my $msg  = delete $opts{'message'} or croak "No message specified";
+    $opts{'icq51_text'} = $opts{'icq6_text'} = LJ::exml($msg);
+    
+    LJ::ICQPartnerServer->alert(
+        'to' => $self->{'icq'},
+        %opts,
+    );
 }
 
 sub esn_inbox_default_expand {

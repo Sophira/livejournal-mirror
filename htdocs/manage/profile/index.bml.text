@@ -141,6 +141,12 @@
 
 .gender.unspecified=(Unspecified)
 
+.icq.verified=Verified
+
+.icq.nonverified=Non-verified
+
+.icq.verify=Verify
+
 .im=IM/Chat
 
 .interest.line1=Short single-word phrases are best.
