@@ -6,32 +6,25 @@ use LWP::UserAgent;
 use HTTP::Request;
 use HTTP::Headers;
 
-use constant {
-    ICQ_PS_URL => 'http://partners.icq.com/icq.php',
-};
-
-
 sub alert {
     my $class = shift;
+
     my %params = (
-        common_url => 'http://sup.com',
-        common_width => 800,
-        common_height => 600,
-        common_title => 'common_title',
-        common_extra_url => 'http://sup.com',
-        icq51_width => '800',
-        icq51_height => '600',
-        icq51_text => 'icq51_text',
-        icq51_free_data => 'icq51_free_data',
-        icq51_toaster_title => 'icq51_toaster_title ' . $_,	 # единственное, что отображается в 5.1 - заголовок pop-up
-        icq6_display_name => 'icq6_display_name', 
-        icq6_toaster_title => 'icq6_toaster_title',
-        icq6_text => 'icq6_text',
-        icq6_image_url => 'http://www.ljdev.livejournal.ru/temp/icq6_lj_logo.png',
-        icq6_action_text => 'icq6_action_text',
-        icq6_extra_title => 'icq6_extra_title',
-        icq6_width => '800',
-        icq6_height => '600',
+        common_url => $LJ::ICQ_COMMON_URL,
+        common_width => $LJ::ICQ_COMMON_WIDTH,
+        common_height => $LJ::ICQ_COMMON_HEIGHT,
+        common_title => $LJ::ICQ_COMMON_TITLE,
+        common_extra_url => $LJ::ICQ_COMMON_EXTRA_URL,
+        icq51_width => $LJ::ICQ_ICQ51_WIDTH,
+        icq51_height => $LJ::ICQ_ICQ51_HEIGHT,
+        icq51_free_data => $LJ::ICQ_ICQ51_FREE_DATA,
+        icq6_display_name => $LJ::ICQ_ICQ6_DISPLAY_NAME,
+        icq6_toaster_title => $LJ::ICQ_ICQ6_TOASTER_TITLE,
+        icq6_image_url => $LJ::ICQ_ICQ6_IMAGE_URL,
+        icq6_action_text => $LJ::ICQ_ICQ6_ACTION_TEXT,
+        icq6_extra_title => $LJ::ICQ_ICQ6_EXTRA_TITLE,
+        icq6_width => $LJ::ICQ_ICQ6_WIDTH,
+        icq6_height => $LJ::ICQ_ICQ6_HEIGHT,
         @_
     );
 
@@ -45,7 +38,7 @@ sub alert {
 
 sub call {
     my $content = shift or die 'invalid content';
-    my $url = (shift or ICQ_PS_URL);
+    my $url = (shift or $LJ::ICQ_PS_URL);
     
     # warn "Calling:\n$content";
     my $ua = LWP::UserAgent->new;
@@ -61,7 +54,6 @@ sub call {
     
     if ($response->is_success) {
         return 1;
-        # print $response->content;  # or whatever
     }
     else {
         die $response->status_line . $response->content;
@@ -126,7 +118,3 @@ sub soap_envelop {
 }
 
 1;
-
-
-=comment
-=cut

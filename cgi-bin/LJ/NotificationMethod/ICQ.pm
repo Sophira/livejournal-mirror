@@ -75,8 +75,6 @@ sub notify {
 
 sub configured {
     my $class = shift;
-
-    # FIXME: check if jabber server is configured
     return 1;
 }
 
@@ -84,12 +82,6 @@ sub configured_for_user {
     my $class = shift;
     my $u = shift;    
     return length $u->prop('icq') && $u->prop('icq_verified');    
-}
-
-sub url {
-    my $class = shift;
-
-    return LJ::run_hook('jabber_link');
 }
 
 1;
