@@ -8,6 +8,7 @@ use strict;
 use LWP::UserAgent;
 use HTML::Entities;
 use XML::Parser;
+use Encode;
 
 # Get current track
 sub current {
@@ -113,6 +114,10 @@ sub current {
     if ($error_message) {
         return { error => "Can't retrieve data from last.fm: $error_message" };
     }
+
+    # This prevents worker from die when it catch unicode characters in last.fm title.
+    # (turn off UTF-8 flags from text strings)
+    ($artist, $name) = map { Encode::is_utf8($_) ? Encode::encode("utf8", $_) : $_ } ($artist, $name);
 
     if ($artist || $name) {
         my $track = HTML::Entities::decode(($artist ? "$artist - $name" : $name) . ' | Scrobbled by Last.fm');
