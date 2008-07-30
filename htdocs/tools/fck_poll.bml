@@ -48,7 +48,6 @@
     var eSelected = FCK.Selection.MoveToAncestorNode( 'DIV' );
     if ( eSelected ) {
         FCK.Selection.SelectNode( eSelected );
-    //    var divIds = oEditor.FCKTools.GetAllChildrenIds( eSelected );
     }
 
     //If an object is currently selected, load the properties into the dialog
