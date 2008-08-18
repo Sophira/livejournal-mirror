@@ -542,7 +542,7 @@ InObFCK.setupIframeHandlers = function () {
     el = GetE("fromfileentry");
     if (el) el.onclick = el.onfocus = function () { return InObFCK.selectRadio("fromfile"); };
     el = GetE("fromfb");
-    if (el) el.onfocus = function () { return InObFCK.selectRadio("fromfb"); };
+    if (el) el.onfocus = el.onclick = function () { return InObFCK.selectRadio("fromfb"); };
     el = GetE("btnPrev");
     if (el) el.onclick = InObFCK.onButtonPrevious;
 
@@ -644,6 +644,7 @@ InObFCK.fotobilderStepOne = function () {
 
     div_if.innerHTML = "<iframe width='100%' height='100%' id='fbstepframe' src=\"" + url + "\" frameborder='0'></iframe>";
     div_if.style.border = '0px solid';
+    div_if.style.height = '100%'; // Needed for Safari to display Iframe
 
     InObFCK.setPreviousCb(InObFCK.showSelectorPage);
 }
