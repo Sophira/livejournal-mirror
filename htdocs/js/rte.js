@@ -107,7 +107,6 @@ function useRichText(textArea, statPrefix) {
     }
 
     $("switched_rte_on").value = '1';
-    if (focus()) { editor_frame.focus() };
 
     return false; // do not follow link
 }
@@ -132,7 +131,6 @@ function usePlainText(textArea) {
         html = html.replace(/&nbsp;/g, ' ');
     }
 
-    if (focus()) { editor_frame.focus() };
     $(textArea).value = html;
     oEditor.Focus();
 

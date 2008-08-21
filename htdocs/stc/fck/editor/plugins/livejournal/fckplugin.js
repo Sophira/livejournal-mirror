@@ -277,7 +277,15 @@ LJPollCommand.Add=function(pollsource, index) {
         // Make the tag like the editor would
         var html = "<div id=\"poll"+index+"\">"+poll+"</div>";
 
-        FCK.InsertHtml(html);
+        // IE and Safari handle Selections differently and InsertHtml
+        // will not overwrite the enclosing DIVs in those browsers,
+        // so just replace the selected polls innerHTML
+        if (FCK.Selection.Element) {
+            FCK.Selection.Element.innerHTML = poll;
+        } else {
+            FCK.InsertHtml(html);
+        }
+
     }
 
     return;
@@ -306,7 +314,7 @@ LJPollCommand.ippu=function(evt) {
         var href = "href='javascript:Poll.callRichTextEditor()'";
         var notice = parent.LJ_IPPU.showNote("Polls must be edited inside the Poll Wizard<br /><a "+href+">Go to poll wizard</a>", ele);
         notice.centerOnWidget(ele);
-        parent.Event.stop(evt);
+        if (parent.Event.stop) parent.Event.stop(evt);
     }
 }
 
