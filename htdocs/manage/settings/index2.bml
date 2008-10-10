@@ -349,7 +349,7 @@ body<=
 
     $ret .= "<div id='settings_left'>";
 
-    $ret .= "<ul class='settings_nav'>";
+    $ret .= "<ul id='settings_nav'>";
     foreach my $cat (@cats_order) {
         next unless $cats_with_settings{$cat}->{visible};
 
@@ -362,7 +362,7 @@ body<=
     }
     $ret .= "</ul>";
 
-    $ret .= "<div class='settings_nav_title'><p>";
+    $ret .= "<div id='settings_nav_title'><p>";
     $ret .= $cats_with_settings{$given_cat}->{desc};
     $ret .= "</p></div>";
 
