@@ -2403,7 +2403,7 @@ setting.language.label=Language
 
 setting.minsecurity.label=Default Entry Security
 
-setting.minsecurity.option=Set all new entries to a minumum security of
+setting.minsecurity.option=Set all new entries to a minimum security of
 
 setting.minsecurity.option.select.friends=friends
 
