@@ -327,6 +327,8 @@ body<=
 
     my $ret = "<div id='settings_page'>";
 
+    $ret .= LJ::run_hook("settings_notice");
+
     my ($getextra, $getsep) = ("", "?");
     $title = $windowtitle = $ML{'.title.self'};
     if ($u && $authas ne $remote->user) {
