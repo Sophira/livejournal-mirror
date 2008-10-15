@@ -7,7 +7,7 @@ body<=
 
     BML::set_language_scope('/manage/settings/index.bml');
 
-    LJ::need_res("stc/settings.css");
+    LJ::need_res("stc/settings.css", "js/settings.js");
     LJ::set_active_crumb('manage');
 
     my $remote = LJ::get_remote();
@@ -369,7 +369,9 @@ body<=
     $ret .= "</p></div>";
 
     if ($cats_with_settings{$given_cat}->{form}) {
-        $ret .= "<form action='$LJ::SITEROOT/manage/settings/index2.bml$getextra${getsep}cat=$given_cat' method='post'>";
+        my $confirm_msg = LJ::ejs($ML{'.form.confirm'});
+        $ret .= "<script>Settings.confirm_msg = \"$confirm_msg\";</script>";
+        $ret .= "<form id='settings_form' action='$LJ::SITEROOT/manage/settings/index2.bml$getextra${getsep}cat=$given_cat' method='post'>";
         $ret .= LJ::form_auth();
     }
     $ret .= "<div class='settings_content'>";

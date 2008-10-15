@@ -52,6 +52,8 @@
 
 .finished.save_button=Save Changes
 
+.form.confirm=Save your changes?
+
 .fn.adultcontentflag=Adult Content
 
 .fn.bdayreminder=Birthday reminders
