@@ -327,7 +327,8 @@ body<=
                 $deleted_subs = 1;
             }
         }
-        $submit_msg .= "<?warningbar $ML{'.success'} warningbar?><br />";
+        $submit_msg .= "<?warningbar $ML{'.success'} warningbar?><br />"
+            if $deleted_subs;
     }
 
     my $ret = "<div id='settings_page'>";
