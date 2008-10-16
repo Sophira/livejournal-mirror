@@ -3226,6 +3226,7 @@ sub subscribe_interface {
     my $ret_url      = delete $opts{ret_url} || '';
     my $def_notes    = delete $opts{'default_selected_notifications'} || [];
     my $settings_page= delete $opts{'settings_page'} || 0;
+    my $post_to_settings_page = delete $opts{'post_to_settings_page'} || 0;
 
     croak "Invalid user object passed to subscribe_interface" unless LJ::isu($journalu);
 
@@ -3247,6 +3248,11 @@ sub subscribe_interface {
 
     unless ($settings_page) {
         $ret .= "<span class='esnlinks'><a href='$LJ::SITEROOT/inbox/'>$ui_inbox</a> | $ui_manage</span>";
+    }
+
+    if ($post_to_settings_page) {
+        $ret .= "<form method='POST' action='$LJ::SITEROOT/manage/settings/index2.bml?cat=notifications'>$formauth";
+    } elsif (!$settings_page) {
         $ret .= "<form method='POST' action='$LJ::SITEROOT/manage/subscriptions/$getextra'>$formauth";
     }
 
@@ -3453,7 +3459,7 @@ sub subscribe_interface {
                 # the JournalNewComment event as well, since JournalNewComment notifications
                 # are a subset of the non-ESN notifications
                 my $etypeid = $pending_sub->etypeid;
-                if (LJ::Event->class($etypeid) =~ /JournalNewComment/ && LJ::Setting::CommentEmailNotify->selected($u)) {
+                if (!$is_tracking_category && LJ::Event->class($etypeid) =~ /JournalNewComment/ && LJ::Setting::CommentEmailNotify->selected($u)) {
                     $special_selected = 1;
                 }
             }
@@ -3467,7 +3473,7 @@ sub subscribe_interface {
 
             if ($is_tracking_category && ! $pending_sub->pending) {
                 my $subid = $pending_sub->id;
-                my $deletesub_url = $settings_page && $ret_url ? "$ret_url&deletesub_$subid=1" : "?deletesub_$subid=1";
+                my $deletesub_url = $settings_page ? "$LJ::SITEROOT/manage/settings/index2.bml?cat=notifications&deletesub_$subid=1" : "?deletesub_$subid=1";
                 $cat_html .= qq {
                     <a href='$deletesub_url'><img src="$LJ::IMGPREFIX/portal/btn_del.gif" /></a>
                 };
@@ -3613,7 +3619,7 @@ sub subscribe_interface {
     }
 
     $ret .= "</div>";
-    $ret .= "</form>" unless $settings_page;
+    $ret .= "</form>" if !$settings_page || $post_to_settings_page;
 
     return $ret;
 }

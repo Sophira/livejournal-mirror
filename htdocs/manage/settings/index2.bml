@@ -294,6 +294,8 @@ body<=
 
             delete $u->{_subscriptions};
 
+            return BML::redirect($POST{ret_url}) if $POST{ret_url} && !scalar @notif_errors;
+
             # save the LJ::Setting notifications too
             $save_rv = LJ::Setting->save_all($u, \%POST, \@settings);
 
@@ -315,14 +317,17 @@ body<=
 
     if ($given_cat eq "notifications") {
         # look for deletions from GET
+        my $deleted_subs = 0;
         foreach my $subscr ($u->subscriptions) {
             my $id = $subscr->id;
             next unless $id;
 
             if ($GET{"deletesub_$id"}) {
                 $subscr->delete;
+                $deleted_subs = 1;
             }
         }
+        $submit_msg .= "<?warningbar $ML{'.success'} warningbar?><br />";
     }
 
     my $ret = "<div id='settings_page'>";
@@ -461,7 +466,6 @@ body<=
             categories    => \@categories,
             showtracking  => 1,
             settings_page => 1,
-            ret_url       => "$LJ::SITEROOT/manage/settings/index2.bml$getextra${getsep}cat=$given_cat",
         ) . "<br />";
 
     } else {
