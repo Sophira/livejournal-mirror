@@ -94,6 +94,7 @@ sub EntryPage
         # user object is cached from call just made in EntryPage_entry
         'up' => LJ::load_user($s2entry->{'poster'}->{'username'}),
         'viewall' => $viewall,
+        'expand_all' => $opts->{expand_all},
     };
 
     my $userlite_journal = UserLite($u);

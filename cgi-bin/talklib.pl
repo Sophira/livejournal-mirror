@@ -951,7 +951,8 @@ sub fixup_logitem_replycount {
 sub load_comments
 {
     my ($u, $remote, $nodetype, $nodeid, $opts) = @_;
-
+    warn "talklib.pl - \$opts->{expand_all} = $opts->{expand_all}";
+    
     my $n = $u->{'clusterid'};
     my $viewall = $opts->{viewall};
 
@@ -1069,7 +1070,7 @@ sub load_comments
         my $cfc = shift @check_for_children;
         next unless defined $children{$cfc};
         foreach my $child (@{$children{$cfc}}) {
-            if (@posts_to_load < $page_size) {
+            if (@posts_to_load < $page_size || $opts->{expand_all}) {
                 push @posts_to_load, $child;
             } else {
                 if (@subjects_to_load < $max_subjects) {
