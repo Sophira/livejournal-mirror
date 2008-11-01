@@ -34,7 +34,7 @@ sub render_body {
     $ret .= "<div class='rounded-box'><div class='rounded-box-tr'><div class='rounded-box-bl'><div class='rounded-box-br'>";
 
     $ret .= "<div class='rounded-box-content'>";
-    $ret .= $class->start_form;
+    $ret .= $class->start_form(%{$opts{form_attr}});
 
     my $tip_birthdate = LJ::ejs($class->ml('widget.createaccount.tip.birthdate'));
     my $tip_email = LJ::ejs($class->ml('widget.createaccount.tip.email'));
@@ -67,7 +67,7 @@ sub render_body {
     );
     $ret .= " <img id='username_check' src='$LJ::IMGPREFIX/create/check.png' alt='" . $class->ml('widget.createaccount.field.username.available') . "' title='" . $class->ml('widget.createaccount.field.username.available') . "' />";
     $ret .= $error_msg->('username', '<span id="username_error_main"><br /><span class="formitemFlag">', '</span></span>');
-    $ret .= "<span id='username_error'><span id='username_error_inner' class='formitemFlag'></span></span>";
+    $ret .= "<span id='username_error'><br /><span id='username_error_inner' class='formitemFlag'></span></span>";
     $ret .= "</td></tr>\n";
 
     ### email
@@ -222,7 +222,7 @@ sub handle_post {
     my $class = shift;
     my $post = shift;
     my %opts = @_;
-
+warn $opts{ret};
     my $get = $opts{get};
     my %from_post;
     my $remote = LJ::get_remote();
@@ -417,17 +417,30 @@ sub handle_post {
         # Default new accounts to Plus level
         $nu->add_to_class('plus');
         $nu->set_prop("create_accttype", "plus");
+        
+        if($opts{extra_props}){
+            while (my ($key, $value) = each( %{$opts{extra_props}} )){
+                $nu->set_prop($key => $value);
+            };
+        }
 
+        if($opts{status_history}){
+            while (my ($key, $value) = each( %{$opts{status_history}} )){
+                LJ::statushistory_add($nu, 0, $key => $value);
+            };
+        }
+        
         my $stop_output;
         my $body;
-        my $redirect = undef;
+        my $redirect = $opts{ret};
+        warn $redirect;
         LJ::run_hook('underage_redirect', {
             u => $nu,
             redirect => \$redirect,
             ret => \$body,
             stop_output => \$stop_output,
         });
-
+        warn $redirect;
         return BML::redirect($redirect) if $redirect;
         return $body if $stop_output;
 
