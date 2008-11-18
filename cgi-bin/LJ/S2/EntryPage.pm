@@ -316,6 +316,7 @@ sub EntryPage
         my $js = "<script>\n// don't crawl this.  read http://www.livejournal.com/developer/exporting.bml\n";
         $js .= "var LJ_cmtinfo = " . LJ::js_dumper($cmtinfo) . "\n";
         $js .= '</script>';
+        $p->{'LJ_cmtinfo'} = $js if $opts->{'need_cmtinfo'};
         $p->{'head_content'} .= $js;
     }
 

@@ -951,7 +951,6 @@ sub fixup_logitem_replycount {
 sub load_comments
 {
     my ($u, $remote, $nodetype, $nodeid, $opts) = @_;
-    warn "talklib.pl - \$opts->{expand_all} = $opts->{expand_all}";
     
     my $n = $u->{'clusterid'};
     my $viewall = $opts->{viewall};
