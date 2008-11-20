@@ -42,27 +42,36 @@ sub render_body {
 
     $ret .= $class->start_form(%{$opts{form_attr}});
 
-    my $tip_birthdate = LJ::ejs($class->ml('widget.createaccount.tip.birthdate'));
+    my $tip_birthdate = LJ::ejs($class->ml('widget.createaccount.tip.birthdate2'));
     my $tip_email = LJ::ejs($class->ml('widget.createaccount.tip.email'));
     my $tip_password = LJ::ejs($class->ml('widget.createaccount.tip.password'));
     my $tip_username = LJ::ejs($class->ml('widget.createaccount.tip.username'));
 
     # tip module
-    $ret .= "<script language='javascript'>\n";
-    $ret .= "CreateAccount.birthdate = \"$tip_birthdate\"\n";
-    $ret .= "CreateAccount.email = \"$tip_email\"\n";
-    $ret .= "CreateAccount.password = \"$tip_password\"\n";
-    $ret .= "CreateAccount.username = \"$tip_username\"\n";
-    $ret .= "CreateAccount.tipbox_novert = true;\n" if $alt_layout;
-    $ret .= "</script>\n";
-    $ret .= "<div id='tips_box_arrow'></div>";
-    $ret .= "<div id='tips_box'></div>";
+    if ($alt_layout) {
+        $ret .= "<script language='javascript'>\n";
+        $ret .= "CreateAccount.alt_layout = true;\n";
+        $ret .= "</script>\n";
+    } else {
+        $ret .= "<script language='javascript'>\n";
+        $ret .= "CreateAccount.birthdate = \"$tip_birthdate\"\n";
+        $ret .= "CreateAccount.email = \"$tip_email\"\n";
+        $ret .= "CreateAccount.password = \"$tip_password\"\n";
+        $ret .= "CreateAccount.username = \"$tip_username\"\n";
+        $ret .= "</script>\n";
+        $ret .= "<div id='tips_box_arrow'></div>";
+        $ret .= "<div id='tips_box'></div>";
+    }
 
     $ret .= "<table class='create-form' cellspacing='0' cellpadding='3'>\n" unless $alt_layout;
 
     ### username
     if ($alt_layout) {
         $ret .= "<label for='create_user' class='label_create'>" . $class->ml('widget.createaccount.field.username') . "</label>";
+        $ret .= "<div class='bubble' id='bubble_user'>";
+        $ret .= "<div class='bubble-arrow'></div>";
+        $ret .= "<div class='bubble-text'>$tip_username</div>";
+        $ret .= "</div>";
     } else {
         $ret .= "<tr><td class='field-name'>" . $class->ml('widget.createaccount.field.username') . "</td>\n<td>";
     }
@@ -84,6 +93,10 @@ sub render_body {
     ### email
     if ($alt_layout) {
         $ret .= "<label for='create_email' class='label_create'>" . $class->ml('widget.createaccount.field.email') . "</label>";
+        $ret .= "<div class='bubble' id='bubble_email'>";
+        $ret .= "<div class='bubble-arrow'></div>";
+        $ret .= "<div class='bubble-text'>$tip_email</div>";
+        $ret .= "</div>";
     } else {
         $ret .= "<tr><td class='field-name'>" . $class->ml('widget.createaccount.field.email') . "</td>\n<td>";
     }
@@ -101,6 +114,10 @@ sub render_body {
     my $pass_value = $errors->{password} ? "" : $post->{password1};
     if ($alt_layout) {
         $ret .= "<label for='create_password1' class='label_create'>" . $class->ml('widget.createaccount.field.password') . "</label>";
+        $ret .= "<div class='bubble' id='bubble_password1'>";
+        $ret .= "<div class='bubble-arrow'></div>";
+        $ret .= "<div class='bubble-text'>$tip_password</div>";
+        $ret .= "</div>";
     } else {
         $ret .= "<tr><td class='field-name'>" . $class->ml('widget.createaccount.field.password') . "</td>\n<td>";
     }
@@ -118,6 +135,10 @@ sub render_body {
     ### confirm password
     if ($alt_layout) {
         $ret .= "<label for='create_password2' class='label_create'>" . $class->ml('widget.createaccount.field.confirmpassword') . "</label>";
+        $ret .= "<div class='bubble' id='bubble_password1'>";
+        $ret .= "<div class='bubble-arrow'></div>";
+        $ret .= "<div class='bubble-text'>$tip_password</div>";
+        $ret .= "</div>";
     } else {
         $ret .= "<tr><td class='field-name'>" . $class->ml('widget.createaccount.field.confirmpassword') . "</td>\n<td>";
     }
@@ -136,6 +157,10 @@ sub render_body {
     if ($LJ::COPPA_CHECK) {
         if ($alt_layout) {
             $ret .= "<label for='create_bday_mm' class='label_create'>" . $class->ml('widget.createaccount.field.birthdate') . "</label>";
+            $ret .= "<div class='bubble' id='bubble_bday_mm'>";
+            $ret .= "<div class='bubble-arrow'></div>";
+            $ret .= "<div class='bubble-text'>$tip_birthdate</div>";
+            $ret .= "</div>";
             $ret .= $class->html_select(
                 name => "bday_mm",
                 id => "create_bday_mm",

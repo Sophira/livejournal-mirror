@@ -8,6 +8,8 @@ CreateAccount.init = function () {
     if (!$('create_bday_dd')) return;
     if (!$('create_bday_yyyy')) return;
 
+    CreateAccount.bubbleid = "";
+
     DOM.addEventListener($('create_user'), "focus", CreateAccount.eventShowTip.bindEventListener("create_user"));
     DOM.addEventListener($('create_email'), "focus", CreateAccount.eventShowTip.bindEventListener("create_email"));
     DOM.addEventListener($('create_password1'), "focus", CreateAccount.eventShowTip.bindEventListener("create_password1"));
@@ -31,32 +33,40 @@ CreateAccount.eventShowTip = function () {
 CreateAccount.showTip = function (id) {
     if (!id) return;
 
-    var y = DOM.findPosY($(id)), text;
-
-    if (id == "create_bday_mm") {
-        text = CreateAccount.birthdate;
-    } else if (id == "create_email") {
-        text = CreateAccount.email;
-    } else if (id == "create_password1") {
-        text = CreateAccount.password;
-    } else if (id == "create_user") {
-        text = CreateAccount.username;
-    }
-
-    var box = $('tips_box'), box_arr = $('tips_box_arrow');
-    if (box && box_arr) {
-        box.innerHTML = text;
-
-        if (CreateAccount.tipbox_novert) {
-            box.style.top = y + "px";
-            box_arr.style.top = y + "px";
-        } else {
-            box.style.top = y - 188 + "px";
-            box_arr.style.top = y - 183 + "px";
+    if (CreateAccount.alt_layout) {
+        // hide previous bubble
+        if ($(CreateAccount.bubbleid)) {
+            $(CreateAccount.bubbleid).style.visibility = "hidden";
         }
 
-        box.style.display = "block";
-        box_arr.style.display = "block";
+        // show current bubble
+        CreateAccount.bubbleid = id.replace(/create/, 'bubble');
+        if ($(CreateAccount.bubbleid)) {
+            $(CreateAccount.bubbleid).style.visibility = "visible";
+        }
+    } else {
+        var y = DOM.findPosY($(id)), text;
+
+        if (id == "create_bday_mm") {
+            text = CreateAccount.birthdate;
+        } else if (id == "create_email") {
+            text = CreateAccount.email;
+        } else if (id == "create_password1") {
+            text = CreateAccount.password;
+        } else if (id == "create_user") {
+            text = CreateAccount.username;
+        }
+
+        var box = $('tips_box'), box_arr = $('tips_box_arrow');
+        if (box && box_arr) {
+            box.innerHTML = text;
+
+            box.style.top = y - 188 + "px";
+            box.style.display = "block";
+
+            box_arr.style.top = y - 183 + "px";
+            box_arr.style.display = "block";
+        }
     }
 }
 

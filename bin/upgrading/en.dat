@@ -3038,6 +3038,8 @@ widget.createaccount.field.username.available=Username available
 
 widget.createaccount.tip.birthdate=Required by law. No worries, you can set privacy on this after you're done creating an account.
 
+widget.createaccount.tip.birthdate2=Required by law. By default, we only display the month and day.
+
 widget.createaccount.tip.captcha=If you can't read the text, type "audio" to take a sound test instead.
 
 widget.createaccount.tip.email=We need your email address to send important information. We will never share or sell your email address.
