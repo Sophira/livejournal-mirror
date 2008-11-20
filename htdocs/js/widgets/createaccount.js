@@ -47,10 +47,15 @@ CreateAccount.showTip = function (id) {
     if (box && box_arr) {
         box.innerHTML = text;
 
-        box.style.top = y - 188 + "px";
-        box.style.display = "block";
+        if (CreateAccount.tipbox_novert) {
+            box.style.top = y + "px";
+            box_arr.style.top = y + "px";
+        } else {
+            box.style.top = y - 188 + "px";
+            box_arr.style.top = y - 183 + "px";
+        }
 
-        box_arr.style.top = y - 183 + "px";
+        box.style.display = "block";
         box_arr.style.display = "block";
     }
 }
