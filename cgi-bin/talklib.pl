@@ -1559,9 +1559,17 @@ sub talkform {
 
     # Link to create an account
     if (!$remote || defined $oid_identity) {
-        $ret .= "<tr valign='middle' align='left'><td colspan='2'></td><td><span style='font-size: 8pt; font-style: italic;'>";
-        $ret .= BML::ml('.noaccount', {'aopts' => "href='$LJ::SITEROOT/create.bml'"});
-        $ret .= "</span></td></tr>\n";
+        my $create_link = LJ::run_hook("override_create_link_on_talkpost_form", $journalu);
+
+        $ret .= "<tr valign='middle' align='left'>";
+        if ($create_link) {
+            $ret .= $create_link;
+        } else {
+            $ret .= "<td colspan='2'></td><td><span style='font-size: 8pt; font-style: italic;'>";
+            $ret .= BML::ml('.noaccount', {'aopts' => "href='$LJ::SITEROOT/create.bml'"});
+            $ret .= "</span></td>";
+        }
+        $ret .= "</tr>\n";
     }
 
     } # end edit check
