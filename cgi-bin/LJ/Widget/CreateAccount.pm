@@ -262,15 +262,18 @@ sub render_body {
         ### TOS
         if ($LJ::TOS_CHECK) {
             my $tos_string = $class->ml('widget.createaccount.alt_layout.tos', { sitename => $LJ::SITENAMESHORT });
-            $tos_string = $class->ml('widget.createaccount.field.news', { sitename => $LJ::SITENAMESHORT }) unless $tos_string;
-            $ret .= "$tos_string<br />";
-            $ret .= $class->html_check(
-                name => 'tos',
-                id => 'create_tos',
-                value => '1',
-                selected => LJ::did_post() ? $post->{tos} : 0,
-            );
-            $ret .= " <span class='text'>" . $class->ml('widget.createaccount.alt_layout.field.tos') . "</span><br />";
+            if ($tos_string) {
+                $ret .= "$tos_string<br />";
+                $ret .= $class->html_check(
+                    name => 'tos',
+                    id => 'create_tos',
+                    value => '1',
+                    selected => LJ::did_post() ? $post->{tos} : 0,
+                );
+                $ret .= " <span class='text'>" . $class->ml('widget.createaccount.alt_layout.field.tos') . "</span><br /><br />";
+            } else {
+                $ret .= LJ::html_hidden( tos => 1 );
+            }
         }
 
         ### site news
