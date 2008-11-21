@@ -18,6 +18,16 @@ CreateAccount.init = function () {
     DOM.addEventListener($('create_bday_dd'), "focus", CreateAccount.eventShowTip.bindEventListener("create_bday_mm"));
     DOM.addEventListener($('create_bday_yyyy'), "focus", CreateAccount.eventShowTip.bindEventListener("create_bday_mm"));
 
+    if (CreateAccount.alt_layout) {
+        DOM.addEventListener($('create_user'), "blur", CreateAccount.eventHideTip.bindEventListener("create_user"));
+        DOM.addEventListener($('create_email'), "blur", CreateAccount.eventHideTip.bindEventListener("create_email"));
+        DOM.addEventListener($('create_password1'), "blur", CreateAccount.eventHideTip.bindEventListener("create_password1"));
+        DOM.addEventListener($('create_password2'), "blur", CreateAccount.eventHideTip.bindEventListener("create_password1"));
+        DOM.addEventListener($('create_bday_mm'), "blur", CreateAccount.eventHideTip.bindEventListener("create_bday_mm"));
+        DOM.addEventListener($('create_bday_dd'), "blur", CreateAccount.eventHideTip.bindEventListener("create_bday_mm"));
+        DOM.addEventListener($('create_bday_yyyy'), "blur", CreateAccount.eventHideTip.bindEventListener("create_bday_mm"));
+    }
+
     if (!$('username_check')) return;
     if (!$('username_error')) return;
 
@@ -30,16 +40,16 @@ CreateAccount.eventShowTip = function () {
     CreateAccount.showTip(id);
 }
 
+CreateAccount.eventHideTip = function () {
+    var id = this + "";
+    CreateAccount.id = id;
+    CreateAccount.hideTip(id);
+}
+
 CreateAccount.showTip = function (id) {
     if (!id) return;
 
     if (CreateAccount.alt_layout) {
-        // hide previous bubble
-        if ($(CreateAccount.bubbleid)) {
-            $(CreateAccount.bubbleid).style.visibility = "hidden";
-        }
-
-        // show current bubble
         CreateAccount.bubbleid = id.replace(/create/, 'bubble');
         if ($(CreateAccount.bubbleid)) {
             $(CreateAccount.bubbleid).style.visibility = "visible";
@@ -66,6 +76,16 @@ CreateAccount.showTip = function (id) {
 
             box_arr.style.top = y - 183 + "px";
             box_arr.style.display = "block";
+        }
+    }
+}
+
+CreateAccount.hideTip = function (id) {
+    if (!id) return;
+
+    if (CreateAccount.alt_layout) {
+        if ($(CreateAccount.bubbleid)) {
+            $(CreateAccount.bubbleid).style.visibility = "hidden";
         }
     }
 }
