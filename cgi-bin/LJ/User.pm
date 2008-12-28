@@ -760,7 +760,7 @@ sub make_login_session {
     $exptype ||= 'short';
     return 0 unless $u;
 
-    eval { Apache->request->notes('ljuser' => $u->{'user'}); };
+    eval { BML::get_request()->notes->{'ljuser' => $u->{'user'}}; };
 
     # create session and log user in
     my $sess_opts = {
@@ -2139,7 +2139,7 @@ sub record_login {
 
     my ($ip, $ua);
     eval {
-        my $r  = Apache->request;
+        my $r  = BML::get_request();
         $ip = LJ::get_remote_ip();
         $ua = $r->header_in('User-Agent');
     };
@@ -6584,7 +6584,7 @@ sub get_daycounts
     my $viewall = 0;
     if ($remote) {
         # do they have the viewall priv?
-        my $r = eval { Apache->request; }; # web context
+        my $r = eval { BML::get_request(); }; # web context
         my %getargs = $r->args if $r;
         if (defined $getargs{'viewall'} and $getargs{'viewall'} eq '1' and LJ::check_priv($remote, 'canview', '*')) {
             $viewall = 1;
@@ -8760,7 +8760,7 @@ sub get_remote
     };
 
     # can't have a remote user outside of web context
-    my $r = eval { Apache->request; };
+    my $r = eval { BML::get_request(); };
     return $no_remote->() unless $r;
 
     my $criterr = $opts->{criterr} || do { my $d; \$d; };

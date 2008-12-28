@@ -28,7 +28,7 @@ body<=
      $GET{'thread'} =~ s/^3D//;
  }
 
- my $r = Apache->request;
+ my $r = BML::get_request();
  $r->notes("codepath" => "bml.talkread");
 
  my $uri = BML::get_uri();
@@ -334,7 +334,7 @@ my $old_url = 0;
 
  $ret .= "<div style='margin-left: 30px'>";
 
- my $r = Apache->request;
+ my $r = BML::get_request();
 
     if (LJ::SUP->is_sup_enabled($u)) {
         if ($props->{'copyright'} ne 'P') {

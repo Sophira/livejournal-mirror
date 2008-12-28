@@ -5,7 +5,7 @@
 
     BML::set_language_scope('/userinfo.bml');
 
-    my $r = Apache->request;
+    my $r = BML::get_request();
     $r->notes("codepath" => "bml.userinfo");
 
     $bml_okay = 1;

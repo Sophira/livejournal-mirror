@@ -18,7 +18,7 @@ body<=
 
     my $pics = LJ::Talk::get_subjecticons();
 
-    my $r = Apache->request;
+    my $r = BML::get_request();
     $r->notes("codepath" => "bml.talkpost");
 
     my $uri = BML::get_uri();
@@ -315,7 +315,7 @@ body<=
 
     $ret .= "<div style='margin-left: 30px'>";
     ### copyright
-    my $r = Apache->request;
+    my $r = BML::get_request();
 
     if (LJ::SUP->is_sup_enabled($u)) {
  

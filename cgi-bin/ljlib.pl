@@ -2048,7 +2048,7 @@ sub start_request
 
     # include standard files if this is web-context
     unless ($LJ::DISABLED{sitewide_includes}) {
-        if (eval { Apache->request }) {
+        if (eval { BML::get_request() }) {
             # standard site-wide JS and CSS
             LJ::need_res(qw(
                             js/core.js
@@ -2573,7 +2573,7 @@ sub work_report {
     my $dest = $LJ::WORK_REPORT_HOST;
     return unless $dest;
 
-    my $r = eval { Apache->request; };
+    my $r = eval { BML::get_request(); };
     return unless $r;
     return if $r->method eq "OPTIONS";
 
@@ -2874,7 +2874,7 @@ sub get_remote_ip
     my $ip;
     return $LJ::_T_FAKE_IP if $LJ::IS_DEV_SERVER && $LJ::_T_FAKE_IP;
     eval {
-        $ip = Apache->request->connection->remote_ip;
+        $ip = BML::get_request()->connection->remote_ip;
     };
     return $ip || $ENV{'FAKE_IP'};
 }
@@ -3122,7 +3122,7 @@ sub is_web_context {
 sub is_open_proxy
 {
     my $ip = shift;
-    eval { $ip ||= Apache->request; };
+    eval { $ip ||= BML::get_request(); };
     return 0 unless $ip;
     if (ref $ip) { $ip = $ip->connection->remote_ip; }
 

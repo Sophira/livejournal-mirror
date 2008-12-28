@@ -303,8 +303,8 @@ sub check_viewable
         if (defined $remote) {
             return $err->(BML::ml('talk.error.notauthorised'));
         } else {
-            my $r = Apache->request;
-            my $host = $r->header_in("Host");
+            my $r = BML::get_request();
+            my $host = $r->header_in->{"Host"};
             my $args = scalar $r->args;
             my $querysep = $args ? "?" : "";
             my $redir = LJ::eurl("http://" . $host . $r->uri . $querysep . $args);
@@ -2712,8 +2712,8 @@ sub init {
     return $err->("Account is locked, unable to post or edit a comment.") if $journalu->{statusvis} eq 'L';
 
     eval {
-        my $r = Apache->request;
-        $r->notes("journalid" => $journalu->{'userid'});
+        my $r = BML::get_request();
+        $r->notes->{"journalid" => $journalu->{'userid'}};
     };
 
     my $dbcr = LJ::get_cluster_def_reader($journalu);

@@ -2027,7 +2027,7 @@ sub res_includes {
     }
 
     # find current journal
-    my $r = eval { Apache->request };
+    my $r = eval { BML::get_request() };
     my $journal_base = '';
     my $journal = '';
     if ($r) {
@@ -2266,7 +2266,7 @@ sub get_style_for_ads {
         $ret{layout} = $layout ? $layout : $custom_layout;
         $ret{theme} = $theme ? $theme : $custom_theme;
     } else {
-        my $view = Apache->request->notes->{view};
+        my $view = BML::get_request()->notes->{view};
         $view = "lastn" if $view eq "";
 
         if ($view =~ /^(?:friends|day|calendar|lastn)$/) {
@@ -2302,7 +2302,7 @@ sub get_search_term {
     return "" unless $search_pages{$uri};
 
     my $term = "";
-    my $args = Apache->request->args;
+    my $args = BML::get_request()->args;
     if ($uri eq '/interests.bml') {
         if ($args =~ /int=([^&]+)/) {
             $term = $1;
@@ -2517,7 +2517,7 @@ sub ads {
         return '';
     }
 
-    my $r = Apache->request;
+    my $r = BML::get_request();
     my %adcall = ();
 
     # Make sure this mapping is correct for app ads, journal ads only call this function
@@ -2634,7 +2634,7 @@ sub ads {
 
             # pass style info
 
-            my %GET = Apache->request->args;
+            my %GET = BML::get_request()->args;
             my $styleu = $GET{style} eq "mine" && $remote ? $remote : $u;
             my %style = LJ::get_style_for_ads($styleu);
             $adcall{layout} = defined $style{layout} ? $style{layout} : "";
@@ -2859,7 +2859,7 @@ sub control_strip
 
     my $remote = LJ::get_remote();
 
-    my $r = Apache->request;
+    my $r = BML::get_request();
     my $args = scalar $r->args;
     my $querysep = $args ? "?" : "";
     my $uri = "http://" . $r->header_in("Host") . $r->uri . $querysep . $args;
@@ -3633,7 +3633,7 @@ sub subscribe_interface {
 
     # print buttons
     my $referer = BML::get_client_header('Referer');
-    my $uri = $LJ::SITEROOT . Apache->request->uri;
+    my $uri = $LJ::SITEROOT . BML::get_request()->uri;
 
     # normalize the URLs -- ../index.bml doesn't make it a different page.
     $uri =~ s/index\.bml//;

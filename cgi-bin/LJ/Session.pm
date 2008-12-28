@@ -498,7 +498,7 @@ sub session_from_cookies {
     my %getopts = @_;
 
     # must be in web context
-    return undef unless eval { Apache->request; };
+    return undef unless eval { BML::get_request() };
 
     my $sessobj;
 
@@ -801,7 +801,7 @@ sub setdomsess_handler {
 sub _current_url {
     my $r = BML::get_request();
     #FIXME
-    my $r2 = DW::Request->get;
+    my $r2 = LJ::Request->get;
     my $args = $r->args;
     my $args_wq = $args ? "?$args" : "";
     my $host = $r2->header_in("Host");
@@ -844,7 +844,7 @@ sub _memkey {
 sub set_cookie {
     my ($key, $value, %opts) = @_;
 
-    my $r = eval { Apache->request };
+    my $r = eval { BML::get_request() };
     return unless $r;
 
     my $http_only = delete $opts{http_only};
@@ -856,7 +856,7 @@ sub set_cookie {
 
     # Mac IE 5 can't handle HttpOnly, so filter it out
     if ($http_only && ! $LJ::DEBUG{'no_mac_ie_httponly'}) {
-        my $ua = $r->header_in("User-Agent");
+        my $ua = $r->headers_in->{'User-Agent'};
         $http_only = 0 if $ua =~ /MSIE.+Mac_/;
     }
 

@@ -11,7 +11,7 @@ sub bml_handler {
     my ($class, $r, $filename) = @_;
 
     $r->handler("perl-script");
-    $r->notes("bml_filename" => "$LJ::HOME/htdocs/$filename");
+    $r->notes->{"bml_filename" => "$LJ::HOME/htdocs/$filename"};
     $r->push_handlers(PerlHandler => \&Apache::BML::handler);
     return Apache2::Const::OK;
 }
