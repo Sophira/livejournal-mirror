@@ -489,7 +489,7 @@ sub log_event {
     my $uniq = delete $info->{uniq};
     unless ($uniq) {
         eval {
-            $uniq = Apache->request->notes('uniq');
+            $uniq = BML::get_request()->notes('uniq');
         };
     }
     my $remote = delete($info->{remote}) || LJ::get_remote() || undef;

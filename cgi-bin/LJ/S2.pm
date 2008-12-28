@@ -21,7 +21,7 @@ use Class::Autouse qw(
                       LJ::LastFM
                       );
 use Storable;
-use Apache::Constants ();
+#use Apache2::Constants ();
 use POSIX ();
 
 package LJ::S2;
@@ -68,7 +68,7 @@ sub make_journal
     $con_opts->{'style_u'} = $opts->{'style_u'};
     my $ctx = s2_context($r, $styleid, $con_opts);
     unless ($ctx) {
-        $opts->{'handler_return'} = Apache::Constants::OK();
+        $opts->{'handler_return'} = Apache2::Constants::OK();
         return;
     }
 
@@ -185,7 +185,7 @@ sub s2_run
         # expand lj-embed tags
         if ($text =~ /lj\-embed/i) {
             # find out what journal we're looking at
-            my $r = eval { Apache->request };
+            my $r = eval { BML::get_request() };
             if ($r && $r->notes("journalid")) {
                 my $journal = LJ::load_userid($r->notes("journalid"));
                 # expand tags
@@ -662,7 +662,7 @@ sub s2_context
     # but it doesn't matter if we're using the minimal style ...
     my %style;
     eval {
-        my $r = Apache->request;
+        my $r = BML::get_request();
         if ($r->notes('use_minimal_scheme')) {
             my $public = get_public_layers();
             while (my ($layer, $name) = each %LJ::MINIMAL_STYLE) {
@@ -1898,7 +1898,7 @@ sub Entry
         $e->{'metadata'}->{'location'} = $loc->as_html_current if $loc;
     }
 
-    my $r = Apache->request;
+    my $r = BML::get_request();
     if (LJ::SUP->is_sup_enabled($u) && ($r->notes('codepath') eq 's2.entry' || $r->notes('codepath') eq 's2.reply')) {
         if ($p->{'copyright'} ne 'P') {
             $e->{'metadata'}->{'<small>&Oslash; '} = $LJ::S2::CURR_CTX->[S2::PROPS]->{"text_copyr_disagree"} . '</small>';
@@ -2465,7 +2465,7 @@ sub viewer_sees_control_strip
 {
     return 0 unless $LJ::USE_CONTROL_STRIP;
 
-    my $r = Apache->request;
+    my $r = BML::get_request();
     return LJ::run_hook('show_control_strip', {
         userid => $r->notes("journalid"),
     });
@@ -2474,7 +2474,7 @@ sub viewer_sees_control_strip
 sub _get_ad_box_args {
     my $ctx = shift;
     
-    my $r = Apache->request;
+    my $r = BML::get_request();
     my $journalu = LJ::load_userid($r->notes("journalid"));
     return unless $journalu;
     
@@ -2528,7 +2528,7 @@ sub viewer_sees_ad_box {
 }
 
 sub viewer_sees_ebox {
-    my $r = Apache->request;
+    my $r = BML::get_request();
     my $u = LJ::load_userid($r->notes("journalid"));
     return 0 unless $u;
 
@@ -2542,7 +2542,7 @@ sub viewer_sees_ebox {
 sub _get_Entry_ebox_args {
     my ($ctx, $this) = @_;
     
-    my $r = Apache->request;
+    my $r = BML::get_request();
     my $journalu = LJ::load_userid($r->notes("journalid"));
     return unless $journalu;
 
@@ -2600,7 +2600,7 @@ sub viewer_sees_ads # deprecated.
 {
     return 0 unless $LJ::USE_ADS;
 
-    my $r = Apache->request;
+    my $r = BML::get_request();
     return LJ::run_hook('should_show_ad', {
         ctx  => 'journal',
         userid => $r->notes("journalid"),
@@ -2609,7 +2609,7 @@ sub viewer_sees_ads # deprecated.
 
 sub control_strip_logged_out_userpic_css
 {
-    my $r = Apache->request;
+    my $r = BML::get_request();
     my $u = LJ::load_userid($r->notes("journalid"));
     return '' unless $u;
 
@@ -2618,7 +2618,7 @@ sub control_strip_logged_out_userpic_css
 
 sub control_strip_logged_out_full_userpic_css
 {
-    my $r = Apache->request;
+    my $r = BML::get_request();
     my $u = LJ::load_userid($r->notes("journalid"));
     return '' unless $u;
 
@@ -2636,7 +2636,7 @@ sub journal_current_datetime {
 
     my $ret = { '_type' => 'DateTime' };
 
-    my $r = Apache->request;
+    my $r = BML::get_request();
     my $u = LJ::load_userid($r->notes("journalid"));
     return $ret unless $u;
 

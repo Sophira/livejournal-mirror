@@ -5,7 +5,7 @@ package Apache::LiveJournal::Interface::S2;
 
 use strict;
 use MIME::Base64 ();
-use Apache::Constants;
+#use Apache::Constants;
 
 sub load { 1 }
 
@@ -19,7 +19,7 @@ sub handler {
     if ($uri =~ m!^/interface/s2/(\d+)$!) {
         $id = $1 + 0;
     } else {
-        return NOT_FOUND;
+        return NOT_FOUND();
     }
 
     my $lay = LJ::S2::load_layer($id);
@@ -35,7 +35,7 @@ sub handler {
         $r->send_http_header("text/plain; charset=utf-8");
         $r->print("Unauthorized\nYou must send your $LJ::SITENAME username and password or a valid session cookie\n");
 
-        return OK;
+        return OK();
     }
 
     my $dbr = LJ::get_db_reader();
@@ -96,7 +96,7 @@ sub handler {
             $error =~ s!, .+?(src/s2|cgi-bin)/!, !g;
 
             print $error;
-            return OK;
+            return OK();
         }
         else {
             $r->status_line("201 Compiled and Saved");
@@ -120,7 +120,7 @@ sub error {
     $r->print("$string\n$long\n");
 
     # Tell Apache OK so it won't try to handle the error
-    return OK;
+    return OK();
 }
 
 1;

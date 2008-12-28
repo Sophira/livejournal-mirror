@@ -220,7 +220,7 @@ sub guess_remote {
     my $class = shift;
 
     my $uniq = $class->current_uniq;
-    return unless $uniq;
+    return undef unless $uniq;
 
     my $uid = $class->load_mapping( uniq => $uniq );
     return LJ::load_userid($uid);
@@ -230,7 +230,7 @@ sub guess_remote {
 # if 'remote' passed in, returns mapped uniq
 sub load_mapping {
     my $class = shift;
-    return if $class->is_disabled;
+    return undef if $class->is_disabled;
 
     my %opts = @_;
 
@@ -373,14 +373,14 @@ sub generate_uniq_ident {
 }
 
 ###############################################################################
-# These methods require web context, they deal with Apache->request and cookies
+# These methods require web context, they deal with BML::get_request() and cookies
 #
 
 sub ensure_cookie_value {
     my $class = shift;
     return unless LJ::is_web_context();
 
-    my $r = Apache->request;
+    my $r = BML::get_request();
     return unless $r;
     
     my ($uniq, $uniq_time, $uniq_extra) = $class->parts_from_cookie;
@@ -438,7 +438,7 @@ sub sysban_should_block {
     my $class = shift;
     return 0 unless LJ::is_web_context();
 
-    my $r = Apache->request;
+    my $r = BML::get_request();
     my $uri = $r->uri;
 
     # if cookie exists, check for sysban
@@ -457,8 +457,8 @@ sub parts_from_cookie {
     my $class = shift;
     return unless LJ::is_web_context();
 
-    my $r = Apache->request;
-    my $cookieval = $r->header_in("Cookie");
+    my $r = BML::get_request();
+    my $cookieval = $r->headers_in->{"Cookie"};
 
     if ($cookieval =~ /\bljuniq\s*=\s*([a-zA-Z0-9]{15}):(\d+)([^;]+)/) {
         return wantarray() ? ($1, $2, $3) : $1;
@@ -487,8 +487,8 @@ sub set_current_uniq {
 
     return unless LJ::is_web_context();
 
-    my $r = Apache->request;
-    $r->notes('uniq' => $uniq);
+    my $r = BML::get_request();
+    $r->notes->{uniq} = $uniq;
 
     return;
 }
@@ -506,15 +506,15 @@ sub current_uniq {
     return $val if $val;
 
     # otherwise, legacy place is in $r->notes
-    return unless LJ::is_web_context();
+    return undef unless LJ::is_web_context();
 
-    my $r = Apache->request;
+    my $r = BML::get_request();
 
     # see if a uniq is set for this request
     # -- this accounts for cases when the cookie was initially
     #    set in this request, so it wasn't received in an 
     #    incoming headerno cookie was sent in
-    return $r->notes('uniq');
+    return $r->notes->{uniq};
 }
 
 1;

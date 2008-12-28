@@ -4,7 +4,6 @@
 package LJ::ModPerl;
 use strict;
 use lib "$ENV{LJHOME}/cgi-bin";
-use Apache;
 
 # Image::Size wants to pull in Image::Magick.  Let's not let it during
 # the init process.

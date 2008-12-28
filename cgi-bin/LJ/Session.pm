@@ -799,10 +799,12 @@ sub setdomsess_handler {
 ############################################################################
 
 sub _current_url {
-    my $r = Apache->request;
+    my $r = BML::get_request();
+    #FIXME
+    my $r2 = DW::Request->get;
     my $args = $r->args;
     my $args_wq = $args ? "?$args" : "";
-    my $host = $r->header_in("Host");
+    my $host = $r2->header_in("Host");
     my $uri = $r->uri;
     return "http://$host$uri$args_wq";
 }

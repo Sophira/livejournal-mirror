@@ -9,7 +9,7 @@ BEGIN {
 
 use strict;
 use IO::Socket::INET;
-use Apache::Constants qw(:common);
+use Apache2::Const -compile=>qw(:common);
 use Socket qw(SO_BROADCAST);
 
 use vars qw(%udp_sock);
@@ -17,8 +17,8 @@ use vars qw(%udp_sock);
 sub handler
 {
     my $r = shift;
-    return OK if $r->main;
-    return OK unless $LJ::HAVE_AVAIL && $LJ::FREECHILDREN_BCAST;
+    return Apache2::Const::OK if $r->main;
+    return Apache2::Const::OK unless $LJ::HAVE_AVAIL && $LJ::FREECHILDREN_BCAST;
 
     my $callback = $r->current_callback() if $r;
     my $cleanup = $callback eq "PerlCleanupHandler";
@@ -67,7 +67,7 @@ sub handler
             unless $res;
     }
 
-    return OK;
+    return Apache2::Const::OK;
 }
 
 1;

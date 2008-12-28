@@ -23,6 +23,26 @@ sub trim
     return $a;
 }
 
+# similar to decode_url_string below, but a nicer calling convention.  returns
+# a hash of items parsed from the string passed in as the only argument.
+sub parse_args {
+    my $args = $_[0];
+
+    my %GET;
+    foreach my $pair ( split /&/, $args ) {
+        my ($name, $value) = split /=/, $pair;
+
+        $value =~ tr/+/ /;
+        $value =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
+
+        $name =~ tr/+/ /;
+        $name =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
+
+        $GET{$name} .= $GET{$name} ? "\0$value" : $value;
+    }
+    return %GET;
+}
+
 # <LJFUNC>
 # name: LJ::decode_url_string
 # class: web
@@ -188,7 +208,7 @@ sub ejs
 # does the double quotes for ya.
 sub ejs_string {
     my $str = ejs($_[0]);
-    $str =~ s!</script!</scri\" + \"pt!gi;
+    $str =~ s!</script!</scri\" + \"pt!g;
     return "\"" . $str . "\"";
 }
 

@@ -2031,7 +2031,7 @@ sub res_includes {
     my $journal_base = '';
     my $journal = '';
     if ($r) {
-        my $journalid = $r->notes('journalid');
+        my $journalid = $r->notes->{'journalid'};
 
         my $ju;
         $ju = LJ::load_userid($journalid) if $journalid;
@@ -2531,7 +2531,7 @@ sub ads {
         # Try making the uri from request notes if it doesn't match
         # and uri ends in .html
         if (!LJ::check_page_ad_block($uri,$orient) && $r->header_in('Host') ne $LJ::DOMAIN_WEB) {
-            if ($uri = $r->notes('bml_filename')) {
+            if ($uri = $r->notes->{'bml_filename'}) {
                 $uri =~ s!$LJ::HOME/(?:ssldocs|htdocs)!!;
                 $uri = $uri =~ /\/$/ ? "$uri/index.bml" : $uri;
             }
@@ -2617,7 +2617,7 @@ sub ads {
     $adcall{gender} ||= "unknown"; # for logged-out users
 
     if ($ctx eq 'journal') {
-        my $u = $opts{user} ? LJ::load_user($opts{user}) : LJ::load_userid($r->notes("journalid"));
+        my $u = $opts{user} ? LJ::load_user($opts{user}) : LJ::load_userid($r->notes->{"journalid"});
         $opts{entry} = LJ::Entry->new_from_url($adcall{url});
 
         if ($u) {
@@ -2647,7 +2647,7 @@ sub ads {
 
     # Language this page is displayed in
     # set the language to the current user's preferences if they are logged in
-    $adcall{language} = $r->notes('langpref') if $remote;
+    $adcall{language} = $r->notes->{'langpref'} if $remote;
     $adcall{language} =~ s/_LJ//; # Trim _LJ postfixJ
 
     # What type of account level do they have?
@@ -2965,15 +2965,15 @@ sub control_strip
 
         $ret .= "<td id='lj_controlstrip_actionlinks' nowrap='nowrap'>";
         if (LJ::u_equals($remote, $journal)) {
-            if ($r->notes('view') eq "friends") {
+            if ($r->notes->{'view'} eq "friends") {
                 $ret .= $statustext{'yourfriendspage'};
-            } elsif ($r->notes('view') eq "friendsfriends") {
+            } elsif ($r->notes->{'view'} eq "friendsfriends") {
                 $ret .= $statustext{'yourfriendsfriendspage'};
             } else {
                 $ret .= $statustext{'yourjournal'};
             }
             $ret .= "<br />";
-            if ($r->notes('view') eq "friends") {
+            if ($r->notes->{'view'} eq "friends") {
                 my @filters = ("all", $BML::ML{'web.controlstrip.select.friends.all'}, "showpeople", $BML::ML{'web.controlstrip.select.friends.journals'}, "showcommunities", $BML::ML{'web.controlstrip.select.friends.communities'}, "showsyndicated", $BML::ML{'web.controlstrip.select.friends.feeds'});
                 my %res;
                 # FIXME: make this use LJ::Protocol::do_request
@@ -3028,9 +3028,9 @@ sub control_strip
                 $ret .= "$statustext{'friendof'}<br />";
                 $ret .= "$links{'add_friend'}";
             } else {
-                if ($r->notes('view') eq "friends") {
+                if ($r->notes->{'view'} eq "friends") {
                     $ret .= $statustext{'personalfriendspage'};
-                } elsif ($r->notes('view') eq "friendsfriends") {
+                } elsif ($r->notes->{'view'} eq "friendsfriends") {
                     $ret .= $statustext{'personalfriendsfriendspage'};
                 } else {
                     $ret .= $statustext{'personal'};
@@ -3136,9 +3136,9 @@ LOGIN_BAR
         $ret .= "<td id='lj_controlstrip_actionlinks' nowrap='nowrap'>";
 
         if ($journal->is_personal || $journal->is_identity) {
-            if ($r->notes('view') eq "friends") {
+            if ($r->notes->{'view'} eq "friends") {
                 $ret .= $statustext{'personalfriendspage'};
-            } elsif ($r->notes('view') eq "friendsfriends") {
+            } elsif ($r->notes->{'view'} eq "friendsfriends") {
                 $ret .= $statustext{'personalfriendsfriendspage'};
             } else {
                 $ret .= $statustext{'personal'};
@@ -3780,10 +3780,10 @@ sub final_body_html {
     my $before_body_close = "";
     LJ::run_hooks('insert_html_before_body_close', \$before_body_close);
 
-    my $r = Apache->request;
-    if ($r->notes('codepath') eq "bml.talkread" || $r->notes('codepath') eq "bml.talkpost") {
-        my $journalu = LJ::load_userid($r->notes('journalid'));
-        unless ($r->notes('bml_use_scheme') eq 'lynx') {
+    my $r = BML::get_request();
+    if ($r->notes->{'codepath'} eq "bml.talkread" || $r->notes->{'codepath'} eq "bml.talkpost") {
+        my $journalu = LJ::load_userid($r->notes->{'journalid'});
+        unless ($r->notes->{'bml_use_scheme'} eq 'lynx') {
             my $graphicpreviews_obj = LJ::graphicpreviews_obj();
             $before_body_close .= $graphicpreviews_obj->render($journalu);
         }
