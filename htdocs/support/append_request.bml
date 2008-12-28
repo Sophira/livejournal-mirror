@@ -205,7 +205,7 @@ body<=
             'body' => "(Bouncing mail to '" . join(', ', @emails) . "' and closing)\n\n" . $FORM{'body'},
             'posterid' => $remote,
             'type' => 'internal',
-            'uniq' => $r->notes('uniq'),
+            'uniq' => $r->notes->{'uniq'},
             'remote' => $remote,
         });
 
@@ -325,7 +325,7 @@ body<=
         'body' => $status . $FORM{'body'},
         'type' => $type,
         'faqid' => $faqid,
-        'uniq' => $r->notes('uniq'),
+        'uniq' => $r->notes->{'uniq'},
         'remote' => $remote,
         'tier' => $tier,
     });

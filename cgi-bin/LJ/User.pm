@@ -489,7 +489,7 @@ sub log_event {
     my $uniq = delete $info->{uniq};
     unless ($uniq) {
         eval {
-            $uniq = BML::get_request()->notes('uniq');
+            $uniq = BML::get_request()->notes->{'uniq'};
         };
     }
     my $remote = delete($info->{remote}) || LJ::get_remote() || undef;
@@ -2141,7 +2141,7 @@ sub record_login {
     eval {
         my $r  = BML::get_request();
         $ip = LJ::get_remote_ip();
-        $ua = $r->header_in('User-Agent');
+        $ua = $r->header_in->{'User-Agent'};
     };
 
     return $u->do("INSERT INTO loginlog SET userid=?, sessid=?, logintime=UNIX_TIMESTAMP(), ".
@@ -8141,7 +8141,7 @@ sub make_journal
     }
 
     if ($r) {
-        $r->notes('journalid' => $u->{'userid'});
+        $r->notes->{'journalid' => $u->{'userid'}};
     }
 
     my $notice = sub {
@@ -8245,7 +8245,7 @@ sub make_journal
         # render it in the lynx site scheme.
         if ($geta->{'format'} eq 'light') {
             $fallback = 'bml';
-            $r->notes('bml_use_scheme' => 'lynx');
+            $r->notes->{'bml_use_scheme' => 'lynx'};
         }
 
         # there are no BML handlers for these views, so force s2
@@ -8364,7 +8364,7 @@ sub make_journal
     }
 
     if ($stylesys == 2) {
-        $r->notes('codepath' => "s2.$view") if $r;
+        $r->notes->{'codepath' => "s2.$view"} if $r;
 
         eval { LJ::S2->can("dostuff") };  # force Class::Autouse
         my $mj = LJ::S2::make_journal($u, $styleid, $view, $remote, $opts);
@@ -8386,7 +8386,7 @@ sub make_journal
 
     # Everything from here on down is S1.  FIXME: this should be moved to LJ::S1::make_journal
     # to be more like LJ::S2::make_journal.
-    $r->notes('codepath' => "s1.$view") if $r;
+    $r->notes->{'codepath' => "s1.$view"} if $r;
     $u->{'_s1styleid'} = $styleid + 0;
 
     # For embedded polls
@@ -8802,7 +8802,7 @@ sub get_remote
     }
 
     LJ::User->set_remote($u);
-    $r->notes("ljuser" => $u->{'user'});
+    $r->notes->{"ljuser" => $u->{'user'}};
     return $u;
 }
 

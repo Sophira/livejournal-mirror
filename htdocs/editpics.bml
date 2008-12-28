@@ -186,7 +186,7 @@
         unless (%POST) {
 
             my $r = BML::get_request();
-            my $size = $r->header_in("Content-length");
+            my $size = $r->header_in->{"Content-length"};
             unless ($size) {
                 return $err->("No content-length header: can't upload");
             }

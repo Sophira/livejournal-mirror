@@ -2530,7 +2530,7 @@ sub ads {
 
         # Try making the uri from request notes if it doesn't match
         # and uri ends in .html
-        if (!LJ::check_page_ad_block($uri,$orient) && $r->header_in('Host') ne $LJ::DOMAIN_WEB) {
+        if (!LJ::check_page_ad_block($uri,$orient) && $r->header_in->{'Host'} ne $LJ::DOMAIN_WEB) {
             if ($uri = $r->notes->{'bml_filename'}) {
                 $uri =~ s!$LJ::HOME/(?:ssldocs|htdocs)!!;
                 $uri = $uri =~ /\/$/ ? "$uri/index.bml" : $uri;
@@ -2560,7 +2560,7 @@ sub ads {
     $adcall{type}    = $adcall{type} || $ad_page_mapping->{target}; # user|content
 
 
-    $adcall{url}     = 'http://' . $r->header_in('Host') . $r->uri;
+    $adcall{url}     = 'http://' . $r->header_in->{'Host'} . $r->uri;
 
     $adcall{contents} = $pubtext;
     $adcall{tags} = $tag_list;
@@ -2862,7 +2862,7 @@ sub control_strip
     my $r = BML::get_request();
     my $args = scalar $r->args;
     my $querysep = $args ? "?" : "";
-    my $uri = "http://" . $r->header_in("Host") . $r->uri . $querysep . $args;
+    my $uri = "http://" . $r->header_in->{"Host"} . $r->uri . $querysep . $args;
     $uri = LJ::eurl($uri);
     my $create_link = LJ::run_hook("override_create_link_on_navstrip", $journal) || "<a href='$LJ::SITEROOT/create.bml'>" . BML::ml('web.controlstrip.links.create', {'sitename' => $LJ::SITENAMESHORT}) . "</a>";
 

@@ -30,7 +30,7 @@ sub make_feed
         return undef;
     }
 
-    $r->notes('codepath' => "feed.$feedtype") if $r;
+    $r->notes->{'codepath' => "feed.$feedtype"} if $r;
 
     my $dbr = LJ::get_db_reader();
 

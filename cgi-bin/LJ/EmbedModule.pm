@@ -325,7 +325,7 @@ sub module_iframe_tag {
     # page view UNLESS the embedded content is only one embed/object
     # tag and it's whitelisted video.
     my $r = eval { BML::get_request() };
-    my $view = $r ? $r->notes("view") : '';
+    my $view = $r ? $r->notes->{"view"} : '';
     if (! $placeholder_prop && $view eq 'friends') {
         # show placeholder if this is not whitelisted video
         $do_placeholder = 1 if $no_whitelist;

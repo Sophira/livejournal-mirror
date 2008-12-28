@@ -155,12 +155,12 @@ LJ::register_hook("after_journal_content_created", sub {
 
     return unless $r;
     return unless $entry;
-    return unless $r->notes("view") eq 'entry';
+    return unless $r->notes->{"view"} eq 'entry';
     return unless has_pingback($entry->journal);
 
 
     if (LJ::PingBack->should_entry_recieve_pingback($entry)){
-        $r->header_out('X-Pingback', $LJ::PINGBACK->{uri});
+        $r->header_out->{'X-Pingback', $LJ::PINGBACK->{uri}};
     }
     
     

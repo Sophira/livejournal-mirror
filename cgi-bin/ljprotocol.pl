@@ -3011,7 +3011,7 @@ sub check_altusage
     if ($flags->{'usejournal_okay'}) {
         $flags->{'u_owner'} = LJ::load_user($alt);
         $flags->{'ownerid'} = $flags->{'u_owner'}->{'userid'};
-        $r->notes("journalid" => $flags->{'ownerid'}) if $r && !$r->notes("journalid");
+        $r->notes->{"journalid" => $flags->{'ownerid'}} if $r && !$r->notes->{"journalid"};
         return 1 if $flags->{'ownerid'};
         return fail($err,206);
     }
@@ -3021,7 +3021,7 @@ sub check_altusage
     my $canuse = LJ::can_use_journal($u->{'userid'}, $alt, $info);
     $flags->{'ownerid'} = $info->{'ownerid'};
     $flags->{'u_owner'} = $info->{'u_owner'};
-    $r->notes("journalid" => $flags->{'ownerid'}) if $r && !$r->notes("journalid");
+    $r->notes->{"journalid" => $flags->{'ownerid'}} if $r && !$r->notes->{"journalid"};
 
     return 1 if $canuse || $flags->{'ignorecanuse'};
 
@@ -3051,8 +3051,8 @@ sub authenticate
     my $r = eval { BML::get_request() };
     my $ip;
     if ($r) {
-        $r->notes->{"ljuser" => $u->{'user'}) unless $r->notes("ljuser"};
-        $r->notes->{"journalid" => $u->{'userid'}) unless $r->notes("journalid"};
+        $r->notes->{"ljuser" => $u->{'user'}} unless $r->notes->{"ljuser"};
+        $r->notes->{"journalid" => $u->{'userid'}} unless $r->notes->{"journalid"};
         $ip = $r->connection->remote_ip;
     }
 
@@ -3079,7 +3079,7 @@ sub authenticate
             return $chall_ok;
         }
         if ($auth_meth eq "cookie") {
-            return unless $r && $r->header_in("X-LJ-Auth") eq "cookie";
+            return unless $r && $r->header_in->{"X-LJ-Auth"} eq "cookie";
             my $remote = LJ::get_remote();
             return $remote && $remote->{'user'} eq $username ? 1 : 0;
         }

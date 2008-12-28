@@ -403,7 +403,7 @@ sub EntryPage_entry
             $opts->{'handler_return'} = 403;
             return;
         } else {
-            my $host = $r->header_in("Host");
+            my $host = $r->header_in->{"Host"};
             my $args = scalar $r->args;
             my $querysep = $args ? "?" : "";
             my $redir = LJ::eurl("http://$host$uri$querysep$args");

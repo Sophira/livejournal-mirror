@@ -74,13 +74,13 @@ sub handler {
             unless LJ::get_cap($u, "s2styles");
 
         # Read in the entity body to get the source
-        my $len = $r->header_in("Content-length")+0;
+        my $len = $r->header_in->{"Content-length"}+0;
 
         return error($r, 400, "Bad Request", "Supply S2 layer code in the request entity body and set Content-length")
             unless $len;
 
         return error($r, 415, "Bad Media Type", "Request body must be of type application/x-danga-s2-layer")
-            unless lc($r->header_in("Content-type")) eq 'application/x-danga-s2-layer';
+            unless lc($r->header_in->{"Content-type"}) eq 'application/x-danga-s2-layer';
 
         my $s2code;
         $r->read($s2code, $len);
@@ -100,7 +100,7 @@ sub handler {
         }
         else {
             $r->status_line("201 Compiled and Saved");
-            $r->header_out("Location" => "$LJ::SITEROOT/interface/s2/$id");
+            $r->header_out->{"Location" => "$LJ::SITEROOT/interface/s2/$id"};
             $r->send_http_header("text/plain; charset=utf-8");
             $r->print("Compiled and Saved\nThe layer was uploaded successfully.\n");
         }

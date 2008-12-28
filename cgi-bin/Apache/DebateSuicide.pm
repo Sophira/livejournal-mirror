@@ -82,7 +82,7 @@ sub handler
         }
 
         # we should have logged by here, but be paranoid in any case
-        Apache::LiveJournal::db_logger($r) unless $r->pnotes('did_lj_logging');
+        Apache::LiveJournal::db_logger($r) unless $r->pnotes->{'did_lj_logging'};
 
         # This is supposed to set MaxChildRequests to 1, then clear the
         # KeepAlive flag so that Apache will terminate after this request,

@@ -1634,16 +1634,16 @@ sub auth_digest {
         my $nonce = LJ::challenge_generate(180); # 3 mins timeout
         my $authline = "Digest realm=\"lj\", nonce=\"$nonce\", algorithm=MD5, qop=\"auth\"";
         $authline .= ", stale=\"true\"" if $stale;
-        $r->header_out("WWW-Authenticate", $authline);
+        $r->header_out->{"WWW-Authenticate", $authline};
         $r->status_line("401 Authentication required");
         return 0;
     };
 
-    unless ($r->header_in("Authorization")) {
+    unless ($r->header_in->{"Authorization"}) {
         return $decline->(0);
     }
 
-    my $header = $r->header_in("Authorization");
+    my $header = $r->header_in->{"Authorization"};
 
     # parse it
     # TODO: could there be "," or " " inside attribute values, requiring
@@ -2588,7 +2588,7 @@ sub work_report {
 
     my @fields = ($$, $what);
     if ($what eq "start") {
-        my $host = $r->header_in("Host");
+        my $host = $r->header_in->{"Host"};
         my $uri = $r->uri;
         my $args = $r->args;
         $args = substr($args, 0, 100) if length $args > 100;

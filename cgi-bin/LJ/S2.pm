@@ -186,8 +186,8 @@ sub s2_run
         if ($text =~ /lj\-embed/i) {
             # find out what journal we're looking at
             my $r = eval { BML::get_request() };
-            if ($r && $r->notes("journalid")) {
-                my $journal = LJ::load_userid($r->notes("journalid"));
+            if ($r && $r->notes->{"journalid"}) {
+                my $journal = LJ::load_userid($r->notes->{"journalid"});
                 # expand tags
                 LJ::EmbedModule->expand_entry($journal, \$text)
                     if $journal;
@@ -663,7 +663,7 @@ sub s2_context
     my %style;
     eval {
         my $r = BML::get_request();
-        if ($r->notes('use_minimal_scheme')) {
+        if ($r->notes->{'use_minimal_scheme'}) {
             my $public = get_public_layers();
             while (my ($layer, $name) = each %LJ::MINIMAL_STYLE) {
                 next unless $name ne "";
@@ -721,7 +721,7 @@ sub s2_context
 
     if ($opts->{'use_modtime'})
     {
-        my $ims = $r->header_in("If-Modified-Since");
+        my $ims = $r->header_in->{"If-Modified-Since"};
         my $ourtime = LJ::time_to_http($modtime);
         if ($ims eq $ourtime) {
             # 304 return; unload non-public layers
@@ -730,7 +730,7 @@ sub s2_context
             $r->send_http_header();
             return undef;
         } else {
-            $r->header_out("Last-Modified", $ourtime);
+            $r->header_out->{"Last-Modified", $ourtime};
         }
     }
 
@@ -1899,7 +1899,7 @@ sub Entry
     }
 
     my $r = BML::get_request();
-    if (LJ::SUP->is_sup_enabled($u) && ($r->notes('codepath') eq 's2.entry' || $r->notes('codepath') eq 's2.reply')) {
+    if (LJ::SUP->is_sup_enabled($u) && ($r->notes->{'codepath'} eq 's2.entry' || $r->notes->{'codepath'} eq 's2.reply')) {
         if ($p->{'copyright'} ne 'P') {
             $e->{'metadata'}->{'<small>&Oslash; '} = $LJ::S2::CURR_CTX->[S2::PROPS]->{"text_copyr_disagree"} . '</small>';
         }
@@ -2467,7 +2467,7 @@ sub viewer_sees_control_strip
 
     my $r = BML::get_request();
     return LJ::run_hook('show_control_strip', {
-        userid => $r->notes("journalid"),
+        userid => $r->notes->{"journalid"},
     });
 }
 
@@ -2475,7 +2475,7 @@ sub _get_ad_box_args {
     my $ctx = shift;
     
     my $r = BML::get_request();
-    my $journalu = LJ::load_userid($r->notes("journalid"));
+    my $journalu = LJ::load_userid($r->notes->{"journalid"});
     return unless $journalu;
     
     my $colors = _get_colors_for_ad($ctx);
@@ -2529,7 +2529,7 @@ sub viewer_sees_ad_box {
 
 sub viewer_sees_ebox {
     my $r = BML::get_request();
-    my $u = LJ::load_userid($r->notes("journalid"));
+    my $u = LJ::load_userid($r->notes->{"journalid"});
     return 0 unless $u;
 
     if (LJ::S2::current_box_type($u) eq "ebox") {
@@ -2543,7 +2543,7 @@ sub _get_Entry_ebox_args {
     my ($ctx, $this) = @_;
     
     my $r = BML::get_request();
-    my $journalu = LJ::load_userid($r->notes("journalid"));
+    my $journalu = LJ::load_userid($r->notes->{"journalid"});
     return unless $journalu;
 
     my $curr_entry_ct = LJ::S2::nth_entry_seen($this);
@@ -2603,14 +2603,14 @@ sub viewer_sees_ads # deprecated.
     my $r = BML::get_request();
     return LJ::run_hook('should_show_ad', {
         ctx  => 'journal',
-        userid => $r->notes("journalid"),
+        userid => $r->notes->{"journalid"},
     });
 }
 
 sub control_strip_logged_out_userpic_css
 {
     my $r = BML::get_request();
-    my $u = LJ::load_userid($r->notes("journalid"));
+    my $u = LJ::load_userid($r->notes->{"journalid"});
     return '' unless $u;
 
     return LJ::run_hook('control_strip_userpic', $u);
@@ -2619,7 +2619,7 @@ sub control_strip_logged_out_userpic_css
 sub control_strip_logged_out_full_userpic_css
 {
     my $r = BML::get_request();
-    my $u = LJ::load_userid($r->notes("journalid"));
+    my $u = LJ::load_userid($r->notes->{"journalid"});
     return '' unless $u;
 
     return LJ::run_hook('control_strip_loggedout_userpic', $u);
@@ -2637,7 +2637,7 @@ sub journal_current_datetime {
     my $ret = { '_type' => 'DateTime' };
 
     my $r = BML::get_request();
-    my $u = LJ::load_userid($r->notes("journalid"));
+    my $u = LJ::load_userid($r->notes->{"journalid"});
     return $ret unless $u;
 
     # turn the timezone offset number into a four character string (plus '-' if negative)

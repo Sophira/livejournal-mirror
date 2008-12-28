@@ -66,7 +66,7 @@ sub ReplyPage
         $comment = LJ::Comment->new($u, dtalkid => $editid);
         unless ($remote) {
             my $r = $opts->{'r'};
-            my $host = $r->header_in("Host");
+            my $host = $r->header_in->{"Host"};
             my $uri = $r->uri;
             my $args = scalar $r->args;
             my $querysep = $args ? "?" : "";

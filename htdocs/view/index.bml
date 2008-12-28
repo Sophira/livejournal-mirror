@@ -10,7 +10,7 @@
 my $uri = BML::get_uri();
 my $r = BML::get_request();
 if ($uri =~ m!/(\d\d\d\d)/(\d\d)/?$!) {
-    $FORM{'user'} = $r->notes('_journal');
+    $FORM{'user'} = $r->notes->{'_journal'};
     $FORM{'type'} = "month";
     $FORM{'y'} =  $1;
     $FORM{'m'} = $2 + 0;
