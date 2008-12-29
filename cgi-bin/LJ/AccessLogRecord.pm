@@ -25,7 +25,7 @@ sub new {
         'ljuser' => $rl->notes->{'ljuser'},
         'remotecaps' => $remotecaps,
         'remoteid'   => $remoteid,
-        'journalid' => $rl->notes{'journalid'},
+        'journalid' => $rl->notes->{'journalid'},
         'journaltype' => ($ju ? $ju->{journaltype} : ""),
         'journalcaps' => ($ju ? $ju->{caps} : undef),
         'codepath' => $rl->notes->{'codepath'},

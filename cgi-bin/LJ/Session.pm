@@ -804,7 +804,7 @@ sub _current_url {
     my $r2 = LJ::Request->get;
     my $args = $r->args;
     my $args_wq = $args ? "?$args" : "";
-    my $host = $r2->header_in->{"Host"};
+    my $host = $r2->header_in("Host");
     my $uri = $r->uri;
     return "http://$host$uri$args_wq";
 }
