@@ -2046,9 +2046,12 @@ sub start_request
     # reload config if necessary
     LJ::Config->start_request_reload;
 
+    # reset the request abstraction layer
+    LJ::Request->reset;
+
     # include standard files if this is web-context
     unless ($LJ::DISABLED{sitewide_includes}) {
-        if (eval { BML::get_request() }) {
+        if ( LJ::Request->get ) {
             # standard site-wide JS and CSS
             LJ::need_res(qw(
                             js/core.js
