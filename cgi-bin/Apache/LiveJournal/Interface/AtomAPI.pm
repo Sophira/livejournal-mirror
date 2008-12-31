@@ -3,10 +3,10 @@
 package Apache::LiveJournal::Interface::AtomAPI;
 
 use strict;
-#use Apache::Constants qw(:common);
+use Apache2::Const qw(:common);
 use Digest::SHA1;
 use MIME::Base64;
-use lib "$ENV{LJHOME}/cgi-bin";
+use lib "$LJ::HOME/cgi-bin";
 use Class::Autouse qw(
                       LJ::ModuleCheck
                       );
@@ -74,7 +74,7 @@ HTML
     $r->content_type($type);
     $r->send_http_header();
     $r->print($out);
-    return OK();
+    return OK;
 };
 
 sub handle_upload
@@ -538,7 +538,7 @@ sub handle_feed {
         if ($op{'handler_return'}) {
             # this could be a conditional GET shortcut, honor it
             $r->status($op{'handler_return'});
-            return OK();
+            return OK;
         }
         # should never get here
         return respond ($r, 404, "Unknown error.");
@@ -659,7 +659,7 @@ sub handle {
         'categories' => \&handle_categories,
     }->{$action}->( $r, $remote, $u, $opts );
 
-    return OK();
+    return OK;
 }
 
 # Authenticate via the WSSE header.

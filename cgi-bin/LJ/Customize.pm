@@ -2,7 +2,7 @@ package LJ::Customize;
 use strict;
 use Carp qw(croak);
 
-use lib "$ENV{LJHOME}/cgi-bin";
+use lib "$LJ::HOME/cgi-bin";
 
 require "customizelib.pl";
 
@@ -638,7 +638,7 @@ sub get_moodtheme_select_list {
 sub get_cats {
     my $class = shift;
     my $u = shift;
-        
+
     my @categories = (
         all => {
             text => LJ::Lang::ml('customize.cats.all'),

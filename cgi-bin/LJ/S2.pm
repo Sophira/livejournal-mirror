@@ -1,8 +1,10 @@
 #!/usr/bin/perl
 #
 
+package LJ::S2;
+
 use strict;
-use lib "$ENV{'LJHOME'}/src/s2";
+use lib "$LJ::HOME/src/s2";
 use S2;
 use S2::Color;
 use Class::Autouse qw(
@@ -18,13 +20,10 @@ use Class::Autouse qw(
                       LJ::S2::EntryPage
                       LJ::S2::ReplyPage
                       LJ::S2::TagsPage
-                      LJ::LastFM
                       );
 use Storable;
-#use Apache2::Constants ();
+use Apache2::Const qw/ :common /;
 use POSIX ();
-
-package LJ::S2;
 
 # TEMP HACK
 sub get_s2_reader {
@@ -68,7 +67,7 @@ sub make_journal
     $con_opts->{'style_u'} = $opts->{'style_u'};
     my $ctx = s2_context($r, $styleid, $con_opts);
     unless ($ctx) {
-        $opts->{'handler_return'} = Apache2::Constants::OK();
+        $opts->{'handler_return'} = OK;
         return;
     }
 
@@ -208,7 +207,8 @@ sub s2_run
         my $status = $ctx->[S2::SCRATCH]->{'status'} || 200;
         $r->status($status);
         $r->content_type($ctx->[S2::SCRATCH]->{'ctype'} || $ctype);
-        $r->send_http_header();
+        # FIXME: not necessary in ModPerl 2.0?
+        #$r->send_http_header();
     };
 
     my $need_flush;
@@ -714,23 +714,25 @@ sub s2_context
 
         # were we trying to load the default style?
         $r->content_type("text/html");
-        $r->send_http_header();
+        # FIXME: not necessary in ModPerl 2.0?
+        #$r->send_http_header();
         $r->print("<b>Error preparing to run:</b> One or more layers required to load the stock style have been deleted.");
         return undef;
     }
 
     if ($opts->{'use_modtime'})
     {
-        my $ims = $r->header_in->{"If-Modified-Since"};
+        my $ims = $r->headers_in->{"If-Modified-Since"};
         my $ourtime = LJ::time_to_http($modtime);
         if ($ims eq $ourtime) {
             # 304 return; unload non-public layers
             LJ::S2::cleanup_layers(@layers);
             $r->status_line("304 Not Modified");
-            $r->send_http_header();
+            # FIXME: not necessary in ModPerl 2.0?
+            #$r->send_http_header();
             return undef;
         } else {
-            $r->header_out->{"Last-Modified", $ourtime};
+            $r->headers_out->{"Last-Modified"} = $ourtime;
         }
     }
 
@@ -757,7 +759,8 @@ sub s2_context
 
     my $err = $@;
     $r->content_type("text/html");
-    $r->send_http_header();
+    # FIXME: not necessary in ModPerl 2.0 anymore?
+    #$r->send_http_header();
     $r->print("<b>Error preparing to run:</b> $err");
     return undef;
 
@@ -2207,7 +2210,7 @@ sub nth_entry_seen {
     my $e = shift;
     my $key = "$e->{'journal'}->{'username'}-$e->{'itemid'}";
     my $ref = $LJ::REQ_GLOBAL{'nth_entry_keys'};
-    
+
     if (exists $ref->{$key}) {
         return $ref->{$key};
     }
@@ -3166,7 +3169,7 @@ sub _print_quickreply_link
     my ($ctx, $this, $opts) = @_;
 
     $opts ||= {};
-    
+
     # one of these had better work
     my $replyurl =  $opts->{'reply_url'} || $this->{'reply_url'} || $this->{'entry'}->{'comments'}->{'post_url'};
 
@@ -3495,7 +3498,7 @@ sub EntryLite__get_link
 {
     my ($ctx, $this, $key) = @_;
     my $null_link = { '_type' => 'Link', '_isnull' => 1 };
-    
+
     if ($this->{_type} eq 'Entry') {
         return _Entry__get_link($ctx, $this, $key);
     }

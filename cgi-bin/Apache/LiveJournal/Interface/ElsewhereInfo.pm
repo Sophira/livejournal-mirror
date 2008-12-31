@@ -88,7 +88,7 @@ sub handle {
 
     respond($r, 200, JSON::objToJson(\%resp));
 
-    return OK();
+    return OK;
 }
 
 sub respond {
@@ -107,7 +107,7 @@ sub respond {
     $r->send_http_header();
     $r->print($body);
 
-    return OK();
+    return OK;
 };
 
 1;

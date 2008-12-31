@@ -189,27 +189,27 @@ sub log {
     if (my $r = eval {BML::get_request()}) {
         my $rl = $r->last;
 
-        my $remote = eval { LJ::load_user($rl->notes->{'ljuser'}) };
+        my $remote = eval { LJ::load_user($rl->notes('ljuser')) };
         my $remotecaps = $remote ? $remote->{caps} : undef;
         my $remoteid   = $remote ? $remote->{userid} : 0;
-        my $ju = eval { LJ::load_userid($rl->notes->{'journalid'}) };
+        my $ju = eval { LJ::load_userid($rl->notes('journalid')) };
         my $uri = $r->uri;
 
         my %insert_r = (
                         'addr'        => $r->connection->remote_ip,
-                        'remote'      => $rl->notes->{'ljuser'},
+                        'remote'      => $rl->notes('ljuser'),
                         'remotecaps'  => $remotecaps,
                         'remoteid'    => $remoteid,
-                        'journalid'   => $rl->notes->{'journalid'},
+                        'journalid'   => $rl->notes('journalid'),
                         'journaltype' => $ju ? $ju->{journaltype} : "",
-                        'codepath'    => $rl->notes->{'codepath'},
-                        'langpref'    => $rl->notes->{'langpref'},
-                        'clientver'   => $rl->notes->{'clientver'},
+                        'codepath'    => $rl->notes('codepath'),
+                        'langpref'    => $rl->notes('langpref'),
+                        'clientver'   => $rl->notes('clientver'),
                         'method'      => $r->method,
                         'uri'         => $uri,
                         'args'        => scalar $r->args,
-                        'browser'     => $r->header_in->{"User-Agent"},
-                        'ref'         => $r->header_in->{"Referer"},
+                        'browser'     => $r->header_in("User-Agent"),
+                        'ref'         => $r->header_in("Referer"),
                         );
 
         while ( my ($k,$v) = each %insert_r ) {

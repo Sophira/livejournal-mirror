@@ -104,13 +104,9 @@ sub MonthPage
         my $subject = $lt->{$itemid}->[0];
         my $day = $item->{'day'};
 
-        my $ditemid = $itemid*256 + $anum;
-        my $entry_obj = LJ::Entry->new($u, ditemid => $ditemid);
-
-        # don't show posts from suspended users or suspended posts
+        # don't show posts from suspended users
         next unless $pu{$posterid};
         next ENTRY if $pu{$posterid}->{'statusvis'} eq 'S' && !$viewsome;
-        next ENTRY if $entry_obj && $entry_obj->is_suspended_for($remote);
 
 	if ($LJ::UNICODE && $logprops{$itemid}->{'unknown8bit'}) {
             my $text;
@@ -123,6 +119,7 @@ sub MonthPage
             LJ::CleanHTML::clean_subject(\$subject);
         }
 
+        my $ditemid = $itemid*256 + $anum;
         my $nc = "";
         $nc .= "nc=$replycount" if $replycount && $remote && $remote->{'opt_nctalklinks'};
         my $permalink = "$journalbase/$ditemid.html";
@@ -148,12 +145,15 @@ sub MonthPage
             $userpic = Image_userpic($pu{$posterid}, 0, $pickw);
         }
 
+        my $entry_obj = LJ::Entry->new($u, ditemid => $ditemid);
+
         my $entry = Entry($u, {
             'subject' => $subject,
             'text' => "",
             'dateparts' => $alldatepart,
             'system_dateparts' => $item->{system_alldatepart},
             'security' => $security,
+            'age_restriction' => $entry_obj->adult_content_calculated,
             'allowmask' => $allowmask,
             'props' => $logprops{$itemid},
             'itemid' => $ditemid,

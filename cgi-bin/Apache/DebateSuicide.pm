@@ -4,7 +4,7 @@
 package Apache::DebateSuicide;
 
 use strict;
-use Apache2::Const -compile=>qw(:common);
+use Apache2::Const qw/ :common /;
 use Class::Autouse qw(
                       LJ::ModuleCheck
                       );
@@ -17,11 +17,11 @@ our $ppid;
 sub handler
 {
     my $r = shift;
-    return Apache2::Const::OK if $r->main;
-    return Apache2::Const::OK unless $LJ::SUICIDE && LJ::ModuleCheck->have("GTop");
+    return OK if $r->main;
+    return OK unless $LJ::SUICIDE && LJ::ModuleCheck->have("GTop");
 
     my $meminfo;
-    return Apache2::Const::OK unless open (MI, "/proc/meminfo");
+    return OK unless open (MI, "/proc/meminfo");
     $meminfo = join('', <MI>);
     close MI;
 
@@ -31,7 +31,7 @@ sub handler
     }
 
     my $memfree = $meminfo{'MemFree'} + $meminfo{'Cached'};
-    return Apache2::Const::OK unless $memfree;
+    return OK unless $memfree;
 
     my $goodfree = $LJ::SUICIDE_UNDER{$LJ::SERVER_NAME} || $LJ::SUICIDE_UNDER ||   150_000;
     my $is_under = $memfree < $goodfree;
@@ -51,7 +51,7 @@ sub handler
 
         $is_over = $proc_size_k > $maxproc;
     }
-    return Apache2::Const::OK unless $is_over || $is_under;
+    return OK unless $is_over || $is_under;
 
     # we'll proceed to die if we're one of the largest processes
     # on this machine
@@ -82,7 +82,7 @@ sub handler
         }
 
         # we should have logged by here, but be paranoid in any case
-        Apache::LiveJournal::db_logger($r) unless $r->pnotes->{'did_lj_logging'};
+        Apache::LiveJournal::db_logger($r) unless $r->pnotes('did_lj_logging');
 
         # This is supposed to set MaxChildRequests to 1, then clear the
         # KeepAlive flag so that Apache will terminate after this request,
@@ -101,7 +101,7 @@ sub handler
         CORE::exit(0);
     }
 
-    return Apache2::Const::OK;
+    return OK;
 }
 
 sub pid_info {

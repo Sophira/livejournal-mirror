@@ -4,7 +4,7 @@
 package Apache::LiveJournal::PalImg;
 
 use strict;
-# use Apache::Constants qw(:common REDIRECT HTTP_NOT_MODIFIED);
+use Apache2::Const qw(:common REDIRECT HTTP_NOT_MODIFIED);
 use PaletteModify;
 
 # for callers to 'ping' as a class method for Class::Autouse to lazily load
@@ -127,7 +127,7 @@ sub send_file
     $r->send_http_header();
 
     # HEAD request?
-    return OK() if $r->method eq "HEAD";
+    return OK if $r->method eq "HEAD";
 
     my $fh = Apache::File->new($disk_file);
     return 404 unless $fh;
@@ -148,7 +148,7 @@ sub send_file
     $r->print($palette) if $palette; # when palette modified.
     $r->send_fd($fh); # sends remaining data (or all of it) quickly
     $fh->close();
-    return OK();
+    return OK;
 }
 
 1;
