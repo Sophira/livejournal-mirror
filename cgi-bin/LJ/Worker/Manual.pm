@@ -1,6 +1,6 @@
 package LJ::Worker::Manual;
 use strict;
-use lib "$ENV{LJHOME}/cgi-bin";
+use lib "$LJ::HOME/cgi-bin";
 use base 'LJ::Worker';
 require "ljlib.pl";
 use Getopt::Long;
@@ -59,9 +59,8 @@ sub on_afterwork { }
 sub on_idle { }
 sub error {
     my ($class, $msg) = @_;
-    $class->debug($msg);
-}
 
+}
 sub debug {
     my ($class, $msg) = @_;
     $msg =~ s/\s+$//;

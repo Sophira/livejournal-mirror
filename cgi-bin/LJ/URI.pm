@@ -2,18 +2,18 @@
 use strict;
 
 package LJ::URI;
-use Apache2::Const -compile=>qw(:common REDIRECT HTTP_NOT_MODIFIED
-                         HTTP_MOVED_PERMANENTLY HTTP_MOVED_TEMPORARILY
-                         M_TRACE M_OPTIONS);
+use Apache2::Const qw/ :common REDIRECT HTTP_NOT_MODIFIED
+                       HTTP_MOVED_PERMANENTLY HTTP_MOVED_TEMPORARILY
+                       M_TRACE M_OPTIONS /;
 
 # Takes an Apache $r and a path to BML filename relative to htdocs
 sub bml_handler {
     my ($class, $r, $filename) = @_;
 
     $r->handler("perl-script");
-    $r->notes->{"bml_filename" => "$LJ::HOME/htdocs/$filename"};
+    $r->notes->{bml_filename} = "$LJ::HOME/htdocs/$filename";
     $r->push_handlers(PerlHandler => \&Apache::BML::handler);
-    return Apache2::Const::OK;
+    return OK;
 }
 
 # Handle a URI. Returns response if success, undef if not handled
@@ -37,7 +37,7 @@ sub handle {
 
     # handle URI redirects
     if (my $url = $LJ::URI_REDIRECT{$uri}) {
-        return Apache::LiveJournal::redir($r, $url, Apache2::Const::HTTP_MOVED_TEMPORARILY);
+        return Apache::LiveJournal::redir($r, $url, HTTP_MOVED_TEMPORARILY);
     }
 
     # handle vertical URLs

@@ -19,7 +19,7 @@ sub handler
     my $r = shift;
     my $uri = $r->uri;
     my ($base, $ext, $extra) = $uri =~ m!^/palimg/(.+)\.(\w+)(.*)$!;
-    $r->notes->{"codepath" => "img.palimg"};
+    $r->notes("codepath" => "img.palimg");
     return 404 unless $base && $base !~ m!\.\.!;
 
     my $disk_file = "$LJ::HOME/htdocs/palimg/$base.$ext";
@@ -112,14 +112,14 @@ sub send_file
     }
 
     $etag = '"' . $etag . '"';
-    my $ifnonematch = $r->header_in->{"If-None-Match"};
-    return HTTP_NOT_MODIFIED() if
+    my $ifnonematch = $r->header_in("If-None-Match");
+    return HTTP_NOT_MODIFIED if
         defined $ifnonematch && $etag eq $ifnonematch;
 
     # send the file
     $r->content_type($opts->{'mime'});
-    $r->header_out->{"Content-length", $opts->{'size'}};
-    $r->header_out->{"ETag", $etag};
+    $r->header_out("Content-length", $opts->{'size'});
+    $r->header_out("ETag", $etag);
     if ($opts->{'modtime'}) {
         $r->update_mtime($opts->{'modtime'});
         $r->set_last_modified();

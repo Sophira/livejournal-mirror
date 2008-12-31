@@ -88,7 +88,7 @@ sub handle_upload
         my $buff;
 
         # Check length
-        my $len = $r->header_in->{"Content-length"};
+        my $len = $r->header_in("Content-length");
         return respond($r, 400, "Content is too long")
             if $len > $LJ::MAX_ATOM_UPLOAD;
 
@@ -154,7 +154,7 @@ sub handle_upload
         $link->href( $fb->{URL} );
         $atom_reply->add_link($link);
 
-        $r->header_out->{"Location", $fb->{URL}};
+        $r->header_out("Location", $fb->{URL});
         return respond($r, 201, \$atom_reply->as_xml(), 'atom');
     }
 }
@@ -164,7 +164,7 @@ sub handle_post {
     my ($buff, $entry);
 
     # Check length
-    my $len = $r->header_in->{"Content-length"};
+    my $len = $r->header_in("Content-length");
     return respond($r, 400, "Content is too long")
         if $len > $LJ::MAX_ATOM_UPLOAD;
 
@@ -343,7 +343,7 @@ sub handle_post {
     $link->title( $entry->title() );
     $atom_reply->add_link($link);
 
-    $r->header_out->{"Location", $edit_url};
+    $r->header_out("Location", $edit_url);
     return respond($r, 201, \$atom_reply->as_xml(), 'atom');
 }
 
@@ -416,7 +416,7 @@ sub handle_edit {
 
     if ($method eq "PUT") {
         # Check length
-        my $len = $r->header_in->{"Content-length"};
+        my $len = $r->header_in("Content-length");
         return respond($r, 400, "Content is too long")
             if $len > $LJ::MAX_ATOM_UPLOAD;
 
@@ -577,7 +577,7 @@ sub handle {
     #
     # if wsse information is supplied, use it.
     # if not, fall back to digest.
-    my $wsse = $r->header_in->{'X-WSSE'};
+    my $wsse = $r->header_in('X-WSSE');
     my $nonce_dup;
     my $u = $wsse ? auth_wsse($wsse, \$nonce_dup) : LJ::auth_digest($r);
     return respond( $r, 401, "Authentication failed for this AtomAPI request.")
