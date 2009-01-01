@@ -9,6 +9,7 @@ no warnings 'uninitialized';
 use Apache2::Const qw/ :common REDIRECT HTTP_NOT_MODIFIED
                        HTTP_MOVED_PERMANENTLY HTTP_MOVED_TEMPORARILY
                        M_TRACE M_OPTIONS /;
+use Apache2::Connection;
 
 # needed to call S2::set_domain() so early:
 use LJ::S2;

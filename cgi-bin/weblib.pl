@@ -11,7 +11,7 @@ require "crumbs.pl";
 
 use Carp;
 use Class::Autouse qw(
-                      DW::Request
+                      LJ::Request
                       LJ::Event
                       LJ::Subscription::Pending
                       LJ::M::ProfilePage
@@ -2860,11 +2860,13 @@ sub control_strip
 
     my $remote = LJ::get_remote();
 
-    my $r = DW::Request->get;
+    my $r = LJ::Request->get;
     my $args = $r->query_string;
     my $querysep = $args ? "?" : "";
     my $uri = "http://" . $r->header_in('Host') . $r->uri . $querysep . $args;
     $uri = LJ::eurl($uri);
+    my $create_link = LJ::run_hook("override_create_link_on_navstrip", $journal) || "<a href='$LJ::SITEROOT/create.bml'>" . BML::ml('web.controlstrip.links.create', {'sitename' => $LJ::SITENAMESHORT}) . "</a>";
+
 
     # Build up some common links
     my %links = (
@@ -3633,7 +3635,7 @@ sub subscribe_interface {
 
     # print buttons
     my $referer = BML::get_client_header('Referer');
-    my $uri = $LJ::SITEROOT . DW::Request->get->uri;
+    my $uri = $LJ::SITEROOT . LJ::Request->get->uri;
 
     # normalize the URLs -- ../index.bml doesn't make it a different page.
     $uri =~ s/index\.bml//;
