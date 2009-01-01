@@ -62,7 +62,7 @@ sub should_render {
 
     # Make sure we don't exclude tracking from this page or path
     return 0 if grep { $r->uri =~ /$_/ } @{ $LJ::PAGESTATS_EXCLUDE{'uripath'} };
-    return 0 if grep { $r->notes->{'codepath'} eq $_ } @{ $LJ::PAGESTATS_EXCLUDE{'codepath'} };
+    return 0 if grep { $r->notes('codepath') eq $_ } @{ $LJ::PAGESTATS_EXCLUDE{'codepath'} };
 
     # See if their ljuniq cookie has the PageStats flag
     if ($BML::COOKIE{'ljuniq'} =~ /[a-zA-Z0-9]{15}:\d+:pgstats([01])/) {
@@ -129,7 +129,7 @@ sub codepath {
     my ($self) = @_;
     my $r = $self->get_request;
 
-    my $codepath = $r->notes->{'codepath'};
+    my $codepath = $r->notes('codepath');
     # remove 's2.' or 's1.' prefix from codepath
     $codepath =~ s/^[Ss]\d{1}\.(.*)$/$1/;
 

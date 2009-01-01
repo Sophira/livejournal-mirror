@@ -8,10 +8,16 @@ BEGIN {
     # ljlib.pl (via require, ick!).  so this lets them know if it's recursive.
     # we REALLY need to move the rest of this crap to .pm files.
     $LJ::_LJLIB_INIT = 1;
+
+    # ensure we have $LJ::HOME, or complain very vigorously
+    $LJ::HOME ||= $ENV{LJHOME};
+    die "No \$LJ::HOME set, or not a directory!\n"
+        unless $LJ::HOME && -d $LJ::HOME;
 }
 
-use lib "$ENV{LJHOME}/cgi-bin";
+use lib "$LJ::HOME/cgi-bin";
 
+use Apache2::Connection ();
 use Carp;
 use DBI;
 use DBI::Role;
@@ -27,6 +33,7 @@ use Time::Local ();
 use Storable ();
 use Compress::Zlib ();
 use Class::Autouse qw(
+                      LJ::Request
                       TheSchwartz
                       TheSchwartz::Job
                       LJ::AdTargetedInterests
@@ -109,8 +116,8 @@ require "ljhooks.pl";
 require "ljrelation.pl";
 require "ljuserpics.pl";
 
-require "$ENV{'LJHOME'}/cgi-bin/ljlib-local.pl"
-    if -e "$ENV{'LJHOME'}/cgi-bin/ljlib-local.pl";
+require "$LJ::HOME/cgi-bin/ljlib-local.pl"
+    if -e "$LJ::HOME/cgi-bin/ljlib-local.pl";
 
 # if this is a dev server, alias LJ::D to Data::Dumper::Dumper
 if ($LJ::IS_DEV_SERVER) {
@@ -1628,22 +1635,25 @@ sub auth_okay
 sub auth_digest {
     my ($r) = @_;
 
+    # FIXME: Move this up to the caller.
+    $r = LJ::Request->get;
+
     my $decline = sub {
         my $stale = shift;
 
         my $nonce = LJ::challenge_generate(180); # 3 mins timeout
         my $authline = "Digest realm=\"lj\", nonce=\"$nonce\", algorithm=MD5, qop=\"auth\"";
         $authline .= ", stale=\"true\"" if $stale;
-        $r->header_out->{"WWW-Authenticate", $authline};
+        $r->header_out("WWW-Authenticate", $authline);
         $r->status_line("401 Authentication required");
         return 0;
     };
 
-    unless ($r->header_in->{"Authorization"}) {
+    unless ($r->header_in("Authorization")) {
         return $decline->(0);
     }
 
-    my $header = $r->header_in->{"Authorization"};
+    my $header = $r->header_in("Authorization");
 
     # parse it
     # TODO: could there be "," or " " inside attribute values, requiring
@@ -2576,7 +2586,7 @@ sub work_report {
     my $dest = $LJ::WORK_REPORT_HOST;
     return unless $dest;
 
-    my $r = eval { BML::get_request(); };
+    my $r = LJ::Request->get;
     return unless $r;
     return if $r->method eq "OPTIONS";
 
@@ -2591,9 +2601,9 @@ sub work_report {
 
     my @fields = ($$, $what);
     if ($what eq "start") {
-        my $host = $r->header_in->{"Host"};
+        my $host = $r->header_in("Host");
         my $uri = $r->uri;
-        my $args = $r->args;
+        my $args = $r->query_string;
         $args = substr($args, 0, 100) if length $args > 100;
         push @fields, $host, $uri, $args;
 
@@ -2876,10 +2886,9 @@ sub get_remote_ip
 {
     my $ip;
     return $LJ::_T_FAKE_IP if $LJ::IS_DEV_SERVER && $LJ::_T_FAKE_IP;
-    eval {
-        $ip = BML::get_request()->connection->remote_ip;
-    };
-    return $ip || $ENV{'FAKE_IP'};
+
+    my $r = LJ::Request->get;
+    return ( $r ? $r->get_remote_ip : undef ) || $ENV{'FAKE_IP'};
 }
 
 sub md5_struct
@@ -3124,10 +3133,12 @@ sub is_web_context {
 
 sub is_open_proxy
 {
-    my $ip = shift;
-    eval { $ip ||= BML::get_request(); };
+    my $ip = $_[0] || LJ::Request->get;
     return 0 unless $ip;
-    if (ref $ip) { $ip = $ip->connection->remote_ip; }
+
+    if ( ref $ip ) {
+        $ip = $ip->get_remote_ip;
+    }
 
     my $dbr = LJ::get_db_reader();
     my $stat = $dbr->selectrow_hashref("SELECT status, asof FROM openproxy WHERE addr=?",
@@ -3191,7 +3202,7 @@ sub load_include {
     }
 
     # hit it up from the file, if it exists
-    my $filename = "$ENV{'LJHOME'}/htdocs/inc/$file";
+    my $filename = "$LJ::HOME/htdocs/inc/$file";
     return unless -e $filename;
 
     # get it and return it

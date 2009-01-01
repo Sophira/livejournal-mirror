@@ -109,7 +109,7 @@ sub request_header {
     my $server = shift;
     my($key) = @_;
     if ($ENV{MOD_PERL}) {
-        return $server->{apache}->header_in->{$key};
+        return $server->{apache}->header_in($key);
     } else {
         ($key = uc($key)) =~ tr/-/_/;
         return $ENV{'HTTP_' . $key};
@@ -155,7 +155,7 @@ sub response_header {
     my $server = shift;
     my($key, $val) = @_;
     if ($ENV{MOD_PERL}) {
-        $server->{apache}->header_out->{$key, $val};
+        $server->{apache}->header_out($key, $val);
     } else {
         unless ($key =~ /^-/) {
             ($key = lc($key)) =~ tr/-/_/;

@@ -4,13 +4,14 @@
 package LJ;
 use strict;
 
-use lib "$ENV{LJHOME}/cgi-bin";
+use lib "$LJ::HOME/cgi-bin";
 
 # load the bread crumb hash
 require "crumbs.pl";
 
 use Carp;
 use Class::Autouse qw(
+                      DW::Request
                       LJ::Event
                       LJ::Subscription::Pending
                       LJ::M::ProfilePage
@@ -2859,12 +2860,11 @@ sub control_strip
 
     my $remote = LJ::get_remote();
 
-    my $r = BML::get_request();
-    my $args = scalar $r->args;
+    my $r = DW::Request->get;
+    my $args = $r->query_string;
     my $querysep = $args ? "?" : "";
-    my $uri = "http://" . $r->header_in->{"Host"} . $r->uri . $querysep . $args;
+    my $uri = "http://" . $r->header_in('Host') . $r->uri . $querysep . $args;
     $uri = LJ::eurl($uri);
-    my $create_link = LJ::run_hook("override_create_link_on_navstrip", $journal) || "<a href='$LJ::SITEROOT/create.bml'>" . BML::ml('web.controlstrip.links.create', {'sitename' => $LJ::SITENAMESHORT}) . "</a>";
 
     # Build up some common links
     my %links = (
@@ -2965,15 +2965,15 @@ sub control_strip
 
         $ret .= "<td id='lj_controlstrip_actionlinks' nowrap='nowrap'>";
         if (LJ::u_equals($remote, $journal)) {
-            if ($r->notes->{'view'} eq "friends") {
+            if ($r->note('view') eq "friends") {
                 $ret .= $statustext{'yourfriendspage'};
-            } elsif ($r->notes->{'view'} eq "friendsfriends") {
+            } elsif ($r->note('view') eq "friendsfriends") {
                 $ret .= $statustext{'yourfriendsfriendspage'};
             } else {
                 $ret .= $statustext{'yourjournal'};
             }
             $ret .= "<br />";
-            if ($r->notes->{'view'} eq "friends") {
+            if ($r->note('view') eq "friends") {
                 my @filters = ("all", $BML::ML{'web.controlstrip.select.friends.all'}, "showpeople", $BML::ML{'web.controlstrip.select.friends.journals'}, "showcommunities", $BML::ML{'web.controlstrip.select.friends.communities'}, "showsyndicated", $BML::ML{'web.controlstrip.select.friends.feeds'});
                 my %res;
                 # FIXME: make this use LJ::Protocol::do_request
@@ -3028,9 +3028,9 @@ sub control_strip
                 $ret .= "$statustext{'friendof'}<br />";
                 $ret .= "$links{'add_friend'}";
             } else {
-                if ($r->notes->{'view'} eq "friends") {
+                if ($r->note('view') eq "friends") {
                     $ret .= $statustext{'personalfriendspage'};
-                } elsif ($r->notes->{'view'} eq "friendsfriends") {
+                } elsif ($r->note('view') eq "friendsfriends") {
                     $ret .= $statustext{'personalfriendsfriendspage'};
                 } else {
                     $ret .= $statustext{'personal'};
@@ -3136,9 +3136,9 @@ LOGIN_BAR
         $ret .= "<td id='lj_controlstrip_actionlinks' nowrap='nowrap'>";
 
         if ($journal->is_personal || $journal->is_identity) {
-            if ($r->notes->{'view'} eq "friends") {
+            if ($r->note('view') eq "friends") {
                 $ret .= $statustext{'personalfriendspage'};
-            } elsif ($r->notes->{'view'} eq "friendsfriends") {
+            } elsif ($r->note('view') eq "friendsfriends") {
                 $ret .= $statustext{'personalfriendsfriendspage'};
             } else {
                 $ret .= $statustext{'personal'};
@@ -3633,7 +3633,7 @@ sub subscribe_interface {
 
     # print buttons
     my $referer = BML::get_client_header('Referer');
-    my $uri = $LJ::SITEROOT . BML::get_request()->uri;
+    my $uri = $LJ::SITEROOT . DW::Request->get->uri;
 
     # normalize the URLs -- ../index.bml doesn't make it a different page.
     $uri =~ s/index\.bml//;

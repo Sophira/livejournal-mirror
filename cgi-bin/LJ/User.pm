@@ -15,7 +15,7 @@ no warnings 'uninitialized';
 
 package LJ::User;
 use Carp;
-use lib "$ENV{LJHOME}/cgi-bin";
+use lib "$LJ::HOME/cgi-bin";
 use List::Util ();
 use LJ::Constants;
 use LJ::MemCache;
@@ -760,7 +760,7 @@ sub make_login_session {
     $exptype ||= 'short';
     return 0 unless $u;
 
-    eval { BML::get_request()->notes->{'ljuser' => $u->{'user'}}; };
+    eval { BML::get_request()->notes->{'ljuser'} => $u->{'user'}; };
 
     # create session and log user in
     my $sess_opts = {
@@ -8245,7 +8245,7 @@ sub make_journal
         # render it in the lynx site scheme.
         if ($geta->{'format'} eq 'light') {
             $fallback = 'bml';
-            $r->notes->{'bml_use_scheme' => 'lynx'};
+            $r->note(bml_use_scheme => 'lynx');
         }
 
         # there are no BML handlers for these views, so force s2
@@ -8364,7 +8364,8 @@ sub make_journal
     }
 
     if ($stylesys == 2) {
-        $r->notes->{'codepath' => "s2.$view"} if $r;
+        $r->note(codepath => "s2.$view")
+            if $r;
 
         eval { LJ::S2->can("dostuff") };  # force Class::Autouse
         my $mj = LJ::S2::make_journal($u, $styleid, $view, $remote, $opts);
@@ -8386,7 +8387,8 @@ sub make_journal
 
     # Everything from here on down is S1.  FIXME: this should be moved to LJ::S1::make_journal
     # to be more like LJ::S2::make_journal.
-    $r->notes->{'codepath' => "s1.$view"} if $r;
+    $r->note(codepath => "s1.$view")
+        if $r;
     $u->{'_s1styleid'} = $styleid + 0;
 
     # For embedded polls
@@ -8802,7 +8804,7 @@ sub get_remote
     }
 
     LJ::User->set_remote($u);
-    $r->notes->{"ljuser" => $u->{'user'}};
+    $r->notes->{ljuser} => $u->{user};
     return $u;
 }
 

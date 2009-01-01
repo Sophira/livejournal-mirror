@@ -20,7 +20,7 @@ use Class::Autouse qw(
 
 LJ::Config->load;
 
-use lib "$ENV{LJHOME}/cgi-bin";
+use lib "$LJ::HOME/cgi-bin";
 
 require "taglib.pl";
 
@@ -179,8 +179,8 @@ sub do_request
     my @args = ($req, $err, $flags);
 
     my $r = eval { BML::get_request() };
-    $r->notes->{"codepath" => "protocol.$method"}
-        if $r && ! $r->notes->{"codepath"};
+    $r->notes->{codepath} = "protocol.$method"
+        if $r && ! $r->notes->{codepath};
 
     if ($method eq "login")            { return login(@args);            }
     if ($method eq "getfriendgroups")  { return getfriendgroups(@args);  }
@@ -206,7 +206,7 @@ sub do_request
     if ($method eq "addcomment")       { return addcomment(@args);   }
 
 
-    $r->notes->{"codepath" => ""} if $r;
+    $r->notes->{"codepath"} => "" if $r;
     return fail($err,201);
 }
 
@@ -618,7 +618,7 @@ sub login
     if ($req->{'clientversion'} =~ /^\S+\/\S+$/) {
         eval {
             my $r = BML::get_request();
-            $r->notes->{"clientver", $req->{'clientversion'}};
+            $r->notes->{clientver} = $req->{'clientversion'};
         };
     }
 
@@ -950,6 +950,13 @@ sub common_event_validation
 
         # does the property even exist?
         unless ($p) {
+            $pname =~ s/[^\w]//g;
+            return fail($err,205,$pname);
+        }
+
+        # This is a system logprop
+        # fail with unknown metadata here?
+        if ( $p->{ownership} eq 'system' ) {
             $pname =~ s/[^\w]//g;
             return fail($err,205,$pname);
         }
@@ -3051,15 +3058,16 @@ sub authenticate
     my $r = eval { BML::get_request() };
     my $ip;
     if ($r) {
-        $r->notes->{"ljuser" => $u->{'user'}} unless $r->notes->{"ljuser"};
-        $r->notes->{"journalid" => $u->{'userid'}} unless $r->notes->{"journalid"};
-        $ip = $r->connection->remote_ip;
+        $r->notes->{ljuser} = $u->{'user'}
+            unless $r->notes->{ljuser};
+        $r->notes->{journalid} = $u->{'userid'}
+            unless $r->notes->{journalid};
+        $ip = LJ::get_remote_ip();
     }
 
     my $ip_banned = 0;
     my $chal_expired = 0;
     my $auth_check = sub {
-
         my $auth_meth = $req->{'auth_method'} || "clear";
         if ($auth_meth eq "clear") {
             return LJ::auth_okay($u,
@@ -3079,7 +3087,7 @@ sub authenticate
             return $chall_ok;
         }
         if ($auth_meth eq "cookie") {
-            return unless $r && $r->header_in->{"X-LJ-Auth"} eq "cookie";
+            return unless $r && $r->header_in("X-LJ-Auth") eq "cookie";
             my $remote = LJ::get_remote();
             return $remote && $remote->{'user'} eq $username ? 1 : 0;
         }

@@ -2,14 +2,14 @@
 #
 
 use strict;
-use lib "$ENV{LJHOME}/cgi-bin";
+use lib "$LJ::HOME/cgi-bin";
 
 use Class::Autouse qw(
+                      LJ::Cache
                       LJ::LangDatFile
                       );
 
 package LJ::Lang;
-
 use constant MAXIMUM_ITCODE_LENGTH => 80;
 
 my @day_short   = (qw[Sun Mon Tue Wed Thu Fri Sat]);
@@ -197,7 +197,7 @@ sub langdat_file_of_lang_itcode
             $cvs_extra = "/cvs/local";
         }
     }
-    return "$ENV{LJHOME}$cvs_extra/$langdat_file";
+    return "$LJ::HOME$cvs_extra/$langdat_file";
 }
 
 sub relative_langdat_file_of_lang_itcode
@@ -508,6 +508,7 @@ sub is_missing_string {
 sub get_text
 {
     my ($lang, $code, $dmid, $vars) = @_;
+
     $lang ||= $LJ::DEFAULT_LANG;
     
     my $from_db = sub {

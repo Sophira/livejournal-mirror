@@ -3016,7 +3016,6 @@ sub _Comment__get_link
                             $ctx->[S2::PROPS]->{"text_multiform_opt_unscreen"},
                             LJ::S2::Image("$LJ::IMGPREFIX/btn_unscr.gif", 22, 20));
     }
-
     # added new button
     if ($key eq "unscreen_to_reply") {
         #return $null_link unless $this->{'screened'};
