@@ -151,6 +151,8 @@ sub html_select
         my $id;
         if ($opts->{'include_ids'} && $opts->{'name'} ne "" && $value ne "") {
             $id = " id='$opts->{'name'}_$value'";
+        } else {
+            $id = "";
         }
 
         # is this individual option disabled?
