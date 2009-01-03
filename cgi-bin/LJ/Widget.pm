@@ -123,7 +123,7 @@ sub render {
         }
         LJ::need_res($opt_hash{stylesheet}) if $opt_hash{stylesheet};
 
-        return $widget->render_body(@opts);
+        return $widget->render_body(@opts) || "";
     } or $class->handle_error($@);
 
     $ret .= $rv;

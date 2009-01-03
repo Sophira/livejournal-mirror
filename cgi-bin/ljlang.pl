@@ -96,6 +96,7 @@ sub get_lang
 {
     my $code = shift;
     load_lang_struct() unless $LS_CACHED;
+    if (!$code) {return 0};
     return $LN_CODE{$code};
 }
 

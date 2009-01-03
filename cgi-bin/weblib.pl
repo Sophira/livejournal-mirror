@@ -2106,7 +2106,7 @@ sub res_includes {
         $what .= "?v=$modtime" unless $do_concat;
 
         push @{$list{$type} ||= []}, $what;
-        $oldest{$type} = $modtime if $modtime > $oldest{$type};
+        $oldest{$type} = $modtime if !$oldest{$type} || $modtime > $oldest{$type};
     };
 
     foreach my $key (@LJ::NEEDED_RES) {

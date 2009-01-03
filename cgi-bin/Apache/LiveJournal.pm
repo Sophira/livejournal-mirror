@@ -571,6 +571,7 @@ sub trans
         my $ret = LJ::URI->handle($uuri, $r);
         return $ret if defined $ret;
 
+
         if ($uuri eq "/__setdomsess") {
             return redir($r, LJ::Session->setdomsess_handler($r));
         }
