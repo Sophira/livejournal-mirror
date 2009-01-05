@@ -2575,8 +2575,16 @@ sub load_talk_props2
 }
 
 my $work_open = 0;
-sub work_report_start { $work_open = 1; work_report("start"); }
-sub work_report_end   { return unless $work_open; work_report("end"); $work_open = 0;   }
+sub work_report_start { 
+    $work_open = 1; 
+    work_report("start"); 
+}
+
+sub work_report_end   { 
+    return unless $work_open; 
+    work_report("end"); 
+    $work_open = 0;   
+}
 
 # report before/after a request, so a supervisor process can watch for
 # hangs/spins

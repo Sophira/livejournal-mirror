@@ -377,6 +377,10 @@ sub prod_to_show {
 
     ## Sort CProds by date of show - oldest first.
     ## If several have the same date (or never have been shown), sort randomly (i.e. shuffle)
+
+    # FIXME. this disables warnings for the remainder of this block
+    # but I'd prefer to see the unitialized values gone completely.
+    local $^W=0;
     foreach my $poss (sort { $a->[3] <=> $b->[3] || $a->[4] <=> $b->[4] } @poss) {
         my ($class, $cprodid, $state) = @$poss;
         eval "use $class; 1";

@@ -206,7 +206,7 @@ sub do_request
     if ($method eq "addcomment")       { return addcomment(@args);   }
 
 
-    $r->notes->{"codepath"} => "" if $r;
+    $r->notes("codepath") => "" if $r;
     return fail($err,201);
 }
 

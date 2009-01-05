@@ -147,7 +147,7 @@ body<=
     }
 
     # Pagination
-    my $page = int($POST{page} || $GET{page});
+    $page = int($POST{page} || $GET{page});
     
     $body .= LJ::Widget::InboxFolder->render(
                      folder  => "all",

@@ -189,7 +189,7 @@ sub html_check
     my $disabled = $opts->{'disabled'} ? " disabled='disabled'" : "";
     my $ehtml = $opts->{'noescape'} ? 0 : 1;
     my $ret;
-    if ($opts->{'type'} eq "radio") {
+    if ($opts->{'type'} && $opts->{'type'} eq "radio") {
         $ret .= "<input type='radio'";
     } else {
         $ret .= "<input type='checkbox'";
@@ -210,6 +210,7 @@ sub html_check
 # in a label, respecting HTML
 sub labelfy {
     my ($id, $text) = @_;
+    if (!$text) {return;}
 
     $text =~ s!
         ^([^<]+)

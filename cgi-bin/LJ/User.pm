@@ -8364,7 +8364,7 @@ sub make_journal
     }
 
     if ($stylesys == 2) {
-        $r->note(codepath => "s2.$view")
+        $r->notes->{codepath => "s2.$view"}
             if $r;
 
         eval { LJ::S2->can("dostuff") };  # force Class::Autouse
