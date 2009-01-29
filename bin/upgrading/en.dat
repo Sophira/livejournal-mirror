@@ -2248,6 +2248,10 @@ protocol.old_win32_client=There are significantly newer Windows LiveJournal clie
 
 protocol.readonly=Your account is temporarily in read-only mode.  Some operations will fail for a few minutes.
 
+quote.left="
+
+quote.right="
+
 s2theme.themename.default=(Unnamed - [[themeid]])
 
 s2theme.themename.notheme=(Layout Default)
@@ -2662,6 +2666,16 @@ settings.gender.male=Male
 settings.gender.uns=(Unspecified)
 
 settings.option.select=(Please make a selection)
+
+settings.pingback=PingBacks
+
+settings.pingback.process=Allow sending/receiving link notifications from other journals
+
+settings.pingback.option.open=Open
+
+settings.pingback.option.lj_only=LiveJournal.com only
+
+settings.pingback.option.disabled=Disabled
 
 settings.province=or non-US State/province/territory
 
