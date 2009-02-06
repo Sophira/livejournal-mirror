@@ -51,7 +51,7 @@ sub get_content {
     my ($user, $userid, $synurl, $lastmod, $etag, $readers) =
         map { $urow->{$_} } qw(user userid synurl lastmod etag numreaders);
 
-    my $dbh = LJ::get_db_writer();
+    my $dbh = LJ::get_db_reader();
 
     # see if things have changed since we last looked and acquired the lock.
     # otherwise we could 1) check work, 2) get lock, and between 1 and 2 another
