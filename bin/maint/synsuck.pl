@@ -19,8 +19,8 @@ $maint{'synsuck'} = sub
     my $get_next_user = sub {
         return shift @all_users if @all_users;
 
-        # need to get some more rows
-        my $dbh = LJ::get_db_writer();
+        # need to get some more rows. can afford for this to be stable.
+        my $dbh = LJ::get_db_reader();
         my $current_jobs = join(",", map { $dbh->quote($_->[0]) } values %child_jobs);
         my $in_sql = " AND u.userid NOT IN ($current_jobs)" if $current_jobs;
         my $sth = $dbh->prepare("SELECT u.user, s.userid, s.synurl, s.lastmod, " .

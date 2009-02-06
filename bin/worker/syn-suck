@@ -12,7 +12,8 @@ use LJ::SynSuck;  # the real work
 sub work {
     my $class = shift;
 
-    my $dbh = LJ::get_db_writer() or  return;
+    # we can afford for this info to be slightly stale if need be
+    my $dbh = LJ::get_db_reader() or  return;
 
     my @todo;
     my $sth = $dbh->prepare("SELECT u.user, s.userid, s.synurl, s.lastmod, " .
