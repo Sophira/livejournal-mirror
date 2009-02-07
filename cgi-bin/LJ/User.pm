@@ -5477,7 +5477,6 @@ sub load_userids_multiple
         # when putting info into memcached. It's not scalable and not 
         # necessary in this case
         my $db = $LJ::_PRAGMA_FORCE_MASTER ? LJ::get_db_writer() : LJ::get_db_reader();
-             my $db = LJ::get_db_reader();
         _load_user_raw($db, "userid", [ keys %need ], sub {
             my $u = shift;
             LJ::memcache_set_u($u);
