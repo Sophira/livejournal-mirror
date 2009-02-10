@@ -18,13 +18,7 @@ sub render_body {
     my @search_opts = (
         'user' => $class->ml('.widget.search.username'),
         'email' => $class->ml('.widget.search.email'),
-        'aolim' => $class->ml('.widget.search.aim'),
-        'icq' => $class->ml('.widget.search.icq'),
-        'jabber' => $class->ml('.widget.search.jabber'),
-        'msn' => $class->ml('.widget.search.msn'),
-        'yahoo' => $class->ml('.widget.search.yahoo'),
-        'skype' => $class->ml('widget.search.skype'),
-        'google_talk' => $class->ml('widget.search.google_talk'),
+        'instant_messengers' => $class->ml('widget.search.instant_messengers'),
     );
 
     $ret .= "<div class='mailfinder exists'>";
@@ -55,13 +49,6 @@ sub js {
     my $validate_email = $self->ml('widget.search.not_valid.email');
     my $validate_username = $self->ml('widget.search.not_valid.username');
     my $validate_IM_error = $self->ml('widget.search.not_valid.IM_handle');
-    my $validate_IM_aim = $self->ml('widget.search.not_valid.IM_handle.aim');
-    my $validate_IM_icq = $self->ml('widget.search.not_valid.IM_handle.icq');
-    my $validate_IM_jabber = $self->ml('widget.search.not_valid.IM_handle.jabber');
-    my $validate_IM_msn = $self->ml('widget.search.not_valid.IM_handle.msn');
-    my $validate_IM_yahoo = $self->ml('widget.search.not_valid.IM_handle.yahoo');
-    my $validate_IM_skype = $self->ml('widget.search.not_valid.IM_handle.skype');
-    my $validate_IM_google_talk = $self->ml('widget.search.not_valid.IM_handle.google_talk');
 
     qq [
         initWidget: function() {
@@ -80,6 +67,10 @@ sub js {
 
             \$('Widget[FindFriendsInExistingUsers]_errors').innerHTML = '';
             \$('Widget[FindFriendsInExistingUsers]_ajax_status').innerHTML = '$init_text';
+
+            if (type == 'instant_messengers') {
+                type = 'icq';
+            }
 
             var req = {
                         data: HTTPReq.formEncoded({q: this.query, type: type}),
@@ -119,13 +110,6 @@ sub js {
                 not_valid_txt = {
                     user: '$validate_username',
                     email: '$validate_email',
-                    aolim: '$validate_IM_aim',
-                    icq: '$validate_IM_icq',
-                    jabber: '$validate_IM_jabber',
-                    msn: '$validate_IM_msn',
-                    yahoo: '$validate_IM_yahoo',
-                    skype: '$validate_IM_skype',
-                    google_talk: '$validate_IM_google_talk'
                 },
                 client = select.options[select.selectedIndex].value;
 
@@ -135,27 +119,8 @@ sub js {
                     error_empty = '$empty_name';
                     break;
                 case 'email':
-                case 'jabber':
-                case 'msn':
-                case 'yahoo':
-                case 'google_talk':
                     error_empty = '$empty_email';
                     r = rex_email;
-                    break;
-                case 'skype':
-                    r = /^[a-z0-9_.-]+\$/i;
-                    break;
-                case 'lastfm':
-                    r = /^[a-z][_a-z0-9-]{1,20}\$/i; // /^[a-z][_a-z0-9\-]{1,14}\$/i - in last.fm website
-                    break;
-                case 'icq':
-                    r = /^\\d+\$/;
-                    break;
-                case 'aolim':
-                    r = new RegExp('(^\\\\d+\$)|' +rex_email.source, 'i');
-                    break;
-                case 'gizmo':
-                    r = /^[0-9a-z_-]+\$/i;
                     break;
             }
 
