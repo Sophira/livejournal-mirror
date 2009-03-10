@@ -1,50 +1,41 @@
 function LJUser(textArea) {
     var editor_frame = $(textArea + '___Frame');
-    if (!editor_frame ||
-        !FCKeditor_LOADED ||
-        !FCKeditorAPI
-    ) return;
+    if (!editor_frame) return;
+    if (! FCKeditor_LOADED) return;
+    if (! FCKeditorAPI) return;
     var oEditor = FCKeditorAPI.GetInstance(textArea);
-    if (!oEditor) return;
+    if (! oEditor) return;
 
     var html = oEditor.GetXHTML(false);
-    html = html.replace(/<\/lj>/, '');
-    var regexp = /<lj (?:title="([^">]+)?")? ?(?:comm|user)="(\w+?)" ?(?:title="([^">]+)?")? ?\/?>/g;
-
-    var userstr,
-        ljusers = [],
-        username,
-        usertitle;
-        
-    while (ljusers = regexp.exec(html)) {
-        username = ljusers[2];
-        usertitle = ljusers[1] || ljusers[3];
-
+    if (html) html = html.replace(/<\/lj>/, '');
+    var regexp = /<lj user=['"](\w+?)['"] ?\/?>\s?(?:<\/lj>)?\s?/g;
+    var userstr;
+    var ljusers = [];
+    var username;
+    while ((ljusers = regexp.exec(html))) {
+        username = ljusers[1];
         var postData = {
-            'username' : username
-        }
-
-        if (usertitle)
-            postData.usertitle = usertitle;
-
+            "username" : username
+        };
         var url = window.parent.Site.siteroot + "/tools/endpoints/ljuser.bml";
 
-        var gotError = (function(username) { return function(err) {
-            alert(err+' "'+username+'"');
-        }})(username);
+        var gotError = function(err) {
+            alert(err+' '+username);
+            return;
+        }
 
-        var gotInfo = (function(userstr, username) { return function (data) {
+        var gotInfo = function (data) {
             if (data.error) {
-                alert(data.error+' "'+username+'"');
+                alert(data.error+' '+username);
                 return;
             }
             if (!data.success) return;
             data.ljuser = data.ljuser.replace(/<span.+?class=['"]?ljuser['"]?.+?>/,'<div class="ljuser">');
             data.ljuser = data.ljuser.replace(/<\/span>\s?/,'</div>');
-            html = html.replace(userstr, data.ljuser);
+            html = html.replace(data.userstr,data.ljuser);
             oEditor.SetData(html);
             oEditor.Focus();
-        }})(ljusers[0], username);
+        }
 
         var opts = {
             "data": window.parent.HTTPReq.formEncoded(postData),
@@ -170,7 +161,7 @@ function convert_post(textArea) {
     var html = oEditor.GetXHTML(false);
 
     var tags = convert_poll_to_ljtags(html, true);
-    tags = convert_qotd_to_ljtags(tags);
+    tags = convert_qotd_to_ljtags(tags, true);
 
     $(textArea).value = tags;
     oEditor.SetData(tags);
@@ -180,7 +171,7 @@ function convert_to_draft(html) {
     if ( $("switched_rte_on").value == '0' ) return html;
 
     var out = convert_poll_to_ljtags(html, true);
-    out = convert_qotd_to_ljtags(out);
+    out = convert_qotd_to_ljtags(out, true);
     out = out.replace(/\n/g, '');
 
     return out;
@@ -218,17 +209,18 @@ function generate_pollHTML(ljtags, pollID) {
     return tags;
 }
 
-function convert_qotd_to_ljtags(html) {
+function convert_qotd_to_ljtags (html, post) {
     var tags = html.replace(/<div .*qotdid=['"]?(\d+)['"]? .*class=['"]?ljqotd['"]?.*>[^\b]*<\/div>(<br \/>)*/g, "<lj-template name=\"qotd\" id=\"$1\"></lj-template>");
     tags = tags.replace(/<div .*class=['"]?ljqotd['"]? .*qotdid=['"]?(\d+)['"]?.*>[^\b]*<\/div>(<br \/>)*/g, "<lj-template name=\"qotd\" id=\"$1\"></lj-template>");
     return tags;
 }
 
-function convert_qotd_to_HTML(html) {
+function convert_qotd_to_HTML(plaintext) {
     var qotdText = LiveJournal.qotdText;
 
     var styleattr = " style='cursor: default; -moz-user-select: all; -moz-user-input: none; -moz-user-focus: none; -khtml-user-select: all;'";
 
+    var html = plaintext;
     html = html.replace(/<lj-template name=['"]?qotd['"]? id=['"]?(\d+)['"]?>.*?<\/lj-template>(<br \/>)*/g, "<div class=\"ljqotd\" qotdid=\"$1\" contenteditable=\"false\"" + styleattr + ">" + qotdText + "</div>\n\n");
     html = html.replace(/<lj-template id=['"]?(\d+)['"]? name=['"]?qotd['"]?>.*?<\/lj-template>(<br \/>)*/g, "<div class=\"ljqotd\" qotdid=\"$1\" contenteditable=\"false\"" + styleattr + ">" + qotdText + "</div>\n\n");
     html = html.replace(/<lj-template name=['"]?qotd['"]? id=['"]?(\d+)['"]? \/>(<br \/>)*/g, "<div class=\"ljqotd\" qotdid=\"$1\" contenteditable=\"false\"" + styleattr + ">" + qotdText + "</div>\n\n");
@@ -241,7 +233,7 @@ function convert_qotd_to_HTML(html) {
 var FCKeditor_LOADED = false;
 
 function FCKeditor_OnComplete( editorInstance ) {
-    editorInstance.Events.AttachEvent('OnAfterLinkedFieldUpdate', doLinkedFieldUpdate);
+    editorInstance.Events.AttachEvent( 'OnAfterLinkedFieldUpdate', doLinkedFieldUpdate) ;
     FCKeditor_LOADED = true;
 }
 
@@ -253,11 +245,8 @@ function doLinkedFieldUpdate(oEditor) {
 }
 
 function convertToLJTags(html) {
-    html = html.replace(/<div class=['"]ljuser['"]><a href="http:\/\/community\.[-.\w]+\/(\w+)\/.+?<b>\1<\/b><\/a><\/div>/g, '<lj comm="$1"/>')
-    html = html.replace(/<div class=['"]ljuser['"]><a href="http:\/\/community\.[-.\w]+\/(\w+)\/.+?<b>(.+)?<\/b><\/a><\/div>/g, '<lj comm="$1" title="$2"/>')
-    html = html.replace(/<div class=['"]ljuser['"]><a href="http:\/\/(\w+)\..+?<b>\1<\/b><\/a><\/div>/g, '<lj user="$1"/>')
-    html = html.replace(/<div class=['"]ljuser['"]><a href="http:\/\/(\w+)\..+?<b>(.+)?<\/b><\/a><\/div>/g, '<lj user="$1" title="$2"/>')
-    html = html.replace(/<div class=['"]ljvideo['"] url=['"](\S+)['"]><img.+?\/><\/div>/g, '<lj-template name="video">$1</lj-template>');
+    html = html.replace(/<div class=['"]ljuser['"]>.+?<b>(\w+?)<\/b><\/a><\/div>/g, '<lj user=\"$1\">');
+    html = html.replace(/<div class=['"]ljvideo['"] url=['"](\S+)['"]><img.+?\/><\/div>/g, '<lj-template name=\"video\">$1</lj-template>');
     html = html.replace(/<div class=['"]ljvideo['"] url=['"](\S+)['"]><br \/><\/div>/g, '');
     html = html.replace(/<div class=['"]ljraw['"]>(.+?)<\/div>/g, '<lj-raw>$1</lj-raw>');
     html = html.replace(/<div class=['"]ljembed['"](\s*embedid="(\d*)")?\s*>(.*?)<\/div>/gi, '<lj-embed id="$2">$3</lj-embed>');

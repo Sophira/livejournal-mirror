@@ -1418,6 +1418,16 @@ property string text_multiform_conf_delete {
 }
 set text_multiform_conf_delete = "Delete selected comments?";
 
+property string text_multiform_no_comments {
+    des = "Text if no comments for mass-action are selected";
+}
+set text_multiform_no_comments = "You have not selected any comments";
+
+property string text_multiform_no_action {
+    des = "Text if no mass-action selected";
+}
+set text_multiform_no_action = "You have not selected one of the actions";
+
 property string text_multiform_opt_track {
     des = "Text for the comment tracking action";
 }

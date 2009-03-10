@@ -52,6 +52,7 @@ LJUserCommand.Execute=function() {
 
     var gotError = function(err) {
         alert(err);
+        return;
     }
 
     var gotInfo = function (data) {
