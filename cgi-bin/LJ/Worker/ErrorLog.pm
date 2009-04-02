@@ -20,11 +20,11 @@ sub TIEHANDLE {
     my @dest = split(/:/, $dest_point);
 
     if (3 == scalar @dest) {
-        $dest_proto = @dest[0];
+        $dest_proto = $dest[0];
         $dest_point = join(':', $dest[1], $dest[2]);
     }
 
-    my $sock = IO::Socket::INET->new(PeerAddr => $dest_point, Proto => $dest_proto, Timeout => 20)
+    my $sock = IO::Socket::INET->new(PeerAddr => $dest_point, Proto => $dest_proto, Broadcast => 1, Timeout => 20)
         or die "Socket error: $!";
 
     my $self = { handles => { sock => $sock } };
