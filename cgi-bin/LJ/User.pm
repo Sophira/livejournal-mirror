@@ -20,8 +20,10 @@ use List::Util ();
 use LJ::Constants;
 use LJ::MemCache;
 use LJ::Session;
+use URI qw//;
 
 use Class::Autouse qw(
+                      URI
                       LJ::Subscription
                       LJ::SMS
                       LJ::SMS::Message
@@ -1220,12 +1222,28 @@ sub display_name {
     my $id = $u->identity;
     return "[ERR:unknown_identity]" unless $id;
 
+
+    # if name does not have [] .com .ru or https it should be displayed as "name [domain.com]"
+    # otherwise - old code
+    unless ($u->name_orig =~ m!(\w+\.\w{2,4})|(https?://)!){
+        my $uri = URI->new( $id->value );
+        my $domain = $id->value;
+        ($domain) = $uri->host =~ /(\w+\.\w{2,4})$/
+            if $uri->can('host');
+        return $u->name_orig ." [$domain]";
+    }
+
+    #
     my ($url, $name);
     if ($id->typeid == 0) {
         require Net::OpenID::Consumer;
         $url = $id->value;
         $name = Net::OpenID::VerifiedIdentity::DisplayOfURL($url, $LJ::IS_DEV_SERVER);
         $name = LJ::run_hook("identity_display_name", $name) || $name;
+            
+        ## Decode URL's like below to human-readable names
+        ## http://blog.k.python.ru/accounts/5/%D0%94%D0%BC%D0%B8
+        $name =~ s/%([\dA-Fa-f]{2})/chr(hex($1))/ge;
     }
     return $name;
 }
@@ -1274,7 +1292,7 @@ sub ljuser_display {
         }
 
         my $profile = $profile_url ne '' ? $profile_url : "$LJ::SITEROOT/userinfo.bml?userid=$u->{userid}&amp;t=I$andfull";
-
+        
         return "<span class='ljuser' lj:user='$name' style='white-space: nowrap;$strike'><a href='$profile'><img src='$imgurl' alt='[info]' width='$width' height='$height' style='vertical-align: bottom; border: 0; padding-right: 1px;' /></a><a href='$url' rel='nofollow'><b>$name</b></a></span>";
 
     } else {
@@ -1319,8 +1337,12 @@ sub load_identity_user {
         my $extuser = 'ext_' . LJ::alloc_global_counter('E');
 
         my $name = $extuser;
-        if ($type eq "O" && ref $vident) {
-            $name = $vident->display;
+        if ($type eq "O"){
+            if (ref $vident and $vident->can("display")) {
+                $name = $vident->display;
+            } elsif (not ref $vident){
+                $name = $vident;
+            }
         }
 
         $uid = LJ::create_account({
@@ -2513,7 +2535,9 @@ sub revert_style {
         if ($default_theme_uniq) {
             $new_theme = LJ::S2Theme->load_by_uniq($default_theme_uniq);
         } else {
-            my $layoutid = $public->{$default_layout_uniq}->{s2lid} if $public->{$default_layout_uniq} && $public->{$default_layout_uniq}->{type} eq "layout";
+            my $layoutid = '';
+            my $layoutid = $public->{$default_layout_uniq}->{s2lid} 
+                if $public->{$default_layout_uniq} && $public->{$default_layout_uniq}->{type} eq "layout";
             $new_theme = LJ::S2Theme->load_default_of($layoutid, user => $u) if $layoutid;
         }
 
@@ -2954,6 +2978,30 @@ sub is_person {
 sub is_identity {
     my $u = shift;
     return $u->{journaltype} eq "I";
+}
+
+## We trust OpenID users if they are either from trusted OpenID provider or
+## have e-mail validated. During e-mail validation, they answer CAPTCHA test.
+## Trusted OpenID users are like registered user, untrusted are like anonymous
+sub is_trusted_identity {
+    my $u = shift;
+    return unless $u->is_identity;
+    
+    return 1 if $u->is_validated;
+    
+    ## Check top-to-down domain names in list of trusted providers:
+    ## asdf.openid.somewhere.com -> openid.somewhere.com -> somewhere.com
+    my $identity = $u->openid_identity;
+    if ($identity and my $uri = URI->new($identity)) {
+        return unless $uri->can('host');
+        my $host = $uri->host;
+        while ($host =~ /\./) {
+            return 1 if $LJ::TRUSTED_OPENID_PROVIDERS{$host};
+            # remove first domain name
+            $host =~ s/^\w+\.//;
+        }
+    }
+    return;
 }
 
 # return the journal type as a name
@@ -6616,7 +6664,7 @@ sub get_daycounts
     if ($remote) {
         # do they have the viewall priv?
         my $r = eval { Apache->request; }; # web context
-        my %getargs = $r->args if $r;
+        my %getargs = $r ? $r->args : ();
         if (defined $getargs{'viewall'} and $getargs{'viewall'} eq '1' and LJ::check_priv($remote, 'canview', '*')) {
             $viewall = 1;
             LJ::statushistory_add($u->{'userid'}, $remote->{'userid'},
