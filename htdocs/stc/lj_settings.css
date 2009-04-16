@@ -77,3 +77,9 @@
 #contextual_help ul {
     list-style: circle;
 }
+
+.appwidget-location {
+    zoom: 1;
+}
+
+
