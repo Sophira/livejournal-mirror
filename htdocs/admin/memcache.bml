@@ -6,7 +6,6 @@
     use vars qw(%GET);
     use Data::Dumper;
     use Time::HiRes ();
-    use Math::BigInt;
 
     my $u = LJ::get_remote();
     return "You must be logged in to view this tool." unless $u;
