@@ -28,6 +28,10 @@
 
 .cat.history.desc=Account history
 
+.cat.integration=Integration
+
+.cat.integration.desc=MSN Live ID
+
 .cat.mobile=Mobile
 
 .cat.mobile.desc=Voice post, text messaging, and mobile options

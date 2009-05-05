@@ -29,7 +29,7 @@ sub render_body {
     LJ::run_hook('partners_registration_visited', $get->{from});
 
     my $alt_layout = $opts{alt_layout} ? 1 : 0;
-    my $ret;
+    my $ret = '';
 
     if ($alt_layout) {
         $ret .= "<div class='signup-container'>";
@@ -153,6 +153,7 @@ sub render_body {
     $ret .= $error_msg->('confirmpass', '<br /><span class="formitemFlag">', '</span>');
     $ret .= "</td></tr>\n" unless $alt_layout;
 
+
     ### birthdate
     if ($LJ::COPPA_CHECK) {
         if ($alt_layout) {
@@ -193,6 +194,8 @@ sub render_body {
         $ret .= $error_msg->('bday', '<br /><span class="formitemFlag">', '</span>');
         $ret .= "</td></tr>\n" unless $alt_layout;
     }
+
+    $ret .= LJ::run_hook("create_account_extra_fields", \%opts);
 
     ### captcha
     if ($LJ::HUMAN_CHECK{create}) {
@@ -319,7 +322,6 @@ sub render_body {
         $ret .= $class->html_submit( submit => $class->ml('widget.createaccount.btn'), { class => "create-button" }) . "\n";
         $ret .= "</td></tr>\n";
     }
-
     $ret .= "</table>\n" unless $alt_layout;
 
     $ret .= $class->end_form;

@@ -71,21 +71,21 @@
 }
 
 /* Shared Content */
-.account table, .display table, .mobile table, .privacy table, .history table, .advertising table {
+.account table, .display table, .mobile table, .privacy table, .history table, .advertising table, .integration table {
     width: 100%;
 }
-.account td, .display td, .mobile td, .privacy td, .history td, .advertising td {
+.account td, .display td, .mobile td, .privacy td, .history td, .advertising td, .integration td {
     border-bottom: 1px #ccc solid;
     padding: 10px 10px 10px 5px;
 }
-.account td.last, .display td.last, .mobile td.last, .privacy td.last, .history td.last, .advertising td.last {
+.account td.last, .display td.last, .mobile td.last, .privacy td.last, .history td.last, .advertising td.last, .integration td.last {
     border-bottom: none;
 }
 .account td.help, .display td.help, .mobile td.help, .privacy td.help, .history td.help, .advertising td.help {
     width: 14px;
     text-align: right;
 }
-.account_label, .display_label, .mobile_label, .privacy_label, .history_label {
+.account_label, .display_label, .mobile_label, .privacy_label, .history_label, .integration_label {
     font-weight: bold;
 }
 .display_option, .mobile_option, .privacy_option {
@@ -143,6 +143,53 @@
     font-style: italic;
     margin-bottom: 0;
 }
+
+/* Integration Content */
+.integration {
+	margin: 2px 0 5px;
+	background: url(/img/liveid.gif) 100% 2px no-repeat;
+}
+.integration table {
+	border: 0;
+	border-collapse: collapse;
+}
+
+.integration td.integration_label {
+	width: 12em;
+	vertical-align: top;
+} 
+.integration td.msnlogo {
+	padding-right: 160px;
+}
+
+.integration .disabled_msn {
+	color: #999;
+} 
+.integration SPAN {
+	display: block;
+	clear: both;
+	overflow: hidden;
+}
+.integration SPAN.comment {
+	font-size: .85em;
+	color: #999;
+	margin-left: 25px;
+}
+.integration .disabled_msn SPAN.comment {
+	color:#b2b2b2;
+}
+.integration span INPUT {
+	margin-right: 5px;
+	position: relative;
+	top: -2px;
+	float: left;
+}
+.integration span LABEL {
+	float: left;
+	height: 1%;
+	width: 90%;
+}
+
 
 /* Advertising Content */
 .advertising table.setting_table {

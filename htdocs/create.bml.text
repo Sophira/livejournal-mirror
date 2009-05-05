@@ -181,3 +181,11 @@ Thanks for supporting [[sitename]]!
 .username.text_1=Your username is what you use to log in to [[sitename]]. It will appear in your journal address (username.[[lc_sitename]]) as well as next to your posts and comments.
 
 .username.username=username
+
+.widget.liveid.registernew=I want to have a Windows Live ID now!
+
+.widget.liveid.registernewcomment=Windows Live ID is really cool! <br /><a [[aopts]]>Terms of service</a>
+
+.widget.liveid.haveid=I already have one
+
+.widget.liveid.later=Set Windows Live ID later

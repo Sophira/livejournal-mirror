@@ -1437,3 +1437,19 @@ logproplist.pingback:
   des: (J)ournal default, (O)pen - all links from post should be processed with PingBack. (L)iveJournal - only leading to/from livejournal.com. (D)isabled - pingbacks disabled.
   prettyname: PingBack options
   sortorder: 105
+
+userproplist.windows_live_id:
+  cldversion: 0
+  datatype: char
+  des: user's Windows Live Id
+  indexed: 0
+  multihomed: 0
+  prettyname: Windows Live Id
+
+userproplist.windows_live_id_puid:
+  cldversion: 0
+  datatype: char
+  des: user's Windows Live Id PUID
+  indexed: 0
+  multihomed: 0
+  prettyname: Windows Live Id PUID
