@@ -16,7 +16,6 @@ use Class::Autouse qw(
                       LJ::EventLogRecord::EditEntry
                       LJ::Config
                       LJ::Comment
-                      LJ::Friend::History
                       LJ::RateLimit
                       );
 
@@ -2437,12 +2436,6 @@ sub editfriends
                 
                 $sclient->insert_jobs(@jobs) if @jobs;
                 
-                # log action
-                LJ::Friend::History->add_record(
-                    action => "friended",
-                    uid    => $userid,
-                    fid    => $friendid,
-                    );
             }
 
             LJ::run_hooks('befriended', LJ::load_userid($userid), LJ::load_userid($friendid));
