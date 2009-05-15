@@ -3121,6 +3121,18 @@ CREATE TABLE sch_mass_exitstatus (
 )
 EOC
 
+register_tablecreate("friend_history", <<'EOC');
+CREATE TABLE friend_history (
+    rec_id  INT UNSIGNED PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    action  VARCHAR(23),
+    uid     INT(10) UNSIGNED NOT NULL,
+    fid     INT(10) UNSIGNED NOT NULL,
+    status  INT(10),
+    added   DATETIME,
+    INDEX(action)
+)                           
+EOC
+
 
 ### changes
 

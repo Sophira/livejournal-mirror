@@ -154,6 +154,10 @@
 	border-collapse: collapse;
 }
 
+.integration TD.inprogr {
+	border: none;
+}
+
 .integration td.integration_label {
 	width: 12em;
 	vertical-align: top;
@@ -171,10 +175,16 @@
 	overflow: hidden;
 }
 .integration SPAN.comment {
-	font-size: .85em;
+	/*font-size: .85em;*/
 	color: #999;
-	margin-left: 25px;
+	margin-left: 5px;
 }
+
+.integration SPAN.msn-inprogr {
+	display: inline;
+	color:#336699;
+}
+
 .integration .disabled_msn SPAN.comment {
 	color:#b2b2b2;
 }
@@ -184,6 +194,12 @@
 	top: -2px;
 	float: left;
 }
+.integration  span #msnc1, .integration span #msnc2 {
+	top: -1px;
+	left: -1px;
+	margin-bottom: 3px;
+}
+
 .integration span LABEL {
 	float: left;
 	height: 1%;

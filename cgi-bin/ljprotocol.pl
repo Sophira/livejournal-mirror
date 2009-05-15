@@ -16,6 +16,8 @@ use Class::Autouse qw(
                       LJ::EventLogRecord::EditEntry
                       LJ::Config
                       LJ::Comment
+                      LJ::Friend::History
+                      LJ::RateLimit
                       );
 
 LJ::Config->load;
@@ -109,6 +111,7 @@ my %e = (
      "408" => [ E_TEMP, "Maximum queued posts for this community+poster combination reached." ],
      "409" => [ E_PERM, "Post too large." ],
      "410" => [ E_PERM, "Your trial account has expired.  Posting now disabled." ],
+     "411" => [ E_TEMP, "Action frequency limit." ],
 
      # Server Errors
      "500" => [ E_TEMP, "Internal server error" ],
@@ -2285,6 +2288,18 @@ sub editfriends
     # do not let locked people do this
     return fail($err, 308) if $u->{statusvis} eq 'L';
 
+#
+# Do not have values for $LJ::ADD_FRIEND_RATE_LIMIT
+# 
+#    # check action frequency
+#    unless ($flags->{no_rate_check}){
+#        my $cond = ["ratecheck:add_friend:$userid",
+#                    [ $LJ::ADD_FRIEND_RATE_LIMIT || [ 10, 600 ] ]
+#                   ];
+#        return fail($err, 411)
+#            unless LJ::RateLimit->check($u, [ $cond ]);
+#    }
+
     my $res = {};
 
     ## first, figure out who the current friends are to save us work later
@@ -2419,8 +2434,15 @@ sub editfriends
                                                   funcname => "LJ::Worker::FriendChange",
                                                   arg      => [$userid, 'add', $friendid],
                                                   ) unless $LJ::DISABLED{'friendchange-schwartz'};
-
+                
                 $sclient->insert_jobs(@jobs) if @jobs;
+                
+                # log action
+                LJ::Friend::History->add_record(
+                    action => "friended",
+                    uid    => $userid,
+                    fid    => $friendid,
+                    );
             }
 
             LJ::run_hooks('befriended', LJ::load_userid($userid), LJ::load_userid($friendid));
