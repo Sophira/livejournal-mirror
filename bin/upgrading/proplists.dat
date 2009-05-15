@@ -1453,3 +1453,11 @@ userproplist.windows_live_id_puid:
   indexed: 0
   multihomed: 0
   prettyname: Windows Live Id PUID
+
+userproplist.windows_only_invite:
+  cldversion: 0
+  datatype: bool
+  des: Users should be added to each others Buddy List in MS Messenger or invited only.
+  indexed: 0
+  multihomed: 0
+  prettyname: Only Send Invitation to MS Messeger users.
