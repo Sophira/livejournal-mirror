@@ -3133,6 +3133,17 @@ CREATE TABLE friend_history (
 )                           
 EOC
 
+register_tablecreate("comet_history", <<'EOC');
+CREATE TABLE comet_history (
+     rec_id   INT UNSIGNED PRIMARY KEY NOT NULL AUTO_INCREMENT,
+     uid      INT(10) UNSIGNED NOT NULL,
+     type     VARCHAR(31),
+     message  TEXT,
+     added    DATETIME,
+     INDEX(uid)
+)
+EOC
+
 
 ### changes
 
