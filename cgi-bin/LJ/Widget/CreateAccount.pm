@@ -511,22 +511,22 @@ sub handle_post {
             maintainer_login => $LJ::LJ_MAINTAINER_LOGIN,
             maintainer_password => $LJ::LJ_MAINTAINER_PASSWORD
         );  
-        my $msn_user = $user.'@livejournal.com'
-        my $msn_result = $msn->create_member(                                                                                                                            
+        my $msn_user = $user.'@livejournal.com';
+        my $msn_result = $msn->create_member(
             login => $msn_user,
             password => $post->{password1}
         );                                                                                                                                                           
         warn 'MSN result: '.$msn_result;
-        if ($result == LJ::MSN::OK) {
+        if ($msn_result == LJ::MSN::OK) {
             warn "User $msn_user created";
             warn "Need send email";
-        } elsif ($result == LJ::MSN::EXIST) {
+        } elsif ($msn_result == LJ::MSN::EXIST) {
             warn "User $msn_user already exist";
             warn "Need add error into from_post";
-        } elsif ($result == LJ::MSN::INVALID_NAME) {
+        } elsif ($msn_result == LJ::MSN::INVALID_NAME) {
             warn "Invalid name: $msn_user";
             warn "Need add error into from_post";
-        } elsif ($result == LJ::MSN::OTHER_ERROR) {
+        } elsif ($msn_result == LJ::MSN::OTHER_ERROR) {
             warn "What the fuck?!\n";
         }
 
