@@ -9,6 +9,8 @@ use LWP::UserAgent;
 use XML::Simple qw//;
 use HTTP::Request;
 
+use LJ::MSN;
+
 use Data::Dumper;
 
 sub need_res { qw( stc/widgets/createaccount.css js/widgets/createaccount.js js/browserdetect.js ) }
@@ -504,7 +506,29 @@ sub handle_post {
             $opts{extra_props}->{windows_only_invite} = 1;
         }
     } elsif (!$LJ::DISABLED{msn} && $post->{setLiveId} eq 'new') {
-        warn 'Create new LiveID user: '. Dumper(&_create_liveid_account($user,$post->{password1},$email));
+        warn 'Create new LiveID user';
+        my $msn = LJ::MSN->new(
+            maintainer_login => $LJ::LJ_MAINTAINER_LOGIN,
+            maintainer_password => $LJ::LJ_MAINTAINER_PASSWORD
+        );  
+        my $msn_user = $user.'@livejournal.com'
+        my $msn_result = $msn->create_member(                                                                                                                            
+            login => $msn_user,
+            password => $post->{password1}
+        );                                                                                                                                                           
+        warn 'MSN result: '.$msn_result;
+        if ($result == LJ::MSN::OK) {
+            warn "User $msn_user created";
+            warn "Need send email";
+        } elsif ($result == LJ::MSN::EXIST) {
+            warn "User $msn_user already exist";
+            warn "Need add error into from_post";
+        } elsif ($result == LJ::MSN::INVALID_NAME) {
+            warn "Invalid name: $msn_user";
+            warn "Need add error into from_post";
+        } elsif ($result == LJ::MSN::OTHER_ERROR) {
+            warn "What the fuck?!\n";
+        }
 
     }
 
@@ -596,236 +620,5 @@ sub handle_post {
 
     return %from_post;
 }
-
-sub _create_liveid_account {
-    my $username = shift;
-    my $password = shift;
-    my $email = shift;
-
-    return undef unless $username && $password;
-    $username = $username . '@livejournal.com';
-
-    my $ua = LWP::UserAgent->new;
-
-    my $url = _get_login_url($ua, $LJ::LJ_MAINTAINER_LOGIN);
-    return undef unless $url;
-
-    my $template = _get_login_data_template($ua);
-    return undef unless $template;
-    $template =~ s/\%NAME\%/$LJ::LJ_MAINTAINER_LOGIN/gsm; #maintainer
-    $template =~ s/\%PASSWORD\%/$LJ::LJ_MAINTAINER_PASSWORD/gsm;
-
-    my $ticket = _get_passport_ticket($ua, $url, $template);
-    return undef unless $ticket;
-
-    my $rc = _create_member($ua, $ticket, $username, $password);
-    if ($rc) {
-        warn 'Send email about success create LiveID account';
-    }
-}
-
-sub _get_login_url {
-    my $ua = shift;
-    my $username = shift;
-
-    my $content = '<?xml version="1.0" encoding="utf-8"?>
-<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
-  <soap12:Body>
-    <GetLoginUrl xmlns="http://domains.live.com/Service/ManageDomain/V1.0">
-      <memberNameIn>' . $username . '</memberNameIn>
-    </GetLoginUrl>
-  </soap12:Body>
-</soap12:Envelope>
-';
-
-    warn "LiveID get_login_url: ".Dumper($content);
-
-    # Create a request
-    my $req = HTTP::Request->new(POST => 'https://domains.live.com/service/managedomain2.asmx');
-       $req->content_type('text/xml; charset=utf-8');
-       $req->headers->header('Content-Length' => length $content);
-       $req->headers->header('Content-Type' => 'application/soap+xml; charset=utf-8');
-       $req->content($content);
-
-    # Pass request to the user agent and get a response back
-    my $res = $ua->request($req);
-
-    # Check the outcome of the response
-    if ($res->is_success) {
-        my $xml = XML::Simple::XMLin($res->content);
-        return $xml->{'soap:Body'}->{'GetLoginUrlResponse'}->{'GetLoginUrlResult'};
-    }
-
-    warn "Error LiveID get_login_url: " . $res->status_line, "\n";
-    warn Dumper $res;
-
-    return undef;
-};
-
-sub _get_login_data_template {
-    my $ua = shift;
-    my $content = '<?xml version="1.0" encoding="utf-8"?>
-<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
-  <soap12:Body>
-    <GetLoginDataTemplate xmlns="http://domains.live.com/Service/ManageDomain/V1.0" />
-  </soap12:Body>
-</soap12:Envelope>
-';
-
-    # Create a request
-    my $req = HTTP::Request->new(POST => 'https://domains.live.com/service/managedomain2.asmx');
-       $req->content_type('text/xml; charset=utf-8');
-       $req->headers->header('Content-Length' => length $content);
-       $req->headers->header('Content-Type' => 'application/soap+xml; charset=utf-8');
-       $req->content($content);
-
-    warn "Send GetLoginDataTemplate request";
-
-    # Pass request to the user agent and get a response back
-    my $res = $ua->request($req);
-    warn "  sended ...";
-
-    # Check the outcome of the response
-    if ($res->is_success) {
-        my $xml = XML::Simple::XMLin($res->content);
-        return $xml->{'soap:Body'}->{'GetLoginDataTemplateResponse'}->{'GetLoginDataTemplateResult'};
-        #warn "Template: " . Dumper $xml;
-    }
-    warn "Error: " . $res->status_line, "\n";
-    warn Dumper $res;
-
-    return undef;
-}
-
-sub _get_passport_ticket {
-    my $ua  = shift;
-    my $url = shift;
-    my $content = shift;
-
-    # Create a request
-    my $req = HTTP::Request->new(POST => $url);
-       $req->content_type('text/xml; charset=utf-8');
-       $req->headers->header('Content-Length' => length $content);
-       $req->headers->header('Content-Type' => 'application/soap+xml; charset=utf-8');
-       $req->content($content);
-
-    warn "Send GetPassportTicket request";
-
-    # Pass request to the user agent and get a response back
-    my $res = $ua->request($req);
-    warn "  sended ...";
-
-    # Check the outcome of the response
-    if ($res->is_success) {
-        warn "Content: >". $res->content;
-warn "**********************";
-warn "Ticket:\n" . exml($res->content);
-warn "**********************";
-return exml($res->content);
-    }
-    warn "Error: " . $res->status_line, "\n";
-    warn Dumper $res;
-    die "Error GetPassportTicket";
-
-}
-
-sub _create_member {
-    my $ua  = shift;
-    my $passportTicket = shift;
-    my $username = shift;
-    my $password = shift;
-
-    my $content = q|<?xml version="1.0" encoding="utf-8"?>
-<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
-  <soap12:Header>
-    <ManageDomain2Authorization xmlns="http://domains.live.com/Service/ManageDomain/V1.0">
-      <authorizationType>PassportTicket</authorizationType>
-      <authorizationData>%PASSPORT%</authorizationData>
-    </ManageDomain2Authorization>
-  </soap12:Header>
-  <soap12:Body>
-    <CreateMember xmlns="http://domains.live.com/Service/ManageDomain/V1.0">
-      <memberNameIn>%NAME%</memberNameIn>
-      <password>%PASSWORD%</password>
-      <resetPassword>false</resetPassword>
-    </CreateMember>
-  </soap12:Body>
-</soap12:Envelope>|;
-      #<firstName>first</firstName>
-      #<lastName>last</lastName>
-      #<lcid>ru_RU</lcid>
-
-#$content = q|<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Header><ManageDomain2Authorization xmlns="http://domains.live.com/Service/ManageDomain/V1.0"><authorizationType>PassportTicket</authorizationType><authorizationData>
-#%PASSPORT%
-#</authorizationData></ManageDomain2Authorization></soap:Header><soap:Body><CreateMember xmlns="http://domains.live.com/Service/ManageDomain/V1.0"><memberNameIn>%NAME%</memberNameIn><password>password</password><resetPassword>false</resetPassword></CreateMember></soap:Body></soap:Envelope>|;
-
-$passportTicket =~ s/\r?\n//g;
-
-#    my $name = exml('test@ljdev.livejournal.ru');
-    $username = exml($username);
-    $content =~ s|\%PASSPORT\%|$passportTicket|gsm;
-    $content =~ s|\%NAME\%|$username|gsm;
-    $content =~ s|\%PASSWORD\%|$password|gsm;
-#$url = 'https://domains.live.com/service/managedomain2.asmx';
-warn "********************\n";
-warn "CREATE MEMBER:\n$content\n\n";
-warn "********************\n";
-#warn "URL: $url";
-    # Create a request
-#    my $req = HTTP::Request->new(POST => $url);
-#       $req->content_type('text/xml; charset=utf-8');
-#       $req->headers->header('Content-Length' => length $content);
-#       $req->headers->header('Content-Type' => 'application/soap+xml; charset=utf-8');
-#       $req->content($content);
-
-    # Create a request
-    my $req = HTTP::Request->new(POST => 'https://domains.live.com/service/managedomain2.asmx');
-       $req->content_type('text/xml; charset=utf-8');
-       $req->headers->header('Content-Length' => length $content);
-       $req->headers->header('Content-Type' => 'application/soap+xml; charset=utf-8');
-       $req->content($content);
-
-
-    warn "Send CreateMember request";
-
-    # Pass request to the user agent and get a response back
-    my $res = $ua->request($req);
-    warn "  sended ...";
-
-    # Check the outcome of the response
-    if ($res->is_success) {
-#        return $res->content;
-#        my $xml = XML::Simple::XMLin($res->content);
-#        return $xml->{'soap:Body'}->{'GetLoginDataTemplateResponse'}->{'GetLoginDataTemplateResult'};
-        warn "CreateMember: " . $res->content;
-        return 1;
-    }
-    warn "Error: " . $res->status_line, "\n";
-    warn Dumper $res;
-    return 0;
-
-
-}
-
-sub exml {
-    my $content = shift;
-    $content =~ s/&amp;/&/g;
-    $content =~ s/&#([\d]{2,4});/pack('U',$1)/eg;
-    $content =~ s/(&\w+;)/to_char($1)/ge;
-    $content =~ s/<(?:\w|\/).*?>//g;;
-    $content =~ s/\s+/ /g;
-    $content =~ s/^\s+|\s+$//g;
-    return $content;
-}
-
-sub to_char {
-    my $escape = shift;
-    return '<' if $escape eq '&lt;';
-    return '>' if $escape eq '&gt;';
-    return '"' if ($escape eq '&quot;' || $escape eq '&laquo;' || $escape eq '&raquo;');
-    return "'" if $escape eq '&apos;';
-    return '&' if $escape eq '&amp;';
-}
-
 
 1;
