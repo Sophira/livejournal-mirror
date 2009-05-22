@@ -1454,6 +1454,14 @@ userproplist.windows_live_id_puid:
   multihomed: 0
   prettyname: Windows Live Id PUID
 
+userproplist.windows_live_id_wuid:
+  cldversion: 0
+  datatype: char
+  des: user's Windows Live Id WUID
+  indexed: 0
+  multihomed: 0
+  prettyname: Windows Live Id WUID
+
 userproplist.windows_only_invite:
   cldversion: 0
   datatype: bool
