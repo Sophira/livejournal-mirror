@@ -147,24 +147,47 @@
 /* Integration Content */
 .integration {
 	margin: 2px 0 5px;
-	background: url(/img/liveid.gif) 100% 2px no-repeat;
+	/*background: url(/img/liveid.gif) 100% 2px no-repeat;*/
 }
 .integration table {
 	border: 0;
 	border-collapse: collapse;
 }
 
-.integration TD.inprogr {
+.integration .inprogr TD {
 	border: none;
 }
 
 .integration td.integration_label {
-	width: 12em;
+	width: 15em;
 	vertical-align: top;
-} 
+}
+	.integration td.integration_label A {
+		font-weight: normal;
+	}
+.integration .act_msn TD {
+	padding: 0px 10px 10px 5px;
+}
+	
 .integration td.msnlogo {
 	padding-right: 160px;
+	font-weight: bold;
 }
+
+	.msnlogo DIV {
+		padding-top: 7px;
+	}
+	.msnlogo DIV INPUT {
+		padding: 0px 6px;
+		position: relative;
+		overflow: visible;
+	}
+
+	.integration TD.last STRONG {
+		font-weight: bold;
+		display: block;
+		margin-bottom: 7px;
+		}
 
 .integration .disabled_msn {
 	color: #999;
@@ -179,6 +202,9 @@
 	color: #999;
 	margin-left: 5px;
 }
+	.integration .comment.act {
+		color:#000;
+	}
 
 .integration SPAN.msn-inprogr {
 	display: inline;
@@ -205,6 +231,42 @@
 	height: 1%;
 	width: 90%;
 }
+
+.integration #passw, .integration #c-passw {
+	display: block;
+	margin-bottom: 7px;
+	width: 180px;
+}
+
+.integration #c-passw {
+	margin-bottom: 16px;
+}
+
+.integration SPAN.alert_txt {
+	font-size: .85em;
+	margin: 0px 0px 16px 23px;
+	color:#999;
+}
+
+.integration .msn_error {
+	background: #FFE889;
+	border: 1px solid #FFCC33;
+	color:#993300;
+	padding: 10px;
+	font-weight: normal;
+}
+	.integration .msn_error H3 {
+		font-style: normal;
+		color:#FF6600;
+		font-size: 1.2em;
+		margin-bottom: 17px;
+	}
+	.integration .msn_error UL {
+		margin-top: 0px;
+	}
+	.integration .msn_error A {
+		color:#990000;
+	}
 
 
 /* Advertising Content */
