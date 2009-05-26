@@ -506,30 +506,14 @@ sub handle_post {
             $opts{extra_props}->{windows_only_invite} = 1;
         }
     } elsif (!$LJ::DISABLED{msn} && $post->{setLiveId} eq 'new') {
-        warn 'Create new LiveID user';
-        my $msn = LJ::MSN->new(
-            maintainer_login => $LJ::LJ_MAINTAINER_LOGIN,
-            maintainer_password => $LJ::LJ_MAINTAINER_PASSWORD
-        );  
-        my $msn_user = $user.'@livejournal.com';
-        my $msn_result = $msn->create_member(
-            login => $msn_user,
-            password => $post->{password1}
-        );                                                                                                                                                           
-        warn 'MSN result: '.$msn_result;
-        if ($msn_result == LJ::MSN::OK) {
-            warn "User $msn_user created";
-            warn "Need send email";
-        } elsif ($msn_result == LJ::MSN::EXIST) {
-            warn "User $msn_user already exist";
-            warn "Need add error into from_post";
-        } elsif ($msn_result == LJ::MSN::INVALID_NAME) {
-            warn "Invalid name: $msn_user";
-            warn "Need add error into from_post";
-        } elsif ($msn_result == LJ::MSN::OTHER_ERROR) {
-            warn "What the fuck?!\n";
-        }
-
+        # Create new LiveID account
+        my $job = TheSchwartz::Job->new_from_array("LJ::Worker::MSNCreateLiveID", {
+            'username' => $user,
+            'password' => $post->{password1},
+            'email'    => $email
+        });                                                                                                                                                  
+        my $sclient = LJ::theschwartz();
+        $sclient->insert_jobs($job) if $sclient and $job;
     }
 
     # create user and send email as long as the user didn't double-click submit
