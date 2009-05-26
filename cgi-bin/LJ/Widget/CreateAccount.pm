@@ -493,32 +493,33 @@ sub handle_post {
         $from_post{errors}->{tos} = $class->ml('widget.createaccount.alt_layout.error.tos') unless $post->{tos};
     }
 
-    # LiveID
-    $opts{extra_props} = {} unless defined $opts{extra_props};
-    if (!$LJ::DISABLED{msn} && $post->{setLiveId} eq 'reg') {
-        # If user have LiveID account
-        if ($post->{msn_puid} && $post->{msn_liveid}) {
-            my $wll = WindowsLiveLogin->init($LJ::WINDOWS_LIVE_LOGIN);
-            my %token = $wll->processToken($opts{msn_token});
-            $opts{extra_props}->{windows_live_id} = $post->{msn_liveid};
-            $opts{extra_props}->{windows_live_id_puid} = $post->{msn_puid};
-            $opts{extra_props}->{windows_live_id_wuid} = $token{id};
-            $opts{extra_props}->{windows_only_invite} = 1;
-        }
-    } elsif (!$LJ::DISABLED{msn} && $post->{setLiveId} eq 'new') {
-        # Create new LiveID account
-        my $job = TheSchwartz::Job->new_from_array("LJ::Worker::MSNCreateLiveID", {
-            'username' => $user,
-            'password' => $post->{password1},
-            'email'    => $email
-        });                                                                                                                                                  
-        my $sclient = LJ::theschwartz();
-        $sclient->insert_jobs($job) if $sclient and $job;
-    }
-
     # create user and send email as long as the user didn't double-click submit
     # (or they tried to re-create a purged account)
     unless ($second_submit || keys %{$from_post{errors}} || (!LJ::is_enabled("recaptcha") && $wants_audio)) {
+
+        # LiveID
+        $opts{extra_props} = {} unless defined $opts{extra_props};
+        if (!$LJ::DISABLED{msn} && $post->{setLiveId} eq 'reg') {
+            # If user have LiveID account
+            if ($post->{msn_puid} && $post->{msn_liveid}) {
+                my $wll = WindowsLiveLogin->init($LJ::WINDOWS_LIVE_LOGIN);
+                my %token = $wll->processToken($opts{msn_token});
+                $opts{extra_props}->{windows_live_id} = $post->{msn_liveid};
+                $opts{extra_props}->{windows_live_id_puid} = $post->{msn_puid};
+                $opts{extra_props}->{windows_live_id_wuid} = $token{id};
+                $opts{extra_props}->{windows_only_invite} = 1;
+            }
+        } elsif (!$LJ::DISABLED{msn} && $post->{setLiveId} eq 'new') {
+            # Create new LiveID account
+            my $job = TheSchwartz::Job->new_from_array("LJ::Worker::MSNCreateLiveID", {
+                'username' => $user,
+                'password' => $post->{password1},
+                'email'    => $email
+            });                                                                                                                                                  
+            my $sclient = LJ::theschwartz();
+            $sclient->insert_jobs($job) if $sclient and $job;
+        }
+
         my $bdate = sprintf("%04d-%02d-%02d", $post->{bday_yyyy}, $post->{bday_mm}, $post->{bday_dd});
 
         my $nu = LJ::User->create_personal(
