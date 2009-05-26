@@ -11,11 +11,6 @@ sub serialize {
     foreach my $field (FIELDS){
         $res->{$field} = $self->{$field};
     }
-
-use Data::Dumper;
-warn "SELF: " . Dumper( $self );
-warn "RES: " .  Dumper( $res );
-warn "JSON : " . JSON::objToJson($res);
     return JSON::objToJson($res);
 }
 
