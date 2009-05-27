@@ -89,7 +89,7 @@ my @req_hosts;  # client IP, and/or all proxies, real or claimed
 sub handler
 {
     my $r = shift;
-
+    
     if ($LJ::SERVER_TOTALLY_DOWN) {
         $r->handler("perl-script");
         $r->set_handlers(PerlHandler => [ \&totally_down_content ]);
@@ -179,7 +179,6 @@ sub redir {
     my ($r, $url, $code) = @_;
     $r->content_type("text/html");
     $r->header_out(Location => $url);
-
     if ($LJ::DEBUG{'log_redirects'}) {
         $r->log_error("redirect to $url from: " . join(", ", caller(0)));
     }
@@ -410,6 +409,12 @@ sub trans
         return $bml_handler->("$LJ::HOME/htdocs/tools/embedcontent.bml");
     }
 
+    # allow html pages (with .html extention) in user domains and in common www. domain.
+    if ($r->uri =~ m|\A\/__html(\/.+\.html)\z|){
+        $r->uri($1);
+        return DECLINED;
+    }
+
     my $journal_view = sub {
         my $opts = shift;
         $opts ||= {};
@@ -571,7 +576,7 @@ sub trans
         my $mode = undef;
         my $pe;
         my $ljentry;
-
+        
         # if favicon, let filesystem handle it, for now, until
         # we have per-user favicons.
         return DECLINED if $uuri eq "/favicon.ico";
@@ -583,7 +588,7 @@ sub trans
         if ($uuri eq "/__setdomsess") {
             return redir($r, LJ::Session->setdomsess_handler($r));
         }
-
+        
         if ($uuri =~ m#^/(\d+)\.html$#) {
             my $u = LJ::load_user($user)
                 or return 404;
@@ -1255,7 +1260,7 @@ sub journal_content
     my $r = shift;
     my $uri = $r->uri;
     my %GET = $r->args;
-
+    
     if ($RQ{'mode'} eq "robots_txt")
     {
         my $u = LJ::load_user($RQ{'user'});
@@ -1532,7 +1537,7 @@ sub customview_content
 {
     my $r = shift;
     my %FORM = $r->args;
-
+    
     my $charset = "utf-8";
 
     if ($LJ::UNICODE && $FORM{'charset'}) {
