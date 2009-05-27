@@ -227,7 +227,7 @@ as well.
 
 .setting.integration.msn.signintext=For turning messenger on sign up or sign into your Live ID:
 
-.setting.integration.msn.signin=Sing up
+.setting.integration.msn.signin=Sign up
 
 .setting.integration.msn.newlid=Sign into your Live ID account
 
@@ -247,7 +247,7 @@ as well.
 
 .setting.integration.msn.alert=Post the entry about my Messenger into my journal automatically
 
-.setting.integration.msn.alert.comment=<b>Entry's text:</b> "Turn <a [[aopts1]]>LiveJournal Messenger</a> on. My Live ID – [[aopts2]]. Let’s talk!"
+.setting.integration.msn.alert.comment=<b>Entry's text:</b> "Turn <a [[aopts1]]>LiveJournal Messenger</a> on. My Live ID - [[aopts2]]. Let's talk!"
 
 .setting.integration.msn.comment=You can set up LJ-events notifications in the <a [[aopts]]>Notifications</a> tab
 
