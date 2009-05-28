@@ -7,9 +7,12 @@ use Apache::Constants qw(:common);
 use Digest::SHA1;
 use MIME::Base64;
 use lib "$ENV{LJHOME}/cgi-bin";
-use Class::Autouse qw(
-                      LJ::ModuleCheck
-                      );
+
+use Class::Autouse qw/
+    XML::Atom::Feed
+    XML::Atom::Entry
+    XML::Atom::Link
+    /;
 
 require 'parsefeed.pl';
 require 'fbupload.pl';
@@ -555,8 +558,16 @@ sub handle_feed {
 sub handle {
     my $r = shift;
 
+    my $have_xmlatom = eval {
+        require XML::Atom;
+        require XML::Atom::Feed;
+        require XML::Atom::Entry;
+        require XML::Atom::Link;
+        XML::Atom->VERSION < 0.09 ? 0 : 1
+    };
+
     return respond($r, 404, "This server does not support the Atom API.")
-        unless LJ::ModuleCheck->have_xmlatom;
+        unless $have_xmlatom;
 
     # break the uri down: /interface/atom/<verb>[/<number>]
     # or old format:      /interface/atomapi/<username>/<verb>[/<number>]

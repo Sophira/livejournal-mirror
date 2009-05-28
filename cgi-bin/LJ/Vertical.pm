@@ -6,7 +6,10 @@ package LJ::Vertical;
 use strict;
 use vars qw/ $AUTOLOAD /;
 use Carp qw/ croak /;
-use Class::Autouse qw( LJ::Image );
+use Class::Autouse qw( 
+    LJ::Image 
+    Image::Size
+    );
 
 # how many entries to query and display in $self->recent_entries;
 my $RECENT_ENTRY_LIMIT   = 100;
@@ -242,7 +245,6 @@ sub check_entry_for_image_restrictions {
         return 0 unless @$img_urls <= $class->max_number_of_images_for_entry_in_journal($journal);
 
         # now check that these images are not over WxH in size
-        eval "use Image::Size;";
         foreach my $image_url (@$img_urls) {
             my $imageref = LJ::Image->prefetch_image($image_url, timeout => 1);
             return 0 unless $imageref;

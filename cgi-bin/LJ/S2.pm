@@ -4,8 +4,8 @@
 use strict;
 use lib "$ENV{'LJHOME'}/src/s2";
 use S2;
-use S2::Color;
 use Class::Autouse qw(
+                      S2::Color
                       S2::Checker
                       S2::Compiler
                       HTMLCleaner
@@ -20,10 +20,12 @@ use Class::Autouse qw(
                       LJ::S2::TagsPage
                       LJ::LastFM
                       );
-use Storable;
-use Apache::Constants ();
-use POSIX ();
-use Encode;
+use Class::Autouse qw/
+    Storable
+    Apache::Constants
+    POSIX
+    Encode
+    /;
 
 package LJ::S2;
 
@@ -491,12 +493,12 @@ sub b2lid_remap
 sub get_layers_of_user
 {
     my ($u, $is_system, $infokeys) = @_;
-    
+
     my $subst_user = LJ::run_hook("substitute_s2_layers_user", $u);
     if (defined $subst_user && LJ::isu($subst_user)) {
         $u = $subst_user;
     }
-    
+
     my $userid = LJ::want_userid($u);
     return undef unless $userid;
     undef $u unless LJ::isu($u);
@@ -1996,9 +1998,9 @@ sub Page
     my $remote = LJ::get_remote();
     if (LJ::are_hooks('s2_head_content_extra')) {
         $p->{head_content} = join "" =>
-            map { shift @$_} 
+            map { shift @$_}
             LJ::run_hooks('s2_head_content_extra', $remote, $opts->{r});
-        
+
         #$p->{head_content} .= LJ::run_hook('s2_head_content_extra', $remote, $opts->{r});
     }
 
@@ -2214,7 +2216,7 @@ sub nth_entry_seen {
     my $e = shift;
     my $key = "$e->{'journal'}->{'username'}-$e->{'itemid'}";
     my $ref = $LJ::REQ_GLOBAL{'nth_entry_keys'};
-    
+
     if (exists $ref->{$key}) {
         return $ref->{$key};
     }
@@ -2480,11 +2482,11 @@ sub viewer_sees_control_strip
 
 sub _get_ad_box_args {
     my $ctx = shift;
-    
+
     my $r = Apache->request;
     my $journalu = LJ::load_userid($r->notes("journalid"));
     return unless $journalu;
-    
+
     my $colors = _get_colors_for_ad($ctx);
 
     my $qotd = 0;
@@ -2492,7 +2494,7 @@ sub _get_ad_box_args {
         my $entry = LJ::Entry->new($journalu, ditemid => $LJ::S2::CURR_PAGE->{entry}->{itemid});
         $qotd = $entry->prop("qotdid") if $entry;
     }
- 
+
     return {
         journalu => $journalu,
         pubtext  => $LJ::REQ_GLOBAL{text_of_first_public_post},
@@ -2502,7 +2504,7 @@ sub _get_ad_box_args {
         interests_extra => $qotd ? { qotd => $qotd } : {},
         s2_view  => $LJ::S2::CURR_PAGE->{'view'},
         total_posts_number => scalar( @{$LJ::S2::CURR_PAGE->{'entries'} || []}),
-    };    
+    };
 
 }
 
@@ -2548,7 +2550,7 @@ sub viewer_sees_ebox {
 
 sub _get_Entry_ebox_args {
     my ($ctx, $this) = @_;
-    
+
     my $r = Apache->request;
     my $journalu = LJ::load_userid($r->notes("journalid"));
     return unless $journalu;
@@ -2558,9 +2560,9 @@ sub _get_Entry_ebox_args {
     my $total_entry_ct = @$entries;
 
     $LJ::REQ_GLOBAL{ebox_count} = $LJ::REQ_GLOBAL{ebox_count} > 1 ? $LJ::REQ_GLOBAL{ebox_count} : 1;
-    
+
     #return unless (LJ::S2::current_box_type($journalu) eq "ebox");
-    
+
     my $colors = _get_colors_for_ad($ctx);
     my $pubtext;
     my @tag_names;
@@ -2584,7 +2586,7 @@ sub _get_Entry_ebox_args {
     }
 
     return {
-        location    => 's2.ebox',       
+        location    => 's2.ebox',
         journalu    => $journalu,
         pubtext     => $pubtext,
         tags        => \@tag_names,
@@ -2595,7 +2597,7 @@ sub _get_Entry_ebox_args {
         s2_view        => $LJ::S2::CURR_PAGE->{view},
         current_post_number => LJ::S2::nth_entry_seen($this),
         total_posts_number  => scalar( @{$LJ::S2::CURR_PAGE->{'entries'} || []} ),
-    }; 
+    };
 }
 
 sub Entry__viewer_sees_ebox {
@@ -3030,7 +3032,7 @@ sub _Comment__get_link
                             LJ::S2::Image("$LJ::IMGPREFIX/btn_unscr.gif", 22, 20));
     }
 
-    
+
     if ($key eq "watch_thread" || $key eq "unwatch_thread" || $key eq "watching_parent") {
         return $null_link if $LJ::DISABLED{'esn'};
         return $null_link unless $remote && $remote->can_use_esn;
@@ -3125,8 +3127,8 @@ sub _Comment__get_link
     }
     if ($key eq "expand_comments") {
         return $null_link unless LJ::run_hook('show_thread_expander');
-        ## show "Expand" link only if 
-        ## 1) the comment is collapsed 
+        ## show "Expand" link only if
+        ## 1) the comment is collapsed
         ## 2) any of comment's children are collapsed
         my $show_expand_link;
         if (!$this->{full} and !$this->{deleted}) {
@@ -3173,7 +3175,7 @@ sub _print_quickreply_link
     my ($ctx, $this, $opts) = @_;
 
     $opts ||= {};
-    
+
     # one of these had better work
     my $replyurl =  $opts->{'reply_url'} || $this->{'reply_url'} || $this->{'entry'}->{'comments'}->{'post_url'};
 
@@ -3503,7 +3505,7 @@ sub EntryLite__get_link
 {
     my ($ctx, $this, $key) = @_;
     my $null_link = { '_type' => 'Link', '_isnull' => 1 };
-    
+
     if ($this->{_type} eq 'Entry') {
         return _Entry__get_link($ctx, $this, $key);
     }
@@ -3527,12 +3529,12 @@ sub Entry__formatted_subject {
     # if subject has html-tags - print raw subject
     return $this->{subject}
         if($this->{subject} =~ /[<>]/);
-    
+
     my $class = $attrs->{class} ? " class=\"".LJ::ehtml($attrs->{class})."\" " : '';
     my $style = $attrs->{style} ? " style=\"".LJ::ehtml($attrs->{style})."\" " : '';
-    
+
     return "<a href=\"".$this->{permalink_url}."\"$class$style>".$this->{subject}."</a>";
-    
+
 }
 
 sub EntryLite__get_tags_text
@@ -3866,7 +3868,7 @@ foreach my $class (qw(RecentPage FriendsPage YearPage MonthPage DayPage EntryPag
         ##
         ## Oops, years later after this code was written, an error is found:
         ## the argument string to eval must have an extra \:
-        ##      "*${class}__$func = \\&Page__$func"; 
+        ##      "*${class}__$func = \\&Page__$func";
         ## eval "*${class}__$func = \&Page__$func";
         ##
         ## How did it work all this time?
@@ -4067,7 +4069,7 @@ sub UserLite__equals
 sub string__substr
 {
     my ($ctx, $this, $start, $length) = @_;
-    
+
     my $ustr = Encode::decode_utf8($this);
     my $result = substr($ustr, $start, $length);
     return Encode::encode_utf8($result);

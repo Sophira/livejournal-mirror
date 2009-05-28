@@ -7,7 +7,6 @@
 
 {
     package LJ;
-    use Sys::Hostname ();
 
     $DEFAULT_STYLE ||= {
         'core' => 'core1',
@@ -24,7 +23,11 @@
     $SSLDOCS ||= "$HOME/ssldocs";
     $BIN = "$HOME/bin";
 
-    $SERVER_NAME ||= Sys::Hostname::hostname();
+    # $SERVER_NAME must be defined;
+    unless ($SERVER_NAME){
+        require Sys::Hostname;
+        $SERVER_NAME = Sys::Hostname::hostname();
+    }
 
     $UNICODE = 1 unless defined $UNICODE;
 

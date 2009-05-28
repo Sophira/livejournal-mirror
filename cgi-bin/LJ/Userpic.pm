@@ -2,7 +2,10 @@ package LJ::Userpic;
 use strict;
 use Carp qw(croak);
 use Digest::MD5;
-use Class::Autouse qw (LJ::Event::NewUserpic);
+use Class::Autouse qw (
+    LJ::Event::NewUserpic
+    Image::Size
+    );
 
 my %MimeTypeMap = (
                    'image/gif'  => 'gif',
@@ -514,7 +517,6 @@ sub create {
         my $msg = shift;
     };
 
-    eval "use Image::Size;";
     my ($w, $h, $filetype) = Image::Size::imgsize($dataref);
     my $MAX_UPLOAD = $maxbytesize || LJ::Userpic->max_allowed_bytes($u);
 

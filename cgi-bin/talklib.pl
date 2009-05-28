@@ -2193,12 +2193,12 @@ sub get_replycount {
 
 package LJ::Talk::Post;
 
-use Text::Wrap;
-use LJ::EventLogRecord::NewComment;
+use Class::Autouse qw/LJ::EventLogRecord::NewComment/;
 
 sub indent {
     my $a = shift;
     my $leadchar = shift || " ";
+    require Text::Wrap;
     $Text::Wrap::columns = 76;
     return Text::Wrap::fill("$leadchar ", "$leadchar ", $a);
 }

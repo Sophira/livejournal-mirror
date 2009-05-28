@@ -14,18 +14,20 @@ use Apache::BML;
 use Apache::SendStats;
 use Apache::DebateSuicide;
 
-use Digest::MD5;
-use Text::Wrap ();
-use LWP::UserAgent ();
-use Storable;
-use Time::HiRes ();
-use Image::Size ();
-use POSIX ();
+use Class::Autouse qw/
+    Digest::MD5
+    Text::Wrap
+    LWP::UserAgent
+    Storable
+    Time::HiRes
+    Image::Size
+    POSIX
+    LJ::Portal
+    LJ::Blob
+    LJ::Captcha
+    LJ::Faq
+    /;
 
-use LJ::Portal ();
-use LJ::Blob;
-use LJ::Captcha;
-use LJ::Faq;
 
 use Class::Autouse qw(
                       DateTime
@@ -44,12 +46,6 @@ use Class::Autouse qw(
                       );
 
 LJ::Config->load;
-
-# force XML::Atom::* to be brought in (if we have it, it's optional),
-# unless we're in a test.
-BEGIN {
-    LJ::ModuleCheck->have_xmlatom unless LJ::is_from_test();
-}
 
 # in web context, Class::Autouse will load this, which loads MapUTF8.
 # otherwise, we'll rely on the AUTOLOAD in ljlib.pl to load MapUTF8
@@ -110,9 +106,9 @@ sub setup_start {
     # auto-load some stuff before fork (unless this is a test program)
     unless ($0 && $0 =~ m!(^|/)t/!) {
         Storable::thaw(Storable::freeze({}));
-        foreach my $minifile ("GIF89a", "\x89PNG\x0d\x0a\x1a\x0a", "\xFF\xD8") {
-            Image::Size::imgsize(\$minifile);
-        }
+        #foreach my $minifile ("GIF89a", "\x89PNG\x0d\x0a\x1a\x0a", "\xFF\xD8") {
+        #    Image::Size::imgsize(\$minifile);
+        #}
         DBI->install_driver("mysql");
         LJ::CleanHTML::helper_preload();
         LJ::Portal->load_portal_boxes;

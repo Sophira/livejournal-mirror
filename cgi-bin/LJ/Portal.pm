@@ -5,8 +5,10 @@ package LJ::Portal;
 use strict;
 
 use lib "$ENV{LJHOME}/cgi-bin";
-use LJ::Portal::Config;
-use LJ::Portal::Box;
+use Class::Autouse qw/
+    LJ::Portal::Config
+    LJ::Portal::Box
+    /;
 
 sub new {
     my LJ::Portal $self = shift;
@@ -89,7 +91,7 @@ sub load_portal_boxes {
     my $self = shift;
 
     foreach my $boxclass (@LJ::PORTAL_BOXES) {
-        require "LJ/Portal/Box/${boxclass}.pm";
+        Class::Autouse->autouse( "LJ::Portal::Box::" . $boxclass );
     }
 }
 
