@@ -1449,10 +1449,26 @@ userproplist.windows_live_id:
 userproplist.windows_live_id_puid:
   cldversion: 0
   datatype: char
+  des: user's Windows Live Id PUID -- not used because it's too short (255 chars)
+  indexed: 0
+  multihomed: 0
+  prettyname: (not used) 
+
+userproplist.windows_live_id_puid_blob:
+  cldversion: 0
+  datatype: blobchar
   des: user's Windows Live Id PUID
   indexed: 0
   multihomed: 0
   prettyname: Windows Live Id PUID
+
+userproplist.windows_live_id_puid_md5:
+  cldversion: 0
+  datatype: char
+  des: user's Windows Live Id MD5 HASH of PUID
+  indexed: 0
+  multihomed: 0
+  prettyname: Windows Live Id MD5 PUID
 
 userproplist.windows_live_id_wuid:
   cldversion: 0

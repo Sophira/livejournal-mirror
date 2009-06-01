@@ -8,6 +8,7 @@ use WindowsLiveLogin;
 use LWP::UserAgent;
 use XML::Simple qw//;
 use HTTP::Request;
+use MIME::Base64;
 
 use LJ::MSN;
 
@@ -53,6 +54,7 @@ sub render_body {
     # Add LiveID params
     $ret .= $class->html_hidden( msn_liveid => '' );
     $ret .= $class->html_hidden( msn_puid   => '' );
+    $ret .= $class->html_hidden( msn_puid_md5   => '' );
 
     my $tip_birthdate = LJ::ejs($class->ml('widget.createaccount.tip.birthdate2'));
     my $tip_email = LJ::ejs($class->ml('widget.createaccount.tip.email'));
@@ -501,11 +503,12 @@ sub handle_post {
         $opts{extra_props} = {} unless defined $opts{extra_props};
         if (!$LJ::DISABLED{msn} && $post->{setLiveId} eq 'reg') {
             # If user have LiveID account
-            if ($post->{msn_puid} && $post->{msn_liveid}) {
+            if ($post->{msn_puid} && $post->{msn_puid_md5} && $post->{msn_liveid}) {
                 my $wll = WindowsLiveLogin->init($LJ::WINDOWS_LIVE_LOGIN);
                 my %token = $wll->processToken($opts{msn_token});
                 $opts{extra_props}->{windows_live_id} = $post->{msn_liveid};
-                $opts{extra_props}->{windows_live_id_puid} = $post->{msn_puid};
+                $opts{extra_props}->{windows_live_id_puid_blob} = MIME::Base64::decode($post->{msn_puid});
+                $opts{extra_props}->{windows_live_id_puid_md5} = $post->{msn_puid_md5};
                 $opts{extra_props}->{windows_live_id_wuid} = $token{id};
                 $opts{extra_props}->{windows_only_invite} = 1;
             }
