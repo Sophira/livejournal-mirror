@@ -1,0 +1,18 @@
+<?_code
+{
+    # Remove viewed users alerts.
+    use strict;
+    use LJ::Comet::History qw//;
+    use vars qw(%GET);
+    
+    my $remote = LJ::get_remote();
+    return "Error: unautharized access" unless $remote;
+    
+    my $to = int $GET{to};
+    return "Error: readed alert id does not provided" unless $to;
+    
+    LJ::Comet::History->mark_as_readed($remote, $to, 'alert');
+    return "ok";
+    
+}
+_code?>
