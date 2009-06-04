@@ -14,6 +14,7 @@ use lib "$ENV{LJHOME}/cgi-bin";
 
 use Carp;
 use LJ::Constants;
+use LJ::User;
 use Class::Autouse qw/
     DBI
     DBI::Role
@@ -22,7 +23,6 @@ use Class::Autouse qw/
     HTTP::Date
     LJ::MemCache
     LJ::Error
-    LJ::User
     LJ::Entry
     Time::Local
     Storable
