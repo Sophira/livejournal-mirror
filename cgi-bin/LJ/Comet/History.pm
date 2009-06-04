@@ -7,7 +7,7 @@ CREATE TABLE comet_history (
      uid      integer unsigned not null,
      type     varchar(31),
      message  text,
-     
+     status   char(1), -- (N)ew, (R)eaded
      added    datetime,
 
      INDEX(uid)
@@ -37,7 +37,7 @@ sub add {
         ", undef,
         $u->userid, $type, $msg
         ) or die "Can't add message to db: " . $dbcm->errstr;
-    LJ::MemCache::delete("comet:history:" . $u->userid);
+    LJ::MemCache::delete("comet:history:" . $u->userid . ":$type");
 
     my ($rec_id) = $dbcm->selectrow_array("SELECT LAST_INSERT_ID()");
     return 
@@ -50,29 +50,35 @@ sub add {
 }
 
 sub log {
-    my $class = shift;
-    my $u     = shift;
-    my $from  = int (shift);
+    my $class  = shift;
+    my $u      = shift;
+    my $type   = shift;
+    my $status = shift || 'N';
+
+    die "Unknown message type"
+        unless grep {$_ eq $type} qw/alert message post comment/;
+
+    die "Unknown status"
+        unless $status =~ m/^N|R\z/;
 
     #
-    my $ckey   = "comet:history:" . $u->userid;
+    my $ckey   = "comet:history:" . $u->userid . ":$type";
     my $cached = LJ::MemCache::get($ckey);
-warn "*********** BEFORE CACHE";
-    return $cached if $cached and $cached->{messages}->[0]->{rec_id} eq $from;
-warn "*********** AFTER CACHE";
+    return $cached if $cached;
 
     my @messages = ();
     my $dbcm = LJ::get_cluster_master($u);
     my $sth  = $dbcm->prepare("
         SELECT * 
         FROM   comet_history
-        WHERE 
-            rec_id > ?
-            AND uid = ?
+        WHERE  
+            uid = ?
+            AND type = ?
+            AND status = ?
         LIMIT 51
         ") or die $dbcm->errstr;
-    $sth->execute($from, $u->userid)
-        or die "Can't get comet history from DB: user_id=" . $u->userid . " from=$from  Error:" . $dbcm->errstr;
+    $sth->execute($u->userid, $type, $status)
+        or die "Can't get comet history from DB: user_id=" . $u->userid . "  Error:" . $dbcm->errstr;
     while (my $h = $sth->fetchrow_hashref){
         push @messages => $h;
     }
@@ -83,7 +89,7 @@ warn "*********** AFTER CACHE";
                 messages  => [splice @messages, 0 => 50],
                 have_more => $have_more,
                 };
-    LJ::MemCache::set($ckey, $res);
+    LJ::MemCache::set($ckey, $res, $LJ::COMET_HISTORY_LIFETIME);
     return $res;
 
 }
@@ -93,6 +99,55 @@ sub jsoned_log {
     my $res   = $class->log(@_);
     require JSON;
     return JSON::objToJson($res);
+}
+
+
+sub mark_as_readed {
+    my $class = shift;
+    my $u     = shift;
+    my $to    = shift;
+    my $type  = shift;
+
+    die "Unknown message type"
+        unless grep {$_ eq $type} qw/alert message post comment/;
+
+    # 1. update db
+    my $dbcm = LJ::get_cluster_master($u);
+    $dbcm->do("
+        UPDATE comet_history
+        SET status='R'
+        WHERE 
+            rec_id  <= ?
+            AND uid  = ?
+            AND type = ?
+        ", undef,
+        $u->userid, $to, $type
+        ) or die "Can't mark comet_history records as readed: " . $dbcm->errstr;
+
+
+    # 2. invalidate cached data
+    my $ckey   = "comet:history:" . $u->userid . ":$type";
+    LJ::MemCache::delete($ckey);
+    
+    return 1;
+}
+
+sub remove_outdated {
+    my $class = shift;
+
+    foreach my $cid (@LJ::CLUSTERS){
+        my $dbcw = LJ::get_cluster_master($cid);
+        die "Unable to get cluster writer for cluster $cid" unless $dbcw;
+
+        $dbcw->do("
+            DELETE FROM comet_history
+            WHERE added < FROM_UNIXTIME(?)
+            ", undef,
+            (time - $LJ::COMET_HISTORY_LIFETIME)
+            ) or die "Could not remove outdated records from 'comet_history': " . $dbcw->errstr;
+warn "after delete... cluster: $cid";
+    }
+    return 1;
 }
 
 1;

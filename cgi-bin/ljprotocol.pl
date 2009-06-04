@@ -2304,6 +2304,8 @@ sub editfriends
     ## first, figure out who the current friends are to save us work later
     my %curfriend;
     my $friend_count = 0;
+    my $friends_changed = 0;
+    
     # TAG:FR:protocol:editfriends1
     $sth = $dbh->prepare("SELECT u.user FROM useridmap u, friends f ".
                          "WHERE u.userid=f.friendid AND f.userid=$userid");
@@ -2325,6 +2327,7 @@ sub editfriends
         # TAG:FR:protocol:editfriends2_del
         LJ::remove_friend($userid, $friendid);
         $friend_count--;
+        $friends_changed = 1;
     }
 
     my $error_flag = 0;
@@ -2437,7 +2440,7 @@ sub editfriends
                 $sclient->insert_jobs(@jobs) if @jobs;
                 
             }
-
+            $friends_changed = 1;
             LJ::run_hooks('befriended', LJ::load_userid($userid), LJ::load_userid($friendid));
         }
     }
@@ -2448,6 +2451,8 @@ sub editfriends
     LJ::memcache_kill($userid, "friends");
     LJ::memcache_kill($userid, "friends2");
     LJ::mark_dirty($userid, "friends");
+
+    LJ::run_hooks('friends_changed', LJ::load_userid($userid)) if $friends_changed;
 
     return $res;
 }

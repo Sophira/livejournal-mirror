@@ -3989,6 +3989,12 @@ register_alter(sub {
                  "MODIFY jtalkid INT UNSIGNED NOT NULL");
     }
 
+    unless (column_type("comet_history", "status")) {
+        do_alter("comet_history",
+                 "ALTER TABLE comet_history " .
+                 "ADD status char(1) default 'N' after message");
+    }
+
 });
 
 
