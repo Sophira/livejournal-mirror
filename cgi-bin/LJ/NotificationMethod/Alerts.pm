@@ -72,7 +72,7 @@ sub notify {
     
     foreach my $ev (@events) {
         croak "invalid event passed" unless ref $ev;
-        my $msg = $ev->as_im($u);
+        my $msg = $ev->as_alert($u);
 
         # send data to comet server
         my $rec = LJ::Comet::History->add(

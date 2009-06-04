@@ -1339,6 +1339,10 @@ esn.journal_new_entry.head_user=[[poster]] has posted a new entry[[about]].[[tag
 
 esn.journal_new_entry.about= titled "[[title]]"
 
+esn.comm_invite.alert=You've been invited to join [[user]]
+
+esn.befriended.alert=[[who]] has added you as a friend.
+
 esn.befriended.subject=[[who]] added you as a friend!
 
 esn.befriended.email_text<<
@@ -1356,6 +1360,8 @@ Hi [[user]],
 
 You can:
 .
+
+esn.community_join_requst.alert=[[who]] requests membership in [[comm]]. Visit community settings to approve.
 
 esn.defriended.subject=[[who]] removed you from their Friends list
 
@@ -1403,6 +1409,8 @@ esn.read_recent_entries=[[openlink]]Read the recent entries in [[journal]][[clos
 
 esn.join_community=[[openlink]]Join [[journal]] to read Members-only entries[[closelink]]
 
+esn.journal_new_entry.alert=[[who]] posted a new entry in [[journal]]!
+
 esn.read_user_entries=[[openlink]]Read [[poster]]'s recent entries[[closelink]]
 
 esn.add_friend=[[openlink]]Add [[journal]] to your Friends list[[closelink]]
@@ -1432,6 +1440,10 @@ esn.edit_comment=[[openlink]]Edit the comment[[closelink]]
 esn.email.pm.subject=[[sender]] sent you a message
 
 esn.if_suport_form=If your mail client supports it, you can also reply here:
+
+esn.invited_friend_joins.alert=A friend you invited has created the journal [[newuser]].
+
+esn.invited_friend_joins.alert.unnamed=A friend you invited has created a journal.
 
 esn.invited_friend_joins.subject=[[who]] created a journal!
 

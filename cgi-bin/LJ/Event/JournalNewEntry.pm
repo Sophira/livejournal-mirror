@@ -85,6 +85,17 @@ sub as_sms {
             $self->entry->poster->user, $self->entry->journal->user);
 }
 
+sub as_alert {
+    my $self = shift;
+    my $u = shift;
+    return LJ::Lang::get_text($u->prop('browselang'),
+        'esn.journal_new_entry.alert', undef,
+            {
+                who     => $self->entry->poster->display_username,
+                journal => $self->entry->journal->display_username,
+            });
+}
+
 sub as_html {
     my ($self, $target) = @_;
 
@@ -124,6 +135,7 @@ sub as_html_actions {
 }
 
 my @_ml_strings_en = (
+    'esn.journal_new_entry.alert',                  # '[[who]] posted a new entry in [[journal]]!',
     'esn.journal_new_entry.posted_new_entry',       # '[[who]] posted a new entry in [[journal]]!',
     'esn.journal_new_entry.updated_their_journal',  # '[[who]] updated their journal!',
     'esn.hi',                                       # 'Hi [[username]],',
