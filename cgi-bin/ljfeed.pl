@@ -4,11 +4,9 @@ package LJ::Feed;
 use strict;
 no warnings 'uninitialized';
 
-use Class::Autouse qw/
-    LJ::Entry
-    XML::Atom::Person
-    XML::Atom::Feed
-    /;
+use LJ::Entry;
+use XML::Atom::Person;
+use XML::Atom::Feed;
 
 my %feedtypes = (
     rss         => { handler => \&create_view_rss,  need_items => 1 },

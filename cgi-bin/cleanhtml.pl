@@ -14,11 +14,8 @@ LJ::Config->load;
 
 package LJ;
 
+use Encode;
 use HTML::Entities;
-use Class::Autouse qw/
-    Encode 
-    HTML::Entities
-    /;
 
 # <LJFUNC>
 # name: LJ::strip_bad_code

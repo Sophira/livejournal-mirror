@@ -8,12 +8,6 @@ use Digest::SHA1;
 use MIME::Base64;
 use lib "$ENV{LJHOME}/cgi-bin";
 
-use Class::Autouse qw/
-    XML::Atom::Feed
-    XML::Atom::Entry
-    XML::Atom::Link
-    /;
-
 require 'parsefeed.pl';
 require 'fbupload.pl';
 

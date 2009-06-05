@@ -9,11 +9,8 @@ require "ljlib.pl";
 package LJ;
 
 use Text::Wrap ();
-use Class::Autouse qw/
-    Time::HiRes
-    Encode
-    /;
-
+use Time::HiRes qw//;
+use Encode qw//;
 use Class::Autouse qw(
                       IO::Socket::INET
                       MIME::Lite
@@ -34,7 +31,8 @@ sub init {
     }
 }
 
-use Class::Autouse qw/MIME::Words/;
+use MIME::Words qw//;
+
 
 # <LJFUNC>
 # name: LJ::send_mail

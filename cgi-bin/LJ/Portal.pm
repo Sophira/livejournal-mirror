@@ -5,10 +5,8 @@ package LJ::Portal;
 use strict;
 
 use lib "$ENV{LJHOME}/cgi-bin";
-use Class::Autouse qw/
-    LJ::Portal::Config
-    LJ::Portal::Box
-    /;
+use LJ::Portal::Config;
+use LJ::Portal::Box;
 
 sub new {
     my LJ::Portal $self = shift;

@@ -13,21 +13,20 @@ BEGIN {
 use lib "$ENV{LJHOME}/cgi-bin";
 
 use Carp;
+use DBI;
+use DBI::Role;
+use Digest::MD5 ();
+use Digest::SHA1 ();
+use HTTP::Date ();
+use LJ::MemCache;
+use LJ::Error;
+use LJ::User;      # has a bunch of pkg LJ, non-OO methods at bottom
+use LJ::Entry;     # has a bunch of pkg LJ, non-OO methods at bottom
 use LJ::Constants;
 use LJ::User;
-use Class::Autouse qw/
-    DBI
-    DBI::Role
-    Digest::MD5
-    Digest::SHA1
-    HTTP::Date
-    LJ::MemCache
-    LJ::Error
-    LJ::Entry
-    Time::Local
-    Storable
-    Compress::Zlib
-    /;
+use Time::Local ();
+use Storable ();
+use Compress::Zlib ();
 
 use Class::Autouse qw(
                       TheSchwartz

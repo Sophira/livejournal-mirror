@@ -4,8 +4,8 @@
 use strict;
 use lib "$ENV{'LJHOME'}/src/s2";
 use S2;
+use S2::Color;
 use Class::Autouse qw(
-                      S2::Color
                       S2::Checker
                       S2::Compiler
                       HTMLCleaner
@@ -20,12 +20,10 @@ use Class::Autouse qw(
                       LJ::S2::TagsPage
                       LJ::LastFM
                       );
-use Class::Autouse qw/
-    Storable
-    Apache::Constants
-    POSIX
-    Encode
-    /;
+use Storable;
+use Apache::Constants ();
+use POSIX ();
+use Encode;
 
 package LJ::S2;
 
@@ -64,7 +62,6 @@ sub make_journal
             return;
         }
     }
-
     $u->{'_s2styleid'} = $styleid + 0;
 
     $con_opts->{'u'} = $u;
@@ -107,11 +104,9 @@ sub make_journal
 
     $opts->{'ctx'} = $ctx;
     $LJ::S2::CURR_CTX = $ctx;
-
     foreach ("name", "url", "urlname") { LJ::text_out(\$u->{$_}); }
 
     $u->{'_journalbase'} = LJ::journal_base($u->{'user'}, $opts->{'vhost'});
-
     my $view2class = {
         lastn    => "RecentPage",
         calendar => "YearPage",

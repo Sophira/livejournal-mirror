@@ -14,19 +14,17 @@ use Apache::BML;
 use Apache::SendStats;
 use Apache::DebateSuicide;
 
-use Class::Autouse qw/
-    Digest::MD5
-    Text::Wrap
-    LWP::UserAgent
-    Storable
-    Time::HiRes
-    Image::Size
-    POSIX
-    LJ::Portal
-    LJ::Blob
-    LJ::Captcha
-    LJ::Faq
-    /;
+use Digest::MD5 qw//;
+use Text::Wrap ();
+use LWP::UserAgent ();
+use Storable qw//;
+use Time::HiRes ();
+use Image::Size ();
+
+use LJ::Portal ();
+use LJ::Blob;
+use LJ::Captcha;
+use LJ::Faq;
 
 
 use Class::Autouse qw(
