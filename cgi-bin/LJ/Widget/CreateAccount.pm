@@ -9,6 +9,8 @@ use LWP::UserAgent;
 use XML::Simple qw//;
 use HTTP::Request;
 use MIME::Base64;
+use Gearman::Client;
+use Storable qw(freeze thaw);
 
 use LJ::MSN;
 
@@ -514,13 +516,24 @@ sub handle_post {
             }
         } elsif (!$LJ::DISABLED{msn} && $post->{setLiveId} eq 'new') {
             # Create new LiveID account
-            my $job = TheSchwartz::Job->new_from_array("LJ::Worker::MSNCreateLiveID", {
+#            my $job = TheSchwartz::Job->new_from_array("LJ::Worker::MSNCreateLiveID", {
+#                'username' => $user,
+#                'password' => $post->{password1},
+#                'email'    => $email
+#            });                                                                                                                                                  
+#            my $sclient = LJ::theschwartz();
+#            $sclient->insert_jobs($job) if $sclient and $job;
+            my $client = new Gearman::Client;
+            $client->job_servers( @LJ::GEARMAN_SERVERS );
+            my $arg = freeze({
                 'username' => $user,
                 'password' => $post->{password1},
-                'email'    => $email
-            });                                                                                                                                                  
-            my $sclient = LJ::theschwartz();
-            $sclient->insert_jobs($job) if $sclient and $job;
+                'email'    => $email,
+            });
+            my $task = Gearman::Task->new('msn_create_liveid', \$arg);
+            $client->dispatch_background($task);
+            #my $handle = $client->dispatch_background($task);
+            #return JSON::objToJson({ handle => $handle });
         }
 
         my $bdate = sprintf("%04d-%02d-%02d", $post->{bday_yyyy}, $post->{bday_mm}, $post->{bday_dd});

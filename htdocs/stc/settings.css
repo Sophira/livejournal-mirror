@@ -189,9 +189,6 @@
 		margin-bottom: 7px;
 		}
 
-.integration .disabled_msn {
-	color: #999;
-} 
 .integration SPAN {
 	display: block;
 	clear: both;
@@ -211,9 +208,6 @@
 	color:#336699;
 }
 
-.integration .disabled_msn SPAN.comment {
-	color:#b2b2b2;
-}
 .integration span INPUT {
 	margin-right: 5px;
 	position: relative;
