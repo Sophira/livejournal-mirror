@@ -11,12 +11,10 @@ package LJ;
 use Text::Wrap ();
 use Time::HiRes qw//;
 use Encode qw//;
-use Class::Autouse qw(
-                      IO::Socket::INET
-                      MIME::Lite
-                      Mail::Address
-                      MIME::Base64
-                      );
+use IO::Socket::INET;
+use MIME::Lite;
+use Mail::Address;
+use MIME::Base64;
 
 my $done_init = 0;
 sub init {
