@@ -2,7 +2,7 @@
 #
 
 use lib "$ENV{LJHOME}/cgi-bin";
-use Errno qw(ENOENT);
+use POSIX qw/ENOENT/;
 use LJ::Config;
 LJ::Config->load;
 
