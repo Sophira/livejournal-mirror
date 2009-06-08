@@ -239,6 +239,8 @@ as well.
 
 .setting.integration.msn.c-passw=Confirm password
 
+.setting.integration.msn.passw_err=Wrong <br />password
+
 .setting.integration.msn.loadmsn=Turn messenger on
 
 .setting.integration.msn.events=Alert me about LJ-events
