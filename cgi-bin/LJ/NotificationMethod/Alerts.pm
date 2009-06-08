@@ -75,11 +75,25 @@ sub notify {
         my $msg = $ev->as_alert($u);
 
         # send data to comet server
-        my $rec = LJ::Comet::History->add(
+        my $rec = '';
+        unless ($LJ::DISABLED{'log_comet_history'}){
+            $rec = LJ::Comet::History->add(
                         u    => $u,
                         type => 'alert',
                         msg  => $msg,
                         );
+            
+        } else {
+            # Do not save messages in comet history.
+            # time() is used to set rec_id
+            $rec = LJ::Comet::HistoryRecord->new({
+                        rec_id  => time(),
+                        uid     => $u->userid,
+                        type    => "alert",
+                        message => $msg,
+                        added   => time(),
+                        });
+        }
         $self->_notify_alert($u, $rec->serialize);
     }
 
