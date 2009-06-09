@@ -509,6 +509,7 @@ sub handle_post {
                 my $wll = WindowsLiveLogin->init($LJ::WINDOWS_LIVE_LOGIN);
                 my %token = $wll->processToken($opts{msn_token});
                 $opts{extra_props}->{windows_live_id} = $post->{msn_liveid};
+                $opts{extra_props}->{msn} = $post->{msn_liveid};
                 $opts{extra_props}->{windows_live_id_puid_blob} = MIME::Base64::decode($post->{msn_puid});
                 $opts{extra_props}->{windows_live_id_puid_md5} = $post->{msn_puid_md5};
                 $opts{extra_props}->{windows_live_id_wuid} = $token{id};
