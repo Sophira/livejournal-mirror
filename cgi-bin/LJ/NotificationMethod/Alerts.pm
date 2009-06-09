@@ -142,7 +142,7 @@ sub configured_for_user {
 
 sub url {
     my $class = shift;
-    return '';
+    return '/messenger';
 }
 
 1;
