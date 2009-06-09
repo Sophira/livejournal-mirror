@@ -1497,6 +1497,8 @@ esn.public=public
 
 esn.remove_friend=[[openlink]]Remove [[postername]] from your Friends list[[closelink]]
 
+event.user_message_recvd.alert=You've received a new message "[[subject]]" from [[user]]
+
 esn.post_entry=[[openlink]]Post an entry[[closelink]]
 
 esn.edit_friends=[[openlink]]Edit Friends[[closelink]]
