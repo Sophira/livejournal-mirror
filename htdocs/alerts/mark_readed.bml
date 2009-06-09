@@ -3,12 +3,12 @@
     # Remove viewed users alerts.
     use strict;
     use LJ::Comet::History qw//;
-    use vars qw(%GET);
+    use vars qw(%GET %POST);
     
     my $remote = LJ::get_remote();
     return "Error: unautharized access" unless $remote;
     
-    my $to = int $GET{to};
+    my $to = int $POST{to};
     return "Error: readed alert id does not provided" unless $to;
     
     LJ::Comet::History->mark_as_readed($remote, $to, 'alert');
