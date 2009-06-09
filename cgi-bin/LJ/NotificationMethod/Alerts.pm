@@ -25,7 +25,7 @@ sub new {
     return bless $self, $class;
 }
 
-sub title { BML::ml('notification_method.alerts.title') }
+sub title { 'Live Messenger' }
 
 sub help_url { "alerts_full" }
 
