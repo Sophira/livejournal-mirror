@@ -1,0 +1,14 @@
+<?_code
+{
+    # Remove viewed users alerts.
+    use strict;
+    use LJ::Comet::AuthToken qw//;
+    use vars qw(%GET %POST);
+    
+    my $remote = LJ::get_remote();
+    return "Error: unautharized access" unless $remote;
+    
+    return LJ::Comet::AuthToken->generate($remote->userid);
+    
+}
+_code?>
