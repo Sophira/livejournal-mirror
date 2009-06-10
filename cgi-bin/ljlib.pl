@@ -1863,8 +1863,9 @@ sub challenge_check {
 
     if ($opts) {
         $opts->{'expired'} = $expired;
-        $opts->{'valid'} = $valid;
-        $opts->{'count'} = $count;
+        $opts->{'valid'}   = $valid;
+        $opts->{'count'}   = $count;
+        $opts->{'rand'}    = $rand;
     }
 
     return ($valid && !$expired && ($count==1 || $opts->{dont_check_count}));
