@@ -121,7 +121,7 @@ sub mark_as_readed {
             AND uid  = ?
             AND type = ?
         ", undef,
-        $u->userid, $to, $type
+        $to, $u->userid, $type
         ) or die "Can't mark comet_history records as readed: " . $dbcm->errstr;
 
 
