@@ -1046,6 +1046,8 @@ esn.month.day_dec=December [[day]]
 
 esn.comm_join_approve.email_subject=Your Request to Join [[community]] community
 
+esn.comm_join_reject.email_subject=Your Request to Join [[community]] community
+
 esn.comm_join_reject.email_text<<
 Dear [[user]],
 
@@ -1059,6 +1061,8 @@ Regards,
 [[sitename]] Team
 
 .
+
+esn.poll_vote.alert=[[user]] voted in a poll!
 
 esn.poll_vote.email_text<<
 Hi [[user]],
@@ -1277,6 +1281,8 @@ Options:
 
 esn.moderated_submission.subject=Moderated submission notification
 
+esn.security_attribute_changed.account_activated.alert=Your account has been activated
+
 esn.security_attribute_changed.account_activated.email_subject=Your account has been activated
 
 esn.security_attribute_changed.account_activated.email_text<<
@@ -1292,6 +1298,8 @@ Dear [[username]],
 
 esn.security_attribute_changed.account_deleted.email_subject=Your account has been deleted
 
+esn.security_attribute_changed.account_deleted.alert=Your account has been deleted
+
 esn.security_attribute_changed.account_deleted.email_text<<
 Dear [[username]],
  
@@ -1304,6 +1312,8 @@ Dear [[username]],
 .
 
 esn.security_attribute_changed.account_renamed.email_subject=Your account has been renamed
+
+esn.security_attribute_changed.account_renamed.alert=Your account has been renamed
 
 esn.security_attribute_changed.account_renamed.email_text<<
 Dear [[user]],
@@ -1343,6 +1353,10 @@ esn.journal_new_entry.head_user=[[poster]] has posted a new entry[[about]].[[tag
 
 esn.journal_new_entry.about= titled "[[title]]"
 
+esn.user_new_entry.in_their_journal.alert=User '[[user]]' posted in their journal
+
+esn.user_new_entry.in_user_journal.alert=User '[[user]]' posted in '[[journal]]'
+
 esn.comm_invite.alert=You've been invited to join [[user]]
 
 esn.befriended.alert=[[who]] has added you as a friend.
@@ -1367,7 +1381,13 @@ You can:
 
 esn.community_join_requst.alert=[[who]] requests membership in [[comm]]. Visit community settings to approve.
 
+esn.comm_join_approve.alert=Your request to join [[community]] community has been approved.
+
+esn.defriended.alert=[[who]] removed you from their Friends list.
+
 esn.defriended.subject=[[who]] removed you from their Friends list
+    
+esn.comm_join_reject.alert=Your request to join [[community]] community has been declined.
 
 esn.defriended.email_text<<
 Hi [[user]],
@@ -1442,6 +1462,8 @@ esn.view_comments=[[openlink]]View all comments[[closelink]] to this entry
 esn.reply_at_webpage=[[openlink]]Reply[[closelink]] at the webpage
 
 esn.unscreen_comment=[[openlink]]Unscreen the comment[[closelink]]
+
+esn.new_userpic.alert=[[who]] has uploaded a new userpic. You can view it at: [[userpic]].
 
 esn.delete_comment=[[openlink]]Delete the comment[[closelink]]
 
