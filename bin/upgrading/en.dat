@@ -1409,6 +1409,8 @@ esn.you_can=You can:
 
 esn.view_entry=[[openlink]]View the entry[[closelink]]
 
+esn.vgift.alert=[[who]] received a new virtual gift!
+
 esn.read_recent_entries=[[openlink]]Read the recent entries in [[journal]][[closelink]]
 
 esn.join_community=[[openlink]]Join [[journal]] to read Members-only entries[[closelink]]
