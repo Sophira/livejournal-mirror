@@ -71,21 +71,21 @@
 }
 
 /* Shared Content */
-.account table, .display table, .mobile table, .privacy table, .history table, .advertising table, .extension table {
+.account table, .display table, .mobile table, .privacy table, .history table, .advertising table, .extension table, .extensions table {
     width: 100%;
 }
-.account td, .display td, .mobile td, .privacy td, .history td, .advertising td, .integration td {
+.account td, .display td, .mobile td, .privacy td, .history td, .advertising td, .integration td, .extensions td {
     border-bottom: 1px #ccc solid;
     padding: 10px 10px 10px 5px;
 }
-.account td.last, .display td.last, .mobile td.last, .privacy td.last, .history td.last, .advertising td.last, .extension td.last {
+.account td.last, .display td.last, .mobile td.last, .privacy td.last, .history td.last, .advertising td.last, .extension td.last, .extensions td.last {
     border-bottom: none;
 }
-.account td.help, .display td.help, .mobile td.help, .privacy td.help, .history td.help, .advertising td.help {
+.account td.help, .display td.help, .mobile td.help, .privacy td.help, .history td.help, .advertising td.help .extensions td.help {
     width: 14px;
     text-align: right;
 }
-.account_label, .display_label, .mobile_label, .privacy_label, .history_label, .integration_label {
+.account_label, .display_label, .mobile_label, .privacy_label, .history_label, .integration_label, .extensions_label {
     font-weight: bold;
 }
 .display_option, .mobile_option, .privacy_option {
@@ -129,7 +129,8 @@
     text-align: right;
     color: #000;
 }
-.mobile_label, .mobile .help {
+.mobile_label, .mobile .help,
+.extensions_label, .extensions .help {
     vertical-align: top;
 }
 .mobile_option p {
