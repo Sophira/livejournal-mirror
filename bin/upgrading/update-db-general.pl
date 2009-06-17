@@ -3165,6 +3165,17 @@ CREATE TABLE categoryproplist (
 )
 EOC
 
+register_tablecreate("comet_history", <<'EOC');
+CREATE TABLE comet_history (
+     rec_id   INT UNSIGNED PRIMARY KEY NOT NULL AUTO_INCREMENT,
+     uid      INT(10) UNSIGNED NOT NULL,
+     type     VARCHAR(31),
+     message  TEXT,
+     added    DATETIME,
+     INDEX(uid)
+)
+EOC
+
 
 ### changes
 
@@ -4015,6 +4026,12 @@ register_alter(sub {
         do_alter("category", "ALTER IGNORE TABLE category ".
                  "DROP KEY `url_path`, ".
                  "ADD UNIQUE `url_path` (url_path, parentcatid)");
+    }
+
+    unless (column_type("comet_history", "status")) {
+        do_alter("comet_history",
+                 "ALTER TABLE comet_history " .
+                 "ADD status char(1) default 'N' after message");
     }
 
 });

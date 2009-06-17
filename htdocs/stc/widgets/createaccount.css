@@ -61,3 +61,58 @@ span.appwidget-createaccount #username_error {
     display: block;
     width: 330px;
 }
+
+.liveid {
+	float: left;
+	/*background: url(/img/liveid.gif) no-repeat 0 0; */
+	background: url(/img/lj_msn/msn_logo.gif) no-repeat 0 0;
+	padding-top: 25px;
+	min-width: 300px;
+	margin: 10px 0 20px;
+	zoom: 1;
+	}
+
+.liveid UL {
+	margin: 0px;
+	padding: 0px;
+	list-style: none;
+	}
+	.liveid UL LI {
+		clear: both;
+		margin-top: 7px;
+		overflow: hidden;
+		}
+
+		.liveid LI INPUT {
+			float: left;
+			position: relative;
+			top: -2px;
+			margin-right: 6px;
+			}
+		.liveid LI LABEL {
+			float: left;
+			height: 1%;
+			zoom: 1;
+			}
+		.liveid LI .signbtn {
+			float: left;
+			clear: left;
+			margin: 3px 0 0 22px;
+			_margin: 3px 0 0 14px;
+			position: relative;
+			}
+				.liveid LI .signbtn SPAN {
+					padding-right: .6em;
+					}
+
+				.liveid LI .signbtn INPUT {
+					width: auto;
+					float: none;
+					position: relative;
+					}
+
+		.liveid LI .comment {
+			display: block;
+			font-size: .85em;
+			color: #555;
+			}

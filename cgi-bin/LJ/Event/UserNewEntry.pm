@@ -112,6 +112,24 @@ sub as_sms {
 
 }
 
+# esn.user_new_entry.in_their_journal.alert=User '[[user]]' posted in their journal
+# esn.user_new_entry.in_user_journal.alert=User '[[user]]' posted in '[[journal]]'
+sub as_alert {
+    my $self = shift;
+    my $u = shift;
+
+    my $entry = $self->entry;
+
+    return LJ::Lang::get_text($u->prop('browselang'),
+        'esn.user_new_entry.' .
+            ($entry->posterid == $entry->journalid ? 'in_their_journal' : 'in_user_journal' ) .
+            'alert', undef,
+        {
+            who     => $entry->poster->display_username,
+            journal => $entry->journal->display_username,
+        });
+}
+
 sub as_html {
     my $self = shift;
 

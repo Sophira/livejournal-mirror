@@ -195,6 +195,9 @@ sub render_body {
         $ret .= "</td></tr>\n" unless $alt_layout;
     }
 
+    #$ret .= "<tr><td>&nbsp;</td><td>123" . LJ::run_hook("create_account_extra_fields") . "</td></tr>";
+    $ret .= LJ::run_hook("create_account_extra_fields");
+
     ### captcha
     if ($LJ::HUMAN_CHECK{create}) {
         if (LJ::is_enabled("recaptcha")) {
@@ -375,6 +378,12 @@ sub handle_post {
         email => $email,
         name => $user,
     }) if LJ::sysban_check('email', $email);
+
+    my $pre_create_check = LJ::run_hook('preprocess_create_account_extra_fields', $class, $post, \%opts);
+    if ($pre_create_check->{microsoft_agreement_not_accepted}){
+        $from_post{errors}->{microsoft_agreement_not_accepted} = "microsoft_agreement_not_accepted";
+    }
+
 
     my $dbh = LJ::get_db_writer();
 

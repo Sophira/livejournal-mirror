@@ -1995,7 +1995,11 @@ sub Page
 
     my $remote = LJ::get_remote();
     if (LJ::are_hooks('s2_head_content_extra')) {
-        $p->{head_content} .= LJ::run_hook('s2_head_content_extra', $remote, $opts->{r});
+        $p->{head_content} = join "" =>
+            map { shift @$_}
+            LJ::run_hooks('s2_head_content_extra', $remote, $opts->{r});
+
+        #$p->{head_content} .= LJ::run_hook('s2_head_content_extra', $remote, $opts->{r});
     }
 
     # Automatic Discovery of RSS/Atom

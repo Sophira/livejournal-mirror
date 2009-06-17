@@ -93,9 +93,20 @@ my @_ml_strings = (
                                 #You can:
                                 #
     'esn.poll_vote.subject',    #[[user]] voted in a poll!
+    'esn.poll_vote.alert',      #[[user]] voted in a poll!
     'esn.view_poll_status',     #[[openlink]]View the poll's status[[closelink]]
     'esn.discuss_poll'          #[[openlink]]Discuss the poll[[closelink]]
 );
+
+sub as_alert {
+    my $self = shift;
+    my $u = shift;
+    return
+        LJ::Lang::get_text($u->prop('browselang'), 'esn.poll_vote.alert', undef,
+            {
+                user => $self->voter->display_username
+            });
+}
 
 sub as_email_subject {
     my $self = shift;
