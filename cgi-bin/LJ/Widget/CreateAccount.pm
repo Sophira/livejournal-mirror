@@ -323,6 +323,18 @@ sub render_body {
         $ret .= $class->html_submit( submit => $class->ml('widget.createaccount.btn'), { class => "create-button" }) . "\n";
         $ret .= "</td></tr>\n";
     }
+	
+    $ret .=qq|<script type="text/javascript">
+	   var msn_accept=DOM.getElementsByAttributeAndValue(document,'name','_service_agree')[0];
+	   var create_button=DOM.getElementsByClassName(document,'create-button')[0];
+	   create_button.onclick=function(){
+	   	if(msn_accept.checked==false && \$('msn-accept').style.display != 'none'){
+			
+			alert('| . BML::ml('msn_messanger.events') . qq|')
+			return false;
+		}
+	   };
+    </script>|;    
 
     $ret .= "</table>\n" unless $alt_layout;
 
