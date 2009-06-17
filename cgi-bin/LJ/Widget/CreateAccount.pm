@@ -196,7 +196,7 @@ sub render_body {
     }
 
     #$ret .= "<tr><td>&nbsp;</td><td>123" . LJ::run_hook("create_account_extra_fields") . "</td></tr>";
-    $ret .= LJ::run_hook("create_account_extra_fields");
+    $ret .= LJ::run_hook("create_account_extra_fields", {class => $class, errors => $errors});
 
     ### captcha
     if ($LJ::HUMAN_CHECK{create}) {
@@ -325,7 +325,7 @@ sub render_body {
     }
 	
     $ret .=qq|<script type="text/javascript">
-	   var msn_accept=DOM.getElementsByAttributeAndValue(document,'name','_service_agree')[0];
+	   var msn_accept=DOM.getElementsByAttributeAndValue(document,'name','Widget[CreateAccount]_service_agree')[0];
 	   var create_button=DOM.getElementsByClassName(document,'create-button')[0];
 	   create_button.onclick=function(){
 	   	if(msn_accept.checked==false && \$('msn-accept').style.display != 'none'){
@@ -523,6 +523,9 @@ sub handle_post {
             # mark the captcha for deletion
             LJ::Captcha::expire($capid, $anum, $nu->id);
         }
+
+        #
+        LJ::run_hook('post_create_account', $class, $nu, $post, \%opts);
 
         # send welcome mail... unless they're underage
         unless ($is_underage) {
