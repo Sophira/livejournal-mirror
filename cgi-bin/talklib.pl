@@ -2199,7 +2199,7 @@ sub get_replycount {
 
 package LJ::Talk::Post;
 
-use Class::Autouse qw/LJ::EventLogRecord::NewComment/;
+use LJ::EventLogRecord::NewComment;
 
 sub indent {
     my $a = shift;
