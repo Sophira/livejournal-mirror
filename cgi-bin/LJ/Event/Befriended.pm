@@ -138,7 +138,7 @@ sub as_alert {
     my $friend = $self->friend;
     return '' unless $friend;
     return LJ::Lang::get_text($u->prop('browselang'),
-        'esn.befriended.alert', undef, { who => $friend->display_username });
+        'esn.befriended.alert', undef, { who => $friend->ljuser_display({ target => 'blank' }) });
 }
 
 sub subscription_as_html {
