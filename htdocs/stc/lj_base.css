@@ -212,3 +212,7 @@ DL.current-version {
 .lj_ippu_titlebar IMG {
     cursor:pointer;
     }
+
+.opera-filter { display:none; }
+HTML:first-child .opera-filter { display:block; } /* opera lt 9.5 */
+HTML:not(IE7) .opera-filter, x:-o-prefocus { display:block; } /* opera gte 9.5 */
