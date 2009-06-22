@@ -1064,7 +1064,7 @@ Regards,
 
 .
 
-esn.poll_vote.alert=[[user]] voted in a poll!
+esn.poll_vote.alert=[[user]] voted in a [[openlink]]poll[[closelink]]!
 
 esn.poll_vote.email_text<<
 Hi [[user]],
@@ -1491,37 +1491,37 @@ Your friend [[newuser]] has created a journal on [[sitenameshort]]!
 You can:
 .
 
-esn.mail_comments.alert.user_edited_reply_to_your_comment=[[user]] edited a reply to your comment.
+esn.mail_comments.alert.user_edited_reply_to_your_comment=[[user]] edited a [[openlink]]reply[[closelink]] to your comment.
 
-esn.mail_comments.alert.user_edited_reply_to_a_comment=[[user]] edited a reply to a comment.
+esn.mail_comments.alert.user_edited_reply_to_a_comment=[[user]] edited a [[openlink]]reply[[closelink]] to a comment.
 
-esn.mail_comments.alert.user_reply_to_your_comment=[[user]] replied to your comment.
+esn.mail_comments.alert.user_reply_to_your_comment=[[user]] [[openlink]]replied[[closelink]] to your comment.
 
-esn.mail_comments.alert.user_reply_to_a_comment=[[user]] replied to a comment.
+esn.mail_comments.alert.user_reply_to_a_comment=[[user]] [[openlink]]replied[[closelink]] to a comment.
 
-esn.mail_comments.alert.user_edited_reply_to_your_post=[[user]] edited a reply to your post.
+esn.mail_comments.alert.user_edited_reply_to_your_post=[[user]] edited a [[openlink]]reply[[closelink]] to your post.
 
-esn.mail_comments.alert.user_edited_reply_to_a_post=[[user]] edited a reply to a post.
+esn.mail_comments.alert.user_edited_reply_to_a_post=[[user]] edited a [[openlink]]reply[[closelink]] to a post.
 
-esn.mail_comments.alert.user_reply_to_your_post=[[user]] replied to your post.
+esn.mail_comments.alert.user_reply_to_your_post=[[user]] [[openlink]]replied[[closelink]] to your post.
 
-esn.mail_comments.alert.user_reply_to_a_post=[[user]] replied to a post.
+esn.mail_comments.alert.user_reply_to_a_post=[[user]] [[openlink]]replied[[closelink]] to a post.
 
-esn.mail_comments.alert.anonymous_edited_reply_to_your_comment=Anonymous user edited a reply to your comment.
+esn.mail_comments.alert.anonymous_edited_reply_to_your_comment=Anonymous user edited a [[openlink]]reply[[closelink]] to your comment.
 
-esn.mail_comments.alert.anonymous_edited_reply_to_a_comment=Anonymous user edited a reply to a comment.
+esn.mail_comments.alert.anonymous_edited_reply_to_a_comment=Anonymous user edited a [[openlink]]reply[[closelink]] to a comment.
 
-esn.mail_comments.alert.anonymous_reply_to_your_comment=Anonymous user replied to your comment.
+esn.mail_comments.alert.anonymous_reply_to_your_comment=Anonymous user [[openlink]]replied[[closelink]] to your comment.
 
-esn.mail_comments.alert.anonymous_reply_to_a_comment=Anonymous user replied to a comment.
+esn.mail_comments.alert.anonymous_reply_to_a_comment=Anonymous user [[openlink]]replied[[closelink]] to a comment.
 
-esn.mail_comments.alert.anonymous_edited_reply_to_your_post=Anonymous user edited a reply to your post.
+esn.mail_comments.alert.anonymous_edited_reply_to_your_post=Anonymous user edited a [[openlink]]reply[[closelink]] to your post.
 
-esn.mail_comments.alert.anonymous_edited_reply_to_a_post=Anonymous user edited a reply to a post.
+esn.mail_comments.alert.anonymous_edited_reply_to_a_post=Anonymous user edited a [[openlink]]reply[[closelink]] to a post.
 
-esn.mail_comments.alert.anonymous_reply_to_your_post=Anonymous user replied to your post.
+esn.mail_comments.alert.anonymous_reply_to_your_post=Anonymous user [[openlink]]replied[[closelink]] to your post.
 
-esn.mail_comments.alert.anonymous_reply_to_a_post=Anonymous user replied to a post.
+esn.mail_comments.alert.anonymous_reply_to_a_post=Anonymous user [[openlink]]replied[[closelink]] to a post.
 
 esn.public=public
 
@@ -1913,7 +1913,7 @@ event.userpic_upload.me=One of my friends uploads a new userpic
 
 event.userpic_upload.user=[[user]] uploads a new userpic
 
-event.officialpost=[[sitename]] makes a new announcement
+event.officialpost=[[sitename]] makes a new [[openlink]]announcement[[closelink]].
 
 fckland.ljimage=Insert/Edit Image
 

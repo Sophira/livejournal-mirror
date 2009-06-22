@@ -125,8 +125,8 @@ sub as_alert {
             ($entry->posterid == $entry->journalid ? 'in_their_journal' : 'in_user_journal' ) .
             'alert', undef,
         {
-            who     => $entry->poster->ljuser_display({ target => 'blank' }),
-            journal => $entry->journal->ljuser_display({ target => 'blank' }),
+            who     => $entry->poster->ljuser_display({ target => '_blank' }),
+            journal => $entry->journal->ljuser_display({ target => '_blank' }),
         });
 }
 

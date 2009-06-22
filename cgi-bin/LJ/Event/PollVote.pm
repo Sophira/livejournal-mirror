@@ -104,7 +104,9 @@ sub as_alert {
     return
         LJ::Lang::get_text($u->prop('browselang'), 'esn.poll_vote.alert', undef,
             {
-                user => $self->voter->ljuser_display({ target => 'blank' })
+                user        => $self->voter->ljuser_display({ target => '_blank' }),
+                openlink    => '<a href="' . $self->entry->url . '" target="_blank>"',
+                closelink   => '</a>',
             });
 }
 

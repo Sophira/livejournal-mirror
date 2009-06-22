@@ -89,11 +89,12 @@ sub as_sms {
 sub as_alert {
     my $self = shift;
     my $u = shift;
+    my $entry_url = $self->entry->url;
     return LJ::Lang::get_text($u->prop('browselang'),
         'esn.journal_new_entry.alert', undef,
             {
-                who     => $self->entry->poster->ljuser_display({ target => 'blank' }),
-                journal => $self->entry->journal->ljuser_display({ target => 'blank' }),
+                who     => $self->entry->poster->ljuser_display({ target => '_blank' }),
+                journal => "<a href=\"$entry_url\" target='_blank'>" . $self->entry->journal->display_username() . "</a>",
             });
 }
 

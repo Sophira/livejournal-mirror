@@ -49,7 +49,7 @@ sub as_alert {
     return LJ::Lang::get_text($u->prop('browselang'),
         'esn.bday.alert', undef,
             {
-                who     => $self->bdayuser->ljuser_display({ target => 'blank' }),
+                who     => $self->bdayuser->ljuser_display({ target => '_blank' }),
                 bdate   => $self->bday,
             });
 }

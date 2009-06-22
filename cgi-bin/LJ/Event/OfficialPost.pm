@@ -146,8 +146,10 @@ sub as_alert {
             sitenameshort   => $LJ::SITENAMESHORT,
             sitenameabbrev  => $LJ::SITENAMEABBREV,
             subject         => $entry->subject_text || '',
-            username        => $entry->journal->ljuser_display({ target => 'blank' }),
+            username        => $entry->journal->ljuser_display({ target => '_blank' }),
             url             => $entry->url,
+            openlink        => '<a href="' . $entry->url . '" target="_blank">',
+            closelink       => '</a>',
         });
 }
 
