@@ -19,7 +19,7 @@ sub as_alert {
     my $self = shift;
     my $u = shift;
     return LJ::Lang::get_text($u->prop('browselang'),
-        'esn.purged.alert', undef, { journal => $self->event_journal->display_username });
+        'esn.purged.alert', undef, { journal => $self->event_journal->ljuser_display({ target => 'blank' }) });
 }
 
 sub as_html {

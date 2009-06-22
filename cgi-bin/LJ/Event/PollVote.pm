@@ -104,7 +104,7 @@ sub as_alert {
     return
         LJ::Lang::get_text($u->prop('browselang'), 'esn.poll_vote.alert', undef,
             {
-                user => $self->voter->display_username
+                user => $self->voter->ljuser_display({ target => 'blank' })
             });
 }
 

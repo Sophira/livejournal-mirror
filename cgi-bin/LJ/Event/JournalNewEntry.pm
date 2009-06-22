@@ -85,14 +85,15 @@ sub as_sms {
             $self->entry->poster->user, $self->entry->journal->user);
 }
 
+# TODO: A word 'entry' in text must be a hyperlink to this entry.
 sub as_alert {
     my $self = shift;
     my $u = shift;
     return LJ::Lang::get_text($u->prop('browselang'),
         'esn.journal_new_entry.alert', undef,
             {
-                who     => $self->entry->poster->display_username,
-                journal => $self->entry->journal->display_username,
+                who     => $self->entry->poster->ljuser_display({ target => 'blank' }),
+                journal => $self->entry->journal->ljuser_display({ target => 'blank' }),
             });
 }
 

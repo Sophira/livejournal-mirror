@@ -140,7 +140,7 @@ sub as_alert {
     my $friend = $self->friend;
     return '' unless $friend;
     return LJ::Lang::get_text($u->prop('browselang'),
-        'esn.comm_invite.alert', undef, { user => $friend->display_username });
+        'esn.comm_invite.alert', undef, { user => $friend->ljuser_display({ target => 'blank' }) });
 }
 
 sub subscription_as_html {

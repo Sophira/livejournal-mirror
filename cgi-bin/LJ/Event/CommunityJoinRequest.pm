@@ -148,8 +148,8 @@ sub as_alert {
     return LJ::Lang::get_text($u->prop('browselang'),
         'esn.community_join_requst.alert', undef,
             {
-                who  => $self->requestor->display_username,
-                comm => $self->comm->display_username,
+                who  => $self->requestor->ljuser_display({ target => 'blank' }),
+                comm => $self->comm->ljuser_display({ target => 'blank' }),
             });
 }
 

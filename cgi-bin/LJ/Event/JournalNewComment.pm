@@ -198,7 +198,8 @@ sub as_alert {
     my $self = shift;
     my $u = shift;
 
-    my $user = $self->comment->poster ? $self->comment->poster->display_username : '(Anonymous user)';
+    # TODO: [[post]] [[reply]] etc
+    my $user = $self->comment->poster ? $self->comment->poster->ljuser_display({ target => 'blank' }) : '(Anonymous user)';
     my $edited = $self->comment->is_edited;
 
     return LJ::Lang::get_text($u->prop('browselang'),
