@@ -7289,7 +7289,9 @@ sub add_friend
     my $friender = LJ::load_userid($userid);
 
     # check action rate
-    unless ($opts->{no_rate_check}){
+    ## TODO: rate check of adding friends needs PM elaboration
+    ## Remove '1 ||' when specification is complete  
+    unless (1 || $opts->{no_rate_check}){
         my $cond = ["ratecheck:add_friend:$userid",
                     [ $LJ::ADD_FRIEND_RATE_LIMIT || [ 1, 3600 ] ]
                    ];
