@@ -138,7 +138,6 @@ body<=
 
     # Active tab
     my $given_cat = $GET{cat};
-warn "* 1: $given_cat";
     if ($u) {
         $given_cat = "account"
             unless defined $cats_with_settings{$given_cat} &&

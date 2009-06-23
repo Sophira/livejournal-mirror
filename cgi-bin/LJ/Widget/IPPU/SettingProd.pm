@@ -22,7 +22,6 @@ sub render_body {
    
     my $setting_class_html  = $setting_class->as_html($remote, undef, { helper => 0, faq => 1, display_null => 0} );
     my $hidden_setting_key  = $class->html_hidden({ name => 'setting_key', value => $key });
-    warn "\$hidden_setting_key=$hidden_setting_key";
     my $start_form          = $class->start_form( id => 'settingprod_form' );
     my $end_form            = $class->end_form;
 
