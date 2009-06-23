@@ -195,7 +195,6 @@ sub render_body {
         $ret .= "</td></tr>\n" unless $alt_layout;
     }
 
-    #$ret .= "<tr><td>&nbsp;</td><td>123" . LJ::run_hook("create_account_extra_fields") . "</td></tr>";
     $ret .= LJ::run_hook("create_account_extra_fields", {class => $class, errors => $errors});
 
     ### captcha
