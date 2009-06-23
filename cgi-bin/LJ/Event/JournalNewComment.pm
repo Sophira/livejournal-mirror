@@ -199,19 +199,19 @@ sub as_alert {
     my $u = shift;
 
     # TODO: [[post]] [[reply]] etc
-    my $user = $self->comment->poster ? $self->comment->poster->ljuser_display({ target => '_blank' }) : '(Anonymous user)';
-    my $edited = $self->comment->is_edited;
-    my $entryurl  = $entry->url;
+    my $comment = $self->comment;
+    my $user = $comment->poster ? $comment->poster->ljuser_display({ target => '_blank' }) : '(Anonymous user)';
+    my $edited = $comment->is_edited;
 
     return LJ::Lang::get_text($u->prop('browselang'),
         'esn.mail_comments.alert.' .
-            ($self->comment->poster ? 'user' : 'anonymous') . '_' .
+            ($comment->poster ? 'user' : 'anonymous') . '_' .
             ($edited ? 'edited' : 'replied') . '_' .
-            (LJ::u_equals($self->comment->entry->poster, $u) ? 'to_your' : 'to_a') . '_' .
-            ($self->comment->parent ? 'post' : 'comment'), undef,
+            (LJ::u_equals($comment->entry->poster, $u) ? 'to_your' : 'to_a') . '_' .
+            ($comment->parent ? 'post' : 'comment'), undef,
                 {
                     user        => $user,
-                    openlink    => '<a href="' . $self->comment->url . '" target="_blank">',
+                    openlink    => '<a href="' . $comment->url . '" target="_blank">',
                     closelink   => '</a>',
                 });
 }
