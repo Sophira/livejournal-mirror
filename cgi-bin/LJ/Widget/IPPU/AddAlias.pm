@@ -74,7 +74,7 @@ sub handle_post {
 
     my $is_edit = 0;
     $is_edit = 1 if $aliases->{$post->{foruser}} ne '';
-    my $prepared_alias = substr($post->{alias}, 0, 200);
+    my $prepared_alias = substr($post->{alias}, 0, 400);
     $aliases->{$user_for_alias->{userid}} = $prepared_alias if $prepared_alias;
     delete $aliases->{$user_for_alias->{userid}} unless $prepared_alias;
 

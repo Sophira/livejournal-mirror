@@ -274,7 +274,7 @@ body<=
         $aliases = jsonToObj($aliases);
         foreach (grep { /^useralias/ } keys %POST) {
             my $key = my $who = $_;
-            my $value = substr($POST{$key}, 0, 200);
+            my $value = substr($POST{$key}, 0, 400);
             $who =~ s/^useralias_//;
             $aliases->{$who} = $value if (defined $value && $value ne '' && $who ne $remote->{userid});
             delete $aliases->{$who} unless $value;
