@@ -192,7 +192,9 @@
 
 .im.lastfm=Last.fm
 
-.im.msn=WL ID
+.im.msn=Windows Live ID
+
+.im.msn.status=LJ Messenger Status:
 
 .im.skype=Skype
 
