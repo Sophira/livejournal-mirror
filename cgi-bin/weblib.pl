@@ -1189,7 +1189,7 @@ sub entry_form {
 
         # Authentication box
         $out .= "<p class='update-errors'><?inerr $errors->{'auth'} inerr?></p>\n" if $errors->{'auth'};
-
+        
         # Date / Time
         {
             my ($year, $mon, $mday, $hour, $min) = split( /\D/, $opts->{'datetime'});
@@ -1311,7 +1311,11 @@ sub entry_form {
                                 'disabled' => $opts->{'disabled_save'},
                                 'id' => 'draft'}) . "\n";
     $out .= "</div><!-- end #draft-container -->\n\n";
+   
     $out .= "<input type='text' disabled='disabled' name='draftstatus' id='draftstatus' />\n\n";
+
+    $out .= LJ::run_hook("update_page_extra_html_render", $opts);
+    
     LJ::need_res('stc/fck/fckeditor.js', 'js/rte.js', 'stc/display_none.css');
     if (!$opts->{'did_spellcheck'}) {
 
@@ -1948,7 +1952,7 @@ sub entry_form_decode
             delete $req->{'prop_current_mood'};
         }
     }
-    
+
     # process site-specific options
     LJ::run_hooks('decode_entry_form', $POST, $req);
     

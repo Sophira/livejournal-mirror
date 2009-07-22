@@ -1544,6 +1544,8 @@ sub postevent
         'props'     => $req->{'props'},
         'entry'     => $entry,
         'jobs'      => \@jobs,  # for hooks to push jobs onto
+        'req'       => $req,
+        'res'       => $res,
     });
     
     # cluster tracking
@@ -3757,6 +3759,7 @@ sub postevent
     }
 
     $res->{'message'} = $rs->{'message'} if $rs->{'message'};
+    $res->{'extra_result_message'} = $rs->{'extra_result_message'} if $rs->{'extra_result_message'};
     $res->{'success'} = "OK";
     $res->{'itemid'} = $rs->{'itemid'};
     $res->{'anum'} = $rs->{'anum'} if defined $rs->{'anum'};

@@ -214,6 +214,7 @@
             'prop_qotdid' => $qid,
             'altlogin' => $GET{altlogin} ? 1 : 0,
             'prop_opt_preformatted' => $opt_preformatted ? 1 : 0,
+            'qid' => $qid,
         };
 
         if ($remote) {
@@ -378,6 +379,27 @@
             $errors->{'entry'} = $ML{'.error.noentry'};
         }
 
+        unless (
+            (($req{'wepc_email'} ne '') && ($req{'wepc_agree'} ne ''))
+                or
+            (($req{'wepc_email'} eq '') && ($req{'wepc_agree'} eq ''))
+        ) {
+            $errors->{'entry'} = $ML{'wepc.agree.error'} if $req{'wepc_agree'} ne '';
+            $errors->{'entry'} = $ML{'wepc.email.error'} if $req{'wepc_email'} ne '';
+            $print_entry_form->();
+            return
+        }
+
+        if (($req{'wepc_email'} ne '') && ($req{'wepc_agree'} ne '')) {
+            my @errors_email = ();
+            LJ::check_email($req{'wepc_email'}, \@errors_email);
+            if (@errors_email) {
+                $errors->{entry} = $errors_email[0];
+                $print_entry_form->();
+                return;
+            }
+        }
+
         $req{prop_qotdid} = $qid;
 
         my %res;
@@ -427,6 +449,9 @@
                         $ju = $remote;                             # posting as remote
                     };
                     $$body .= BML::ml('.update.success2', {'aopts' => "href='" . $ju->journal_base . "/'"});
+
+                    $$body .= $res{extra_result_message};
+                    
                     my $juser = $ju->{'user'};
                     my ($itemid, $anum) = ($res{'itemid'}, $res{'anum'});
                     $itemlink = LJ::item_link($ju, $itemid, $anum);
