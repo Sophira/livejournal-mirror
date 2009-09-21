@@ -68,7 +68,7 @@ sub render_body {
         $ret .=	"</ul>";
     }
 
-	$ret .= "<a href='$LJ::SITEROOT/shop/vgifts.bml'>" . $class->ml('widget.friendbirthdays.moregifts') . " &rarr;</a>";
+#	$ret .= "<a href='$LJ::SITEROOT/shop/vgifts.bml'>" . $class->ml('widget.friendbirthdays.moregifts') . " &rarr;</a>";
 
     $ret .= "<p class='indent_sm'>&raquo; <a href='$LJ::SITEROOT/birthdays.bml'>" .
             $class->ml('widget.friendbirthdays.friends_link') .
