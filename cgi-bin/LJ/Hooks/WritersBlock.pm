@@ -47,11 +47,12 @@ LJ::register_hook('esn_new_journal_post_email_writersblock', sub {
         $opts->{openlink}   = '<a href="' . $entry->url . '">';
         $opts->{closelink}  = '</a>';
         $opts->{event} = '<br /><br />'. LJ::Widget::QotD->render(
-            user        => $u,
-            embed       => 1,
-            lang        => $lang, 
-            nocontrols  => 1,
-            question    => $question,
+            user            => $u,
+            embed           => 1,
+            lang            => $lang, 
+            nocontrols      => 1,
+            question        => $question,
+            button_as_link  => 1,
         ) . '<br />';
     } else {
         $opts->{openlink}   = '';
@@ -62,7 +63,7 @@ LJ::register_hook('esn_new_journal_post_email_writersblock', sub {
         if ($question) {
             my $ml_key = $qotd->ml_key("$question->{qid}.text");
             my $ml_text = $qotd->ml($ml_key, undef, $lang);
-            LJ::CleanHTML::clean_event(\$ml_text);
+            LJ::CleanHTML::clean_event(\$ml_text, { textonly => 1, } );
             $opts->{event} = $ml_text;
         }
     }
@@ -70,5 +71,8 @@ LJ::register_hook('esn_new_journal_post_email_writersblock', sub {
     return
         LJ::Lang::get_text($lang, 'esn.writersblock.email', undef, $opts) . "\n\n";
 });
+
+# Never show 'join this community' option in esn for writersblock
+LJ::register_hook('esn_hide_join_option_for_writersblock', sub { return 1; });
 
 1;
