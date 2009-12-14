@@ -175,6 +175,8 @@ sub _get_question_data {
     my $class = shift;
     my $q = shift;
     my $opts = shift;
+
+    my $target = $opts->{target};
     
     # FIXME: this is a dirty hack because if this widget is put into a journal page
     #        as the first request of a given Apache, Apache::BML::cur_req will not
@@ -200,7 +202,7 @@ sub _get_question_data {
 
     my $ml_key = $class->ml_key("$q->{qid}.text");
     my $text = $class->ml($ml_key, undef, $lncode);
-    LJ::CleanHTML::clean_event(\$text);
+    LJ::CleanHTML::clean_event(\$text, { target => $target });
 
     my $from_text = '';
     if ($q->{from_user}) {
@@ -212,7 +214,7 @@ sub _get_question_data {
     my $extra_text;
     if ($q->{extra_text} && LJ::run_hook('show_qotd_extra_text', $remote)) {
         $extra_text = $q->{extra_text};
-        LJ::CleanHTML::clean_event(\$extra_text);
+        LJ::CleanHTML::clean_event(\$extra_text, { target => $target });
     }
 
     my $between_text = $from_text && $extra_text ? "<br />" : "";
@@ -225,7 +227,7 @@ sub _get_question_data {
         $view_answers_link = "<a" . ($opts->{small_view_link} ? " class='small-view-link'" : '') .
             (($opts->{form_disabled} || $opts->{embed}) ? ' target="_blank"' : '') . # Open links on top, not in current frame.
             " href=\"$LJ::SITEROOT/misc/latestqotd.bml?qid=$qid\">" .
-                $class->ml('widget.qotd.viewanswers', {'total_count' => $count}) .
+                $class->ml('widget.qotd.viewanswers', {'total_count' => $count}, $lncode) .
             "</a>";
     }
 
@@ -236,7 +238,8 @@ sub _get_question_data {
                 button_disabled => $opts->{form_disabled},
                 button_as_link  => $opts->{button_as_link},
                 form_disabled   => $opts->{form_disabled},
-                embed           => $opts->{embed});
+                embed           => $opts->{embed},
+                lang            => $lncode);
     }
 
     my $impression_img = $class->impression_img($q);
@@ -270,7 +273,7 @@ sub answer_link {
     my %opts = @_;
 
     my $url = $class->answer_url($question, user => $opts{user});
-    my $txt = LJ::run_hook("qotd_answer_txt", $opts{user}) || $class->ml('widget.qotd.answer');
+    my $txt = LJ::run_hook("qotd_answer_txt", $opts{user}) || $class->ml('widget.qotd.answer', undef, $opts{lang});
     my $dis = $opts{button_disabled} ? "disabled='disabled'" : "";
     my $onclick = qq{onclick="document.location.href='$url'"};
     my $target = (($opts{form_disabled} || $opts{embed}) ? ' target="_top"' : '');

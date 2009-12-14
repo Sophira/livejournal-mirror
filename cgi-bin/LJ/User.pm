@@ -6903,7 +6903,8 @@ sub ljuser
         
         ## add class as "ljuser-name_*username*" for find user on page to change alias
         $user_html .= " ljuser-name_".LJ::canonical_username($user);
-        $user_html .= "' lj:user='$user' style='white-space: nowrap;$strike'><a href='$profile'><img src='$img/$fil' alt='[info]' width='$x' height='$y' style='vertical-align: bottom; border: 0; padding-right: 1px;' /></a><a href='$url'$link_color";
+
+        $user_html .= "' lj:user='$user' style='white-space: nowrap;$strike'><a href='$profile'$target><img src='$img/$fil' alt='[info]' width='$x' height='$y' style='vertical-align: bottom; border: 0; padding-right: 1px;' /></a><a href='$url'$link_color$target";
         $user_html .= "  title='$alias'"
             if $alias;
         $user_html .= ">$ljusername";
