@@ -4,6 +4,7 @@ use strict;
 use base qw(LJ::Widget);
 use Carp qw(croak);
 use Class::Autouse qw( LJ::QotD LJ::PromoText );
+use Encode qw(encode decode is_utf8);
 
 sub need_res {
     return qw( js/widgets/qotd.js stc/widgets/qotd.css );
@@ -171,6 +172,48 @@ sub qotd_display {
     return $ret;
 }
 
+sub _format_question_text {
+    my ($class, $text, $opts) = @_;
+    my $target = $opts->{target};
+
+    if ($opts->{nohtml}) {
+        LJ::CleanHTML::clean_subject_all(\$text, { target => $target });
+    } else {
+        LJ::CleanHTML::clean_event(\$text, { target => $target });
+    }
+    $text =~ s/<br \/>|\r|\n/ /g if $opts->{nobr}; # Replace break lines with spaces.
+
+    if ($opts->{trim} || $opts->{addbreaks}) {
+
+        $text = decode('utf8', $text);
+
+        my $break_len = $opts->{addbreaks};
+
+        my $break_word = sub {
+            my ($word) = @_;
+            return $word unless $break_len;
+            return $word if length($word) < $break_len;
+
+            my @parts;
+            foreach my $i (0..(length($word) / $break_len)) {
+                push @parts, substr($word, $i * $break_len, $break_len);
+            }
+
+            return join(' ', @parts);
+        };
+
+        $text =~ s/(\w+)/$break_word->($1)/eg if $break_len;
+
+        $text = encode('utf8', $text);
+        $text = LJ::trim_at_word($text, $opts->{trim}) if $opts->{trim};
+
+        $text =~ s/\s+/ /sg;
+
+    }
+
+    return $text;
+}
+
 sub _get_question_data {
     my $class = shift;
     my $q = shift;
@@ -201,14 +244,7 @@ sub _get_question_data {
     );
 
     my $ml_key = $class->ml_key("$q->{qid}.text");
-    my $text = $class->ml($ml_key, undef, $lncode);
-    if ($opts->{nohtml}) {
-        LJ::CleanHTML::clean_subject_all(\$text, { target => $target });
-    } else {
-        LJ::CleanHTML::clean_event(\$text, { target => $target });
-    }
-    $text =~ s/<br \/>/ /g if $opts->{nobr}; # Replace break lines with spaces.
-    $text = Encode::encode_utf8(LJ::trim_at_word(Encode::decode_utf8($text), $opts->{trim})) if $opts->{trim};
+    my $text = $class->_format_question_text($class->ml($ml_key, undef, $lncode), $opts);
 
     my $from_text = '';
     if ($q->{from_user}) {
@@ -219,7 +255,10 @@ sub _get_question_data {
 
     my $extra_text;
     if ($q->{extra_text} && LJ::run_hook('show_qotd_extra_text', $remote)) {
-        $extra_text = $q->{extra_text};
+        # use 'extra_trim' parameter if it is,
+        # else use 'trim'.
+        $opts->{trim} = $opts->{extra_trim} if exists $opts->{extra_trim} && $opts->{extra_trim};
+        $extra_text = $class->_format_question_text($q->{extra_text}, $opts);
         LJ::CleanHTML::clean_event(\$extra_text, { target => $target });
     }
 
