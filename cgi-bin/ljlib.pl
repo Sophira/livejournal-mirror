@@ -2111,7 +2111,7 @@ sub start_request
 
     # include standard files if this is web-context
     unless ($LJ::DISABLED{sitewide_includes}) {
-        if (eval { Apache->request }) {
+        if (eval { LJ::Request->instance }) {
             # standard site-wide JS and CSS
             # jQuery always should be the first in the list
             LJ::need_res(qw(
@@ -2639,7 +2639,7 @@ sub work_report {
     my $dest = $LJ::WORK_REPORT_HOST;
     return unless $dest;
 
-    my $r = eval { Apache->request; };
+    my $r = eval { LJ::Request->instance; };
     return unless $r;
     return if $r->method eq "OPTIONS";
 
@@ -2944,7 +2944,7 @@ sub get_remote_ip
         return $BML::COOKIE{'fake_ip'} if LJ::is_web_context() && $BML::COOKIE{'fake_ip'};
     }
     eval {
-        $ip = Apache->request->connection->remote_ip;
+        $ip = LJ::Request->instance->connection->remote_ip;
     };
     return $ip || $ENV{'FAKE_IP'};
 }
@@ -3192,7 +3192,7 @@ sub is_web_context {
 sub is_open_proxy
 {
     my $ip = shift;
-    eval { $ip ||= Apache->request; };
+    eval { $ip ||= LJ::Request->instance; };
     return 0 unless $ip;
     if (ref $ip) { $ip = $ip->connection->remote_ip; }
 

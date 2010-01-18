@@ -2,8 +2,8 @@ package LJ::AccessLogRecord;
 use strict;
 
 sub new {
-    my ($class, $r) = @_;
-    my $rl = $r->last;
+    my $class = shift;
+    my $rl = LJ::Request->r;
 
     my $now = time();
     my @now = gmtime($now);
@@ -17,11 +17,11 @@ sub new {
 
     my $self = bless {
         '_now' => $now,
-        '_r'   => $r,
+        '_r'   => LJ::Request->r,
         'whn' => sprintf("%04d%02d%02d%02d%02d%02d", $now[5]+1900, $now[4]+1, @now[3, 2, 1, 0]),
         'whnunix' => $now,
         'server' => $LJ::SERVER_NAME,
-        'addr' => $r->connection->remote_ip,
+        'addr' => LJ::Request->connection->remote_ip,
         'ljuser' => $rl->notes('ljuser'),
         'remotecaps' => $remotecaps,
         'remoteid'   => $remoteid,
@@ -32,19 +32,19 @@ sub new {
         'anonsess' => $rl->notes('anonsess'),
         'langpref' => $rl->notes('langpref'),
         'clientver' => $rl->notes('clientver'),
-        'uniq' => $r->notes('uniq'),
-        'method' => $r->method,
-        'uri' => $r->uri,
-        'args' => scalar $r->args,
+        'uniq' => LJ::Request->notes('uniq'),
+        'method' => LJ::Request->method,
+        'uri' => LJ::Request->uri,
+        'args' => scalar LJ::Request->args,
         'status' => $rl->status,
         'ctype' => $ctype,
         'bytes' => $rl->bytes_sent,
-        'browser' => $r->header_in("User-Agent"),
-        'secs' => $now - $r->request_time(),
-        'ref' => $r->header_in("Referer"),
-        'host' => $r->header_in("Host"),
+        'browser' => LJ::Request->header_in("User-Agent"),
+        'secs' => $now - LJ::Request->request_time(),
+        'ref' => LJ::Request->header_in("Referer"),
+        'host' => LJ::Request->header_in("Host"),
     }, $class;
-    $self->populate_gtop_info($r);
+    $self->populate_gtop_info();
     return $self;
 }
 
@@ -54,7 +54,7 @@ sub keys {
 }
 
 sub populate_gtop_info {
-    my ($self, $r) = @_;
+    my $self = shift;
 
     # If the configuration says to log statistics and GTop is available, then
     # add those data to the log
@@ -64,9 +64,9 @@ sub populate_gtop_info {
     #   New Every Time: 2.17439 wallclock secs ( 1.18 usr +  0.94 sys =  2.12 CPU) @ 4716.98/s (n=10000)
     my $GTop = LJ::gtop() or return;
 
-    my $startcpu = $r->pnotes( 'gtop_cpu' ) or return;
+    my $startcpu = LJ::Request->pnotes( 'gtop_cpu' ) or return;
     my $endcpu = $GTop->cpu                 or return;
-    my $startmem = $r->pnotes( 'gtop_mem' ) or return;
+    my $startmem = LJ::Request->pnotes( 'gtop_mem' ) or return;
     my $endmem = $GTop->proc_mem( $$ )      or return;
     my $cpufreq = $endcpu->frequency        or return;
 

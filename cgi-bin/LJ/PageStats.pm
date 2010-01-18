@@ -90,7 +90,7 @@ sub get_user {
 sub get_request {
     my ($self) = @_;
 
-    return Apache->request;
+    return LJ::Request->r;
 }
 
 sub get_root {

@@ -17,9 +17,9 @@ sub load { 1 }
 sub handler
 {
     my $r = shift;
-    my $uri = $r->uri;
+    my $uri = LJ::Request->uri;
     my ($base, $ext, $extra) = $uri =~ m!^/palimg/(.+)\.(\w+)(.*)$!;
-    $r->notes("codepath" => "img.palimg");
+    LJ::Request->notes("codepath" => "img.palimg");
     return 404 unless $base && $base !~ m!\.\.!;
 
     my $disk_file = "$LJ::HOME/htdocs/palimg/$base.$ext";
@@ -44,7 +44,7 @@ sub handler
         }
     }
 
-    return send_file($r, $disk_file, {
+    return send_file($disk_file, {
         'mime' => $mime,
         'etag' => $etag,
         'palspec' => $palspec,
@@ -61,7 +61,7 @@ sub parse_hex_color
 
 sub send_file
 {
-    my ($r, $disk_file, $opts) = @_;
+    my ($disk_file, $opts) = @_;
 
     my $etag = $opts->{'etag'};
 
@@ -112,23 +112,46 @@ sub send_file
     }
 
     $etag = '"' . $etag . '"';
-    my $ifnonematch = $r->header_in("If-None-Match");
+    my $ifnonematch = LJ::Request->header_in("If-None-Match");
     return HTTP_NOT_MODIFIED if
         defined $ifnonematch && $etag eq $ifnonematch;
 
     # send the file
-    $r->content_type($opts->{'mime'});
-    $r->header_out("Content-length", $opts->{'size'});
-    $r->header_out("ETag", $etag);
+    LJ::Request->content_type($opts->{'mime'});
+    LJ::Request->header_out("Content-length", $opts->{'size'});
+    LJ::Request->header_out("ETag", $etag);
     if ($opts->{'modtime'}) {
-        $r->update_mtime($opts->{'modtime'});
-        $r->set_last_modified();
+        LJ::Request->update_mtime($opts->{'modtime'});
+        LJ::Request->set_last_modified();
     }
-    $r->send_http_header();
+    LJ::Request->send_http_header();
 
     # HEAD request?
-    return OK if $r->method eq "HEAD";
+    return OK if LJ::Request->method eq "HEAD";
 
+    # this is slow way of sending file.
+    # but in productions this code should not be called.
+    open my $fh, "<" => $disk_file
+        or return 404;
+    binmode $fh;
+    my $palette = undef;
+    if (%pal_colors) {
+        if ($opts->{'mime'} eq "image/gif") {
+            $palette = PaletteModify::new_gif_palette($fh, \%pal_colors);
+        } elsif ($opts->{'mime'} == "image/png") {
+            $palette = PaletteModify::new_png_palette($fh, \%pal_colors);
+        }
+        unless ($palette) {
+            return 404;  # image isn't palette changeable?
+        }
+    }
+    LJ::Request->print($palette) if $palette;
+    while (my $readed = read($fh, my $buf, 1024*1024)){
+        LJ::Request->print($buf);
+    }
+    close $fh;
+
+=head
     my $fh = Apache::File->new($disk_file);
     return 404 unless $fh;
     binmode($fh);
@@ -148,6 +171,7 @@ sub send_file
     $r->print($palette) if $palette; # when palette modified.
     $r->send_fd($fh); # sends remaining data (or all of it) quickly
     $fh->close();
+=cut
     return OK;
 }
 
