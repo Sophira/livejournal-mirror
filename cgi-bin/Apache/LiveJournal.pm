@@ -7,9 +7,9 @@ use strict;
 no warnings 'uninitialized';
 
 use LJ::Request;
-use Apache::Constants qw(:common REDIRECT HTTP_NOT_MODIFIED
-                         HTTP_MOVED_PERMANENTLY HTTP_MOVED_TEMPORARILY
-                         M_TRACE M_OPTIONS);
+#use Apache::Constants qw(:common REDIRECT HTTP_NOT_MODIFIED
+#                         HTTP_MOVED_PERMANENTLY HTTP_MOVED_TEMPORARILY
+#                         M_TRACE M_OPTIONS);
 use Apache::File ();
 use lib "$ENV{LJHOME}/cgi-bin";
 
@@ -100,7 +100,7 @@ sub handler
     if ($LJ::SERVER_TOTALLY_DOWN) {
         LJ::Request->handler("perl-script");
         LJ::Request->set_handlers(PerlHandler => [ \&totally_down_content ]);
-        return OK;
+        return LJ::Request::OK;
     }
 
     # only perform this once in case of internal redirects
@@ -179,7 +179,7 @@ sub handler
 
     LJ::Request->set_handlers(PerlTransHandler => [ \&trans ]);
 
-    return OK;
+    return LJ::Request::OK;
 }
 
 sub redir {
@@ -196,12 +196,12 @@ sub redir {
     if ($LJ::DEBUG{'log_redirects'}) {
         LJ::Request->log_error("redirect to $url from: " . join(", ", caller(0)));
     }
-    return $code || REDIRECT;
+    return $code || LJ::Request::REDIRECT;
 }
 
 # send the user to the URL for them to get their domain session cookie
 sub remote_domsess_bounce {
-    return redir(LJ::remote_bounce_url(), HTTP_MOVED_TEMPORARILY);
+    return redir(LJ::remote_bounce_url(), LJ::Request::HTTP_MOVED_TEMPORARILY);
 }
 
 sub totally_down_content
@@ -212,14 +212,14 @@ sub totally_down_content
         LJ::Request->content_type("text/plain");
         LJ::Request->send_http_header();
         LJ::Request->print("success\nFAIL\nerrmsg\n$LJ::SERVER_DOWN_MESSAGE");
-        return OK;
+        return LJ::Request::OK;
     }
 
     if ($uri =~ m!^/customview.cgi!) {
         LJ::Request->content_type("text/html");
         LJ::Request->send_http_header();
         LJ::Request->print("<!-- $LJ::SERVER_DOWN_MESSAGE -->");
-        return OK;
+        return LJ::Request::OK;
     }
 
     # set to 500 so people don't cache this error message
@@ -230,7 +230,7 @@ sub totally_down_content
     LJ::Request->send_http_header();
 
     LJ::Request->print($body);
-    return OK;
+    return LJ::Request::OK;
 }
 
 sub blocked_bot
@@ -248,14 +248,15 @@ sub blocked_bot
     }
 
     LJ::Request->print("<h1>$subject</h1>$message");
-    return OK;
+    return LJ::Request::OK;
 }
 
 sub trans
 {
-    return DECLINED if ! LJ::Request->is_main || LJ::Request->method_number == LJ::Request->M_OPTIONS;  # don't deal with subrequests or OPTIONS
+    return LJ::Request::DECLINED 
+        if ! LJ::Request->is_main || LJ::Request->method_number == LJ::Request->M_OPTIONS;  # don't deal with subrequests or OPTIONS
 
-    my $uri = LJ::Request->uri;
+    my $uri  = LJ::Request->uri;
     my $args = LJ::Request->args;
     my $args_wq = $args ? "?$args" : "";
     my $host = LJ::Request->header_in("Host");
@@ -264,7 +265,7 @@ sub trans
 
     # disable TRACE (so scripts on non-LJ domains can't invoke
     # a trace to get the LJ cookies in the echo)
-    return FORBIDDEN if LJ::Request->method_number == M_TRACE;
+    return LJ::Request::FORBIDDEN if LJ::Request->method_number == LJ::Request::M_TRACE;
 
     # If the configuration says to log statistics and GTop is available, mark
     # values before the request runs so it can be turned into a delta later
@@ -287,7 +288,7 @@ sub trans
         LJ::Request->handler("perl-script");
         LJ::Request->notes("bml_filename" => $filename);
         LJ::Request->push_handlers(PerlHandler => \&Apache::BML::handler);
-        return OK;
+        return LJ::Request::OK;
     };
 
     if (LJ::Request->is_initial_req) {
@@ -307,7 +308,7 @@ sub trans
               if (LJ::UniqCookie->sysban_should_block) {
                   LJ::Request->handler("perl-script");
                   LJ::Request->push_handlers(PerlHandler => \&blocked_bot );
-                  return OK;
+                  return LJ::Request::OK;
               }
           }
     } else { # not is_initial_req
@@ -324,13 +325,13 @@ sub trans
             if (LJ::sysban_check('ip', $ip)) {
                 LJ::Request->handler("perl-script");
                 LJ::Request->push_handlers(PerlHandler => \&blocked_bot );
-                return OK;
+                return LJ::Request::OK;
             }
         }
         if (LJ::run_hook("forbid_request")) {
             LJ::Request->handler("perl-script");
             LJ::Request->push_handlers(PerlHandler => \&blocked_bot );
-            return OK;
+            return LJ::Request::OK
         }
     }
 
@@ -349,9 +350,9 @@ sub trans
             LJ::Request->filename($file);
             $LJ::IMGPREFIX = "/img";
             $LJ::STATPREFIX = "/stc";
-            return OK;
+            return LJ::Request::OK
         } else {
-            return FORBIDDEN;
+            return LJ::Request::FORBIDDEN;
         }
     } elsif (LJ::run_hook("set_alternate_statimg")) {
         # do nothing, hook did it.
@@ -411,7 +412,7 @@ sub trans
                 LJ::Request->handler("perl-script");
                 LJ::Request->push_handlers(PerlHandler => \&anti_squatter);
             }
-            return OK;
+            return LJ::Request::OK
         }
     }
 
@@ -423,7 +424,7 @@ sub trans
     # allow html pages (with .html extention) in user domains and in common www. domain.
     if (LJ::Request->uri =~ m|\A\/__html(\/.+\.html)\z|){
         LJ::Request->uri($1);
-        return DECLINED;
+        return LJ::Request::DECLINED
     }
 
     my $journal_view = sub {
@@ -521,7 +522,7 @@ sub trans
 
         if ($opts->{'mode'} eq "info") {
             my $u = LJ::load_user($opts->{user})
-                or return 404;
+                or return LJ::Request::NOT_FOUND;
             my $mode = $GET{mode} eq 'full' ? '?mode=full' : '';
             return redir($u->profile_url . $mode);
         }
@@ -552,7 +553,7 @@ sub trans
 
         if ($opts->{'mode'} eq "update") {
             my $u = LJ::load_user($opts->{user})
-                or return 404;
+                or return LJ::Request::NOT_FOUND;
 
             return redir("$LJ::SITEROOT/update.bml?usejournal=".$u->{'user'});
         }
@@ -568,18 +569,18 @@ sub trans
             if ($mode eq "customview") {
                 LJ::Request->handler("perl-script");
                 LJ::Request->push_handlers(PerlHandler => \&customview_content);
-                return OK;
+                return LJ::Request::OK
             }
             if (my $handler = LJ::run_hook("data_handler:$mode", $RQ{'user'}, $path)) {
                 LJ::Request->handler("perl-script");
                 LJ::Request->push_handlers(PerlHandler => $handler);
-                return OK;
+                return LJ::Request::OK
             }
         }
 
         LJ::Request->handler("perl-script");
         LJ::Request->push_handlers(PerlHandler => \&journal_content);
-        return OK;
+        return LJ::Request::OK
     };
 
     my $determine_view = sub {
@@ -590,7 +591,7 @@ sub trans
 
         # if favicon, let filesystem handle it, for now, until
         # we have per-user favicons.
-        return DECLINED if $uuri eq "/favicon.ico";
+        return LJ::Request::DECLINED if $uuri eq "/favicon.ico";
 
         # see if there is a modular handler for this URI
         my $ret = LJ::URI->handle($uuri, LJ::Request->r);
@@ -602,7 +603,7 @@ sub trans
 
         if ($uuri =~ m#^/(\d+)\.html$#) {
             my $u = LJ::load_user($user)
-                or return 404;
+                or return LJ::Request::NOT_FOUND;
 
             $ljentry = LJ::Entry->new($u, ditemid => $1);
             if ($GET{'mode'} eq "reply" || $GET{'replyto'} || $GET{'edit'}) {
@@ -614,7 +615,7 @@ sub trans
             my ($year, $mon, $day, $slash) = ($1, $2, $3, $4);
             unless ($slash) {
                 my $u = LJ::load_user($user)
-                    or return 404;
+                    or return LJ::Request::NOT_FOUND;
                 my $proper = $u->journal_base . "/$year";
                 $proper .= "/$mon" if defined $mon;
                 $proper .= "/$day" if defined $day;
@@ -674,7 +675,7 @@ sub trans
                 return redir(LJ::journal_base($user) . "$uri/") unless $pe;
                 if ($pe eq '/') {
                     # do a 404 for now
-                    return 404;
+                    return LJ::Request::NOT_FOUND;
                 } else {
                     # filtered lastn page
                     $mode = 'lastn';
@@ -690,7 +691,7 @@ sub trans
             my $key = $uuri;
             $key =~ s!^/!!;
             my $u = LJ::load_user($user)
-                or return 404;
+                or return LJ::Request::NOT_FOUND;
 
             my ($type, $nodeid) =
                 $LJ::DISABLED{'named_permalinks'} ? () :
@@ -775,16 +776,16 @@ sub trans
         } elsif ($uri =~ m!^/(?:talkscreen|delcomment)\.bml!) {
             # these URLs need to always work for the javascript comment management code
             # (JavaScript can't do cross-domain XMLHttpRequest calls)
-            return DECLINED;
+            return LJ::Request::DECLINED
 
         } elsif ($func eq "journal") {
 
             unless ($uri =~ m!^/(\w{1,15})(/.*)?$!) {
-                return DECLINED if $uri eq "/favicon.ico";
+                return LJ::Request::DECLINED if $uri eq "/favicon.ico";
                 my $redir = LJ::run_hook("journal_subdomain_redirect_url",
                                          $host, $uri);
                 return redir($redir) if $redir;
-                return 404;
+                return LJ::Request::NOT_FOUND;
             }
             ($user, $uri) = ($1, $2);
             $uri ||= "/";
@@ -806,11 +807,11 @@ sub trans
                 'files' => \&files_trans,
             };
             return $code->{$func}->(LJ::Request->r) if $code->{$func};
-            return 404;  # bogus ljconfig
+            return LJ::Request::NOT_FOUND;  # bogus ljconfig
         } else {
             my $view = $determine_view->($user, "users", $uri);
             return $view if defined $view;
-            return 404;
+            return LJ::Request::NOT_FOUND;
         }
     }
 
@@ -829,11 +830,11 @@ sub trans
             SELECT u.user FROM useridmap u, domains d WHERE
             u.userid=d.userid AND d.domain=$checkhost
         });
-        return 404 unless $user;
+        return LJ::Request::NOT_FOUND unless $user;
 
         my $view = $determine_view->($user, "other:$host$hostport", $uri);
         return $view if defined $view;
-        return 404;
+        return LJ::Request::NOT_FOUND;
     }
 
     # userpic
@@ -857,7 +858,7 @@ sub trans
 
         # get what the username should be
         my $cuser = LJ::canonical_username($user);
-        return DECLINED unless length($cuser);
+        return LJ::Request::DECLINED unless length($cuser);
 
         my $srest = $rest || '/';
 
@@ -866,7 +867,7 @@ sub trans
             # FIXME: skip two redirects and send them right to __setdomsess with the right
             #        cookie-to-be-set arguments.  below is the easy/slow route.
             my $u = LJ::load_user($cuser)
-                or return 404;
+                or return LJ::Request::NOT_FOUND;
             my $base = $u->journal_base;
             return redir("$base$srest$args_wq", correct_url_redirect_code());
         }
@@ -896,22 +897,22 @@ sub trans
         my $int = $1 || "flat";
         LJ::Request->handler("perl-script");
         if ($int eq "fotobilder") {
-            return 403 unless $LJ::FOTOBILDER_IP{LJ::Request->remote_ip};
+            return LJ::Request::FORBIDDEN unless $LJ::FOTOBILDER_IP{LJ::Request->remote_ip};
             LJ::Request->push_handlers(PerlHandler => \&Apache::LiveJournal::Interface::FotoBilder::handler);
-            return OK;
+            return LJ::Request::OK
         }
         if ($int =~ /^flat|xmlrpc|blogger|elsewhere_info|atom(?:api)?$/) {
             $RQ{'interface'} = $int;
             $RQ{'is_ssl'} = $is_ssl;
             LJ::Request->push_handlers(PerlHandler => \&interface_content);
-            return OK;
+            return LJ::Request::OK
         }
         if ($int eq "s2") {
             Apache::LiveJournal::Interface::S2->load;
             LJ::Request->push_handlers(PerlHandler => \&Apache::LiveJournal::Interface::S2::handler);
-            return OK;
+            return LJ::Request::OK
         }
-        return 404;
+        return LJ::Request::NOT_FOUND;
     }
 
     # see if there is a modular handler for this URI
@@ -922,14 +923,14 @@ sub trans
     if ($uri =~ m!^/customview\.cgi!) {
         LJ::Request->handler("perl-script");
         LJ::Request->push_handlers(PerlHandler => \&customview_content);
-        return OK;
+        return LJ::Request::OK
     }
 
     if ($uri =~ m!^/palimg/!) {
         Apache::LiveJournal::PalImg->load;
         LJ::Request->handler("perl-script");
         LJ::Request->push_handlers(PerlHandler => \&Apache::LiveJournal::PalImg::handler);
-        return OK;
+        return LJ::Request::OK
     }
 
     # redirected resources
@@ -939,7 +940,7 @@ sub trans
             $new .= ($new =~ /\?/ ? "&" : "?");
             $new .= LJ::Request->args;
         }
-        return redir($new, HTTP_MOVED_PERMANENTLY);
+        return redir($new, LJ::Request::HTTP_MOVED_PERMANENTLY);
     }
 
     # confirm
@@ -957,7 +958,7 @@ sub trans
         return redir("$LJ::SITEROOT/reject.bml?$1");
     }
 
-    return FORBIDDEN if $uri =~ m!^/userpics!;
+    return LJ::Request::FORBIDDEN if $uri =~ m!^/userpics!;
 
     # avoid the fakeapache library having to deal with the <Files ~ *.bml> stuff
     # in the modperl_startup.pl http_conf
@@ -969,12 +970,12 @@ sub trans
         return Apache::BML::handler();
     }
 
-    return DECLINED;
+    return LJ::Request::DECLINED
 }
 
 sub userpic_trans
 {
-    return 404 unless LJ::Request->uri =~ m!^/(?:userpic/)?(\d+)/(\d+)$!;
+    return LJ::Request::NOT_FOUND unless LJ::Request->uri =~ m!^/(?:userpic/)?(\d+)/(\d+)$!;
     my ($picid, $userid) = ($1, $2);
 
     LJ::Request->notes("codepath" => "img.userpic");
@@ -992,7 +993,7 @@ sub userpic_trans
 
     # we can safely do this without checking since we never re-use
     # picture IDs and don't let the contents get modified
-    return HTTP_NOT_MODIFIED if LJ::Request->header_in('If-Modified-Since');
+    return LJ::Request::HTTP_NOT_MODIFIED if LJ::Request->header_in('If-Modified-Since');
 
     $RQ{'picid'} = $picid;
     $RQ{'pic-userid'} = $userid;
@@ -1025,7 +1026,7 @@ sub userpic_trans
 
     LJ::Request->handler("perl-script");
     LJ::Request->push_handlers(PerlHandler => \&userpic_content);
-    return OK;
+    return LJ::Request::OK
 }
 
 sub userpic_content
@@ -1060,12 +1061,12 @@ sub userpic_content
 
     # Load the user object and pic and make sure the picture is viewable
     my $u = LJ::load_userid($userid);
-    return NOT_FOUND unless $u && $u->{'statusvis'} !~ /[XS]/;
+    return LJ::Request::NOT_FOUND unless $u && $u->{'statusvis'} !~ /[XS]/;
 
     my %upics;
     LJ::load_userpics(\%upics, [ $u, $picid ]);
-    my $pic = $upics{$picid} or return NOT_FOUND;
-    return NOT_FOUND if $pic->{'userid'} != $userid || $pic->{state} eq 'X';
+    my $pic = $upics{$picid} or return LJ::Request::NOT_FOUND;
+    return LJ::Request::NOT_FOUND if $pic->{'userid'} != $userid || $pic->{state} eq 'X';
 
     # Read the mimetype from the pichash if dversion 7
     $mime = { 'G' => 'image/gif',
@@ -1112,13 +1113,13 @@ sub userpic_content
 
         else {
             my $data = LJ::mogclient()->get_file_data( $key );
-            return NOT_FOUND unless $data;
+            return LJ::Request::NOT_FOUND unless $data;
             $size = length $$data;
             $send_headers->();
             LJ::Request->print( $$data ) unless LJ::Request->header_only;
         }
 
-        return OK;
+        return LJ::Request::OK
     }
 
     # dversion < 7 reproxy file path
@@ -1138,7 +1139,7 @@ sub userpic_content
         LJ::Request->header_out( 'X-REPROXY-FILE', $path );
         $send_headers->();
 
-        return OK;
+        return LJ::Request::OK
     }
 
     # try to get it from disk if in disk-cache mode
@@ -1155,7 +1156,7 @@ sub userpic_content
             LJ::Request->print($magic);
             LJ::Request->sendfile($file, $fh); # for Apache v1 needs FileHandle, Apache v2 needs Filename
             close $fh;
-            return OK;
+            return LJ::Request::OK
 
         } else {
             $need_cache = 1;
@@ -1174,13 +1175,13 @@ sub userpic_content
 
         unless ($data) {
             my $dbb = LJ::get_cluster_reader($u);
-            return SERVER_ERROR unless $dbb;
+            return LJ::Request::SERVER_ERROR unless $dbb;
             $data = $dbb->selectrow_array("SELECT imagedata FROM userpicblob2 WHERE ".
                                           "userid=$pic->{'userid'} AND picid=$picid");
         }
     }
 
-    return NOT_FOUND unless $data;
+    return LJ::Request::NOT_FOUND unless $data;
 
     if ($need_cache) {
         # make $realfile /userpic-userid, and $file /userpic
@@ -1206,7 +1207,7 @@ sub userpic_content
     $size = length($data);
     $send_headers->();
     LJ::Request->print($data) unless LJ::Request->header_only;
-    return OK;
+    return LJ::Request::OK
 }
 
 sub files_handler {
@@ -1215,7 +1216,7 @@ sub files_handler {
     my $result = LJ::FileStore->get_path_info( path => LJ::Request->uri );
 
     # file not found
-    return 404 unless $result;
+    return LJ::Request::NOT_FOUND unless $result;
 
     my $size = $result->{content_length};
 
@@ -1245,9 +1246,9 @@ sub files_handler {
             LJ::Request->send_http_header();
         };
         $send_headers->();
-        return OK;
+        return LJ::Request::OK
     }
-    return 404;
+    return LJ::Request::NOT_FOUND;
 }
 
 sub files_trans
@@ -1260,15 +1261,15 @@ sub files_trans
             LJ::Request->notes("codepath" => "files.$domain");
             LJ::Request->handler("perl-script");
             LJ::Request->push_handlers(PerlHandler => $handler);
-            return OK;
+            return LJ::Request::OK
         }
-        return 404;
+        return LJ::Request::NOT_FOUND;
     } else {
         LJ::Request->handler("perl-script");
         LJ::Request->push_handlers(PerlHandler => \&files_handler);
-        return OK;
+        return LJ::Request::OK
     }
-    return 404;
+    return LJ::Request::NOT_FOUND;
 }
 
 sub journal_content
@@ -1279,7 +1280,7 @@ sub journal_content
     if ($RQ{'mode'} eq "robots_txt")
     {
         my $u = LJ::load_user($RQ{'user'});
-        return 404 unless $u;
+        return LJ::Request::NOT_FOUND unless $u;
 
         $u->preload_props("opt_blockrobots", "adult_content", "admin_content_flag");
         LJ::Request->content_type("text/plain");
@@ -1290,7 +1291,7 @@ sub journal_content
         if ($u->should_block_robots) {
             LJ::Request->print("Disallow: /\n");
         }
-        return OK;
+        return LJ::Request::OK
     }
 
     # handle HTTP digest authentication
@@ -1301,7 +1302,7 @@ sub journal_content
             LJ::Request->content_type("text/html");
             LJ::Request->send_http_header();
             LJ::Request->print("<b>Digest authentication failed.</b>");
-            return OK;
+            return LJ::Request::OK
         }
     }
 
@@ -1329,7 +1330,7 @@ sub journal_content
         LJ::Request->send_http_header();
         LJ::Request->print("Invalid cookies.  Try <a href='$LJ::SITEROOT/logout.bml'>logging out</a> and then logging back in.\n");
         LJ::Request->print("<!-- xxxxxxxxxxxxxxxxxxxxxxxx -->\n") for (0..100);
-        return OK;
+        return LJ::Request::OK
     }
 
 
@@ -1415,7 +1416,7 @@ sub journal_content
     {
         # No special information to give to the user, so just let
         # Apache handle the 404
-        return 404;
+        return LJ::Request::NOT_FOUND;
     }
     elsif ($opts->{'baduser'})
     {
@@ -1535,7 +1536,7 @@ sub journal_content
     LJ::Request->send_http_header();
     LJ::Request->print($html) unless LJ::Request->header_only;
 
-    return OK;
+    return LJ::Request::OK
 }
 
 sub customview_content
@@ -1550,7 +1551,7 @@ sub customview_content
             LJ::Request->content_type("text/html");
             LJ::Request->send_http_header();
             LJ::Request->print("<b>Error:</b> requested charset not supported.");
-            return OK;
+            return LJ::Request::OK
         }
     }
 
@@ -1572,7 +1573,7 @@ sub customview_content
 
     if ($LJ::ONLY_USER_VHOSTS && $cur_journal ne $user) {
         my $u = LJ::load_user($user)
-            or return 404;
+            or return LJ::Request::NOT_FOUND;
         my $safeurl = $u->journal_base . "/data/customview?";
         my %get_args = %FORM;
         delete $get_args{'user'};
@@ -1612,7 +1613,7 @@ sub customview_content
 
     LJ::Request->header_out("Cache-Control", "must-revalidate");
     LJ::Request->header_out("Content-Length", length($data));
-    return OK;
+    return LJ::Request::OK
 }
 
 sub correct_url_redirect_code {
@@ -1627,24 +1628,24 @@ sub interface_content
     my $args = LJ::Request->args;
 
     if ($RQ{'interface'} eq "xmlrpc") {
-        return 404 unless LJ::ModuleCheck->have('XMLRPC::Transport::HTTP');
+        return LJ::Request::NOT_FOUND unless LJ::ModuleCheck->have('XMLRPC::Transport::HTTP');
         my $server = XMLRPC::Transport::HTTP::Apache
             -> on_action(sub { die "Access denied\n" if $_[2] =~ /:|\'/ })
             -> dispatch_to('LJ::XMLRPC')
             -> handle(LJ::Request->r);
-        return OK;
+        return LJ::Request::OK
     }
 
     if ($RQ{'interface'} eq "blogger") {
         Apache::LiveJournal::Interface::Blogger->load;
-        return 404 unless LJ::ModuleCheck->have('XMLRPC::Transport::HTTP');
+        return LJ::Request::NOT_FOUND unless LJ::ModuleCheck->have('XMLRPC::Transport::HTTP');
         my $pkg = "Apache::LiveJournal::Interface::Blogger";
         my $server = XMLRPC::Transport::HTTP::Apache
             -> on_action(sub { die "Access denied\n" if $_[2] =~ /:|\'/ })
             -> dispatch_with({ 'blogger' => $pkg })
             -> dispatch_to($pkg)
             -> handle(LJ::Request->r);
-        return OK;
+        return LJ::Request::OK
     }
 
     if ($RQ{'interface'} =~ /atom(?:api)?/) {
@@ -1652,21 +1653,21 @@ sub interface_content
         # the interface package will set up all headers and
         # print everything
         Apache::LiveJournal::Interface::AtomAPI::handle(LJ::Request->r);
-        return OK;
+        return LJ::Request::OK
     }
 
     if ($RQ{'interface'} =~ /elsewhere_info/) {
         # the interface package will set up all headers and
         # print everything
         Apache::LiveJournal::Interface::ElsewhereInfo->handle(LJ::Request->r);
-        return OK;
+        return LJ::Request::OK
     }
 
     if ($RQ{'interface'} ne "flat") {
         LJ::Request->content_type("text/plain");
         LJ::Request->send_http_header;
         LJ::Request->print("Unknown interface.");
-        return OK;
+        return LJ::Request::OK
     }
 
     LJ::Request->content_type("text/plain");
@@ -1686,7 +1687,7 @@ sub interface_content
         foreach (sort keys %out) {
             LJ::Request->print(LJ::eurl($_) . "=" . LJ::eurl($out{$_}) . "&");
         }
-        return OK;
+        return LJ::Request::OK
     }
 
     my $length = 0;
@@ -1705,7 +1706,7 @@ sub interface_content
         LJ::Request->print($key, "\n", $val, "\n");
     }
 
-    return OK;
+    return LJ::Request::OK
 }
 
 sub db_logger
@@ -1754,7 +1755,7 @@ sub anti_squatter
                   LJ::html_hidden("dest", "$LJ::SQUAT_URL"),
                   LJ::html_submit(undef, "Acknowledged"),
                   "</form></body></html>");
-        return OK;
+        return LJ::Request::OK
     });
 
 }

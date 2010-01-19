@@ -6,7 +6,23 @@ use Apache::Constants;
 #*DONE      = \&Apache::Constants::DONE;
 #*NOT_FOUND = \&Apache::Constants::NOT_FOUND;
 
-sub LJ::Request::M_OPTIONS { return Apache::Constants::M_OPTIONS() }
+sub LJ::Request::OK                        { return Apache::Constants::OK() }
+sub LJ::Request::REDIRECT                  { return Apache::Constants::REDIRECT() }
+sub LJ::Request::DECLINED                  { return Apache::Constants::DECLINED() }
+sub LJ::Request::FORBIDDEN                 { return Apache::Constants::FORBIDDEN() }
+sub LJ::Request::HTTP_NOT_MODIFIED         { return Apache::Constants::HTTP_NOT_MODIFIED() }
+sub LJ::Request::HTTP_MOVED_PERMANENTLY    { return Apache::Constants::HTTP_MOVED_PERMANENTLY() }
+sub LJ::Request::HTTP_MOVED_TEMPORARILY    { return Apache::Constants::HTTP_MOVED_TEMPORARILY() }
+sub LJ::Request::M_TRACE                   { return Apache::Constants::M_TRACE() }
+sub LJ::Request::M_OPTIONS                 { return Apache::Constants::M_OPTIONS() }
+sub LJ::Request::NOT_FOUND                 { return Apache::Constants::NOT_FOUND() }
+sub LJ::Request::SERVER_ERROR              { return Apache::Constants::SERVER_ERROR() }
+#sub LJ::Request:: { return Apache::Constants::() }
+
+
+
+
+
 
 require Apache::Request;
 require Apache::URI;
@@ -25,10 +41,6 @@ sub LJ::Request::instance {
 #    return $instance ? $instance : undef;
 }
 
-
-sub LJ::Request::REDIRECT {
-    return \&Apache::Constants::REDIRECT;
-}
 
 sub LJ::Request::init {
     my $class = shift;
