@@ -74,6 +74,12 @@ sub LJ::Request::is_main {
     return $instance->{r}->is_main(@_);
 }
 
+sub LJ::Request::main {
+    my $class = shift;
+    die "Request is not provided to LJ::Request" unless $instance;
+    return $instance->{r}->main(@_);
+}
+
 sub LJ::Request::dir_config {
     my $class = shift;
     die "Request is not provided to LJ::Request" unless $instance;
@@ -149,12 +155,12 @@ sub LJ::Request::push_handlers {
 
 sub LJ::Request::set_handlers {
     my $class = shift;
-    $instance->{apr}->set_handlers(@_);
+    $instance->{r}->set_handlers(@_);
 }
 
 sub LJ::Request::handler {
     my $class = shift;
-    $instance->{apr}->handler(@_);
+    $instance->{r}->handler(@_);
 }
 
 sub LJ::Request::method_number {
@@ -165,6 +171,11 @@ sub LJ::Request::method_number {
 sub LJ::Request::status {
     my $class = shift;
     return $instance->{r}->status(@_);
+}
+
+sub LJ::Request::status_line {
+    my $class = shift;
+    return $instance->{r}->status_line(@_);
 }
 
 ##
@@ -326,6 +337,11 @@ sub LJ::Request::set_header_out {
     return 1;
 }
 
+sub LJ::Request::unset_headers_in {
+    my $class = shift;
+    my $header = shift;
+    $instance->{r}->headers_in->unset($header);
+}
 
 sub LJ::Request::log_error {
     my $class = shift;
@@ -361,6 +377,21 @@ sub LJ::Request::sendfile {
     $instance->{r}->send_fd($fh);
     $fh->close();
 
+}
+
+sub LJ::Request::parsed_uri {
+    my $class = shift;
+    $instance->{r}->parsed_uri; # Apache::URI
+}
+
+sub LJ::Request::current_callback {
+    my $class = shift;
+    return $instance->{r}->current_callback;
+}
+
+sub LJ::Request::child_terminate {
+    my $class = shift;
+    return $instance->{r}->child_terminate;
 }
 
 
