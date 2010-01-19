@@ -90,7 +90,7 @@ my @req_hosts;  # client IP, and/or all proxies, real or claimed
 sub handler
 {
     my $class = ();
-    my $r     = shift;
+    my $r     = shift; # 
 
     LJ::Request->free();
     LJ::Request->init($r);
@@ -199,7 +199,6 @@ sub remote_domsess_bounce {
 
 sub totally_down_content
 {
-    #my $r = shift;
     my $uri = LJ::Request->uri;
 
     if ($uri =~ m!^/interface/flat! || $uri =~ m!^/cgi-bin/log\.cg!) {
@@ -229,8 +228,6 @@ sub totally_down_content
 
 sub blocked_bot
 {
-    #my $r = shift;
-
     LJ::Request->status_line("403 Denied");
     LJ::Request->content_type("text/html");
     LJ::Request->send_http_header();
@@ -249,7 +246,6 @@ sub blocked_bot
 
 sub trans
 {
-    #my $r = shift;
     return DECLINED if ! LJ::Request->is_main || LJ::Request->method_number == LJ::Request->M_OPTIONS;  # don't deal with subrequests or OPTIONS
 
     my $uri = LJ::Request->uri;
@@ -971,7 +967,6 @@ sub trans
 
 sub userpic_trans
 {
-    #my $r = shift;
     return 404 unless LJ::Request->uri =~ m!^/(?:userpic/)?(\d+)/(\d+)$!;
     my ($picid, $userid) = ($1, $2);
 
@@ -1028,7 +1023,6 @@ sub userpic_trans
 
 sub userpic_content
 {
-    #my $r = shift;
     my $file = LJ::Request->filename;
 
     my $picid = $RQ{'picid'};
@@ -1210,8 +1204,6 @@ sub userpic_content
 
 sub files_handler {
 
-    #my $r = LJ::Request->r;
-
     use LJ::FileStore;
     my $result = LJ::FileStore->get_path_info( path => LJ::Request->uri );
 
@@ -1253,7 +1245,6 @@ sub files_handler {
 
 sub files_trans
 {
-    #my $r = shift;
     LJ::Request->uri =~ m!^/(\w{1,15})/(\w+)(/\S+)!;
     my ($user, $domain, $rest) = ($1, $2, $3);
 
@@ -1275,7 +1266,6 @@ sub files_trans
 
 sub journal_content
 {
-    #my $r = shift;
     my $uri = LJ::Request->uri;
     my %GET = LJ::Request->args;
 
@@ -1543,7 +1533,6 @@ sub journal_content
 
 sub customview_content
 {
-    #my $r = shift;
     my %FORM = LJ::Request->args;
 
     my $charset = "utf-8";
@@ -1628,7 +1617,6 @@ sub correct_url_redirect_code {
 
 sub interface_content
 {
-    #my $r = shift;
     my $args = LJ::Request->args;
 
     if ($RQ{'interface'} eq "xmlrpc") {
@@ -1715,8 +1703,6 @@ sub interface_content
 
 sub db_logger
 {
-    #my $r = shift;
-
     LJ::Request->pnotes('did_lj_logging' => 1);
 
     # these are common enough, it's worth doing it here, early, before
@@ -1748,7 +1734,6 @@ sub db_logger
 
 sub anti_squatter
 {
-    #my $r = shift;
     LJ::Request->push_handlers(PerlHandler => sub {
         LJ::Request->content_type("text/html");
         LJ::Request->send_http_header();

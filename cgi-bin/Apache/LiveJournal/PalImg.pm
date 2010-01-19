@@ -16,7 +16,7 @@ sub load { 1 }
 
 sub handler
 {
-    my $r = shift;
+    #my $r = shift;
     my $uri = LJ::Request->uri;
     my ($base, $ext, $extra) = $uri =~ m!^/palimg/(.+)\.(\w+)(.*)$!;
     LJ::Request->notes("codepath" => "img.palimg");

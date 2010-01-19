@@ -16,8 +16,8 @@ our $ppid;
 # oh btw, this is totally linux-specific.  gtop didn't work, so so much for portability.
 sub handler
 {
-    my $r = shift;
-    return OK if $r->main;
+    #my $r = shift;
+    return OK if LJ::Request->main;
     return OK unless $LJ::SUICIDE && LJ::ModuleCheck->have("GTop");
 
     my $meminfo;
@@ -77,17 +77,17 @@ sub handler
     if (grep { $$ == $_ } @pids[0,1]) {
         my $my_use_k = $stats{$$}[0] >> 10;
         if ($LJ::DEBUG{'suicide'}) {
-            $r->log_error("Suicide [$$]: system memory free = ${memfree}k; " .
+            LJ::Request->log_error("Suicide [$$]: system memory free = ${memfree}k; " .
                           "i'm big, using ${my_use_k}k");
         }
 
         # we should have logged by here, but be paranoid in any case
-        Apache::LiveJournal::db_logger($r) unless $r->pnotes('did_lj_logging');
+        Apache::LiveJournal::db_logger() unless LJ::Request->pnotes('did_lj_logging');
 
         # This is supposed to set MaxChildRequests to 1, then clear the
         # KeepAlive flag so that Apache will terminate after this request,
         # but it doesn't work.  We'll call it here just in case.
-        $r->child_terminate;
+        LJ::Request->child_terminate;
 
         # We should call Apache::exit(Apache::Constants::DONE) here because
         # it makes sure that the child shuts down cleanly after fulfilling
