@@ -207,7 +207,7 @@ sub log {
                         'clientver'   => $rl->notes('clientver'),
                         'method'      => LJ::Request->method,
                         'uri'         => $uri,
-                        'args'        => scalar LJ::Request->get_params,
+                        'args'        => scalar LJ::Request->args,
                         'browser'     => LJ::Request->header_in("User-Agent"),
                         'ref'         => LJ::Request->header_in("Referer"),
                         );

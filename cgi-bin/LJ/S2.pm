@@ -722,7 +722,7 @@ sub s2_context
 
     if ($opts->{'use_modtime'})
     {
-        my $ims = LJ::request->header_in("If-Modified-Since");
+        my $ims = LJ::Request->header_in("If-Modified-Since");
         my $ourtime = LJ::time_to_http($modtime);
         if ($ims eq $ourtime) {
             # 304 return; unload non-public layers

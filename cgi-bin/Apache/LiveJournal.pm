@@ -1289,7 +1289,7 @@ sub journal_content
     # handle HTTP digest authentication
     if ($GET{'auth'} eq 'digest' ||
         LJ::Request->header_in("Authorization") =~ /^Digest/) {
-        my $res = LJ::auth_digest(LJ::Request->r);
+        my $res = LJ::auth_digest();
         unless ($res) {
             LJ::Request->content_type("text/html");
             LJ::Request->send_http_header();

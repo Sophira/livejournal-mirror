@@ -1689,7 +1689,6 @@ sub auth_okay
 # limits and nonce counts are used to prevent replay attacks.
 
 sub auth_digest {
-    my ($r) = @_;
 
     my $decline = sub {
         my $stale = shift;
@@ -1697,16 +1696,16 @@ sub auth_digest {
         my $nonce = LJ::challenge_generate(180); # 3 mins timeout
         my $authline = "Digest realm=\"lj\", nonce=\"$nonce\", algorithm=MD5, qop=\"auth\"";
         $authline .= ", stale=\"true\"" if $stale;
-        $r->header_out("WWW-Authenticate", $authline);
-        $r->status_line("401 Authentication required");
+        LJ::Request->header_out("WWW-Authenticate", $authline);
+        LJ::Request->status_line("401 Authentication required");
         return 0;
     };
 
-    unless ($r->header_in("Authorization")) {
+    unless (LJ::Request->header_in("Authorization")) {
         return $decline->(0);
     }
 
-    my $header = $r->header_in("Authorization");
+    my $header = LJ::Request->header_in("Authorization");
 
     # parse it
     # TODO: could there be "," or " " inside attribute values, requiring
@@ -1766,7 +1765,7 @@ sub auth_digest {
 
     my $a1src = $u->user . ':lj:' . $u->password;
     my $a1 = Digest::MD5::md5_hex($a1src);
-    my $a2src = $r->method . ":$attrs{'uri'}";
+    my $a2src = LJ::Request->method . ":$attrs{'uri'}";
     my $a2 = Digest::MD5::md5_hex($a2src);
     my $hashsrc = "$a1:$attrs{'nonce'}:$attrs{'nc'}:$attrs{'cnonce'}:$attrs{'qop'}:$a2";
     my $hash = Digest::MD5::md5_hex($hashsrc);
@@ -2639,9 +2638,8 @@ sub work_report {
     my $dest = $LJ::WORK_REPORT_HOST;
     return unless $dest;
 
-    my $r = eval { LJ::Request->instance; };
-    return unless $r;
-    return if $r->method eq "OPTIONS";
+    return unless LJ::Request->is_inited;
+    return if LJ::Request->method eq "OPTIONS";
 
     $dest = $dest->() if ref $dest eq "CODE";
     return unless $dest;
@@ -2654,9 +2652,9 @@ sub work_report {
 
     my @fields = ($$, $what);
     if ($what eq "start") {
-        my $host = $r->header_in("Host");
-        my $uri = $r->uri;
-        my $args = $r->args;
+        my $host = LJ::Request->header_in("Host");
+        my $uri = LJ::Request->uri;
+        my $args = LJ::Request->args;
         $args = substr($args, 0, 100) if length $args > 100;
         push @fields, $host, $uri, $args;
 

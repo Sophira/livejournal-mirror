@@ -40,6 +40,11 @@ sub LJ::Request::init {
     return $instance;
 }
 
+sub LJ::Request::status_line {
+    die "Request is not provided to LJ::Request" unless $instance;
+    return $instance->{apr}->status_line(@_);
+}
+
 sub LJ::Request::is_inited {
     return $instance ? 1 : 0;
 }

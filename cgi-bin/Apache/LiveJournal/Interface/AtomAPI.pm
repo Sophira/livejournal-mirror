@@ -583,7 +583,7 @@ sub handle {
     # if not, fall back to digest.
     my $wsse = LJ::Request->header_in('X-WSSE');
     my $nonce_dup;
-    my $u = $wsse ? auth_wsse($wsse, \$nonce_dup) : LJ::auth_digest(LJ::Request->r);
+    my $u = $wsse ? auth_wsse($wsse, \$nonce_dup) : LJ::auth_digest();
     return respond(401, "Authentication failed for this AtomAPI request.")
         unless $u;
 
