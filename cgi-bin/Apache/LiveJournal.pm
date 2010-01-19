@@ -183,6 +183,13 @@ sub handler
 }
 
 sub redir {
+    # TODO: remove debug code
+    if (@_ == 3){
+        require Carp;
+        Carp::cluck("get 3 args instead of 2");
+        shift @_; # assumes the first arg is a Apache->request obj. 
+    }
+    
     my ($url, $code) = @_;
     LJ::Request->content_type("text/html");
     LJ::Request->header_out(Location => $url);

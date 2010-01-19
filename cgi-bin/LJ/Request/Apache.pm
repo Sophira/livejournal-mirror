@@ -40,11 +40,6 @@ sub LJ::Request::init {
     return $instance;
 }
 
-sub LJ::Request::status_line {
-    die "Request is not provided to LJ::Request" unless $instance;
-    return $instance->{apr}->status_line(@_);
-}
-
 sub LJ::Request::is_inited {
     return $instance ? 1 : 0;
 }
@@ -292,6 +287,8 @@ sub LJ::Request::err_headers_out {
 
 ## Returns Array (Key, Value, Key, Value) which can be converted to HASH.
 ## But there can be some params with the same name!
+#
+# TODO: do we need this and 'args' methods? they are much the same.
 sub LJ::Request::get_params {
     my $class = shift;
     if (wantarray) {
