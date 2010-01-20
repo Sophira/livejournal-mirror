@@ -74,6 +74,12 @@ sub LJ::Request::request_time {
     return $instance->{apr}->request_time();
 }
 
+sub LJ::Request::meets_conditions {
+    my $class = shift;
+    die "Request is not provided to LJ::Request" unless $instance;
+    return $instance->{apr}->meets_conditions();
+}
+
 sub LJ::Request::read {
     my $class = shift;
     die "Request is not provided to LJ::Request" unless $instance;
