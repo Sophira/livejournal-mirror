@@ -47,7 +47,7 @@ sub LJ::Request::init {
     my $r     = shift;
 
     $instance = bless {}, $class;
-    $instance->{apr} = Apache::Request->new($r, DISABLE_UPLOADS => 1);
+    $instance->{apr} = Apache::Request->new($r);
     $instance->{r} = $r;
     return $instance;
 }
