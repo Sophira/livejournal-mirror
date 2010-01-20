@@ -309,14 +309,10 @@ sub LJ::Request::err_headers_out {
 # TODO: do we need this and 'args' methods? they are much the same.
 sub LJ::Request::get_params {
     my $class = shift;
-    if (wantarray) {
-        my @params = $instance->{r}->args;
-        return @params;
-    } else {
-        my $query_string = $instance->{r}->args;
-        return $query_string;
-    }
+    my @params = $instance->{r}->args;
+    return @params;
 }
+
 sub LJ::Request::post_params {
     my $class = shift;
 
