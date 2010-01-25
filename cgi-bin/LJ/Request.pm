@@ -7,7 +7,7 @@ use constant MP2 => (exists $ENV{MOD_PERL_API_VERSION} &&
 BEGIN {
     if (MP2){
         require LJ::Request::Apache2;
-    } else {
+    } elsif($ENV{MOD_PERL_API_VERSION} or $ENV{MOD_PERL}) {
         require LJ::Request::Apache;
     }
 }

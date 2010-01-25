@@ -4,7 +4,6 @@
 package Apache::DebateSuicide;
 
 use strict;
-use Apache::Constants qw(:common);
 use Class::Autouse qw(
                       LJ::ModuleCheck
                       );
@@ -17,11 +16,11 @@ our $ppid;
 sub handler
 {
     #my $r = shift;
-    return OK if LJ::Request->main;
-    return OK unless $LJ::SUICIDE && LJ::ModuleCheck->have("GTop");
+    return LJ::Request::OK if LJ::Request->main;
+    return LJ::Request::OK unless $LJ::SUICIDE && LJ::ModuleCheck->have("GTop");
 
     my $meminfo;
-    return OK unless open (MI, "/proc/meminfo");
+    return LJ::Request::OK unless open (MI, "/proc/meminfo");
     $meminfo = join('', <MI>);
     close MI;
 
@@ -31,7 +30,7 @@ sub handler
     }
 
     my $memfree = $meminfo{'MemFree'} + $meminfo{'Cached'};
-    return OK unless $memfree;
+    return LJ::Request::OK unless $memfree;
 
     my $goodfree = $LJ::SUICIDE_UNDER{$LJ::SERVER_NAME} || $LJ::SUICIDE_UNDER ||   150_000;
     my $is_under = $memfree < $goodfree;
@@ -51,7 +50,7 @@ sub handler
 
         $is_over = $proc_size_k > $maxproc;
     }
-    return OK unless $is_over || $is_under;
+    return LJ::Request::OK unless $is_over || $is_under;
 
     # we'll proceed to die if we're one of the largest processes
     # on this machine
@@ -101,7 +100,7 @@ sub handler
         CORE::exit(0);
     }
 
-    return OK;
+    return LJ::Request::OK;
 }
 
 sub pid_info {

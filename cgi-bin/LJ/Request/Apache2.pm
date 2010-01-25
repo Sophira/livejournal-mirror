@@ -25,7 +25,7 @@ sub LJ::Request::HTTP_MOVED_TEMPORARILY    { return Apache2::Const::HTTP_MOVED_T
 sub LJ::Request::M_TRACE                   { return Apache2::Const::M_TRACE() }
 sub LJ::Request::M_OPTIONS                 { return Apache2::Const::M_OPTIONS() }
 sub LJ::Request::SERVER_ERROR              { return Apache2::Const::SERVER_ERROR() }
-
+sub LJ::Request::BAD_REQUEST               { return Apache2::Const::BAD_REQUEST() }
 
 
 my $instance = '';
@@ -130,6 +130,11 @@ sub LJ::Request::method {
     $instance->{r}->method;
 }
 
+sub LJ::Request::bytes_sent {
+    my $class = shift;
+    $instance->{r}->bytes_sent(@_);
+}
+
 sub LJ::Request::document_root {
     my $class = shift;
     $instance->{r}->document_root;
@@ -198,10 +203,10 @@ sub LJ::Request::free {
     $instance = undef;
 }
 
-
+# use pnotes instead of notes
 sub LJ::Request::notes {
     my $class = shift;
-    $instance->{apr}->notes (@_);
+    $instance->{apr}->pnotes (@_);
 }
 
 sub LJ::Request::pnotes {

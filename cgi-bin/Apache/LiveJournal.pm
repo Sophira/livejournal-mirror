@@ -38,7 +38,6 @@ use Class::Autouse qw(
 # load.  in non-apache mode, they're loaded via LJ::ModuleCheck->have
 use Class::Autouse qw(
                       Compress::Zlib
-                      XMLRPC::Transport::HTTP
                       LJ::URI
                       );
 
@@ -260,6 +259,9 @@ sub trans
     my $args = LJ::Request->args;
     my $args_wq = $args ? "?$args" : "";
     my $host = LJ::Request->header_in("Host");
+warn "HOST: $host";
+warn "URI: " . LJ::Request->uri;
+warn "Filename: " . LJ::Request->filename;
     my $hostport = ($host =~ s/:\d+$//) ? $& : "";
     $host =~ s/\.$//; ## 'www.livejournal.com.' is a valid DNS hostname
 
@@ -283,8 +285,10 @@ sub trans
 
     my $is_ssl = $LJ::IS_SSL = LJ::run_hook("ssl_check");
 
+#=head
     my $bml_handler = sub {
         my $filename = shift;
+warn "BML HANDLER: filename=$filename";
         LJ::Request->handler("perl-script");
         LJ::Request->notes("bml_filename" => $filename);
         LJ::Request->push_handlers(PerlHandler => \&Apache::BML::handler);
@@ -367,6 +371,7 @@ sub trans
     if ($LJ::DOMAIN_WEB && LJ::Request->method eq "GET" &&
         $host eq $LJ::DOMAIN && $LJ::DOMAIN_WEB ne $LJ::DOMAIN)
     {
+warn "REDIRECT TO SITEROOT";
         my $url = "$LJ::SITEROOT$uri";
         $url .= "?" . $args if $args;
         return redir($url);
@@ -430,6 +435,7 @@ sub trans
     my $journal_view = sub {
         my $opts = shift;
         $opts ||= {};
+warn "Journal view";
 
         my $orig_user = $opts->{'user'};
         $opts->{'user'} = LJ::canonical_username($opts->{'user'});
@@ -588,6 +594,7 @@ sub trans
         my $mode = undef;
         my $pe;
         my $ljentry;
+warn "Determine view: uuri=$uuri";
 
         # if favicon, let filesystem handle it, for now, until
         # we have per-user favicons.
@@ -969,6 +976,8 @@ sub trans
         LJ::Request->notes("bml_filename" => $file);
         return Apache::BML::handler();
     }
+#=cut
+warn "End of trans";
 
     return LJ::Request::DECLINED
 }

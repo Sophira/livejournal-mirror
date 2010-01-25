@@ -9,15 +9,14 @@ BEGIN {
 
 use strict;
 use IO::Socket::INET;
-use Apache::Constants qw(:common);
 use Socket qw(SO_BROADCAST);
 
 use vars qw(%udp_sock);
 
 sub handler
 {
-    return OK if LJ::Request->main;
-    return OK unless $LJ::HAVE_AVAIL && $LJ::FREECHILDREN_BCAST;
+    return LJ::Request::OK if LJ::Request->main;
+    return LJ::Request::OK unless $LJ::HAVE_AVAIL && $LJ::FREECHILDREN_BCAST;
 
     my $callback = LJ::Request->is_inited ? LJ::Request->current_callback() : '';
     my $cleanup = $callback eq "PerlCleanupHandler";
@@ -66,7 +65,7 @@ sub handler
             unless $res;
     }
 
-    return OK;
+    return LJ::Request::OK;
 }
 
 1;

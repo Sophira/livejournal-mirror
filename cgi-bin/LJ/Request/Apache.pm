@@ -17,6 +17,7 @@ sub LJ::Request::M_TRACE                   { return Apache::Constants::M_TRACE()
 sub LJ::Request::M_OPTIONS                 { return Apache::Constants::M_OPTIONS() }
 sub LJ::Request::NOT_FOUND                 { return Apache::Constants::NOT_FOUND() }
 sub LJ::Request::SERVER_ERROR              { return Apache::Constants::SERVER_ERROR() }
+sub LJ::Request::BAD_REQUEST               { return Apache::Constants::BAD_REQUEST() }
 #sub LJ::Request:: { return Apache::Constants::() }
 
 
@@ -134,6 +135,11 @@ sub LJ::Request::args {
 sub LJ::Request::method {
     my $class = shift;
     $instance->{apr}->method;
+}
+
+sub LJ::Request::bytes_sent {
+    my $class = shift;
+    $instance->{r}->bytes_sent(@_);
 }
 
 sub LJ::Request::document_root {

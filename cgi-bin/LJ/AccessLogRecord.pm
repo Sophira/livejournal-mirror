@@ -3,16 +3,15 @@ use strict;
 
 sub new {
     my $class = shift;
-    my $rl = LJ::Request->r;
 
     my $now = time();
     my @now = gmtime($now);
 
-    my $remote = eval { LJ::load_user($rl->notes('ljuser')) };
+    my $remote = eval { LJ::load_user(LJ::Request->notes('ljuser')) };
     my $remotecaps = $remote ? $remote->{caps} : undef;
     my $remoteid   = $remote ? $remote->{userid} : 0;
-    my $ju = eval { LJ::load_userid($rl->notes('journalid')) };
-    my $ctype = $rl->content_type;
+    my $ju = eval { LJ::load_userid(LJ::Request->notes('journalid')) };
+    my $ctype = LJ::Request->content_type;
     $ctype =~ s/;.*//;  # strip charset
 
     my $self = bless {
@@ -21,24 +20,24 @@ sub new {
         'whn' => sprintf("%04d%02d%02d%02d%02d%02d", $now[5]+1900, $now[4]+1, @now[3, 2, 1, 0]),
         'whnunix' => $now,
         'server' => $LJ::SERVER_NAME,
-        'addr' => LJ::Request->connection->remote_ip,
-        'ljuser' => $rl->notes('ljuser'),
+        'addr' => LJ::Request->remote_ip,
+        'ljuser' => LJ::Request->notes('ljuser'),
         'remotecaps' => $remotecaps,
         'remoteid'   => $remoteid,
-        'journalid' => $rl->notes('journalid'),
+        'journalid' => LJ::Request->notes('journalid'),
         'journaltype' => ($ju ? $ju->{journaltype} : ""),
         'journalcaps' => ($ju ? $ju->{caps} : undef),
-        'codepath' => $rl->notes('codepath'),
-        'anonsess' => $rl->notes('anonsess'),
-        'langpref' => $rl->notes('langpref'),
-        'clientver' => $rl->notes('clientver'),
+        'codepath' => LJ::Request->notes('codepath'),
+        'anonsess' => LJ::Request->notes('anonsess'),
+        'langpref' => LJ::Request->notes('langpref'),
+        'clientver' => LJ::Request->notes('clientver'),
         'uniq' => LJ::Request->notes('uniq'),
         'method' => LJ::Request->method,
         'uri' => LJ::Request->uri,
         'args' => scalar LJ::Request->args,
-        'status' => $rl->status,
+        'status' => LJ::Request->status,
         'ctype' => $ctype,
-        'bytes' => $rl->bytes_sent,
+        'bytes' => LJ::Request->bytes_sent,
         'browser' => LJ::Request->header_in("User-Agent"),
         'secs' => $now - LJ::Request->request_time(),
         'ref' => LJ::Request->header_in("Referer"),
