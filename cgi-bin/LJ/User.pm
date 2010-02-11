@@ -5505,10 +5505,9 @@ sub set_custom_usericon {
 sub _subscriptions_count {
     my ($u) = @_;
 
-    my $set = LJ::Subscription::GroupSet->fetch_for_user($u);
-    my @groups = grep { $_->is_tracking } $set->groups;
+    my $set = LJ::Subscription::GroupSet->fetch_for_user($u, sub { 0 });
 
-    return scalar(@groups);
+    return $set->{'active_count'};
 }
 
 sub subscriptions_count {

@@ -18,7 +18,8 @@ sub new {
     return bless({
         'user' => LJ::want_user($u),
         'groups' => {},
-        'inbox_count' => 0,
+        'total_count' => 0,
+        'active_count' => 0,
     }, $class);
 }
 
@@ -54,6 +55,8 @@ sub fetch_for_user {
 
     $filter ||= sub { 1 };
 
+    my $inbox_ntypeid = LJ::NotificationMethod::Inbox->ntypeid;
+
     my $self = $class->new($u);
 
     $u = LJ::want_user($u);
@@ -78,18 +81,22 @@ sub fetch_for_user {
     my $lastrow = undef;
     my $lastobj = undef;
 
+    my %counted_active;
+
     foreach my $row (@$res) {
         my $sub = bless($row, 'LJ::Subscription');
 
-        $self->{'inbox_count'}++ if
-            $row->{'ntypeid'} == LJ::NotificationMethod::Inbox->ntypeid &&
-            $sub->group->is_tracking;
+        if ($sub->group->is_tracking and $sub->enabled) {
+            $self->{'total_count'}++ if $row->{'ntypeid'} == $inbox_ntypeid;
+
+            $self->{'active_count'}++ if
+                $sub->active && !($counted_active{$sub->group->freeze}++);
+        }
 
         next unless $filter->($row);
 
         $self->insert_sub($sub);
     }
-
 
     if ($u->{'opt_gettalkemail'} eq 'Y') {
         my @virtual_subs = (
@@ -128,7 +135,24 @@ sub fetch_for_user {
         }
     }
 
+    $self->{'filtered_out_active_count'} = $self->{'active_count'};
+    foreach my $group ($self->groups) {
+        $self->{'filtered_out_active_count'}--
+            if $group->active && $group->is_tracking;
+    }
+
     return $self;
+}
+
+sub update_active_count {
+    my ($self) = @_;
+
+    $self->{'active_count'} = $self->{'filtered_out_active_count'};
+
+    foreach my $group ($self->groups) {
+        $self->{'active_count'}++
+            if $group->active && $group->is_tracking;
+    }
 }
 
 sub insert_group {
@@ -286,6 +310,8 @@ sub update {
 
     my $u = $self->user;
 
+    my $inbox_ntypeid = LJ::NotificationMethod::Inbox->ntypeid;
+
     my $array2hash = sub {
         return map { $_ => 1 } @_;
     };
@@ -344,7 +370,6 @@ sub update {
             keys %{$group_new->{'subs'}},
         );
 
-        my $inbox_ntypeid = LJ::NotificationMethod::Inbox->ntypeid;
         my @ntypeids;
 
         # inbox goes first, for quota counting
@@ -376,6 +401,9 @@ sub update {
                 $self->_db_insert_sub($sub_new);
             }
         }
+
+        $group_old->{'subs'} = $group_new->{'subs'};
+        $self->update_active_count;
     }
 }
 
@@ -415,16 +443,33 @@ sub _db_collect_sets_binds {
     return ($sets, @binds);
 }
 
+sub _check_can_activate {
+    my ($self, $sub) = @_;
+
+    my $group = $self->find_group($sub->group);
+
+    return if
+        $group && ($group->active || !$group->enabled);
+
+    return if $self->{'active_count'} < LJ::get_cap($self->user, 'subscriptions');
+
+    die LJ::Subscription::QuotaError::Active->new($self->user);
+}
+
 sub _db_insert_sub {
     my ($self, $sub) = @_;
 
-    if ($sub->{'ntypeid'} == LJ::NotificationMethod::Inbox->ntypeid) {
-        die LJ::Subscription::QuotaError->new if
-            $self->{'inbox_count'} >= LJ::get_cap($self->user, 'subscriptions');
+    my $inbox_ntypeid = LJ::NotificationMethod::Inbox->ntypeid;
 
-        $self->{'inbox_count'}++ if
+    if ($sub->{'ntypeid'} == $inbox_ntypeid) {
+        die LJ::Subscription::QuotaError::Total->new($self->user) if
+            $self->{'total_count'} >= LJ::get_cap($self->user, 'subscriptions_total');
+
+        $self->{'total_count'}++ if
             $sub->group->is_tracking;
     }
+
+    $self->_check_can_activate($sub) if $sub->active;
 
     $sub->{'userid'} ||= $self->user->id;
     my ($sets, @binds) = $self->_db_collect_sets_binds($sub);
@@ -438,6 +483,8 @@ sub _db_insert_sub {
 sub _db_update_sub {
     my ($self, $subid, $sub) = @_;
 
+    $self->_check_can_activate($sub) if $sub->active;
+
     my ($sets, @binds) = $self->_db_collect_sets_binds($sub, ['flags']);
 
     $self->_dbh->do("UPDATE subs SET $sets WHERE userid=? AND subid=?", undef, @binds, $self->user->id, $subid);
@@ -446,8 +493,10 @@ sub _db_update_sub {
 sub _db_drop_sub {
     my ($self, $sub) = @_;
 
-    $self->{'inbox_count'}-- if
-        $sub->{'ntypeid'} == LJ::NotificationMethod::Inbox->ntypeid &&
+    my $inbox_ntypeid = LJ::NotificationMethod::Inbox->ntypeid;
+
+    $self->{'total_count'}-- if
+        $sub->{'ntypeid'} == $inbox_ntypeid &&
         $sub->group->is_tracking;
 
     my (@sets, @binds);

@@ -1616,6 +1616,8 @@ sub customview_content
 
     LJ::Request->header_out("Cache-Control", "must-revalidate");
     LJ::Request->header_out("Content-Length", length($data));
+    LJ::Request->send_http_header();
+    LJ::Request->print($data) unless LJ::Request->header_only;
     return LJ::Request::OK
 }
 
