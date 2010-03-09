@@ -125,8 +125,7 @@ sub handler
                     LJ::Request->remote_ip($real);
                 }
                 LJ::Request->header_in('X-Forwarded-For', join(", ", @hosts));
-            }
-
+            } 
             # and now, deal with getting the right Host header
             if ($_ = LJ::Request->header_in('X-Host')) {
                 LJ::Request->header_in('Host', $_);
@@ -250,6 +249,10 @@ sub blocked_bot
 
 sub trans
 {
+    {
+        my $r = shift;
+        LJ::Request->init($r);
+    }
     return LJ::Request::DECLINED 
         if ! LJ::Request->is_main || LJ::Request->method_number == LJ::Request->M_OPTIONS;  # don't deal with subrequests or OPTIONS
 
@@ -1437,6 +1440,7 @@ sub journal_content
     }
     elsif ($opts->{'baduser'})
     {
+warn "!BAD user error: user=$user"; # TODO: this is temporary error message to detect abnormal behaviour under Apache 1.
         $status = "404 Unknown User";
         $html = "<h1>Unknown User</h1><p>There is no user <b>$user</b> at <a href='$LJ::SITEROOT'>$LJ::SITENAME.</a></p>";
         $generate_iejunk = 1;
