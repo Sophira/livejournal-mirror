@@ -3625,8 +3625,10 @@ sub _Entry__get_link
         my $entry_title = LJ::ejs($entry->subject_html);
         my $link = LJ::S2::Link("#", $ctx->[S2::PROPS]->{"text_share_this"}, LJ::S2::Image("$LJ::IMGPREFIX/btn_sharethis.gif", 24, 24));
         $link->{_raw} = qq|<script type="text/javascript">
+            var stLink = jQuery('a:last')[0];
+            stLink.href = 'javascript:void(0)'
             SHARETHIS.addEntry({url:'$entry_url', title: '$entry_title'}, {button: false})
-                .attachButton(jQuery('a:last')[0]);
+                .attachButton(stLink);
             </script>|;
         return $link;
     }
