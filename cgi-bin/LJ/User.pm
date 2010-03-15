@@ -5237,7 +5237,7 @@ sub num_comments_posted {
             SELECT COUNT(*) FROM talkleft WHERE userid=?
         }, undef, $u->id);
 
-        warn $u->clusterid, ", ", $ret;
+        #warn $u->clusterid, ", ", $ret;
         $u->set_prop('talkleftct' => $ret);
     }
 
