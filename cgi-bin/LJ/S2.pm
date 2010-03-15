@@ -69,7 +69,7 @@ sub make_journal
     $con_opts->{'style_u'} = $opts->{'style_u'};
     my $ctx = s2_context($r, $styleid, $con_opts);
     unless ($ctx) {
-        $opts->{'handler_return'} = Apache::Constants::OK();
+        $opts->{'handler_return'} = LJ::Request::OK();
         return;
     }
 
