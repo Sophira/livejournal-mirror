@@ -902,7 +902,7 @@ sub clean
                 if ($opts->{'cutpreview'}) {
                     $newdata .= "<b>&lt;/lj-cut&gt;</b>";
                 } else {
-                    $newdata .= "<a name='cutid$cutcount-end' />"
+                    $newdata .= "<a name='cutid$cutcount-end'></a>"
                 }
             } else {
                 if ($mode eq "allow") {
@@ -1466,7 +1466,7 @@ sub clean_s1_style
         });
     }
 
-    return Storable::freeze(\%tmpl);
+    return Storable::nfreeze(\%tmpl);
 }
 
 sub s1_attribute_clean {

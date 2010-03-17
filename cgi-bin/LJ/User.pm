@@ -9068,7 +9068,7 @@ sub make_journal
         my $sth = $dbh->prepare("SELECT coltype, color FROM themecustom WHERE user=?");
         $sth->execute($u->{'user'});
         $col->{$_->{'coltype'}} = $_->{'color'} while $_ = $sth->fetchrow_hashref;
-        $update{'color_stor'} = Storable::freeze($col);
+        $update{'color_stor'} = Storable::nfreeze($col);
     }
 
     # save the updates
