@@ -989,8 +989,10 @@ sub trans
 
             my $new_uri  = $uri . "index.bml";
             my $bml_file = "$ENV{LJHOME}/htdocs/" . $uri . "index.bml";
-            LJ::Request->uri($new_uri);
-            return $bml_handler->($bml_file);
+            if (-e $bml_file) {
+                LJ::Request->uri($new_uri);
+                return $bml_handler->($bml_file);
+            }
         }
     }
     return LJ::Request::DECLINED
