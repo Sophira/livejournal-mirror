@@ -2344,10 +2344,12 @@ sub enter_comment {
                     "?, 'L', ?, ?, ?)", undef,
                     $posterid, $journalu->{userid}, $itemid, $jtalkid, $pub);
 
-            LJ::MemCache::incr([$posterid, "talkleftct:$posterid"]);
         } else {
             # both primary and backup talkleft hosts down.  can't do much now.
         }
+
+        my $poster = LJ::want_user($posterid);
+        $poster->set_prop('talkleftct' => $poster->prop('talkleftct') + 1);
     }
 
     $journalu->do("INSERT INTO talktext2 (journalid, jtalkid, subject, body) ".
@@ -2933,7 +2935,7 @@ sub init {
 # des-ditemid: identifier of post, need for checking reply-count
 # </LJFUNC>
 sub require_captcha_test {
-    my ($commenter, $journal, $body, $ditemid) = @_;
+    my ($commenter, $journal, $body, $ditemid, $nowrite) = @_;
 
     ## allow some users (our bots) to post without captchas in any rate
     return if $commenter and 
@@ -2948,7 +2950,7 @@ sub require_captcha_test {
     ## 1. Check rate by remote user and by IP (for anonymous user)
     ##
     if ($LJ::HUMAN_CHECK{anonpost} || $LJ::HUMAN_CHECK{authpost}) {
-        return 1 if !LJ::Talk::Post::check_rate($commenter, $journal);
+        return 1 if !LJ::Talk::Post::check_rate($commenter, $journal, $nowrite);
     }
     if ($LJ::HUMAN_CHECK{anonpost} && $anon_commenter) {
         return 1 if LJ::sysban_check('talk_ip_test', LJ::get_remote_ip());
@@ -3224,7 +3226,7 @@ sub over_maxcomments {
 
 # more anti-spammer rate limiting.  returns 1 if rate is okay, 0 if too fast.
 sub check_rate {
-    my ($remote, $journalu) = @_;
+    my ($remote, $journalu, $nowrite) = @_;
     return 1 unless $LJ::ANTI_TALKSPAM;
 
     my $ip = LJ::get_remote_ip();
@@ -3265,7 +3267,7 @@ sub check_rate {
           ];
     }
 
-    return LJ::RateLimit->check($remote, \@watch);
+    return LJ::RateLimit->check($remote, \@watch, $nowrite);
 }
 
 1;

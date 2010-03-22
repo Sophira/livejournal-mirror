@@ -975,19 +975,31 @@ sub trans
 
     # emulate DirectoryIndex directive
     if ($host =~ m'^www' and 
-        not defined LJ::Request->filename   # it seems that under Apache v2 'filename' method maps to files only
-                                            # and for directories it returns undef.
+        not defined LJ::Request->filename  # it seems that under Apache v2 'filename' method maps to files only
+                                           # and for directories it returns undef.
     ){
         # maps uri to dir
         my $uri = LJ::Request->uri;
         return LJ::Request::NOT_FOUND if $uri =~ /\.\./; # forbids ANY .. in uri
         
         if ($uri and -d "$ENV{LJHOME}/htdocs/" . $uri){
-            $uri .= "/" unless $uri =~ /\/$/; # make sure it ends with /
+            unless ($uri =~ /\/$/) {
+                return redir("$LJ::SITEROOT$uri/");
+            }
+
+            # index.bml
             my $new_uri  = $uri . "index.bml";
             my $bml_file = "$ENV{LJHOME}/htdocs/" . $uri . "index.bml";
-            LJ::Request->uri($new_uri);
-            return $bml_handler->($bml_file);
+            if (-e $bml_file) {
+                LJ::Request->uri($new_uri);
+                return $bml_handler->($bml_file);
+            } 
+
+            # index.html
+            my $html_file = "$ENV{LJHOME}/htdocs/" . $uri . "index.html";
+            if (-e $html_file){
+                return redir($uri . "index.html");
+            }
         }
     }
     return LJ::Request::DECLINED
