@@ -1,0 +1,81 @@
+;; -*- coding: utf-8 -*-
+.commlist.actinfo=Info
+
+.commlist.actinfo2|staleness=1
+.commlist.actinfo2=Profile
+
+.commlist.actinvites=Invitations
+
+.commlist.actions=<b>Actions</b>
+
+.commlist.actmembers2=Members
+
+.commlist.actpending|notes=This is appended to /community/manage.bml.commlist.actmembers2 when there are pending people.
+.commlist.actpending=, <a [[aopts]]>[[num]] pending</a>
+
+.commlist.actsettings2=Settings
+
+.commlist.customize|staleness=1
+.commlist.customize=Customize
+
+.commlist.customize2|staleness=1
+.commlist.customize2=Journal Style
+
+.commlist.header=Your communities
+
+.commlist.moderation=Awaiting Moderation
+
+.commlist.moderation.num2=[<a [[aopts]]>[[num]] in queue</a>]
+
+.commlist.none=<i>You are not managing any communities.</i>
+
+.commlist.post|staleness=1
+.commlist.post=Post
+
+.commlist.text=Here are the communities that you manage or co-manage:
+
+.commlist.title=<b>Title</b>
+
+.commlist.username=<b>Username</b>
+
+.communitydirectory|staleness=1
+.communitydirectory=Community Directory
+
+.communitydirectory.manage|staleness=1
+.communitydirectory.manage=Manage Community Directory Listing
+
+.create.header=Create a community
+
+.create.text2=You can also <a [[aopts]]><b>create a new community</b></a>.
+
+.error.badaccounttype=You must be logged in as a regular user account in order to access this page.
+
+.joinmail.body=For communities with moderated membership, you have several email options:
+
+.joinmail.body2|staleness=1
+.joinmail.body2=For communities with moderated membership, you can <a [[aopts]]>get notified</a> whenever anyone requests membership.
+
+.joinmail.email.all=E-mail every time someone requests to join
+
+.joinmail.email.digest=One e-mail each day with a list of all pending requests
+
+.joinmail.email.none=No e-mail, I will use this page to look for new requests
+
+.joinmail.save=Save Settings
+
+.joinmail.title=Administrative options
+
+.managelinks|staleness=1
+.managelinks=Manage [[user]]'s:
+
+.modemail.body=For moderated communities, you can choose whether to send emails or not:
+
+.modemail.no=No email, I will manage the moderation queue manually
+
+.modemail.yes=Email me every time someone submits a post to the queue
+
+.title=Community Management
+
+.title2|staleness=1
+.title2=Manage Communities
+

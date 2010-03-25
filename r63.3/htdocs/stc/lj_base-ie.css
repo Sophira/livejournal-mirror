@@ -1,0 +1,110 @@
+/* ie6 and below css */
+
+.LJ_Placeholder_Container {
+    position: relative;
+}
+.LJ_Placeholder_Container img {
+    position: absolute;
+    top: 45%;
+    left: 45%;
+}
+
+/* Vgift shop page */
+.vgift .vg_img {
+    height: 101px;
+    width: 101px;
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+*HTML .vgift-img-l {
+    zoom:expression(
+        function(t){
+            if (220 < t.scrollWidth && t.scrollWidth > t.scrollHeight) {
+                t.width = '220';
+            }
+            else if (220 < t.scrollHeight) {
+                t.height = '220';
+            }
+            t.runtimeStyle.zoom = 1;
+        }(this));
+    }
+*HTML .vgift-img-s {
+    zoom:expression(
+        function(t){
+            if (100 < t.scrollWidth && t.scrollWidth > t.scrollHeight) {
+                t.width = '100';
+            }
+            else if (100 < t.scrollHeight) {
+                t.height = '100';
+            }
+            t.runtimeStyle.zoom = 1;
+        }(this));
+    }
+
+/* singapoure news block */
+.sg-content UL {
+	display: block;
+}
+
+.sg-content LI {
+		width: 25%;
+		border-left: 1px solid #f9c5ab;
+		min-height: 10em;
+		display: block;
+		float: left;
+		margin-left: -3px;
+}
+*HTML .sg-content LI {
+		height: 220px;
+}
+
+/* Disabled block
+--------------------------- */
+/* Must be removed after implementation of Framework! */
+.st-disabled {
+    zoom:1;
+    }
+.b-blocker {
+    zoom:expression(
+        function(t){
+            t.runtimeStyle.zoom = 1;
+            t.insertAdjacentHTML('beforeBegin','<iframe class="b-blocker-iframe" src="about:blank"></iframe>')
+        }(this)
+    );
+    stretch:expression(
+        function(t){
+            var h = t.parentNode.offsetHeight;
+            if (t.h != h) {
+                t.style.height = t.h = h;
+            }           
+        }(this)
+    );
+    }
+.b-blocker-iframe {
+    position:absolute;
+    -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";
+    filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=0);
+    display:none;
+    padding:0;
+    margin:0;
+    border:0;
+    opacity:0;
+    expression:expression(
+        function(t){
+            var L = t.nextSibling.offsetLeft;
+            var T = t.nextSibling.offsetTop;
+            var W = t.nextSibling.offsetWidth;
+            var H = t.nextSibling.offsetHeight;
+            if (t.L != L || t.T != T || t.W != W || t.H != H) {
+                t.runtimeStyle.left = t.L = L;
+                t.runtimeStyle.top = t.T = T;
+                t.runtimeStyle.width = t.W = W;
+                t.runtimeStyle.height = t.H = H;
+            }
+        }(this)
+    );
+    }
+    .st-disabled .b-blocker-iframe {
+        display:block;
+        }

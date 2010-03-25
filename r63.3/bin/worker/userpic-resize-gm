@@ -1,0 +1,28 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use lib "$ENV{LJHOME}/cgi-bin";
+require 'ljlib.pl';
+use LJ::NewWorker::Gearman;
+
+LJ::NewWorker::Gearman::UserPicResize->start();
+
+package LJ::NewWorker::Gearman::UserPicResize;
+use strict;
+use lib "$ENV{LJHOME}/cgi-bin";
+require "ljlib.pl";
+use base 'LJ::NewWorker::Gearman';
+use Image::Magick;
+use Gearman::Worker;
+use Storable;
+
+sub declare { return [ 'lj_upf_resize' => \&lj_upf_resize ] }
+sub work    { }
+
+sub lj_upf_resize {
+    my $job = shift;
+    my $args = eval { Storable::thaw($job->arg) } || [];
+    return Storable::nfreeze(LJ::_get_upf_scaled(@$args));
+}
+
+1;

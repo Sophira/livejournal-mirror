@@ -1,0 +1,9 @@
+<?_code
+{
+    use strict;
+    use vars qw(%GET);
+    return BML::redirect(LJ::Session->helper_url($GET{'return'}) || "$LJ::SITEROOT/login.bml");
+}
+_code?>
+
+

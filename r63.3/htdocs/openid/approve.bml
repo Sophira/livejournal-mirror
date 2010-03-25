@@ -1,0 +1,85 @@
+<?_code
+{
+    return $ML{'.error.openid_support_disabled'} unless LJ::OpenID::server_enabled();
+
+    use strict;
+    use vars qw($title $body %GET %POST);
+    use LJ::OpenID;
+
+    my $err = sub {
+        $body = shift;
+        $title = shift;
+        $title ||= "Error";
+        return "";
+    };
+
+    my $u = LJ::get_remote() or
+        return $err->($ML{'.error.login_needed'}, $ML{'.error.need_to_login'});
+
+    my $identity = LJ::OpenID::is_identity($u, $GET{'identity'}, \%GET);
+    unless ($identity) {
+        return $err->(BML::ml('.error.cannot_provide_identity',
+                { url => LJ::ehtml($GET{'identity'}), user => LJ::ljuser($u)})
+        );
+    }
+
+    my $site = $GET{'trust_root'};
+    $site =~ s/\?.*//;
+    return $err->($ML{'.error.invalid_site_address'}) unless $site =~ m!^https?://!;
+
+    # TODO: check URL and see if it contains images or external scripts/css/images, where
+    # an attacker could sniff the validation tokens in the Referer header?
+    
+    my $nos = LJ::OpenID::server();
+    my $sig_return = $nos->signed_return_url(
+                        identity     => $GET{'identity'},
+                        return_to    => $GET{'return_to'},
+                        trust_root   => $GET{'trust_root'},
+                        assoc_handle => $GET{'assoc_handle'},
+    );
+
+    ##
+    ## If user is logged in, and user trusts the site, then
+    ## we can tell the site user's identity.
+    ## 
+    if (LJ::OpenID::is_trusted($u, $site)) {
+        return BML::redirect($sig_return) if $sig_return;
+    }
+    
+    if (LJ::did_post()) {
+        return $err->($ML{'.error.possible_form_tampering'}) unless LJ::check_form_auth();
+
+        if ($POST{'no'}) {
+            my $cancel_url = $nos->cancel_return_url(
+                                                     return_to => $GET{'return_to'},
+                                                     );
+            return BML::redirect($cancel_url);
+        }
+
+        if ($POST{'yes:always'}) {
+            LJ::OpenID::add_trust($u, $site)
+                or return $err->($ML{'.error.failed_to_save'});
+        }
+        return BML::redirect($sig_return) if $sig_return;
+        return $err->($ML{'.error.failed_sign_url'});
+    }
+
+    $title = $ML{'.form.title'};
+    $body = $ML{'.form.header1'};
+    $body .= "<form method='post'>";
+    $body .= LJ::form_auth();
+    my $dis_site = LJ::ehtml($site);
+    $dis_site =~ s!\*\.!<span style='color: red'><i>&lt;anything&gt;</i></span>.!;
+
+    $body .= "<div style='overflow: auto; background: #DDD; word-wrap: break-word; color: black; border: 2px solid black; padding: 0.5em; font-size: 13pt'><tt>$dis_site</tt></div>";
+    $body .= $ML{'.form.header2'};
+    $body .= "<table align='center'><tr><td><input type='submit' name='yes:once' value='".$ML{'.form.button.yes_this_time'}."' /> ";
+    $body .= "<input type='submit' name='yes:always' value='".$ML{'.form.button.yes_always'}."' /> ";
+    $body .= "<input type='submit' name='no' value='".$ML{'.form.button.no'}."' /></td></tr></table>";
+    $body .= "</form>";
+    return;
+}
+_code?><?page
+title=><?_code return $title; _code?>
+body=><?_code  return $body;  _code?>
+page?>

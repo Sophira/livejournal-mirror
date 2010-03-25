@@ -1,0 +1,473 @@
+<?page
+body<=
+<?_code
+{
+    use strict;
+    use vars qw(%GET %POST %FORM $title $windowtitle $headextra @errors @warnings);
+    use LJ::Subscription::GroupSet;
+    use LJ::Widget::SubscribeInterface;
+
+    BML::set_language_scope('/manage/settings/index.bml');
+
+    LJ::need_res("stc/settings.css", "js/settings.js");
+    LJ::set_active_crumb('manage');
+
+    my $remote = LJ::get_remote();
+    my $authas;
+    my $u;
+
+    if ($remote) {
+        $authas = $GET{authas} || $remote->user;
+        $u = LJ::get_authas_user($authas);
+        return LJ::bad_input($ML{'error.invalidauth'})
+            unless $u;
+    }
+
+    # the different navigation categories and their settings
+    my %cats_with_settings = (
+        account => {
+            name => $ML{'.cat.account'},
+            visible => 1,
+            disabled => !$u ? 1 : 0,
+            form => 0,
+            desc => $ML{'.cat.account.desc'},
+            sort_weight => 10,
+            settings => [qw(
+                LJ::Setting::Display::AccountLevel
+                LJ::Setting::Display::AccountStatus
+                LJ::Setting::Display::Username
+                LJ::Setting::Display::Email
+                LJ::Setting::Display::Password
+                LJ::Setting::Display::SecretQuestion
+                LJ::Setting::Display::DomainMapping
+            )],
+        },
+        display => {
+            name => $ML{'.cat.display'},
+            visible => 1,
+            disabled => 0,
+            form => 1,
+            desc => $ML{'.cat.display.desc'},
+            sort_weight => 20,
+            settings => [qw(
+                LJ::Setting::Language
+                LJ::Setting::TimeZone
+                LJ::Setting::ImagePlaceholders
+                LJ::Setting::EmbedPlaceholders
+                LJ::Setting::GraphicPreviews
+                LJ::Setting::EmailFormat
+                LJ::Setting::EntryEditor
+                LJ::Setting::StyleAlwaysMine
+                LJ::Setting::StyleMine
+                LJ::Setting::CtxPopup
+                LJ::Setting::GettingStarted
+                LJ::Setting::SiteScheme
+                LJ::Setting::AdultContent
+                LJ::Setting::ViewingAdultContent
+                LJ::Setting::SafeSearch
+                LJ::Setting::CyrillicServices
+            )],
+        },
+        notifications => {
+            name => $ML{'.cat.notifications'},
+            visible => 1,
+            disabled => !$u || $u->is_community ? 1 : 0,
+            form => 1,
+            desc => $ML{'.cat.notifications.desc'},
+            sort_weight => 30,
+            settings => [qw(
+                    LJ::Setting::CommentEmailNotify
+                    LJ::Setting::SelfCommentEmail
+            )],
+        },
+        mobile => {
+            name => $ML{'.cat.mobile'},
+            visible => 1,
+            disabled => !$u || $u->is_community ? 1 : 0,
+            form => 1,
+            desc => $ML{'.cat.mobile.desc'},
+            sort_weight => 40,
+            settings => [qw(
+                LJ::Setting::VoicePosting
+                LJ::Setting::SMS
+                LJ::Setting::EmailPosting
+                LJ::Setting::Display::MobileApps
+            )],
+        },
+        privacy => {
+            name => $ML{'.cat.privacy'},
+            visible => 1,
+            disabled => !$u ? 1 : 0,
+            form => 1,
+            desc => $ML{'.cat.privacy.desc'},
+            sort_weight => 50,
+            settings => [qw(
+                LJ::Setting::MinSecurity
+                LJ::Setting::SearchInclusion
+                LJ::Setting::SearchCommentInclusion
+                LJ::Setting::ContentPromotion
+                LJ::Setting::NotifyWeblogs
+                LJ::Setting::FacebookBeacon
+                LJ::Setting::EnableComments
+                LJ::Setting::CommentScreening
+                LJ::Setting::CommentCaptcha
+                LJ::Setting::CommentIP
+                LJ::Setting::Display::BanUsers
+                LJ::Setting::FindByEmail
+                LJ::Setting::PingBack
+                LJ::Setting::Ratings
+                LJ::Setting::InvisibilityGuests
+            )],
+        },
+        history => {
+            name => $ML{'.cat.history'},
+            visible => 1,
+            disabled => !$u || $u->is_community ? 1 : 0,
+            form => 0,
+            desc => $ML{'.cat.history.desc'},
+            sort_weight => 60,
+            settings => [qw(
+                LJ::Setting::Display::Logins
+                LJ::Setting::Display::Payments
+                LJ::Setting::Display::Emails
+                LJ::Setting::Display::EmailPosts
+                LJ::Setting::Display::SMSHistory
+                LJ::Setting::Display::GiftCerts
+            )],
+        },
+    );
+
+    LJ::run_hooks("settings_extra_cats", \%cats_with_settings, user => $u);
+
+    # Active tab
+    my $given_cat = $GET{cat};
+    my $selfuri = '/manage/settings/?cat='.$given_cat;
+
+    if ($u) {
+        $given_cat = "account"
+            unless defined $cats_with_settings{$given_cat} &&
+                   $cats_with_settings{$given_cat}->{visible} &&
+                   !$cats_with_settings{$given_cat}->{disabled};
+    } else {
+        $given_cat = "display";
+    }
+
+
+    # http(s) access
+    my $QUERY_STRING = $ENV{QUERY_STRING};
+    return BML::redirect( "$LJ::SSLROOT/manage/settings/index.bml?$ENV{QUERY_STRING}")
+        if $cats_with_settings{$given_cat}
+            and $cats_with_settings{$given_cat}->{need_ssl}
+            and not $LJ::IS_SSL;
+
+    # Category order
+    my @cats_order =
+        map  { $_->[0] }
+        sort { $a->[1]->{sort_weight} <=> $b->[1]->{sort_weight} }
+        map  { [$_, $cats_with_settings{$_}] }
+        keys %cats_with_settings;
+
+
+    my @settings = @{$cats_with_settings{$given_cat}->{settings}};
+
+    # remove any settings that don't exist for this category
+    my $remove_setting = sub {
+        my $el_ref = shift;
+
+        splice(@settings, $$el_ref, 1);
+        $$el_ref--;
+    };
+    for (my $i = 0; $i < scalar @settings; $i++) {
+        my $setting = $settings[$i];
+
+        if (eval "use $setting; 1;") {
+            $remove_setting->(\$i) unless $setting->should_render($u);
+        } else {
+            $remove_setting->(\$i);
+        }
+    }
+
+    my $save_rv;
+    my $submit_msg;
+    if (LJ::did_post()) {
+        return LJ::bad_input($ML{'error.invalidform'})
+            unless LJ::check_form_auth() || $given_cat eq 'notifications';
+
+        $save_rv = LJ::Setting->save_all($u, \%POST, \@settings);
+
+        if (LJ::Setting->save_had_errors($save_rv)) {
+            $submit_msg .= "<?errorbar $ML{'.errors'} errorbar?><br />";
+        } else {
+            $submit_msg .= "<?warningbar $ML{'.success'} warningbar?><br />";
+        }
+    }
+
+    my $set;
+
+    if ($given_cat eq "notifications") {
+        $set = LJ::Subscription::GroupSet->fetch_for_user($u);
+
+        if ($FORM{'delete_group'}) {
+            return "<?h1 $ML{'Error'} h1?><?p $ML{'error.invalidform'} p?>"
+                unless (
+                    LJ::did_post() ||
+                    LJ::Auth->check_ajax_auth_token($u, $selfuri,
+                        map { $_ => $GET{$_} } qw(auth_token delete_group)
+                    )
+                );
+
+            my $group = LJ::Subscription::Group->thaw($FORM{'delete_group'});
+            $set->drop_group($group);
+
+            return BML::redirect($selfuri . '&saved=1');
+        }
+
+        if (LJ::did_post()) {
+            my @ntypes = @LJ::NOTIFY_TYPES;
+
+            my %ntypeids = map { $_ => $_->ntypeid } @ntypes;
+
+            my $newset = LJ::Subscription::GroupSet->new($u);
+
+            foreach my $field (keys %POST) {
+                next unless $field =~ /event\-(\d+)/;
+                my $field_num = $1;
+
+                my $group = LJ::Subscription::Group->thaw($POST{$field});
+
+                foreach my $ntypeid (values %ntypeids) {
+                    next unless exists $POST{'sub-'.$field_num.'-'.$ntypeid};
+
+                    $group->create_sub($ntypeid);
+                }
+
+                $newset->insert_group($group);
+            }
+
+            eval { $set->update($newset) };
+
+            my $error = $@;
+
+            $u->set_prop('opt_getselfemail' => exists($POST{'opt_getselfemail'}))
+                if LJ::get_cap($u, 'getselfemail');
+
+            if ($error) {
+                if ($error->isa('LJ::Subscription::QuotaError')) {
+                    my $mlstring = $error->as_string;
+                    $submit_msg .= "<?errorbar $mlstring errorbar?>";
+                }
+            } else {
+                return BML::redirect($selfuri . '&saved=1');
+            }
+        }
+
+        $submit_msg .= "<?warningbar $ML{'.success'} warningbar?><br />"
+            if $GET{'saved'};
+    }
+
+    my $ret = "<div id='settings_page'>";
+
+    my ($getextra, $getsep) = ("", "?");
+    $title = $windowtitle = $ML{'.title.self'};
+    if ($u && $authas ne $remote->user) {
+        $getextra = "?authas=$authas";
+        $getsep = "&";
+        $title = BML::ml('.title.comm', { user => $u->ljuser_display({ head_size => 24 }) });
+        $windowtitle = BML::ml('.title.comm', { user => $u->display_username });
+    }
+
+    if ($u) {
+        $ret .= "<div id='authas_select'>";
+        $ret .= "<form action='$LJ::SITEROOT/manage/settings/' method='get'>";
+        $ret .= LJ::make_authas_select($remote, { authas => $GET{authas} });
+        $ret .= LJ::html_hidden( cat => $given_cat );
+        $ret .= "</form>";
+        $ret .= "</div>";
+    }
+
+    $ret .= "<p id='intro'>" . BML::ml('.intro3', { aopts1 => "href='$LJ::SITEROOT/manage/profile/$getextra'", aopts2 => "href='$LJ::SITEROOT/customize/$getextra'" }) . "</p>"
+        if $u;
+    $ret .= $submit_msg;
+
+    $ret .= "<div id='settings_left'>";
+
+    $ret .= "<ul id='settings_nav'>";
+    foreach my $cat (@cats_order) {
+        next unless $cats_with_settings{$cat}->{visible};
+
+        if ($cats_with_settings{$cat}->{disabled}) {
+            $ret .= "<li class='disabled'>$cats_with_settings{$cat}->{name}</li>";
+        } else {
+            my $active_class = " class='active'" if $cat eq $given_cat;
+            $ret .= "<li><a href='$LJ::SITEROOT/manage/settings/$getextra${getsep}cat=$cat'$active_class>$cats_with_settings{$cat}->{name}</a></li>";
+        }
+    }
+    $ret .= "</ul>";
+
+    $ret .= "<div id='settings_nav_title'><p>";
+    $ret .= $cats_with_settings{$given_cat}->{desc};
+    $ret .= "</p></div>";
+
+    if ($cats_with_settings{$given_cat}->{form}) {
+        my $confirm_msg = LJ::ejs($ML{'.form.confirm'});
+        $ret .= "<script>Settings.confirm_msg = \"$confirm_msg\";</script>";
+        $ret .= "<form id='settings_form' action='".(($cats_with_settings{$given_cat} && $cats_with_settings{$given_cat}->{need_ssl})?$LJ::SSLROOT:$LJ::SITEROOT)."/manage/settings/$getextra${getsep}cat=$given_cat' method='post'>";
+        $ret .= LJ::form_auth();
+    }
+    $ret .= "<div class='settings_content'>";
+    
+    ## small hack: class 'adsense' is removed by FF plugin AdBlock,
+    ## so for category 'adsense' class is 'lj_adsense' 
+    if ($given_cat eq "adsense") {
+        $ret .= "<div class='lj_adsense'>";
+    } else {
+        $ret .= "<div class='$given_cat'>";
+    }
+    
+
+    if ($given_cat eq "notifications") {
+        my $widget = LJ::Widget::SubscribeInterface->new;
+        $widget->{'no_table'} = 1;
+        $widget->{'no_container_div'} = 1;
+        $widget->{'allow_delete'} = 1;
+        $widget->{'page'} = $selfuri;
+
+        $ret .= '<table class="Subscribe" cellspacing="0" cellpadding="0" ' .
+            'style="clear:none">';
+
+        $ret .= $widget->render({
+            'title' => $ML{'subscribe_interface.category.my-account'},
+            'groups' => $set->extract_groups(
+            LJ::run_hook('esn_settings_my_account') || [
+                'OfficialPost',
+                'JournalNewComment-u',
+                'CommunityEntryReply',
+                'CommentReply',
+                'PollVote-u',
+                'Befriended-u',
+                'Defriended-u',
+                'UserMessageRecvd-u',
+            ]),
+            'u' => $u,
+            'css_class' => 'my_account',
+        });
+
+        my $can_getselfemail = LJ::get_cap($u, 'getselfemail');
+        my $value = $can_getselfemail ? $u->prop('opt_getselfemail') : 0;
+
+        if ($can_getselfemail || !$u->is_identity) {
+            my $label = $ML{'subscribe_interface.getselfemail'};
+            $label .= LJ::run_hook("upgrade_link", $u) unless $can_getselfemail;
+            my $class = $can_getselfemail ? '' : 'disabled';
+
+            $ret .= '<tbody class="opt_getselfemail">';
+            $ret .= "<tr class=\"$class\">";
+            $ret .= '<td>';
+            $ret .= qq{<label for="opt_getselfemail">$label</label>};
+            $ret .= '</td>';
+            $ret .= '<td>';
+            $ret .= LJ::html_check({
+                'name' => 'opt_getselfemail',
+                'id' => 'opt_getselfemail',
+                'selected' => $value,
+                'disabled' => !$can_getselfemail,
+                'noescape' => 1,
+            });
+            $ret .= '</td>';
+            $ret .= '<td colspan="4"></td>';
+            $ret .= '</tr></tbody>';
+        }
+
+        $ret .= $widget->render({
+            'title' => $ML{'subscribe_interface.category.friends-and-communities'},
+            'groups' => $set->extract_groups([
+                'InvitedFriendJoins-u',
+                'CommunityInvite-u',
+                'CommunityJoinRequest-u',
+                'NewUserpic',
+                'Birthday',
+                'NewVGift',
+            ]),
+            'u' => $u,
+            'css_class' => 'friends_and_communities',
+        });
+
+        my @groups =
+            sort { $a->createtime <=> $b->createtime }
+            grep { $_->is_tracking }
+            $set->groups;
+
+        $ret .= $widget->render({
+            'title' => $ML{'subscribe_interface.category.subscription-tracking'},
+            'groups' => \@groups,
+            'u' => $u,
+            'css_class' => 'tracking',
+        });
+
+        $ret .= '</table>';
+
+        $ret .= LJ::html_hidden({'id' => 'catids', 'value' => '0,1,2'});
+
+    } elsif ($cats_with_settings{$given_cat}->{raw_html}){
+        foreach my $setting (@{ $cats_with_settings{$given_cat}->{settings} }){
+            $ret .= $setting->raw_html($u);
+        }
+    } else {
+
+        my $setting_ct = 1;
+        $ret .= "<table cellpadding='0' cellspacing='0'>";
+        foreach my $setting (@settings) {
+            my $errors = $setting->errors_from_save($save_rv);
+            my $args = $setting->args_from_save($save_rv);
+
+            my $label = $setting->label;
+            my $option = $setting->option($u, $errors, $args, getargs => \%GET );
+            my $actionlink = $setting->actionlink($u);
+            my $helpicon = LJ::help_icon($setting->helpurl($u));
+            my $last_class = $setting_ct == scalar @settings ? " last" : "";
+
+            $ret .= "<tr>";
+            $ret .= "<td class='${given_cat}_label$last_class'>$label</td>" if $label;
+            $ret .= "<td class='${given_cat}_option$last_class'>" . ($option ? $option : "&nbsp;") . "</td>";
+            $ret .= "<td class='${given_cat}_actionlink$last_class'>" . ($actionlink ? $actionlink : "&nbsp;") . "</td>";
+            $ret .= "<td class='help$last_class'>" . ($helpicon ? $helpicon : "&nbsp;") . "</td>";
+            $ret .= "</tr>";
+
+            $setting_ct++;
+        }
+        $ret .= "</table>";
+    }
+
+    if ($given_cat eq "account") {
+        my $account_stats = LJ::run_hook("settings_account_stats", $u);
+        if ($account_stats) {
+            $ret .= "<div class='account_stats'>";
+            $ret .= $account_stats;
+            $ret .= "</div>";
+        }
+    }
+
+    $ret .= "</div>";
+    $ret .= "</div>";
+
+    $ret .= "<div id='settings_save'>";
+    $ret .= $cats_with_settings{$given_cat}->{form} ? LJ::html_submit($ML{'.btn.save'}) : "&nbsp;";
+    $ret .= "</div>";
+    $ret .= "</form>" if $cats_with_settings{$given_cat}->{form};
+
+    $ret .= "</div>";
+
+    $ret .= "</div>";
+
+    $ret .= LJ::Widget::SettingProdDisplay->render;
+    
+    return $ret;
+}
+_code?>
+<=body
+title=><?_code return $title; _code?>
+windowtitle=><?_code return $windowtitle; _code?>
+head<=
+<?_code return $headextra; _code?>
+<=head
+page?>

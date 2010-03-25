@@ -1,0 +1,21 @@
+#!/usr/bin/perl
+use strict;
+use lib "$ENV{LJHOME}/cgi-bin";
+
+LJ::NewWorker::Manual::CleanCometHistory->start();
+
+package LJ::NewWorker::Manual::CleanCometHistory;
+use base 'LJ::NewWorker::Manual';
+use LJ::Comet::History;
+
+sub on_idle {
+    return 24*60*60; # once a day
+}
+
+# return 1 if we did work, false if not.
+sub work {
+    my $class = shift;
+    return LJ::Comet::History->remove_outdated();
+}
+
+1;

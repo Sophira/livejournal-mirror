@@ -1,0 +1,214 @@
+<?page
+title=><?_code return $ML{'.title'}; _code?>
+body<=
+<?_code
+{
+    use strict;
+    use vars qw(%GET %POST);
+    use JSON;
+
+    my $max_alias_length = 200; # max allowed chars(?) or bytes in alias
+
+    return LJ::server_down_html() if $LJ::SERVER_DOWN;
+
+    LJ::set_active_crumb('aliases');
+
+    my $u = LJ::get_remote();
+    return "<?needlogin?>" unless $u;
+    return $LJ::MSG_READONLY_USER if LJ::get_cap($u, "readonly");
+    return "<?h1 " . BML::ml('.not.allowed', { aopts => "href='$LJ::SITEROOT/paidaccounts/'" } ) . " h1?>" unless $u->get_cap('aliases');
+
+    my $ret = '';
+    my @aliases;
+    ### user is now authenticated ###
+    
+    my $key = 'new_aliases';
+
+    # if a POST, update their info
+    if (LJ::did_post()) {
+        my $new_user = delete $POST{$key."new_user"};
+        my $new_alias = delete $POST{$key."new_alias"};
+        return "<?badinput?>" unless LJ::text_in(\%POST);
+        return "<?h1 $ML{'Error'} h1?><?p $ML{'error.invalidform'} p?>"
+            unless LJ::check_form_auth();
+
+        my @a_new_user  = split /\0/, $new_user;
+        my @a_new_alias = split /\0/, $new_alias;
+
+        my @userid_list = split /\|/, $POST{$key."_user_list"};
+        foreach my $userid (@userid_list) {
+            if (($POST{"delete_btn"} ne '' && $POST{"check".$userid} eq 'on') || $POST{$key.$userid} eq '') {
+                push @aliases, ($userid, undef);
+            } elsif ($POST{$key.$userid} ne '' && $POST{"save_btn"} ne '') {
+                push @aliases, ($userid, $POST{$key.$userid});
+            }
+        }
+
+        my $error = '';
+        my @not_exists_users = ();
+
+        foreach my $idx (0..$#a_new_user) {
+
+            next unless $a_new_user[$idx];
+
+            my $adding_u = LJ::load_user($a_new_user[$idx]);
+
+            unless ($adding_u) {
+                push @not_exists_users, $a_new_user[$idx];
+                next;
+            }
+
+            push @aliases, ($adding_u->{userid}, $a_new_alias[$idx])
+                if $adding_u->{user} ne $u->{user} && $a_new_alias[$idx];
+        }
+
+        my $alias_error;
+        if (!LJ::set_alias(\@aliases, \$alias_error)) {
+            $error .= "<?p $alias_error p?>";
+        }
+
+        $error .= "<?p ".BML::ml('.error.user_not_exist', { username => join (", ", @not_exists_users) } )." p?>" if scalar @not_exists_users;
+        $error .= "<?p ".BML::ml('.error.yourself')." p?>" if scalar grep { $u->{user} eq $_ } @a_new_user;
+        
+        # tell the user all is well
+        if ($error) {
+            $ret .= "<?h1 $ML{'Error'} h1?>$error";
+        } else {
+            $ret .= "<?h1 $ML{'.success.head'} h1?><?p $ML{'.success.saved'} p?>";
+        }
+    }
+
+    # now show edit form
+    
+    $ret .= "<form method='post' onsubmit='aliasSubmit()'>\n";
+    $ret .= LJ::form_auth();
+    
+    $ret .= q|<table class="aliaslist-table b-form-changelist">|;
+    
+    my @userid_list = ();
+    my %all_aliases = LJ::get_all_aliases();
+    my $us = LJ::load_userids(keys %all_aliases);
+    foreach my $userid (keys %all_aliases) {
+        delete $all_aliases{$userid} unless $us->{$userid}; # need safe sort below
+    }
+    my $users_list_html = '';
+    foreach my $userid (sort { $us->{$a}->display_name cmp $us->{$b}->display_name } keys %all_aliases) {
+        my $u = $us->{$userid};
+        $users_list_html .= q|<tr><td>|
+                                .LJ::html_check({ 'type' => 'check',
+                                  'name' => "check".$userid,
+                                  'id' => "check".$userid,
+                                  'class' => "user_check",
+                                  'value' => 'on' }) . q| |.
+        LJ::ljuser($u->{user}).
+        
+        q|</td><td class="user_alias"><input type="text" class="type-text" name="|.$key.$userid.q|" value="|
+                .LJ::ehtml(LJ::ljuser_alias($u->{user})).qq|" size="50" maxlength="$max_alias_length" onblur="DOM[this.value==this.defaultValue?'removeClassName':'addClassName'](this, 'type-text-changed')"/>|
+                ."</td></tr>\n";
+        push @userid_list, $userid;
+    }
+    $ret .= q|<tr class="newalias"><td colspan="2"><label for="alias-new-user">|. $ML{'.alias.header.newalias'} .q|</label></td></tr>|."\n";
+    $ret .= '<tr id="new_alias_tr"><td>';
+    $ret .= LJ::html_text({
+                name  => "${key}new_user",
+                class => 'type-text',
+                id    => 'alias-new-user',
+                value => "$ML{'.alias.enterusername'}"
+             });
+    $ret .= '</td><td class="user_alias">';
+    $ret .= LJ::html_text({
+                name  => "${key}new_alias",
+                class => 'type-text',
+                id    => 'alias-new-alias',
+                maxlenght => $max_alias_length,
+                size  => 50,
+                value => "$ML{'.alias.enternote'}"
+             });
+    $ret .= "<span class=\"user_alias_error\"></span></td></tr>\n";
+    $ret .= q|<input type="hidden" name="|.${key}.q|_user_list" value="|.join('|', @userid_list).q|"/>|."\n";
+    $ret .= q|<tr><td colspan="2" class="more"><a href="#" id="adding-more-alias" onclick="return addAliasLine()">|. $ML{'.alias.aliaslist.more'} .q|</a></td></tr>|;
+    $ret .= q|<tr><th>|. $ML{'.alias.header.username'} .q|</th><th>|.$ML{'.alias.header.alias'} .q|</th></tr>|."\n";
+    $ret .= $users_list_html;
+    $ret .= q|<tr><td colspan="2" class="notedel"><input type="button" name="delete_btn" onclick="this.form.save_btn.name='delete_btn';this.form.save_btn.click()" value="|.$ML{'.done.btn.delete'}.q|"/></td></tr>|;
+    $ret .= q|</table>|."\n";
+
+    $ret .=qq|<script type="text/javascript">
+        function addAliasLine(){
+            var more_link = \$('adding-more-alias'),
+                new_tr = \$('new_alias_tr').cloneNode(true),
+                inps = new_tr.getElementsByTagName('input');
+            inps[0].parentNode.innerHTML += ''; // IE 6 hack
+            inps[1].parentNode.innerHTML += ''; // IE 6 hack
+            inps[0].value = inps[0].defaultValue;
+            inps[1].value = inps[1].defaultValue;
+            inps[0].className = inps[1].className = 'type-text';
+            inps[0].id = '';
+            addLineEvents(inps[0], inps[1]);
+            more_link.parentNode.parentNode.parentNode.insertBefore(new_tr, more_link.parentNode.parentNode);
+            return false;
+        }
+        var errmsg_change = '|.LJ::ejs($ML{'.error.override_old_value'}).q|';
+
+        function addLineEvents(input_name, input_alias){
+            input_name.onblur =
+            input_alias.onblur =
+                function(){aliasPlaceholder(this, 'blur')}
+            input_name.onfocus =
+            input_alias.onfocus =
+                function(){aliasPlaceholder(this, 'focus')}
+            input_name.oninput =
+            input_name.onpaste =
+            input_name.onkeyup =
+                function(){checkAlias(this)}
+        }
+        addLineEvents($('alias-new-user'), $('alias-new-alias'))
+
+        function aliasSubmit() {
+            var i = -1,
+                inps_name = document.getElementsByName('new_aliasesnew_user'),
+                inps_alias = document.getElementsByName('new_aliasesnew_alias');
+            while(inps_name[++i]) {
+                inps_name[i].value == inps_name[i].defaultValue && (inps_name[i].value = '')
+                inps_alias[i].value == inps_alias[i].defaultValue && (inps_alias[i].value = '')
+            }
+        }
+
+        function checkAlias(alias){
+            var i = -1,
+                aliasTable = DOM.getElementsByClassName(document,'aliaslist-table')[0].firstChild,
+                currentAliases = DOM.getElementsByAttribute(aliasTable,'lj:user'),
+                warningBlock = DOM.getElementsByClassName(alias.parentNode.parentNode,'user_alias_error')[0];
+
+            warningBlock.innerHTML = '';
+            while(currentAliases[++i]) {
+                if (alias.value == currentAliases[i].getAttribute('lj:user')) {
+                    warningBlock.innerHTML = errmsg_change.replace('%username%', alias.value);
+                    break;
+                }
+            }
+        }
+
+        function aliasPlaceholder(inp, type){
+            if (type == 'blur') {
+                DOM[inp.value ? 'addClassName' : 'removeClassName'](inp, 'type-text-changed')
+                if (!inp.value) {
+                    inp.value = inp.defaultValue;
+                }
+            }
+            if (type == 'focus' && inp.value == inp.defaultValue) {
+                inp.value = '';
+            }
+        }
+        </script>|;
+
+    ### ending submit block
+    $ret .= "<?standout " . LJ::html_submit("save_btn", $ML{'.done.btn.savechanges'}) . " standout?>\n";
+    $ret .= "</form>\n";
+
+    return $ret;
+
+}
+_code?>
+
+<=body
+page?>

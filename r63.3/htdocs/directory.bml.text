@@ -1,0 +1,70 @@
+;; -*- coding: utf-8 -*-
+.browse.country.desc=Select a country to read journals from that country...
+
+.browse.country.title=Browse Journals by Country
+
+.browse.usa.desc=Click a US state below to read journals from that state, or click a country name below the map to read journals from that country.
+
+.browse.usa.title=Browse Journals by US State
+
+.error.accounttype2<<
+Sorry, your account type doesn't permit usage of the
+directory, or you aren't currently <a [[aopts]]>logged in</a>.  If your account type permits
+directory usage, be sure that you are logged in and then try again.
+.
+
+.error.notloggedin=You must <a [[aopts]]>login</a> to use the directory.
+
+.error.search_dir|staleness=1
+.error.search_dir=There was an error searching the directory. Please try again in a few minutes.
+
+.navcrap.matches=[[count]] matches
+
+.navcrap.xofy=Page [[curpage]] of [[totpages]] shown (records [[reca]]-[[recb]])
+
+.new_all_search|staleness=1
+.new_all_search=All
+
+.new_community_search|staleness=1
+.new_community_search=Communities Only
+
+.new_search|staleness=1
+.new_search=New search
+
+.new_search_show|staleness=1
+.new_search_show=Show:
+
+.new_user_search|staleness=1
+.new_user_search=Users Only
+
+.no_results|staleness=1
+.no_results=No Results Found!
+
+.open=Open
+
+.post=Post
+
+.search.monkey=Hundreds of trained monkeys are currently running about finding your search results.  Please stand by.
+
+.search.new=New Query
+
+.search.overflow=<b>Search results limited to [[count]] results.  Please refine your query.</b>
+
+.search.title=Searching
+
+.search_results|staleness=1
+.search_results=Search Results
+
+.title|staleness=1
+.title=Directory Search
+
+.unable_find_users|staleness=1
+.unable_find_users=Sorry, we're unable to help you find users matching the interests you've provided.
+
+.update=Update:
+
+.user=User
+
+.us_map|staleness=1
+.us_map=US Map
+

@@ -1,0 +1,370 @@
+/*_*/
+BODY {
+	font:62.5%/1.5 Georgia, serif;
+	color:#333;
+	background:#FFF;
+	}
+A:link,
+A:visited {
+	border-bottom:1px solid #999;
+	text-decoration:none;
+	color:#333;
+	}
+A:link:hover,
+A:visited:hover {
+	color:#000;
+	border-color:#000;
+	}
+	.entry-content A:link {
+		border-color:#99ADC0;
+		color:#345C81;
+		}
+	.entry-content A:visited {
+		border-color:#99ADC0;
+		color:#798998;
+		}
+	.entry-title A:link,
+	.entry-title A:visited {
+		border-color:#D6D6D6;
+		}
+	.entry-title A:link:hover,
+	.entry-title A:visited:hover {
+		border-color:#000;
+		}
+	.entry-content A:link:hover,
+	.entry-content A:visited:hover {
+		border-color:#284764;
+		}
+	.sidebar .sidebar-tags A:link,
+	.sidebar .sidebar-tags A:visited {
+		border:0;
+		color:#445363;
+		}
+	.sidebar .sidebar-tags A:link:hover,
+	.sidebar .sidebar-tags A:visited:hover {
+		color:#000;
+		text-decoration:underline !important;
+		}
+	.calendar-wrap TABLE CAPTION A:link,
+	.calendar-wrap TABLE CAPTION A:visited,
+	.calendar-wrap TABLE TBODY TD A:link,
+	.calendar-wrap TABLE TBODY TD A:visited,
+	.calendar-wrap TABLE TBODY TD A:link:hover,
+	.calendar-wrap TABLE TBODY TD A:visited:hover,
+	.calendar-wrap TABLE TBODY TD A:link:active,
+	.calendar-wrap TABLE TBODY TD A:visited:active,
+	.entry-linkbar A:link,
+	.entry-linkbar A:visited,
+	.ljuser A:link,
+	.ljuser A:visited {
+		border:0;
+		}
+	.ljuser A:link B,
+	.ljuser A:visited B {
+		border-bottom:1px solid #999;
+		}
+	.ljuser A:link:hover B,
+	.ljuser A:visited:hover B {
+		border-color:#000;
+		}
+.hr {
+	margin-left:16px;
+	background:#000 url(../i/10y-georgia/grid.gif) -1px 0 repeat-x;
+	}
+	.header .hr {
+		clear:both;
+		margin-left:0;
+		background-color:#CCC;
+		}
+	.header .hr-afterhead {
+		height:5px;
+		margin-top:20px;
+		background-color:#000;
+		background-position:0 0;
+		}
+	.column-right .hr-afterhead {
+		margin-right:330px;
+		}
+	.column-left .hr-afterhead {
+		margin-left:330px;
+		}
+
+.header {
+	clear:both;
+	padding:22px 16px 0;
+	}
+	.header-in {
+		position:relative;
+		overflow:hidden;
+		}
+	.header .userpic {
+		float:left;
+		display:inline;
+		height:50px;
+		padding:5px 10px 0 2px;
+		overflow:hidden;
+		}
+		.header .userpic IMG {
+			width:auto;
+			height:auto;
+			max-width:50px;
+			max-height:50px;
+			}
+			* HTML .header .userpic IMG {
+				_width:50px;
+				}
+	
+	.header-sec {
+		float:left;
+		padding:4px 0 19px;
+		}
+	.header .nav {
+		display:inline;
+		line-height:1;
+		}
+		.header .item {
+			display:inline;
+			padding-left:20px;
+			font-size:.9em;
+			text-transform:uppercase;
+			}
+		.header .nav-sub {
+			float:right;
+			padding:4px 0 19px;
+			}
+		.header .nav-sub .item {
+			padding-left:12px;
+			}
+#page .header .nav-sub .btn {
+	height:1.444em;
+	padding-left:18px;
+	background:url(../i/10y-georgia/icons.gif) 0 -100px no-repeat;
+	}
+	#page .header .nav-sub .btn:hover {
+		word-spacing:0;
+		}
+	#page .layout .layout-inner .btn SPAN {
+		float:none;
+		display:inline;
+		padding:0;
+		margin:0;
+		line-height:1.444;
+		}
+	#page .header .nav-sub .btn SPAN SPAN SPAN {
+		border-bottom:1px solid #999;
+		}
+	#page .header .nav-sub .btn:hover SPAN SPAN SPAN {
+		border-color:#000;
+		}
+	#page .header .nav-sub .btn-add {
+		background-position:0 0;
+		}
+
+.header H1 {
+	display:inline;
+	padding-top:1px;
+	padding-bottom:19px;
+	font-size:.9em;
+	text-transform:uppercase;
+	line-height:1;
+	}
+	.header H1 B {
+		font-weight:normal;
+		}
+	.header H1 IMG {
+		margin:-8px 0;
+		}
+.header H2 {
+	clear:both;
+	padding-top:19px;
+	font-size:3.6em;
+	font-weight:bold;
+	font-style:italic;
+	}
+.header H3 {
+	font-size:1.8em;
+	font-weight:bold;
+	font-style:italic;
+	color:#777;
+	}
+	.column-right .header H2,
+	.column-right .header H3 {
+		margin-right:340px;
+		}
+	.column-left .header H2,
+	.column-left .header H3 {
+		margin-left:330px;
+		}
+
+.content-inner {
+	overflow:visible;
+	}
+	.column-right .content-inner {
+		margin-right:345px;
+		margin-left:0;
+		}
+	.column-left .content-inner {
+		margin-right:16px;
+		margin-left:329px;
+		}
+	.content .entry {
+		margin-top:2.2em;
+		}
+		.content .entry .entry-title,
+		.content .entry .entry-text {
+			padding-left:16px;
+			}
+		.content .entry .entry-text .author {
+			position:static;
+			float:none;
+			display:inline;
+			max-width:none;
+			margin:0;
+			text-align:left;
+			}
+			.content .entry .entry-text .entry-date {
+				margin:-.2em 0 1em;
+				font-size:1.1em;
+				font-style:italic;
+				text-transform:lowercase;
+				font-family:Georgia, serif;
+				}
+			.content .entry .entry-text .author DT {
+				float:right;
+				width:120px;
+				margin:-2.6em 0 0 1.2em;
+				text-align:center;
+				}
+			.content .entry .entry-text .author .username {
+				float:right;
+				clear:right;
+				width:120px;
+				margin:0 0 1.2em 1.2em;
+				text-align:center;
+				}
+		#page .entry .entrymenu {
+			padding:4px 0 2.2em 16px;
+			}
+		#page .entrymenu .comments {
+			position:relative;
+			float:left;
+			top:-1em;
+			}
+		#page .entrymenu .btn {
+			display:inline;
+			border-bottom:1px solid #999;
+			font-size:1.3em;
+			font-style:italic;
+			line-height:1.2;
+			}
+			#page .entrymenu .btn:hover {
+				border-color:#000;
+				}
+				#page .layout .layout-inner .entrymenu .btn SPAN {
+					line-height:1.2;
+					}
+			#page .entrymenu .btn-simple {
+				color:#777;
+				}
+			#page .entrymenu .btn-simple:hover {
+				color:#000;
+				}
+			#page .entrymenu .btn-comments {
+				font-size:2.5em;
+				padding-left:11px;
+				border:0;
+				margin:0 0 0 -3px;
+				font-weight:bold;
+				color:#345C81;
+				background:url(../i/10y-georgia/icons.gif) 0 -192px no-repeat;
+				}
+			#page .entrymenu .btn-comments:hover {
+				color:#000;
+				}
+	.content .entry .entry-text {
+		font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;
+		}
+	.content .page-nav {
+		padding:1em 0 1em 16px;
+		}
+	.content .entry .entry-linkbar IMG {
+		padding-right:0;
+		}
+
+.entry-comments TABLE {
+	margin:0 auto;
+	}
+	.entry-comments TABLE TABLE {
+		margin:0;
+		}
+
+.sidebar-inner {
+	margin-top:-3.4em;
+	}
+	.sidebar-block DT {
+		margin-bottom:.85em;
+		font-size:1.2em;
+		letter-spacing:.1em;
+		text-transform:uppercase;
+		}
+	.sidebar-links DD,
+	.sidebar-summary LI {
+		display:block;
+		padding-bottom:.6em;
+		margin-left:0;
+		list-style:none;
+		line-height:1.2;
+		font-family:Tahoma, Arial, sans-serif;
+		}
+	.sidebar-tags .tags {
+		text-align:justify;
+		}
+	.sidebar-cal DT {
+		font-size:1.1em;
+		}
+	.sidebar .calendar-wrap {
+		font-size:1em;
+		}
+
+.calendar-wrap {
+	width:240px;
+	}
+	.entry .calendar-wrap {
+		height:16em;
+		}
+	.sidebar .calendar-wrap CAPTION {
+		display:none;
+		}
+	.calendar-wrap TH {
+		font-family:Arial;
+		text-transform:lowercase;
+		color:#FFF;
+		background:#1F2932;
+		}
+	.calendar-wrap TABLE TBODY TD {
+		text-align:center;
+		font-size:1.1em;
+		font-weight:normal;
+		font-style:italic;
+		color:#CCC;
+		}
+		.sidebar .calendar-wrap TABLE TBODY TD {
+			line-height:2.2;
+			}
+		#page .calendar-wrap TABLE TBODY TD A:link,
+		#page .calendar-wrap TABLE TBODY TD A:visited {
+			text-align:center;
+			color:#345C81;
+			}
+		#page .calendar-wrap TABLE TBODY TD A:link:hover,
+		#page .calendar-wrap TABLE TBODY TD A:visited:hover {
+			color:#FFF;
+			background:#1F2932;
+			}
+.footer {
+	padding-top:1px;
+	background:#000 url(../i/10y-georgia/grid.gif) 1px 0;
+	}
+	.footer A {
+		background:#FFF;
+		}

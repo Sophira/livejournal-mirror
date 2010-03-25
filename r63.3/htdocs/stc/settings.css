@@ -1,0 +1,769 @@
+/*Common */
+
+#settings_page img {
+    border: 0;
+}
+.smaller {
+    font-size: 11px;
+}
+.disabled {
+    color: #666;
+}
+
+/* Layout */
+#intro {
+    margin-bottom: 20px;
+}
+#settings_left {
+    min-width: 625px;
+}
+#settings_save {
+    background: #c7e0f6;
+    padding: 5px 7px;
+}
+
+/* Tabs */
+#settings_nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    zoom: 1;
+}
+#settings_nav li {
+    float: left;
+}
+#settings_nav li a {
+    color: #000;
+    text-decoration: none;
+    display: block;
+    background: #ecf6ff;
+    margin-right: 5px;
+    padding: 2px 7px;
+    font-weight: bold;
+    border-color: #c7e0f6;
+    border-width: 2px 2px 0 2px;
+    border-style: solid;
+}
+#settings_nav li a:hover, #settings_nav li a.active {
+    background: #c7e0f6;
+}
+#settings_nav li.disabled {
+    color: #999;
+    display: block;
+    background: #efefef;
+    margin-right: 5px;
+    padding: 2px 7px;
+    font-weight: bold;
+    border-color: #ccc;
+    border-width: 2px 2px 0 2px;
+    border-style: solid;
+}
+#settings_nav_title {
+    clear: left;
+    zoom: 1;
+}
+#settings_nav_title p {
+    background: #c7e0f6;
+    padding: 4px 10px;
+    display: block;
+    margin: 0;
+    font-size: 11px;
+}
+
+/* Shared Content */
+.account table, .display table, .mobile table, 
+.privacy table, .history table, .advertising table, .extension table, .extensions table,
+.lj_adsense table {
+    width: 100%;
+}
+.account td, .display td, .mobile td, .privacy td, .history td, .advertising td, .integration td, 
+.extensions td, .lj_adsense td {
+    border-bottom: 1px #ccc solid;
+    padding: 10px 10px 10px 5px;
+}
+.account td.last, .display td.last, .mobile td.last, .privacy td.last, 
+.history td.last, .advertising td.last, .extension td.last, 
+.extensions td.last, .lj_adsense td {
+    border-bottom: none;
+}
+.account td.help, .display td.help, .mobile td.help, .privacy td.help, 
+.history td.help, .advertising td.help .extensions td.help, .lj_adsense td.help {
+    width: 14px;
+    text-align: right;
+}
+.account_label, .display_label, .mobile_label, 
+.privacy_label, .history_label, .integration_label, 
+.extensions_label, .adsense_label {
+    font-weight: bold;
+}
+.display_option, .mobile_option, .privacy_option {
+    color: #000;
+}
+
+/* Account Content */
+.account {
+    margin-bottom: 10px;
+}
+.account_actionlink {
+    text-align: right;
+}
+.account_stats {
+    background: #eee;
+    padding: 5px 10px;
+    line-height: 18px;
+}
+.account_stats p {
+    padding: 0;
+    margin: 0 0 5px 0;
+}
+
+/* Display Content */
+.display .radiotext {
+    position: relative;
+    bottom: 2px;
+    left: 2px;
+    padding-right: 10px;
+}
+
+/* Mobile Content */
+.mobile table.setting_table {
+    width: auto;
+}
+.mobile table.setting_table td {
+    border: 0;
+    padding: 0;
+}
+.mobile td.setting_label {
+    text-align: right;
+    color: #000;
+}
+.mobile_label, .mobile .help,
+.extensions_label, .extensions .help {
+    vertical-align: top;
+}
+.mobile_option p {
+    margin: 0;
+    padding-bottom: 5px;
+}
+
+/* Privacy Content */
+.privacy .details {
+    font-size: 11px;
+    font-style: italic;
+    margin-bottom: 0;
+}
+
+/* Integration Content */
+.extension {
+	margin: 2px 0 5px;
+	/*background: url(/img/liveid.gif) 100% 2px no-repeat;*/
+	}
+.extension table {
+	border: 0;
+	border-collapse: collapse;
+	}
+
+.extension .inprogr TD {
+	border: none;
+	}
+
+.extension td.integration_label {
+	width: 15em;
+	vertical-align: top;
+	}
+	.extension td.integration_label A {
+		font-weight: normal;
+		}
+.extension .act_msn TD {
+	padding: 0px 10px 10px 5px;
+	}
+	.extensions td.extentsions_label {
+		width: 19%;
+		white-space: nowrap;
+		}	
+	.extensions td.extensions_option {
+		width: 80%;
+	}
+.extension td.msnlogo {
+	padding-right: 160px;
+	font-weight: bold;
+	}
+
+	.msnlogo DIV {
+		padding-top: 7px;
+		}
+	.msnlogo DIV INPUT {
+		padding: 0px 6px;
+		position: relative;
+		overflow: visible;
+		}
+
+	.extension TD.last STRONG {
+		font-weight: bold;
+		display: block;
+		margin-bottom: 7px;
+		}
+
+.extension SPAN {
+	display: block;
+	clear: both;
+	overflow: hidden;
+	}
+.extension SPAN.comment {
+	/*font-size: .85em;*/
+	color: #999;
+	margin: 5px 0 0 5px;
+	}
+	.extension .comment.act {
+		color:#000;
+		}
+
+.extension SPAN.msn-inprogr {
+	display: inline;
+	color:#336699;
+	}
+
+.extension span INPUT {
+	margin-right: 4px;
+	position: relative;
+	top: -2px;
+	float: left;
+	}
+.extension  span #msn1, .extension span #msn3 {
+	top: -1px;
+	left: -3px;
+	margin-bottom: 3px;
+	}
+
+.extension span LABEL {
+	float: left;
+	height: 1%;
+	width: 90%;
+	}
+	.extension SPAN.msn_id {
+		display: inline;
+		}
+
+.extension #passw, .extension #c-passw {
+	display: block;
+	margin-bottom: 7px;
+	width: 180px;
+	}
+
+.extension #c-passw {
+	margin-bottom: 16px;
+	float: left;
+	}
+
+#msn_err_diff_pass {
+	float: left;
+	clear: none;
+	padding-left: 7px;
+	line-height: 1;
+	font-size: 10px;
+	color: #FF0000;
+	}
+
+.extension SPAN.alert_txt {
+	font-size: .85em;
+	margin: 0px 0px 16px 23px;
+	color:#999;
+	}
+
+.extension .msn_error {
+	background: #FFE889;
+	border: 1px solid #FFCC33;
+	color:#993300;
+	padding: 10px;
+	font-weight: normal;
+	}
+	.extension .msn_error H3 {
+		font-style: normal;
+		color:#FF6600;
+		font-size: 1.2em;
+		margin-bottom: 17px;
+		}
+	.extension .msn_error UL {
+		margin-top: 0px;
+		}
+	.extension .msn_error A {
+		color:#990000;
+		}
+
+
+/* Advertising Content */
+.advertising table.setting_table {
+    width: auto;
+    margin: 0;
+}
+.advertising table.setting_table td {
+    border: 0;
+    padding: 0;
+    vertical-align: top;
+}
+.advertising p {
+    margin-top: 0;
+}
+.advertising .example {
+    font-size: .8em;
+    color: #666;
+}
+.advertising .category {
+    padding-left: 1px;
+    margin-bottom: 10px;
+    margin-left: 20px;
+}
+
+/* Google Adsense Content */
+.lj_adsense {
+	position: relative;
+	zoom: 1;
+	}
+* HTML .lj_adsense TABLE {
+	position: relative;
+	zoom: 1;
+}
+.lj_adsense UL {
+	margin: .7em 0 0;
+	padding: 0;
+	list-style: none;
+	}
+	.lj_adsense UL LI {
+		margin-bottom: 7px;
+		}
+
+.adsense_label {
+	vertical-align: top;
+	}
+.adsense_option {
+	width: 80%;
+	vertical-align: top;
+	}
+.adsense_option FIELDSET {
+	padding:0;
+	border:0;
+	margin:0;
+	}
+.adsense_option INPUT {
+	margin: 0px;
+	}
+.adsense_option INPUT.ads_opt {
+	position: relative;
+	top: 2px;
+	left: -2px;
+	margin-right: 3px;
+	}
+*:first-child+html .adsense_option INPUT.ads_opt {
+	top: 1px;
+	left: -3px;
+	}
+.adsense_option INPUT.ads_select {
+	position: relative;
+	top: 3px;
+	left: -2px;
+	margin-right: 3px;
+	}
+	*:first-child+html .adsense_option INPUT.ads_select {
+		top: 1px;
+		left: -3px;
+		}
+	.adsense_option .steps LI {
+		margin-bottom: 10px;
+		}
+	.adsense_option LI LABEL {
+		display: block;
+		margin-bottom: 3px;
+		}
+		.adsense_option .adsense-create LI LABEL {
+			display:inline;
+			}
+	.adsense_option .steps LI.adsense_more {
+		margin-bottom: 17px;
+		}
+		.adsense_option LI.adsense_more LABEL {
+			display: inline;
+			}
+		.adsense_option LI.adsense_more INPUT {
+			width: auto;
+			}
+	.adsense_option .steps INPUT, .adsense_option .steps SELECT {
+		width: 210px;
+		}
+		.adsense_option .steps INPUT.adsense-btn {
+			width: auto;
+			overflow: visible;
+			}
+		.adsense_option .steps INPUT.ads_opt {
+			width: auto;
+			}
+.adsense-form-hint {
+	display:block;
+	padding:.2em 0 1em;
+	font-size:.85em;
+	font-style:italic;
+	}
+
+.adv-types {
+	margin: 0px 0px 20px;
+	}
+	.adv-types DT, .adv-types DD,
+	.adv-colors DT, .adv-colors DD {
+		margin: 0;
+		padding: 0;
+		}		
+	.adv-types DT,
+	.adv-colors DT {
+		font-weight: bold;
+		margin-bottom: 7px;
+		}
+	.adv-types DT LABEL {
+		font-weight: normal;
+		}
+	.adv-types DD {
+		margin-bottom: 5px;
+		}
+		.adsense_option .adv-types DD LABEL  {
+			display: inline;
+			}
+		.adsense_option .adv-types DD INPUT {
+			width: auto;
+			}
+		.adsense_option .adv-types DD TEXTAREA {
+			width: 80%;
+			margin-top: 12px;
+			display: block;
+			}
+		.adsense_option .adv-types DD B {
+			display: block;
+			font-weight: normal;
+			}
+		.adsense_option .adv-types DD A {
+			font-size: 11px;
+			}
+
+.adsense_status {
+		margin: 11px 0px;
+	}
+.adsense_label DIV {
+	font-size: 11px;
+	font-weight: normal;
+	}
+#adsense_user {
+	margin: 20px 0;
+	}
+	#adsense_user SPAN {
+		display: block;
+		}
+.adsense-settings {
+	border-top: 1px solid #CCC;
+	margin-top: 7px;
+	padding-top: 7px;
+	}
+.adsense_option .setting-type {
+	position: absolute;
+	left: 5px;
+	margin: 0;
+	}
+* HTML .adsense_option .setting-type {
+	zoom: 1;
+	height: 1%;	
+	position: relative;
+	margin-left: -185px;
+	float: left;
+}
+
+	.adsense_option .setting-type LI {
+		font-size: 11px;
+		}
+.adsense_option .adv-lang {
+	margin-bottom: 20px;
+	}
+	.adv-lang LABEL {
+		font-weight: bold;
+		display: block !important;
+		margin-bottom: 9px;
+	}
+.adsense_option .adv-type-tabs {
+	width: 100%;
+	overflow: hidden;
+	zoom: 1;
+	background: url('/img/corners/adsense-tabs.gif') repeat-x 0 100%;
+	margin-bottom: 12px;
+	}
+
+*:first-child+html .adsense_option .adv-type-tabs  {
+	padding-bottom: 1px;
+	}
+
+* HTML .adsense_option .adv-type-tabs  {
+	padding-bottom: 1px;
+}
+	.adsense_option .adv-type-tabs LI {
+		zoom:1;
+		position:relative;
+		float: left;
+		display:inline;
+		padding: 7px 10px 5px;
+		margin: 0px 7px 2px 0px;
+		border: 1px solid #CCC;
+		border-width: 1px 1px 0px 1px;
+		}
+	.adsense_option .adv-type-tabs LI.cur {
+		padding: 7px 10px 6px;
+		margin: 0px 7px 0px 0px;
+		border-bottom: 1px solid #FFF;
+		background: #FFF;
+		}
+	*:first-child+html .adsense_option .adv-type-tabs LI.cur {
+		border-bottom: none;
+		}
+	* HTML 	.adsense_option .adv-type-tabs LI.cur {
+		border-bottom: none;
+		}
+.adsense_option .adsense-banner {
+	float: left;
+	width: 100%;
+	zoom: 1;
+}
+	.adsense-banner .banner-preview {
+		margin-bottom: 15px;
+	}
+	.adsense-banner.vertical .banner-preview {
+		width: 160px; 
+		height: 600px; 
+		float: right;
+		margin-bottom: 0;
+	}
+	.banner-preview-text {
+		margin-top:0;
+		}
+	.adsense-banner .banner-settings {
+		width: 100%; 
+	}
+	.adsense-settings-extended .adsense-banner.vertical .banner-settings {
+		float: right; 
+		margin-right: -160px
+	}
+	.adsense-banner.vertical .banner-settings-in {
+		margin-right: 180px;
+	}
+
+/* Adsense color pickers */
+.adsense-color-pickers:after {
+	content:"";
+	clear:both;
+	display:block;
+	width:0;
+	height:0;
+	overflow:hidden;
+	visibility:hidden;
+	}
+.adsense-color-pickers {
+	position:relative;
+	z-index:100;
+	list-style:none;
+	margin:12px 0 12px 0 !important;
+	padding:0 0 18px;
+	border-bottom:1px solid #CCC;
+	zoom:1;
+	}
+	.adsense-color-picker {
+		float:left;
+		display:inline;
+		width:133px;
+		margin: 0 !important;
+		padding:0;
+		padding-bottom: 20px;
+		}
+	.adsense-color-picker-in {
+		margin:0;
+		padding:0;
+		}
+	.adsense-color-picker DT {
+		margin-bottom: 0px;
+		}
+	.adsense-color-picker-in LABEL {
+		font-weight: normal;
+		}
+	.adsense_option .steps .adsense-color-picker INPUT {
+		width:97px;
+		margin-top:4px;
+		-moz-box-sizing:border-box;
+		-webkit-box-sizing:border-box;
+		box-sizing:border-box;
+		font-size:1em;
+		}
+	*+HTML .adsense_option .steps .adsense-color-picker INPUT {
+		width:92px;
+		}
+
+/* adsense banner scheme */
+.adsense-scheme {
+	position:relative;
+	width:78px;
+	height:123px;
+	border:1px solid #FFEABF;
+	padding:0 25px 0 8px;
+	overflow:hidden;
+	background:#FFFFE7;
+	}
+	.adsense-scheme-head {
+		display:block;
+		width:51px;
+		height:6px;
+		margin:5px 0 6px 0;
+		overflow:hidden;
+		background:#EAEFDA;
+		}
+	.adsense-scheme-alt .adsense-scheme-head {
+		margin:11px 0 12px;
+		}
+	.adsense-scheme-content {
+		display:block;
+		width:71px;
+		height:66px;
+		margin:0 0 6px 0;
+		overflow:hidden;
+		background:#CCC url(/img/adsense/adsense-scheme.gif) 0 0 repeat-y;
+		}
+	.adsense-scheme-alt .adsense-scheme-content {
+		margin:0 0 11px 0;
+		}
+	.adsense-scheme-b1 {
+		display:block;
+		width:80px;
+		height:10px;
+		margin:7px 0 0;
+		overflow:hidden;
+		background:#000 url(/img/adsense/adsense-scheme.gif) -95px 0 no-repeat;
+		}
+	.adsense-scheme-b2 {
+		display:block;
+		width:22px;
+		height:22px;
+		border-right:49px solid #FFFFE7;
+		margin:22px 0 0;
+		overflow:hidden;
+		background:#000 url(/img/adsense/adsense-scheme.gif) -72px 0 no-repeat;
+		}
+	.adsense-scheme .adsense-scheme-b3 {
+		position:absolute;
+		left:91px;
+		top:21px;
+		width:11px;
+		height:54px;
+		overflow:hidden;
+		background:#000 url(/img/adsense/adsense-scheme.gif) -74px 0 repeat-y;
+		}
+	.adsense-scheme-alt .adsense-scheme-b2 {
+		position:absolute;
+		left:83px;
+		top:26px;
+		border:0;
+		margin:0;
+		}
+	.adsense-scheme-alt .adsense-scheme-b1,
+	.adsense-scheme-alt .adsense-scheme-b3 {
+		display:none;
+		}
+	.adsense-scheme-b1-active .adsense-scheme-b1,
+	.adsense-scheme-b2-active .adsense-scheme-b2,
+	.adsense-scheme-b3-active .adsense-scheme-b3,
+	.adsense-scheme-b4-active .adsense-scheme-b4 {
+		background-color:#F00;
+		}
+	.adsense-scheme-b4 {
+		display:block;
+		width:80px;
+		height:10px;
+		margin:0 0 0 0;
+		overflow:hidden;
+		background:#000 url(/img/adsense/adsense-scheme.gif) -95px 0 no-repeat;
+		}
+
+/* Adv types wrap */
+.adv-types-wrap {
+	margin:0 0 20px;
+	zoom:1;
+	}
+	.adv-types-wrap:after {
+		content:"";
+		clear:both;
+		display:block;
+		width:0;
+		height:0;
+		overflow:hidden;
+		visibility:hidden;
+		}
+	.adv-types-wrap .adv-types {
+		float:left;
+		padding-right:30px;
+		margin:0;
+		}
+	.adv-types-wrap .adsense-scheme {
+		float:left;
+		display:inline;
+		}
+	.adv-types-note {
+		clear:both;
+		padding:1em 0;
+		}
+/* Adsen */
+.adsense-settings-standard .adv-colors,
+.adsense-settings-standard .banner-preview-wrap,
+.adsense-settings-extended .banner-preview-text,
+.adsense-settings-standard #banType,
+.adsense-settings-standard #tabs {
+	display:none;
+	}
+
+/* Adsense status */
+.adsense-status {
+	margin:.5em 0;
+	padding:0;
+	line-height:1.25;
+	}
+	.adsense-status DT {
+		display:inline;
+		margin:0;
+		padding:0;
+		font-weight:bold;
+		}
+	.adsense-status DD {
+		display:inline;
+		margin:0;
+		padding:0;
+		}
+		.adsense-status DD EM {
+			font-style:normal;
+			color:#D08707;
+			}
+			
+/* AdSense Help Icon correction for IE */
+*:first-child+html .lj_adsense DD A IMG {
+	vertical-align: bottom;
+	padding-bottom: 2px;
+}
+*:first-child+html .lj_adsense P A IMG {
+	vertical-align: bottom;
+	padding-bottom: 2px;
+}
+*HTML .lj_adsense DD A IMG {
+	vertical-align: bottom;
+	padding-bottom: 2px;
+}
+*HTML .lj_adsense P A IMG {
+	vertical-align: bottom;
+	padding-bottom: 2px;
+}
+
+/* Delete basket icon */
+/* Must be removed after implementation of Framework! */
+.i-basket {
+    border: 0 !important;
+    text-decoration: none !important;
+    }
+
+
+
+

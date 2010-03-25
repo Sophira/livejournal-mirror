@@ -1,0 +1,42 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use lib "$ENV{LJHOME}/cgi-bin";
+require 'ljlib.pl';
+require 'taglib.pl';
+use LJ::NewWorker::Gearman;
+LJ::NewWorker::Gearman::Taglib->start();
+package LJ::NewWorker::Gearman::Taglib;
+use strict;
+use lib "$ENV{LJHOME}/cgi-bin";
+require "ljlib.pl";
+require 'taglib.pl';
+use base 'LJ::NewWorker::Gearman';
+use Storable;
+
+sub declare { [ 'load_usertags' => \&load_usertags ] }
+sub work    {}
+
+sub load_usertags {
+    my $job = shift;
+    my $uid = $job->arg;
+
+    my $u = LJ::load_userid($uid)
+        or return "ERR:nouser";
+
+    my $ret = sub {
+        my $tags = shift;
+        $u->do("SELECT RELEASE_LOCK(?)", undef, "loadtags:$u->{userid}");
+        return (ref $tags) ? LJ::Tags::_pack_tags($tags) : $tags;
+    };
+
+    my $rv = $u->do("SELECT GET_LOCK(?, 10)", undef, "loadtags:$u->{userid}");
+    return "ERR:nolock" unless $rv;
+
+    my $val = LJ::MemCache::get([ $u->{userid}, "tags2:$u->{userid}" ]);
+    return $ret->($val) if $val;
+
+    my $res = LJ::Tags::get_usertagsmulti({ no_gearman => 1 }, $u);
+    return $ret->($res->{$u->id} || {});
+}
+1;
