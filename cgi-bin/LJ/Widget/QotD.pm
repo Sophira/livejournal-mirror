@@ -34,7 +34,7 @@ sub render_body {
         my ($month_short, $day, $num, $total) = LJ::QotD->question_info($questions[0], $u, $domain);
 
         #
-        my $max = LJ::QotD->get_questions( user => $u, count => 1, domain => $domain );
+        my $max = LJ::QotD->get_questions( user => $u, count => 1, all_filtered => 1, domain => $domain );
 
         $ret .= qq[<p class="i-qotd-nav">];
         if ($max > 1) {
@@ -58,7 +58,7 @@ sub render_body {
         $ret .= $class->qotd_display( questions => \@questions, user => $u, %opts );
         $ret .= '</div>';
         # show promo on vertical pages
-        $ret .= LJ::run_hook("promo_with_qotd", $opts{domain});
+        $ret .= LJ::run_hook("promo_with_qotd", $opts{domain}) unless $opts{nopromo};
     }
 
     return $ret;
