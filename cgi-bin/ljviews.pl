@@ -30,7 +30,7 @@ use Class::Autouse qw(LJ::LastFM);
 
 # updated everytime new S1 style cleaning rules are added,
 # so cached cleaned versions are invalidated.
-$LJ::S1::CLEANER_VERSION = 13;
+$LJ::S1::CLEANER_VERSION = 14;
 
 # PROPERTY Flags:
 
@@ -402,7 +402,8 @@ sub load_style
                 map { $styc->{$_} } qw(type opt_cache vars_stor vars_cleanver));
     }
 
-    my $ret = Storable::thaw($styc->{'vars_stor'});
+    my $ret = eval { Storable::thaw($styc->{'vars_stor'}) };
+    warn "Deserialization error: $@" if $@;
     $$viewref = $styc->{'type'} if ref $viewref eq "SCALAR";
 
     if ($styc->{'opt_cache'} eq "Y") {
