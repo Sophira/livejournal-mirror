@@ -240,12 +240,44 @@ sub work {
 
     my $pid = fork;
     
-    if ($pid) {
-        my $status = waitpid($pid, 0);
-        $job->did_something($status);
+    ##
+    ## list of exit codes of child processes:
+    ## 0 - job didn't do the work (did_something==0)
+    ## 1 - did_something>0 (it's boolean value, actually)
+    ## 2 - exception was thrown, reason and message are lost :(
+    ##
+    ## This is a hack, the more solid solution will be later. 
+    ## 
+    if (!defined $pid) {
+        die "fork failed: $!";
+    } elsif ($pid) {
+        
+        ## Must use default CHLD handler, otherwise, waitpid will return -1
+        ## and no exit status of child process can be collected
+        local $SIG{CHLD}; 
+        
+        my $wpid = waitpid($pid, 0);
+        if ($wpid!=$pid) {
+            die "Something strange: waitpid($pid,0) returned $wpid";
+        }
+        my $status = $? >> 8;
+        if ($status==0 || $status==1) {
+            return $job->did_something($status);
+        } elsif ($status==2) {
+            die "Job died";
+        } else {
+            die "Job did something strange";
+        }
     } else {
-        $class->do_work($job);
-        exit $job->did_something;
+        eval {
+            $class->do_work($job);
+        };
+        if ($@) {
+            warn $@;
+            exit 2;
+        } else {
+            exit( $job->did_something ? 1 : 0 );
+        }
     }
 }
 
