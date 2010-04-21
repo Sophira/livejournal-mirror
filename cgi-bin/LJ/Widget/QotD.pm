@@ -25,9 +25,6 @@ sub render_body {
     my @questions = $opts{question} || LJ::QotD->get_questions( user => $u, skip => $skip, domain => $domain );
     return "" unless @questions;
 
-    # If there is no lang tag, try to get user settings or use $LJ::DEFAULT_LANG.
-    $opts{lang} ||= ($u && $u->prop('browselang')) ? $u->prop('browselang') : $LJ::DEFAULT_LANG;
-
     # Navigation controlls
     unless ($opts{nocontrols}) {
 
@@ -148,21 +145,22 @@ sub qotd_display {
         $ret .= "";
         foreach my $q (@$questions) {
             my $d = $class->_get_question_data($q, \%opts);
+            my $subject = $d->{subject} || $q->{subject};
             my $extra_text = $q->{extra_text}
                                 ? "<p>$q->{extra_text}</p>"
                                 : "";
     
             $ret .=
                 ($q->{img_url}
-                    ? qq[<img src="$q->{img_url}" alt="$q->{subject}" title="$q->{subject}" class="qotd-pic" />]
+                    ? qq[<img src="$q->{img_url}" alt="$subject" title="$subject" class="qotd-pic" />]
                     : ''
                 ) . qq[
                 <div class="b-qotd-question-inner">
-                    <h3>$q->{subject}</h3>
+                    <h3>$subject</h3>
                     <p>$d->{text}<em class="i-qotd-by">$d->{from_text}</em></p>
                     $extra_text
                     <ul class="canyon">
-                        <li class="canyon-section"><button type="button" onclick="document.location.href='$d->{answer_url}'">$d->{answer_text}</button></li>
+                        <li class="canyon-section"><form action="$d->{answer_url}" target="_top"><button type="submit">$d->{answer_text}</button></form></li>
                         <li class="canyon-side">$d->{view_answers_link}</li>
                     </ul>
                 </div>];
@@ -240,13 +238,12 @@ sub _get_question_data {
     #       -- Chernyshev 2009/01/21
 
     my $remote = LJ::get_remote();
-    my $lncode = $opts->{lang} || (
-        ($remote && $remote->prop('browselang')) ?
-            $remote->prop('browselang') : $LJ::DEFAULT_LANG
-    );
+    my $lncode = $opts->{lang};
 
     my $ml_key = $class->ml_key("$q->{qid}.text");
     my $text = $class->_format_question_text($class->ml($ml_key, undef, $lncode), $opts);
+
+    my $subject = $class->ml( $class->ml_key("$q->{qid}.subject", undef, $lncode) );
 
     my $from_text = '';
     if ($q->{from_user}) {
@@ -297,6 +294,7 @@ sub _get_question_data {
     }
     
     return {
+        subject         => $subject,
         text            => $text,
         from_text       => $from_text,
         extra_text      => $extra_text,
