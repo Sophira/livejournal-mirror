@@ -2038,6 +2038,7 @@ sub Page
         });
         LJ::control_strip_js_inject( user => $u->{user} );
     }
+    LJ::journal_js_inject();
 
     # FOAF autodiscovery
     my $foafurl = $u->{external_foaf_url} ? LJ::eurl($u->{external_foaf_url}) : "$p->{base_url}/data/foaf";
@@ -3774,7 +3775,7 @@ sub Entry__get_eventratescounters
     return
         LJ::get_eventratescounters(
             $this->{'journal'}->{'_u'}->{'userid'},
-            int($this->{'itemid'}/256));
+            int($this->{'itemid'}));
 }
 
 sub Entry__get_eventrates
@@ -3785,10 +3786,23 @@ sub Entry__get_eventrates
         map { LJ::S2::UserLite(LJ::want_user($_)) }
             LJ::get_eventrates(
                 journalid   => $this->{'journal'}->{'_u'}->{'userid'},
-                jitemid     => int($this->{'itemid'}/256),
+                jitemid     => int($this->{'itemid'}),
                 limits      => "$skip, $limit",
             )
     ];
+}
+
+sub Entry__is_myvoice
+{
+    my ($ctx, $this) = @_;
+    my $remote = LJ::get_remote();
+    return 0 unless $remote;
+    return
+        scalar LJ::get_eventrates(
+                journalid   => $this->{'journal'}->{'_u'}->{'userid'},
+                jitemid     => int($this->{'itemid'}),
+                userids     => [ $remote->{'userid'} ],
+        );
 }
 
 sub EntryPage__print_multiform_actionline
@@ -3888,6 +3902,31 @@ sub Page__print_ad_box {
     $args->{location} = $location;
     my $ad_html = LJ::get_ads($args);
     $S2::pout->($ad_html) if $ad_html;
+}
+
+my %approved_widget_classes = map { $_ => $_ } qw (TopEntries TopUsers);
+
+sub Page__widget
+{
+    my ($ctx, $this, $opts) = @_;
+
+    my $class = $opts->{'class'};
+    return '' unless $approved_widget_classes{$class};
+
+    # if $opts->{'journal'} specified, try use it as name to load LJ::User object,
+    # else get current journal.
+    $opts->{'journal'} = $opts->{'journal'} ?
+        LJ::load_user($opts->{'journal'}) : $LJ::S2::CURR_PAGE->{'journal'}->{'_u'};
+
+    my $ret = '';
+
+    eval { $ret = "LJ::Widget::$class"->render(%$opts); };
+    if ($@) {
+        warn "Error when Page::widget() try to call LJ::Widget::$class->render() from LJ::S2:\n$@\n";
+        return '';
+    }
+
+    return $ret;
 }
 
 sub Entry__print_ebox {

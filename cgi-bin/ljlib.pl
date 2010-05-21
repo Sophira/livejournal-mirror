@@ -2129,6 +2129,7 @@ sub start_request
                             js/httpreq.js
                             js/livejournal.js
                             js/common/AdEngine.js
+                            js/journal.js
                             stc/lj_base.css
                             ));
 
@@ -2144,6 +2145,8 @@ sub start_request
               LJ::need_res(qw(
                               js/ippu.js
                               js/lj_ippu.js
+                              js/ljwidget.js
+                              js/ljwidget_ippu.js
                               js/hourglass.js
                               js/contextualhover.js
                               stc/contextualhover.css

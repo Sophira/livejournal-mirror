@@ -1151,6 +1151,7 @@ sub create_view_lastn
         });
         LJ::control_strip_js_inject( user => $u->{user} );
     }
+    LJ::journal_js_inject();
 
     LJ::run_hooks("need_res_for_journals", $u);
     my $graphicpreviews_obj = LJ::graphicpreviews_obj();
@@ -1607,6 +1608,7 @@ sub create_view_friends
         });
         LJ::control_strip_js_inject( user => $u->{user} );
     }
+    LJ::journal_js_inject();
 
     LJ::run_hooks("need_res_for_journals", $u);
     my $graphicpreviews_obj = LJ::graphicpreviews_obj();
@@ -2107,6 +2109,8 @@ sub create_view_calendar
         });
         LJ::control_strip_js_inject( user => $u->{user} );
     }
+    LJ::journal_js_inject();
+
     $calendar_page{'head'} .=
         $vars->{'GLOBAL_HEAD'} . "\n" . $vars->{'CALENDAR_HEAD'};
 
@@ -2373,6 +2377,7 @@ sub create_view_day
         });
         LJ::control_strip_js_inject( user => $u->{user} );
     }
+    LJ::journal_js_inject();
 
     LJ::run_hooks("need_res_for_journals", $u);
     my $graphicpreviews_obj = LJ::graphicpreviews_obj();
