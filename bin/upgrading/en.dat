@@ -2403,6 +2403,10 @@ event.user_new_entry.any=Any of my friends posts a new entry anywhere.
 event.user_new_entry.user|staleness=1
 event.user_new_entry.user=[[user]] posts a new entry anywhere.
 
+eventrates.view_all=View all
+
+eventrates.users_who_like_it=Users who like it
+
 fckland.ljimage=Insert/Edit Image
 
 fcklang.cutcontents=Type your cut contents here.
@@ -2544,6 +2548,8 @@ gender.specify|staleness=1
 gender.specify=Specify
 
 Help=Help
+
+i_like_this_title=Please click Track this if you want to receive all comments to this entry
 
 img.btn_del=Delete
 
@@ -3574,6 +3580,12 @@ quote.left="
 quote.right|staleness=1
 quote.right="
 
+repost.default_button=repost
+
+repost.default_subject=post
+
+repost.wrapper=Originaly posted by <lj user="[[username]]"> at <a href="[[url]]">[[subject]]</a><div class="repost">[[text]]</div>
+
 s2theme.themename.default|staleness=1
 s2theme.themename.default=(Unnamed - [[themeid]])
 
@@ -4101,6 +4113,16 @@ setting.viewingadultcontent.option.select.explicit=explicit adult content only
 
 setting.viewingadultcontent.option.select.none|staleness=1
 setting.viewingadultcontent.option.select.none=nothing
+
+setting.webmastertools_yandex.label=Yandex webmaster tools
+
+setting.webmastertools_yandex.label2=Enter your meta tag content value obtained from Yandex
+
+setting.webmastertools_google.label=Google webmaster tools
+
+setting.webmastertools_google.label2=Enter your meta tag content value obtained from Google
+
+setting.webmastertools.error=This field can only accept characters: A-Z, 0-9, dashes, and underlines.
 
 settings.city=City
 
@@ -5772,6 +5794,8 @@ web.postto.btn=Switch
 
 web.postto.label=Post to:
 
+we_like_this_title=View people who like it
+
 widget.addqotd.extratext|staleness=1
 widget.addqotd.extratext=Extra Text (optional):
 
@@ -6794,6 +6818,18 @@ widget.themenav.switchtos1=Switch to old style system (S1)
 
 widget.themenav.title|staleness=1
 widget.themenav.title=2. Select a New Theme
+
+widget.topentries.comments=[[count]] [[?count|comment|comments]]
+
+widget.topusers.top5commenters.title=Top 5 commenters within 24h
+
+widget.topusers.head.nr=Nr
+
+widget.topusers.head.users=Users
+
+widget.topusers.top5posters.title=Top 5 posters within a week
+
+widget.updatesforuser.footer=Customize your [[openlink]]notifications[[closelink]] so you never miss a beat
 
 widget.upgradeaccount.title|staleness=1
 widget.upgradeaccount.title=Upgrade your account

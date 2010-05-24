@@ -3890,6 +3890,31 @@ sub Page__print_ad_box {
     $S2::pout->($ad_html) if $ad_html;
 }
 
+my %approved_widget_classes = map { $_ => $_ } qw (TopEntries TopUsers);
+
+sub Page__widget
+{
+    my ($ctx, $this, $opts) = @_;
+
+    my $class = $opts->{'class'};
+    return '' unless $approved_widget_classes{$class};
+
+    # if $opts->{'journal'} specified, try use it as name to load LJ::User object,
+    # else get current journal.
+    $opts->{'journal'} = $opts->{'journal'} ?
+        LJ::load_user($opts->{'journal'}) : $LJ::S2::CURR_PAGE->{'journal'}->{'_u'};
+
+    my $ret = '';
+
+    eval { $ret = "LJ::Widget::$class"->render(%$opts); };
+    if ($@) {
+        warn "Error when Page::widget() try to call LJ::Widget::$class->render() from LJ::S2:\n$@\n";
+        return '';
+    }
+
+    return $ret;
+}
+
 sub Entry__print_ebox {
     my $args = _get_Entry_ebox_args(@_);
     return unless $args;

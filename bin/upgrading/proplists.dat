@@ -1505,3 +1505,32 @@ userproplist.ilikeit_enable:
   datatype: bool
   des: Enable 'I like it' button in community.
   prettyname: Enable 'I like it' button.
+
+userproplist.closed_sm:
+  datatype: char
+  des: List of closed site messages
+  cldversion: 8
+
+userproplist.widget_top_entries:
+  cldversion: 7
+  datatype: char
+  des: Current setings and status of Top n entries
+  indexed: 1
+  multihomed: 0
+  prettyname: Current setings and status of Top n entries
+
+userproplist.webmastertools_yandex:
+  datatype: char
+  des: Meta tag content value provided by Yandex
+  cldversion: 8
+
+userproplist.webmastertools_google:
+  datatype: char
+  des: Meta tag content value provided by Google
+  cldversion: 8
+
+userproplist.comment_alter_time:
+  datatype: num
+  des: Unix time of last modification of comment's data in journal. Comment added/deleted/updated/screened/etc...
+  cldversion: 8
+
