@@ -369,8 +369,6 @@ class Entry extends EntryLite
     "How many users rates this entry.";
     function builtin get_eventrates() : UserLite[]
     "Id list of users who rates this entry.";
-    function builtin is_myvoice() : bool
-    "Is my voice already counted by the system.";
 }
 
 class Comment extends EntryLite
@@ -563,9 +561,6 @@ class Page
 
     function builtin print_trusted(string key)
     "Prints a trusted string by key.";
-
-    function builtin widget(string{} opts) : string
-    "Returns rendered widget body.";
 }
 
 class TagsPage extends Page

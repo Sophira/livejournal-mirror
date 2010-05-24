@@ -1,53 +1,95 @@
 <?_code # -*-bml-*-
 {
     use strict;
-    use LJ::JSON;
-    use vars qw(%POST);
+    use JSON;
+    use vars qw(%GET);
 
-    my $err = sub { return LJ::JSON->to_json({ status => 'error', 'error' => $_[0], }); };
+    my $err = sub {
+        my $msg = shift;
+        return JSON::objToJson({
+            'error' => $msg,
+        });
+    };
 
-    my $action = $POST{action};
-    my ($journal, $itemid) = map { $POST{$_} } qw(journal itemid);
-    my $journal_user = LJ::load_user($journal);
-    my $journalid = 0;
-    $journalid = $journal_user->userid() if $journal_user;
-
-    return $err->('Missing args') unless $journalid && $itemid;
+    my $action = $GET{action};
 
     my %actions = (
-        undorate    => sub { LJ::reset_eventrate(map { int($_) } @_) },
+        undorate   => sub {
+            my ($journalid, $jitemid) = map { int($GET{$_}) } qw(journalid jitemid);
 
-        rate        => sub { LJ::set_eventrate(map { int($_) } @_) },
+            return {
+                status  => 'error',
+                message => 'Missing args',
+            } unless $journalid && $jitemid;
 
-        list        => sub {
-            my ($journalid, $itemid) = @_;
-            my ($skip, $limit) = map { int($POST{$_}) } qw(skip limit);
+            my $result = LJ::reset_eventrate($journalid, $jitemid);
+
+            return {
+                status => 'OK',
+                result => $result,
+            };
+        },
+
+        rate   => sub {
+            my ($journalid, $jitemid) = map { int($GET{$_}) } qw(journalid jitemid);
+
+            return {
+                status  => 'error',
+                message => 'Missing args',
+            } unless $journalid && $jitemid;
+
+            my $result = LJ::set_eventrate($journalid, $jitemid);
+
+            return {
+                status => 'OK',
+                result => $result,
+            };
+        },
+
+        total   => sub {
+            my ($journalid, $jitemid) = map { int($GET{$_}) } qw(journalid jitemid);
+
+            return {
+                status  => 'error',
+                message => 'Missing args',
+            } unless $journalid && $jitemid;
+
+            my $result = LJ::get_eventratescounters($journalid,$jitemid);
+
+            return {
+                status => 'OK',
+                result => $result,
+            };
+        },
+
+        list  => sub {
+            my ($journalid, $jitemid, $skip, $limit) =
+                map { int($GET{$_}) } qw(journalid jitemid skip limit);
+
             $skip ||= 0; $limit ||= 10;
+
+            return {
+                status  => 'error',
+                message => 'Missing args',
+            } unless $journalid && $jitemid;
 
             my @result = LJ::get_eventrates(
                 journalid   => $journalid,
-                itemid      => $itemid,
-                limits      => "$skip, $limit",
+                jitemid     => $jitemid,
+                limits      => "'$skip', '$limit'",
             );
 
-            return join(', ', map {
-                my $user = undef;
-                $_ && ($user = LJ::load_userid($_)) && $user->ljuser_display();
-            } @result);
+            return {
+                status => 'OK',
+                result => \@result,
+            };
         },
     );
 
     if (exists($actions{$action})) {
-        my $result = $actions{$action}->($journalid, $itemid);
-        return LJ::JSON->to_json(
-            {
-                status                  => 'OK',
-                result                  => $result,
-                total                   => LJ::get_eventratescounters($journalid, $itemid),
-                ml_view_all             => $ML{'eventrates.view_all'},
-                ml_users_who_like_it    => $ML{'eventrates.users_who_like_it'},
-            }
-        );
+        my $data = $actions{$action}->();
+        return JSON::objToJson($data) if $data;
+        return $err->('Malfunction'); # :)
     } else {
         return $err->('Wrong args (no action provided)');
     }

@@ -2477,13 +2477,6 @@ sub control_strip_js_inject
                     ));
 }
 
-sub journal_js_inject
-{
-    LJ::need_res(qw(
-                    js/journal.js
-                    ));
-}
-
 # For the Rich Text Editor
 # Set JS variables for use by the RTE
 sub rte_js_vars {
