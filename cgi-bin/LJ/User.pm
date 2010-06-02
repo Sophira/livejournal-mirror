@@ -6981,7 +6981,7 @@ sub ljuser
         return $make_tag->($icon, $url, $size || 16) if $icon;
     }
 
-    if (my $icon = $u->custom_usericon) {
+    if (!$LJ::IS_SSL && (my $icon = $u->custom_usericon)) {
         return $make_tag->($icon, $url, 17);
     }
     
