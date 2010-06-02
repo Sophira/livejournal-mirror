@@ -107,6 +107,7 @@ sub qotd_display_embed {
             my $d = $class->_get_question_data($q, \%opts);
             $ret .= "<p>$d->{text}</p><p style='font-size: 0.8em;'>$d->{from_text}$d->{between_text}$d->{extra_text}</p>";
             $ret .= "<p>$d->{answer_link} $d->{view_answers_link}$d->{impression_img}</p>";
+            #$ret .= ": $d->{tracking_text} : ";
         }
         $ret .= "</div>";
     }
@@ -146,7 +147,7 @@ sub qotd_display {
         foreach my $q (@$questions) {
             my $d = $class->_get_question_data($q, \%opts);
             my $subject = $d->{subject} || $q->{subject};
-            my $extra_text = $q->{extra_text}
+            my $extra_text = ($q->{extra_text} and not $opts{no_extra_text})
                                 ? "<p>$q->{extra_text}</p>"
                                 : "";
     
@@ -306,6 +307,7 @@ sub _get_question_data {
         answers_url     => $class->answers_url($q, $opts),
         impression_img  => $impression_img,
         date            => $date,
+        tracking_text   => LJ::run_hook("qotd_tracking_text", $q),
     };
 }
 
