@@ -1441,7 +1441,14 @@ sub talkform {
         $ret .= LJ::tosagree_html('comment', $form->{agree_tos}, BML::ml('tos.error'));
     }
 
-    my $oid_identity = $remote ? $remote->openid_identity : undef;
+    my ($is_identity, $oid_identity);
+    if ($remote && $remote->is_identity) {
+        $is_identity = 1;
+        my $id = $remote->identity;
+        if ($id->short_code eq 'openid') {
+            $oid_identity = $id->value;
+        }
+    }
 
     # Default radio button
     # 4 possible scenarios:
@@ -1453,7 +1460,7 @@ sub talkform {
 
         # Initial page load (no remote)
         return $default if $type eq 'anonymous' &&
-            ! $form->{'usertype'} && ! $remote && ! $oid_identity;
+            ! $form->{'usertype'} && ! $remote && ! $is_identity;
 
         # Anonymous
         return $default if $type eq 'anonymous' &&
@@ -1466,7 +1473,7 @@ sub talkform {
 
             return $default if $type eq 'openid_cookie' &&
                 ($form->{'usertype'} eq 'openid_cookie' ||
-                (defined $oid_identity));
+                $is_identity);
         }
 
         # Remote user, remote equals userpost
@@ -1487,7 +1494,7 @@ sub talkform {
 
     # special link to create an account
     my $create_link;
-    if (!$remote || defined $oid_identity) {
+    if (!$remote || $is_identity) {
         $create_link = LJ::run_hook("override_create_link_on_talkpost_form", $journalu);
         $ret .= $create_link;
     }
@@ -1501,7 +1508,7 @@ sub talkform {
 
     if ($editid) {
 
-        return "You cannot edit this comment." unless $remote && !defined $oid_identity;
+        return "You cannot edit this comment." unless $remote && !$is_identity;
 
         $ret .= "<tr valign='middle' id='ljuser_row'>";
         my $logged_in = LJ::ehtml($remote->display_name);
@@ -1545,7 +1552,7 @@ sub talkform {
         if (LJ::OpenID->consumer_enabled) {
             # OpenID!!
             # Logged in
-            if (defined $oid_identity) {
+            if ($is_identity) {
                 $ret .= "<tr valign='middle' id='oidli' name='oidli'>";
                 $ret .= "<td align='center'><img src='$LJ::IMGPREFIX/openid-profile.gif' onclick='handleRadios(4);' /></td><td align='center'><input type='radio' name='usertype' value='openid_cookie' id='talkpostfromoidli'" .
                     $whocheck->('openid_cookie') . "/>";
@@ -1569,7 +1576,7 @@ sub talkform {
             }
 
             # URL: [    ]  Verify? [ ]
-            my $url_def = defined $oid_identity ? ($form->{'oidurl'} || $oid_identity) : '';
+            my $url_def = $is_identity ? ($form->{'oidurl'} || $oid_identity) : '';
 
             $ret .= "<tr valign='middle' align='left' id='oid_more'><td colspan='2'></td><td>";
             $ret .= "Identity URL:&nbsp;<input class='textbox' name='oidurl' maxlength='60' size='53' id='oidurl' value='$url_def' /> ";
@@ -1588,7 +1595,7 @@ sub talkform {
 
         if (LJ::OpenID->consumer_enabled) {
             # OpenID user can comment if the account has validated e-mail address or OpenID provider is trusted
-            if (defined $oid_identity && $remote->is_trusted_identity) {
+            if ($is_identity && $remote->is_trusted_identity) {
                 my $logged_in = LJ::ehtml($remote->display_name);
                 $ret .= "<tr valign='middle' id='oidli' name='oidli'>";
                 if (LJ::is_banned($remote, $journalu)) {
@@ -1612,7 +1619,7 @@ sub talkform {
                 $ret .= "<td align='center'>(  )</td>";
                 $ret .= "<td align='left' colspan='2'><font color='#c0c0c0'><b>OpenID</b></font>";
                 $ret .= BML::ml('.opt.noopenidpost', { aopts1 => "href='$LJ::SITEROOT/changeemail.bml'", aopts2 => "href='$LJ::SITEROOT/register.bml'" })
-                    if defined $oid_identity;
+                    if $is_identity;
 
                 $ret .= LJ::help_icon_html("openid", " ");
 
@@ -1637,7 +1644,7 @@ sub talkform {
         if (LJ::OpenID->consumer_enabled) {
             # OpenID!!
             # Logged in
-            if (defined $oid_identity) {
+            if ($is_identity) {
                 $ret .= "<tr valign='middle' id='oidli' name='oidli'>";
                 $ret .= "<td align='center'><img src='$LJ::IMGPREFIX/openid-profile.gif' onclick='handleRadios(4);' /></td>";
                 if ($remote_can_comment) {
@@ -1670,7 +1677,7 @@ sub talkform {
             }
 
             # URL: [    ]  Verify? [ ]
-            my $url_def = defined $oid_identity ? ($form->{'oidurl'} || $oid_identity) : '';
+            my $url_def = $is_identity ? ($form->{'oidurl'} || $oid_identity) : '';
 
             $ret .= "<tr valign='middle' align='left' id='oid_more'><td colspan='2'></td><td>";
             $ret .= "Identity URL:&nbsp;<input class='textbox' name='oidurl' maxlength='60' size='53' id='oidurl' value='$url_def' /> ";
@@ -1680,7 +1687,7 @@ sub talkform {
         }
     }
 
-    if ($remote && !defined $oid_identity) {
+    if ($remote && !$is_identity) {
         $ret .= "<tr valign='middle' id='ljuser_row" . ($remote_can_comment ? '' : '_cannot') . "'>";
         my $logged_in = LJ::ehtml($remote->display_name);
 
@@ -1736,7 +1743,7 @@ sub talkform {
     $ret .= $BML::ML{'.opt.willscreen'} if $screening eq 'A';
     $ret .= "</td></tr>\n";
 
-    if ($remote && ! defined $oid_identity) {
+    if ($remote && ! $is_identity) {
         $ret .= "<script language='JavaScript'>\n";
         $ret .= "<!--\n";
         $ret .= "if (document.getElementById) {\n";
@@ -1754,7 +1761,7 @@ sub talkform {
     $ret .= "<tr valign='middle' align='left' id='lj_more'><td colspan='2'></td><td>";
 
     my $ljuser_def = "";
-    if ($remote && !defined $oid_identity) {
+    if ($remote && !$is_identity) {
         if ($form->{userpost} ne $form->{cookieuser} && $form->{usertype} ne 'anonymous') {
             $ljuser_def = BML::eall($form->{userpost});
         } else {
@@ -1776,7 +1783,7 @@ sub talkform {
     $ret .= "</td></tr>\n";
 
     # Link to create an account
-    if (!$create_link && (!$remote || defined $oid_identity)) {
+    if (!$create_link && (!$remote || $is_identity)) {
         $ret .= "<tr valign='middle' align='left'>";
         $ret .= "<td colspan='2'></td><td><span style='font-size: 8pt; font-style: italic;'>";
         $ret .= BML::ml('.noaccount', {'aopts' => "href='$LJ::SITEROOT/create.bml'"});

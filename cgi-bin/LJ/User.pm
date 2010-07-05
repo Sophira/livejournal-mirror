@@ -1217,17 +1217,12 @@ sub url {
 
     my $url;
 
-    if ($u->{'journaltype'} eq "I" && ! $u->{url}) {
-        my $id = $u->identity;
-        if ($id && $id->typeid == 0) {
-            $u->set_prop("url", $id->[1]) if $id->[1];
-            $url = $id->value;
-        }
+    if ($u->is_identity && !$u->prop('url')) {
+        $u->set_prop( 'url' => $u->identity->url );
     }
 
-    # not openid, what does their 'url' prop say?
     $url ||= $u->prop('url');
-    return undef unless $url;
+    return unless $url;
 
     $url = "http://$url" unless $url =~ m!^http://!;
 
@@ -1262,7 +1257,8 @@ sub identity {
                                   );
         return $i;
     }
-    return undef;
+
+    return;
 }
 
 # returns a URL if account is an OpenID identity.  undef otherwise.
@@ -3323,19 +3319,26 @@ sub is_trusted_identity {
     return unless $u->is_identity;
     
     return 1 if $u->is_validated;
-    
-    ## Check top-to-down domain names in list of trusted providers:
-    ## asdf.openid.somewhere.com -> openid.somewhere.com -> somewhere.com
-    my $identity = $u->openid_identity;
-    if ($identity and my $uri = URI->new($identity)) {
-        return unless $uri->can('host');
-        my $host = $uri->host;
-        while ($host =~ /\./) {
-            return 1 if $LJ::TRUSTED_OPENID_PROVIDERS{$host};
-            # remove first domain name (or whatever) with dot
-            $host =~ s/^.*?\.//;
+
+    my $id = $u->identity;
+
+    if ($id->short_code eq 'openid') {
+        ## Check top-to-down domain names in list of trusted providers:
+        ## asdf.openid.somewhere.com -> openid.somewhere.com -> somewhere.com
+        my $url = $id->url;
+        if ($url and my $uri = URI->new($url)) {
+            return unless $uri->can('host');
+            my $host = $uri->host;
+            while ($host =~ /\./) {
+                return 1 if $LJ::TRUSTED_OPENID_PROVIDERS{$host};
+                # remove first domain name (or whatever) with dot
+                $host =~ s/^.*?\.//;
+            }
         }
+
+        return;
     }
+
     return;
 }
 

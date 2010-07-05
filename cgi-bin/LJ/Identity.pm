@@ -1,40 +1,35 @@
 package LJ::Identity;
-
 use strict;
 
-use fields (
-            'typeid',  # Id number of identity type
-            'value',   # Identity string
-            );
+use Carp qw();
+
+# initialization code. do not touch this.
+my @CLASSES = LJ::ModuleLoader->module_subclasses('LJ::Identity');
+foreach my $class (@CLASSES) {
+    eval "use $class";
+    Carp::confess "Error loading event module '$class': $@" if $@;
+}
+
+my %TYPEMAP = map { $_->typeid => $_ } @CLASSES;
+
+# initialization code ends
 
 sub new {
-    my LJ::Identity $self = shift;
-    $self = fields::new( $self ) unless ref $self;
-    my %opts = @_;
+    my ($class, %opts) = @_;
 
-    $self->{typeid} = $opts{'typeid'};
-    $self->{value}  = $opts{'value'};
-
-    return $self;
+    return bless {
+        'value' => $opts{'value'},
+    }, $TYPEMAP{$opts{'typeid'}};
 }
 
-sub pretty_type {
-    my LJ::Identity $self = shift;
-    return 'OpenID' if $self->{typeid} == 0;
-    return 'Invalid identity type';
-}
-
-sub typeid {
-    my LJ::Identity $self = shift;
-    die("Cannot set new typeid value") if @_;
-
-    return $self->{typeid};
-}
+sub pretty_type { Carp::confess 'Invalid identity type' }
+sub typeid { Carp::confess 'Invalid identity type' }
+sub url { Carp::confess 'Invalid identity type' }
+sub short_code { 'unknown' }
 
 sub value {
-    my LJ::Identity $self = shift;
-    die("Cannot set new identity value") if @_;
-
-    return $self->{value};
+    my ($self) = @_;
+    return $self->{'value'};
 }
+
 1;
