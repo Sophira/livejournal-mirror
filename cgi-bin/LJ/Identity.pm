@@ -5,12 +5,13 @@ in LiveJournal
 
 =head1 SYNOPSIS
 
- # create an identity account
+ # load or create an identity account
  my $u = LJ::User::load_identity_user(
     'O', # OpenID
     $openid_url,
     { 'vident' => $vident }, # OpenID-specific "verified identity" data
  );
+ warn $u; # 'LJ::User=HASH(0xDEADBEEF)'
  
  # manipulate the account in an identity-specific way
  my $id = $u->identity;
