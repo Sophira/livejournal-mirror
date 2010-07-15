@@ -667,7 +667,7 @@ sub create_qr_div {
 
     my $stylemineuri = $stylemine ? "style=mine&" : "";
     my $basepath =  LJ::journal_base($u) . "/$ditemid.html?${stylemineuri}";
-    my $usertype = ($remote->openid_identity && $remote->is_trusted_identity) ? 'openid_cookie' : 'cookieuser';
+    my $usertype = ($remote->is_identity && $remote->is_trusted_identity) ? 'openid_cookie' : 'cookieuser';
     $qrhtml .= LJ::html_hidden({'name' => 'replyto', 'id' => 'replyto', 'value' => ''},
                                {'name' => 'parenttalkid', 'id' => 'parenttalkid', 'value' => ''},
                                {'name' => 'journal', 'id' => 'journal', 'value' => $u->{'user'}},
