@@ -59,7 +59,7 @@ body<=
             my $url = $vident->url;
             return LJ::bad_input("Invalid characters in identity URL.") if $url =~ /[\<\>\s]/;
 
-            my $uo = LJ::User::load_identity_user("O", $url, $vident);
+            my $uo = LJ::User::load_identity_user("O", $url, { 'vident' => $vident });
             return LJ::bad_input("Couldn't vivify your account (but we verified that you're " . LJ::ehtml($url) . ")")
                 unless $uo;
 
