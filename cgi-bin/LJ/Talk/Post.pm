@@ -391,7 +391,11 @@ sub init {
     # OpenID
     if (LJ::OpenID->consumer_enabled && ($form->{'usertype'} eq 'openid' ||  $form->{'usertype'} eq 'openid_cookie')) {
 
-        if ($remote && defined $remote->openid_identity) {
+        my $remote_is_openid = $remote &&
+                               $remote->is_identity &&
+                               $remote->identity->short_code eq 'openid';
+
+        if ($remote_is_openid) {
             $up = $remote;
 
             ### see if the user is banned from posting here
