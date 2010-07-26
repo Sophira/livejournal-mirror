@@ -439,7 +439,7 @@
         @LJ::TALK_METHODS_ORDER = qw(
             Anonymous
             OpenID
-            RegularUser
+            User
         );
     }
 }

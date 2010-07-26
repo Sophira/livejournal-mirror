@@ -274,7 +274,7 @@ sub init {
     my $entry = LJ::Entry->new($journalu, ditemid => $ditemid);
     $entry->handle_prefetched_props($iprops);
 
-    my $talkurl = LJ::journal_base($journalu) . "/$ditemid.html";
+    my $talkurl = $entry->url;
     $init->{talkurl} = $talkurl;
 
     ### load users
@@ -283,6 +283,7 @@ sub init {
                                ], [ $journalu ]);
     LJ::load_user_props($journalu, "opt_logcommentips");
 
+    ### two hacks; unsure if these need to stay
     if ($form->{'userpost'} && $form->{'usertype'} ne "user") {
         unless ($form->{'usertype'} eq "cookieuser" &&
                 $form->{'userpost'} eq $form->{'cookieuser'}) {
@@ -295,176 +296,22 @@ sub init {
         $err->(BML::ml("$SC.error.badusername2", {'sitename' => $LJ::SITENAMESHORT, 'aopts' => "href='$LJ::SITEROOT/lostinfo.bml'"}));
         return undef;
     }
+    ### hacks end here
 
-    my $cookie_auth;
-    if ($form->{'usertype'} eq "cookieuser") {
-        $bmlerr->("$SC.error.lostcookie")
-            unless ($remote && $remote->{'user'} eq $form->{'cookieuser'});
-        return undef if @$errret;
+    my $up;
 
-        $cookie_auth = 1;
-        $form->{'userpost'} = $remote->{'user'};
-        $form->{'usertype'} = "user";
-    }
-    # XXXevan hack:  remove me when we fix preview.
-    $init->{cookie_auth} = $cookie_auth;
+    foreach my $author_class (LJ::Talk::Author->all) {
+        next unless $author_class->want_user_input($form->{'usertype'});
 
-    # test accounts may only comment on other test accounts.
-    if ((grep { $form->{'userpost'} eq $_ } @LJ::TESTACCTS) &&
-        !(grep { $journalu->{'user'} eq $_ } @LJ::TESTACCTS) && !$LJ::IS_DEV_SERVER)
-    {
-        $bmlerr->("$SC.error.testacct");
-    }
+        $up = $author_class->handle_user_input( $form, $remote, $need_captcha,
+                                                $errret, $init );
+        return if @$errret or LJ::Request->redirected;
 
-    my $userpost = lc($form->{'userpost'});
-    my $up;             # user posting
-    my $exptype;        # set to long if ! after username
-    my $ipfixed;        # set to remote  ip if < after username
-    my $used_ecp;       # ecphash was validated and used
-
-    if ($form->{'usertype'} eq "user") {
-        if ($form->{'userpost'}) {
-
-            # parse inline login opts
-            if ($form->{'userpost'} =~ s/[!<]{1,2}$//) {
-                $exptype = 'long' if index($&, "!") >= 0;
-                $ipfixed = LJ::get_remote_ip() if index($&, "<") >= 0;
-            }
-
-            $up = LJ::load_user($form->{'userpost'});
-            if ($up) {
-                ### see if the user is banned from posting here
-                if (LJ::is_banned($up, $journalu)) {
-                    $bmlerr->("$SC.error.banned");
-                }
-
-                # TEMP until we have better openid support
-                if ($up->is_identity && $journalu->{'opt_whocanreply'} eq "reg") {
-                    $bmlerr->("$SC.error.noopenid");
-                }
-
-                unless ($up->{'journaltype'} eq "P" ||
-                        ($up->{'journaltype'} eq "I" && $cookie_auth)) {
-                    $bmlerr->("$SC.error.postshared");
-                }
-
-                # if we're already authenticated via cookie, then userpost was set
-                # to the authenticated username, so we got into this block, but we
-                # don't want to re-authenticate, so just skip this
-                unless ($cookie_auth) {
-
-                    # if ecphash present, authenticate on that
-                    if ($form->{'ecphash'}) {
-
-                        if ($form->{'ecphash'} eq
-                            LJ::Talk::ecphash($itemid, $form->{'parenttalkid'}, $up->password))
-                        {
-                            $used_ecp = 1;
-                        } else {
-                            $err->(BML::ml("$SC.error.badpassword2", {'aopts' => "href='$LJ::SITEROOT/lostinfo.bml'"}));
-                        }
-
-                    # otherwise authenticate on username/password
-                    } else {
-                        my $ok;
-                        if ($form->{response}) {
-                            $ok = LJ::challenge_check_login($up, $form->{chal}, $form->{response});
-                        } else {
-                            $ok = LJ::auth_okay($up, $form->{'password'}, $form->{'hpassword'});
-                        }
-                        $err->(BML::ml("$SC.error.badpassword2", {'aopts' => "href='$LJ::SITEROOT/lostinfo.bml'"})) unless $ok;
-                    }
-                }
-
-                # if the user chooses to log in, do so
-                if ($form->{'do_login'} && ! @$errret) {
-                    $init->{didlogin} = $up->make_login_session($exptype, $ipfixed);
-                }
-            } else {
-                $err->(BML::ml("$SC.error.badusername2", {'sitename' => $LJ::SITENAMESHORT, 'aopts' => "href='$LJ::SITEROOT/lostinfo.bml'"}));
-            }
-        } else {
-            $bmlerr->("$SC.error.nousername");
-        }
-    }
-
-    # OpenID
-    if (LJ::OpenID->consumer_enabled && ($form->{'usertype'} eq 'openid' ||  $form->{'usertype'} eq 'openid_cookie')) {
-
-        my $remote_is_openid = $remote &&
-                               $remote->is_identity &&
-                               $remote->identity->short_code eq 'openid';
-
-        if ($remote_is_openid) {
-            $up = $remote;
-
-            ### see if the user is banned from posting here
-            $bmlerr->("$SC.error.banned") if (LJ::is_banned($up, $journalu));
-
-            if ($form->{'oiddo_login'}) {
-                $up->make_login_session($form->{'exptype'}, $form->{'ipfixed'});
-            }
-        } else { # First time through
-            my $csr = LJ::OpenID::consumer();
-            my $exptype = 'short';
-            my $ipfixed = 0;
-            my $etime = 0;
-
-            # parse inline login opts
-            return $err->("No OpenID identity URL entered") unless $form->{'oidurl'};
-            if ($form->{'oidurl'} =~ s/[!<]{1,2}$//) {
-                if (index($&, "!") >= 0) {
-                    $exptype = 'long';
-                    $etime = time()+60*60*24*60;
-                }
-                $ipfixed = LJ::get_remote_ip() if index($&, "<") >= 0;
-            }
-
-            my $tried_local_ref = LJ::OpenID::blocked_hosts($csr);
-
-            my $claimed_id = $csr->claimed_identity($form->{'oidurl'});
-
-            unless ($claimed_id) {
-                return $err->("You can't use a $LJ::SITENAMESHORT OpenID account on $LJ::SITENAME &mdash; ".
-                                 "just <a href='/login.bml'>go login</a> with your actual $LJ::SITENAMESHORT account.") if $$tried_local_ref;
-                return $err->("No claimed id: ".$csr->err);
-            }
-
-            # Store their cleaned up identity url vs what they
-            # actually typed in
-            $form->{'oidurl'} = $claimed_id->claimed_url();
-
-            # Store the entry
-            my $pendcid = LJ::alloc_user_counter($journalu, "C");
-
-            $err->("Unable to allocate pending id") unless $pendcid;
-
-            # Since these were gotten from the oidurl and won't
-            # persist in the form data
-            $form->{'exptype'} = $exptype;
-            $form->{'etime'} = $etime;
-            $form->{'ipfixed'} = $ipfixed;
-            my $penddata = Storable::nfreeze($form);
-
-            $err->("Unable to get database handle to store pending comment") unless $journalu->writer;
-
-            $journalu->do("INSERT INTO pendcomments (jid, pendcid, data, datesubmit) VALUES (?, ?, ?, UNIX_TIMESTAMP())", undef, $journalu->{'userid'}, $pendcid, $penddata);
-
-            $err->($journalu->errstr) if $journalu->err;
-
-            my $check_url = $claimed_id->check_url(
-                                                   return_to      => "$LJ::SITEROOT/talkpost_do.bml?jid=$journalu->{'userid'}&pendcid=$pendcid",
-                                                   trust_root     => "$LJ::SITEROOT",
-                                                   delayed_return => 1,
-                                                   );
-            # Don't redirect them if errors
-            return undef if @$errret;
-            return BML::redirect($check_url);
-        }
+        last;
     }
 
     # validate the challenge/response value (anti-spammer)
-    unless ($used_ecp) {
+    unless ($init->{'used_ecp'}) {
         my $chrp_err;
         if (my $chrp = $form->{'chrp1'}) {
             my ($c_ditemid, $c_uid, $c_time, $c_chars, $c_res) =
@@ -501,6 +348,11 @@ sub init {
         $bmlerr->("$SC.error.mustlogin") unless (defined $up);
         $bmlerr->("$SC.error.noauth");
         return undef;
+    }
+
+    ### see if the user is banned from posting here
+    if ($up && LJ::is_banned($up, $journalu)) {
+        $bmlerr->("$SC.error.banned");
     }
 
     # If the reply is to a comment, check that it exists.

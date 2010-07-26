@@ -14,6 +14,7 @@ use Class::Autouse qw(
 use MIME::Words;
 use Carp qw(croak);
 use LJ::TimeUtil;
+use LJ::Talk::Author;
 
 use constant PACK_FORMAT => "NNNNC"; ## $talkid, $parenttalkid, $poster, $time, $state 
 
@@ -1458,64 +1459,18 @@ sub talkform {
         }
     }
 
-    # Default radio button
-    # 4 possible scenarios:
-    # remote - initial form load, error and redisplay
-    # no remote - initial load, error and redisplay
-    my $whocheck = sub {
-        my $type    = shift;
-        my $default = " checked='checked'";
-
-        # Initial page load (no remote)
-        return $default
-            if $type eq 'anonymous'
-            && !$form->{'usertype'}
-            && !$remote
-            && !$is_identity;
-
-        # Anonymous
-        return $default
-            if $type               eq 'anonymous'
-            && $form->{'usertype'} eq 'anonymous';
-
-        if ( LJ::OpenID->consumer_enabled ) {
-
-            # OpenID
-            return $default
-                if $type               eq 'openid'
-                && $form->{'usertype'} eq 'openid';
-
-            return $default
-                if $type eq 'openid_cookie'
-                && ( $form->{'usertype'} eq 'openid_cookie'
-                || $is_identity );
-        }
-
-        # Remote user, remote equals userpost
-        return $default
-            if $type eq 'remote'
-            && ( $form->{'usertype'} eq 'cookieuser'
-            || $form->{'userpost'} eq $form->{'cookieuser'} );
-
-        # Possible remote, using ljuser field
-        if ( $type eq 'ljuser' ) {
-            return $default if
-
-                # Remote user posting as someone else.
-                (  $form->{'userpost'}
-                && $form->{'userpost'} ne $form->{'cookieuser'}
-                && $form->{'usertype'} ne 'anonymous' )
-                || ( $form->{'usertype'} eq 'user' && !$form->{'userpost'} );
-        }
-
-        return;
-    };
-
     # special link to create an account
     my $create_link;
     if ( !$remote || $is_identity ) {
         $create_link = LJ::run_hook( "override_create_link_on_talkpost_form",
             $journalu );
+    }
+
+    my @author_options;
+    foreach my $author_class (LJ::Talk::Author->all) {
+        my $params = $author_class->display_params($opts);
+        $params->{'short_code'} = $author_class->short_code;
+        push @author_options, $params;
     }
 
     # from registered user or anonymous?
@@ -1537,19 +1492,6 @@ sub talkform {
         $ml_willscreenfriend
             = LJ::Lang::ml('/talkpost.bml.opt.willscreenfriend');
     }
-
-    my $ljuser_def = "";
-    if ($is_person) {
-        if (   $form->{userpost} ne $form->{cookieuser}
-            && $form->{usertype} ne 'anonymous' )
-        {
-            $ljuser_def = LJ::ehtml( $form->{userpost} );
-        }
-        else {
-            $ljuser_def = $remote->username;
-        }
-    }
-    $ljuser_def = "" unless $remote_can_comment;
 
     my $basesubject = $form->{subject} || "";
     if ( $opts->{replyto} && !$basesubject && $parpost->{'subject'} ) {
@@ -1763,12 +1705,8 @@ sub talkform {
         'registered_can_comment' => $entry->registered_can_comment,
         'friends_can_comment'    => $entry->friends_can_comment,
         'is_public'              => $entry->is_public,
-        'openid_enabled'         => LJ::OpenID->consumer_enabled,
         'is_person'              => $is_person,
         'is_identity'            => $remote && $remote->is_identity,
-        'is_trusted_identity'    => $remote
-                                    && $remote->is_identity
-                                    && $remote->is_trusted_identity,
         'remote_can_comment'     => $remote_can_comment,
 
         # ml variables. it is weird that we've got to pass these to
@@ -1787,14 +1725,9 @@ sub talkform {
         'ml_willscreenfriend'    => $ml{'willscreenfriend'},
 
         # help icons
-        'helpicon_openid'        => LJ::help_icon_html( "openid",       " " ),
         'helpicon_userpics'      => LJ::help_icon_html( "userpics",     " " ),
         'helpicon_noautoformat'  => LJ::help_icon_html( "noautoformat", " " ),
         'helpicon_iplogging'     => LJ::help_icon_html( "iplogging",    " " ),
-
-        # css helpers
-        'css_ljuser_row_id' => 'ljuser_row'
-            . ( $remote_can_comment ? '' : '_cannot' ),
 
         'captcha_html'              => $captcha_html,
         'comment_length_cap'        => LJ::CMAX_COMMENT,
@@ -1815,29 +1748,13 @@ sub talkform {
         'subjicon_current_h'        => $subicon_current_show{'h'},
         'warnscreened'              => !$editid && $parpost->{'state'} eq "S",
 
-        'whocheck_anonymous'        => $whocheck->('anonymous')     || undef,
-        'whocheck_openid_cookie'    => $whocheck->('openid_cookie') || undef,
-        'whocheck_openid'           => $whocheck->('openid')        || undef,
-        'whocheck_remote'           => $whocheck->('remote')        || undef,
-        'whocheck_ljuser'           => $remote_can_comment
-                                       ? ( $whocheck->('ljuser') || undef )
-                                       : ' checked="checked"',
-
         'form_intro'                => $form_intro,
         'errors'                    => \@errors_show,
         'tosagree'                  => $html_tosagree,
 
-        # miscellaneous parameters for openid
-        'openid_url_default'    => $is_identity
-                                   ? ( $form->{'oidurl'} || $oid_identity )
-                                   : '',
-        'oiddo_login_checked'   => $form->{'oiddo_login'}
-                                   ? "checked='checked' "
-                                   : '',
-
         # miscellaneous parameters for the "log in" form as well
-        'username_default'      => $ljuser_def,
         'basesubject'           => $basesubject,
+        'author_options'        => \@author_options,
     );
 
     return $template->output;
