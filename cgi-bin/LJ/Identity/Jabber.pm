@@ -1,4 +1,5 @@
 package LJ::Identity::Jabber;
+use strict;
 
 sub typeid { 'J' }
 sub pretty_type { 'Jabber' }

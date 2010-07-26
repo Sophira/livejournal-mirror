@@ -202,14 +202,14 @@ sub get {
             SELECT value FROM blobcache WHERE bckey=?
         }, undef, $key);
 
-        return undef unless $val;
+        return unless $val;
 
         # put it back in memcache.
         LJ::MemCache::set($key, $val);
         return $val;
     }
 
-    return undef;
+    return;
 }
 
 sub set {
