@@ -6,7 +6,12 @@ body<=
     use strict;
     use vars qw($title);
 
-    $title = LJ::Lang::ml('identity.bml.login.title');
+    # logged-in users don't get to here
+    if (LJ::get_remote()) {
+        return LJ::Request->redirect("$LJ::SITEROOT/login.bml");
+    }
+
+    $title = LJ::Lang::ml('.title');
 
     my $thispage = "$LJ::SITEROOT/identity/login.bml";
     my @errors;
@@ -36,7 +41,7 @@ body<=
     foreach my $type (@LJ::IDENTITY_TYPES) {
         push @types, {
             'type' => $type,
-            'ml_tab_heading' => $type,
+            'ml_tab_heading' => LJ::Lang::ml(".tab.$type"),
         };
     }
 

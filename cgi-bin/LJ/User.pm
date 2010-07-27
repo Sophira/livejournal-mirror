@@ -1296,7 +1296,7 @@ sub load_existing_identity_user {
 
 # class function - load an identity user, and if we've never seen them before create a user account for them
 sub load_identity_user {
-    my ($type, $ident, $extra) = @_;
+    my ($type, $ident, $extra, $created_ref) = @_;
 
     my $u = load_existing_identity_user($type, $ident);
 
@@ -1337,6 +1337,7 @@ sub load_identity_user {
     $u = LJ::load_userid($uid);
 
     $u->identity->initialize_user($u, $extra);
+    $$created_ref = 1 if $created_ref;
 
     # record create information
     my $remote = LJ::get_remote();
