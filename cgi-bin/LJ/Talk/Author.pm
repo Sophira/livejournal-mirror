@@ -9,11 +9,11 @@ including logged-in users, anonymous commenters, and identities.
      warn $author_class;                            # 'LJ::Talk::Author::OpenID'
      warn $author_class->short_code;                # 'OpenID'
      warn $author_class->display_params($opts);     # 'HASH(0xDEADBEEF)'
-     warn $author_class->want_user_input('openid'); # boolean
- 
-     next unless $author_class->want_user_input('openid');
-     warn $author_class->handle_user_input(...); # 'LJ::User=HASH(0xDEADBEEF)'
  }
+
+ my $author_class = LJ::Talk::Author->get_handler('openid');
+ die unless $author_class;
+ warn $author_class->handle_user_input(...); # 'LJ::User=HASH(0xDEADBEEF)'
 
 =cut
 
@@ -33,10 +33,25 @@ my %code_map;
 List all of the supported author choices. Used by LJ::Talk::talkform
 and LJ::Talk::Post::init.
 
+=head3 get_handler
+
+Get the handler for the given 'usertype' form field value. See also:
+want_user_input. Used by LJ::Talk::Post::init.
+
 =cut
 
 sub all {
     return map { "LJ::Talk::Author::$_" } @LJ::TALK_METHODS_ORDER;
+}
+
+sub get_handler {
+    my ($class, $usertype) = @_;
+
+    foreach my $author_class($class->all) {
+        return $author_class if $author_class->want_user_input($usertype);
+    }
+
+    return;
 }
 
 =head2 (Purely) virtual
@@ -75,7 +90,7 @@ sub display_params {
 
 Return a boolean value indicating that the provided 'usertype' form
 field value in the commenting form corresponds to this author class.
-Used by LJ::Talk::Post::init.
+Used by get_handler.
 
 =head3 handle_user_input(...)
 

@@ -300,16 +300,17 @@ sub init {
 
     my $up;
 
-    foreach my $author_class (LJ::Talk::Author->all) {
-        next unless $author_class->want_user_input($form->{'usertype'});
+    my $author_class = LJ::Talk::Author->get_handler($form->{'usertype'});
 
-        $up = $author_class->handle_user_input( $form, $remote, $need_captcha,
-                                                $errret, $init );
-        return if @$errret or LJ::Request->redirected;
-
-        last;
+    # whoops, a bogus usertype value. no way.
+    unless ($author_class) {
+        return $bmlerr->('error.invalidform');
     }
 
+    $up = $author_class->handle_user_input( $form, $remote, $need_captcha,
+                                            $errret, $init );
+    return if @$errret or LJ::Request->redirected;
+    
     # validate the challenge/response value (anti-spammer)
     unless ($init->{'used_ecp'}) {
         my $chrp_err;
