@@ -1,3 +1,22 @@
+=head1 NAME
+
+LJ::Talk::Author - a set of classes to handle various commenting choices,
+including logged-in users, anonymous commenters, and identities.
+
+=head1 SYNOPSIS
+
+ foreach my $author_class (LJ::Talk::Author->all) {
+     warn $author_class;                            # 'LJ::Talk::Author::OpenID'
+     warn $author_class->short_code;                # 'OpenID'
+     warn $author_class->display_params($opts);     # 'HASH(0xDEADBEEF)'
+     warn $author_class->want_user_input('openid'); # boolean
+ 
+     next unless $author_class->want_user_input('openid');
+     warn $author_class->handle_user_input(...); # 'LJ::User=HASH(0xDEADBEEF)'
+ }
+
+=cut
+
 package LJ::Talk::Author;
 use strict;
 
@@ -5,20 +24,44 @@ use Carp qw();
 
 my %code_map;
 
+=head1 METHODS
+
+=head2 Base class / final
+
+=head3 all
+
+List all of the supported author choices. Used by LJ::Talk::talkform
+and LJ::Talk::Post::init.
+
+=cut
+
+sub all {
+    return map { "LJ::Talk::Author::$_" } @LJ::TALK_METHODS_ORDER;
+}
+
+=head2 (Purely) virtual
+
+=head3 short_code
+
+Return the "short code" for this author choice. It is used by the
+templates/CommentForm/Form.tmpl template to find the corresponding
+templates/CommentForm/Author-${short_code}.tmpl template.
+
+=cut
+
 sub short_code {
     my ($class) = @_;
     $class =~ s/^LJ::Talk::Author:://;
     return $class;
 }
 
-sub all {
-    return map { "LJ::Talk::Author::$_" } @LJ::TALK_METHODS_ORDER;
-}
+=head3 display_params($opts)
 
-sub find_class {
-    my ($class, $code) = @_;
-    return $code_map{$code};
-}
+Return a hashref with the form params for the same template. The $opts
+argument is the same argument that gets passed to LJ::Talk::talkform.
+Used by LJ::Talk::talkform.
+
+=cut
 
 sub display_params {
     my ($class, $opts) = @_;
@@ -28,19 +71,40 @@ sub display_params {
     return {};
 }
 
-sub handle_form_submission {
-    my ($class, $entry, $errors) = @_;
+=head3 want_user_input($usertype)
 
-    Carp::confess "short_code must be overridden in a subclass";
+Return a boolean value indicating that the provided 'usertype' form
+field value in the commenting form corresponds to this author class.
+Used by LJ::Talk::Post::init.
 
-    my $remote = LJ::get_remote();
-    $errors ||= [];
+=head3 handle_user_input(...)
 
-    push @$errors, "example error";
-    return;
-}
+ my $up = $author_class->handle_user_input(
+     $form,
+     $remote,
+     $need_captch,
+     $errret,
+     $init,
+ );
+
+Handle the user input in the form fields as appropriate with this
+commenting choice. The parameters passed are the same parameters that
+are passed to LJ::Talk::Post::init, plus an $init hashref that can be
+written to to alter the initialization results.
+
+Returns an LJ::User object that is supposed to be the comment author, or
+undef in case the comment is supposed to be posted anonymously. In case
+of an error, $errret listref is populated with errors, and the return
+value should be discarded.
+
+Used by LJ::Talk::Post::init.
+
+=cut
 
 sub want_user_input { 0 }
+sub handle_user_input {
+    my ($class, $form, $remote, $need_captcha, $errret, $init) = @_;
+}
 
 # initialization code here
 foreach my $method (@LJ::TALK_METHODS_ORDER) {
