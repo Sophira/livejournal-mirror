@@ -1752,9 +1752,12 @@ sub talkform {
         'errors'                    => \@errors_show,
         'tosagree'                  => $html_tosagree,
 
-        # miscellaneous parameters for the "log in" form as well
         'basesubject'           => $basesubject,
         'author_options'        => \@author_options,
+
+        'extra_rows'            => LJ::run_hook('extra_talkform_rows', {
+            'entry' => $entry,
+        }),
     );
 
     return $template->output;

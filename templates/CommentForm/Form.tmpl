@@ -165,7 +165,14 @@
     <td align='right'><TMPL_VAR expr="ml('/talkpost.bml.opt.message')"></td>
     <td style='width: 90%'>
         <textarea class='textbox' rows='10' cols='75' wrap='soft' name='body' id='commenttext'><TMPL_VAR comment_body></textarea>
+    </td>
+</tr>
 
+<TMPL_VAR extra_rows>
+
+<tr>
+    <td></td>
+    <td>
         <TMPL_IF captcha_html>
             <TMPL_VAR captcha_html>
             <br />

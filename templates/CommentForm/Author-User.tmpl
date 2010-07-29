@@ -18,7 +18,7 @@
     <TMPL_ELSE>
         <td align='center'><img src='<TMPL_VAR lj_imgprefix>/userinfo.gif'  onclick='handleRadios(1);' /></td>
         <TMPL_IF remote_can_comment>
-            <td align='center'><input type='radio' name='usertype' value='cookieuser' id='talkpostfromremote' <TMPL_VAR whocheck_remote> /></td>
+            <td align='center'><input type='radio' name='usertype' value='cookieuser' id='talkpostfromremote' <TMPL_IF whocheck_remote>checked="checked"</TMPL_IF> /></td>
             <td align='left'>
                 <label for='talkpostfromremote'><TMPL_VAR ml_loggedin></label>
 
@@ -46,7 +46,7 @@
 
 <tr valign='middle' id='otherljuser_row' name='otherljuser_row'>
 <td align='center'><img src='<TMPL_VAR lj_imgprefix>/pencil.gif' onclick='handleRadios(2);' /></td>
-<td align='center'><input type='radio' name='usertype' value='user' id='talkpostfromlj' <TMPL_VAR whocheck_ljuser> /></td>
+<td align='center'><input type='radio' name='usertype' value='user' id='talkpostfromlj' <TMPL_IF whocheck_ljuser>checked="checked"</TMPL_IF> /></td>
 <td align='left'>
     <b><label for='talkpostfromlj' onclick='handleRadios(2); return false;'><TMPL_VAR expr="ml('/talkpost.bml.opt.ljuser2')"></label></b>
     <TMPL_VAR ml_willscreen>

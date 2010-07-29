@@ -754,6 +754,11 @@ sub create_qr_div {
     $qrhtml .= "<textarea class='textbox' rows='10' cols='50' wrap='soft' name='body' id='body' style='width: 99%'></textarea>";
     $qrhtml .= "</td></tr>";
 
+    $qrhtml .= LJ::run_hook('extra_quickreply_rows', {
+        'user'    => $user,
+        'ditemid' => $ditemid,
+    });
+
     $qrhtml .= "<tr><td>&nbsp;</td>";
     $qrhtml .= "<td colspan='3' align='left'>";
 

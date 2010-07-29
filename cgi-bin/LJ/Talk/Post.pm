@@ -506,6 +506,8 @@ sub init {
     $init->{parent} = $parent;
     $init->{comment} = $comment;
 
+    LJ::run_hooks('decode_comment_form', $form, $comment);
+
     # anti-spam captcha check
     if (ref $need_captcha eq 'SCALAR') {
 
@@ -699,6 +701,13 @@ sub post_comment {
     LJ::mark_user_active($comment->{u}, 'comment');
 
     LJ::run_hooks('new_comment', $journalu->{userid}, $item->{itemid}, $jtalkid);
+    LJ::run_hooks('new_comment2', {
+        'data'      => $comment,
+        'posterid'  => $posterid,
+        'journalid' => $journalu->{'userid'},
+        'itemid'    => $item->{'itemid'},
+        'jtalkid'   => $jtalkid,
+    });
 
     return 1;
 }
