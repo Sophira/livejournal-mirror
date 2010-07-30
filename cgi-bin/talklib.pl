@@ -8,22 +8,11 @@
 # </LJDEP>
 
 use strict;
-package LJ::Talk;
 
-use LJ::Constants;
-use LJ::RateLimit qw//;
-use Class::Autouse qw(
-                      LJ::Event::JournalNewComment
-                      LJ::Event::UserNewComment
-                      LJ::Comment
-                      LJ::EventLogRecord::NewComment
-                      Captcha::reCAPTCHA
-                      LJ::OpenID
-                      );
-use MIME::Words;
-use Carp qw(croak);
-use LJ::TimeUtil;
+use LJ::Talk;
+use LJ::Talk::Post;
 
+<<<<<<< .working
 use constant PACK_FORMAT => "NNNNC"; ## $talkid, $parenttalkid, $poster, $time, $state 
 
 # dataversion for rate limit logging
@@ -3398,5 +3387,6 @@ sub check_rate {
     return LJ::RateLimit->check($remote, \@watch, $nowrite);
 }
 
+=======
+>>>>>>> .merge-right.r17059
 1;
-
