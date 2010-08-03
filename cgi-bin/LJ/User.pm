@@ -1347,6 +1347,15 @@ sub load_identity_user {
     return $u;
 }
 
+sub remove_identity {
+    my ($u) = @_;
+
+    my $dbh = LJ::get_db_writer();
+    $dbh->do( 'DELETE FROM identitymap WHERE userid=?', undef, $u->id );
+
+    delete $u->{'_identity'};
+}
+
 # instance method:  returns userprop for a user.  currently from cache with no
 # way yet to force master.
 sub prop {
