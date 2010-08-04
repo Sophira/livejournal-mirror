@@ -385,9 +385,7 @@ sub init {
         $journalu->{'opt_whocanreply'} = "reg";
     }
 
-    if (($form->{'usertype'} ne "user" && $form->{'usertype'} ne 'openid' && $form->{'usertype'} ne 'openid_cookie')
-        && $journalu->{'opt_whocanreply'} ne "all")
-    {
+    if (!$up && $journalu->{'opt_whocanreply'} ne "all") {
         $bmlerr->("$SC.error.noanon");
     }
 
