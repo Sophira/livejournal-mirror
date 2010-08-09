@@ -446,10 +446,23 @@ sub trans
     }
 
     # allow html pages (with .html extention) in user domains and in common www. domain.
-    if (LJ::Request->uri =~ m|\A\/__html(\/.+\.html)\z|){
+    if ($uri =~ m|\A\/__html(\/.+\.html)\z|){
         LJ::Request->uri($1);
         return LJ::Request::DECLINED
     }
+
+    ##
+    if ($host eq $LJ::DOMAIN_WEB && $uri =~ m!^/redirect/!) {
+        my $url = $GET{'url'};
+        if ($url 
+            && $url =~ m! ^ https?:// [-\w.]*? ([-\w]+ \. [-\w]+) / !x 
+            && $LJ::ALLOWED_REDIRECT_TO_DOMAIN{$1}) 
+        {
+            return redir($url);
+        }
+        ## else - returns 404
+    }
+
 
     my $journal_view = sub {
         my $opts = shift;
