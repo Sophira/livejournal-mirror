@@ -965,7 +965,10 @@ sub clean
                     $newdata .= "<a name='cutid$cutcount-end'></a>"
                 }
             }
-            elsif ($tag eq "lj-repost" and $ljrepost_allowed){
+            elsif ($tag eq "lj-repost" and $ljrepost_allowed and exists $opencount{$tag}){
+                ## Add repost button
+                ## If there is opening <lj-repost> tag than $opencount{$tag} exists.
+                ##
                 my $button   = LJ::ehtml($opencount{$tag}->{button}) || LJ::Lang::ml("repost.default_button");
                 my $subject  = LJ::ehtml($opencount{$tag}->{subject});
                 my $captured = substr $newdata => $opencount{$tag}->{offset};
@@ -974,7 +977,10 @@ sub clean
                     # !!! avoid calling any 'text' methods on $entry, 
                     #     it can produce inifinite loop of cleanhtml calls.
 
-                    $subject ||= LJ::ehtml($entry->subject_raw || LJ::Lang::ml("repost.default_subject"));
+                    unless ($subject){
+                        $subject = LJ::ehtml($entry->subject_raw || LJ::Lang::ml("repost.default_subject"));
+                        $subject = Encode::decode_utf8($subject) if $subject;
+                    }
                     $captured = LJ::Lang::ml("repost.wrapper", { 
                                                 username => $entry->poster->username,
                                                 url      => $entry->url,
