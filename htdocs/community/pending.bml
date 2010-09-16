@@ -66,8 +66,6 @@ body<=
 
         if ($POST{'reject_select'} eq '1') {
             $ret .= '<div class="b-pending">';
-            $ret .= "<h3>".$ML{'.following_users'}."</h3>";
-            $ret .= '<p class="i-bubble b-bubble-alert b-bubble-noarrow b-bubble-intext">' . $ML{'.you_can_remove'} . '</p>';
 
             my @userids = split(',', $POST{'ids'});
 
@@ -93,9 +91,11 @@ body<=
             if ($POST{"approve"}) {
                 $ret .= "<?p " . BML::ml('.success.added', { num => $added }) . " p?>" if $added;
             } else {
+                $ret .= "<h3>".$ML{'.following_users'}."</h3>";
+                $ret .= '<p class="i-bubble b-bubble-alert b-bubble-noarrow b-bubble-intext">' . $ML{'.you_can_remove'} . '</p>';
                 $ret .= "<form method='post' action='pending.bml?authas=$cname'>\n";
                 $ret .= LJ::form_auth();
-                $ret .= '<ul class="b-pending-users"><li>' . join (",</li><li>", map { "<span><a href='" . $_->profile_url . "' target='_blank'>" . $_->{name} . "</a><i id=\"reject_user_id_".$_->{userid}."\" class='i-pending-close' title='" . $ML{'.button.remove'} . "'></i></span>" } @to_show) . "</li></ul>\n";
+                $ret .= '<ul class="b-pending-users"><li>' . join (",</li><li>", map { "<span><a href='" . $_->profile_url . "' target='_blank'>" . $_->display_name . "</a><i id=\"reject_user_id_".$_->{userid}."\" class='i-pending-close' title='" . $ML{'.button.remove'} . "'></i></span>" } @to_show) . "</li></ul>\n";
                 $ret .= LJ::html_hidden('ids', join(',', map { $_->{'userid'} } @to_show)) . "\n";
                 $ret .= "<textarea name='reason' rows='7' cols='50' class='b-pending-reason' placeholder='".$ML{'.reason.default.text'}."'></textarea>\n";
                 $ret .= LJ::html_hidden('reject_done', 1);
@@ -219,10 +219,12 @@ body<=
         # rows for existing users
         my $rc = 0;
         foreach (@users) {
+            my $disabled = $_->is_validated ? {} : { disabled => 1 };
+            my $selected = $_->is_validated ? 1 : 0;
             my $rstyle = ($rc++ & 1) ? '#efefef' : '#fff';
             $ret .= "<tr style='background-color: $rstyle;'><td>";
             $ret .= LJ::html_check({ id => 'pending_' . $_->userid, name => 'pending_' . $_->userid, 
-                                     selected => $jumpto ? ($_->user eq $jumpto ? 1 : 0) : 1 });
+                                     selected => $jumpto ? ($_->user eq $jumpto ? $selected : 0) : $selected, %$disabled });
             $ret .= "</td><td>" . LJ::ljuser($_->{user}) . "</td></tr>\n";
         }
 
