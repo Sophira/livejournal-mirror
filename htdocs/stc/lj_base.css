@@ -1021,14 +1021,6 @@ Must be removed after implementation of Framework! */
 	padding: 0;
 	list-style: none;
 	}
-.b-manage-smsn:after {
-	content: "";
-	display: block;
-	clear: both;
-	visibility: hidden;
-	line-height: 0;
-	height: 0;
-	}
 .b-manage-smsn-hide {
 	}
 	.b-manage-smsn LI {
@@ -1042,28 +1034,31 @@ Must be removed after implementation of Framework! */
 		padding: 0.3em 0 0;
 		line-height: 1.5;
 		}
+		.b-manage-smsn .b-manage-smsn-sms INPUT {
+			width: 95px;
+			}
 	.b-manage-smsn-hide .b-manage-smsn-sms {
 		padding: 0;
 		}
 	.b-manage-smsn .b-manage-smsn-status {
 		position: relative;
-		overflow: hidden;
 		padding: 0 0 0 2em;
+		margin-left: 110px;
 		}
 	.b-manage-smsn-hide .b-manage-smsn-status {
 		display: none;
 		}
 		.b-manage-smsn .b-manage-smsn-status .help-icon {
 			position: absolute;
-			top: 5px;
-			right: -20px;
+			top: 8px;
+			right: 0;
 			}
 			.b-manage-smsn .b-manage-smsn-status .help-icon A {
 				border: none;
 				}
 		.i-manage-smsn-icon {
 			position: absolute;
-			top: 13px;
+			top: 16px;
 			left: 0;
 			width: 16px;
 			height: 16px;
@@ -1073,6 +1068,7 @@ Must be removed after implementation of Framework! */
 			background-position: 0 -800px;
 			}
 		.i-manage-smsn-unsupporteddef,
+		.i-manage-smsn-already_use,
 		.i-manage-smsn-initial {
 			background-position: 0 0;
 			}
