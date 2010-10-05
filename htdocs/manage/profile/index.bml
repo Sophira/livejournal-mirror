@@ -487,8 +487,9 @@ body<=
         $ret .= "</table>\n";
 
         ## TEXT MESSAGING
+        my $country = LJ::country_of_remote_ip();
         $ret .= "<a name='txtmsg'></a><div class='section_head'>" . 
-            (LJ::GeoLocation->ip_country() eq 'RU' ? $ML{'.section.phone'} : $ML{'.section.textmsg'}) . "\n";
+            ($country eq 'RU' ? $ML{'.section.phone'} : $ML{'.section.textmsg'}) . "\n";
         unless (LJ::get_cap($u, "textmessaging")) {
             my $inline;
             if ($inline .= LJ::run_hook("cprod_inline", $u, 'TextMessaging')) {
@@ -502,7 +503,7 @@ body<=
             foreach (values %$tminfo) { LJ::text_out(\$_); }
             $tminfo->{'security'} = "N" if ($u->{'txtmsg_status'} eq 'off' || $u->{'txtmsg_status'} eq 'none');
 
-            if ($LJ::DISABLED{smsru} || LJ::GeoLocation->ip_country() ne 'RU') {
+            if ($LJ::DISABLED{smsru} || $country ne 'RU') {
                 $ret .= "<span id='phone_view_options' class='view_options'>$ML{'.fn.txtmsg'}&nbsp;";
                 $ret .= LJ::html_select({ 'name' => 'txtmsg_security', 'selected' => $tminfo->{'security'} },
                                           "all" => BML::ml(".security.visibility.everybody"),
@@ -515,9 +516,9 @@ body<=
             }
 
             my $block_id = 'phone_verification';
-               $block_id = '' if $LJ::DISABLED{smsru} || LJ::GeoLocation->ip_country() ne 'RU'; ## empty block_id disables JS script
+               $block_id = '' if $LJ::DISABLED{smsru} || $country ne 'RU'; ## empty block_id disables JS script
             $ret .= "<table class='field_block' id='$block_id'>\n";
-            if ($LJ::DISABLED{smsru} || LJ::GeoLocation->ip_country() ne 'RU') {
+            if ($LJ::DISABLED{smsru} || $country ne 'RU') {
                 foreach (values %$tminfo) { LJ::text_out(\$_); }
                 ##
                 $ret .= "<tr><td class='field_name'>$ML{'.fn.servprov'}</td><td>";
@@ -536,7 +537,9 @@ body<=
             }
             $ret .= "<tr><td class='field_name'>$ML{'.fn.txtnum'}</td><td>";
             $ret .= '<ul class="b-manage-smsn b-manage-smsn-hide">';
-            $ret .= '<li class="b-manage-smsn-sms">' . LJ::html_text({ 'name' => 'txtmsg_number', 'value' => $tminfo->{'number'}, 'size' => '15', 'maxlength' => '15' }) . '<br /><span class="helper">' . $ML{'.section.textmsg.example'} . '</span></li>';
+            $ret .= '<li class="b-manage-smsn-sms">' . LJ::html_text({ 'name' => 'txtmsg_number', 'value' => $tminfo->{'number'}, 'size' => '15', 'maxlength' => '15' });
+            $ret .= '<br /><span class="helper">' . $ML{'.section.textmsg.example_us'} . '</span></li>' if $country eq 'US';
+            $ret .= '<br /><span class="helper">' . $ML{'.section.textmsg.example_ru'} . '</span></li>' if $country eq 'RU';
             $ret .= '<li class="b-manage-smsn-status"><i class="i-manage-smsn-icon"></i><i class="help-icon">' . LJ::help_icon('sms_notification') . '</i><span class="i-bubble b-bubble-lite"><i class="i-bubble-arrow-border"></i><i class="i-bubble-arrow"></i><span>' . $ML{'.section.textmsg.info'} . ' </span></span></li>';
             $ret .= "<li class='b-manage-smsn-btn'><input type='button' name='sendsms' value='$ML{'.section.textmsg.button'}' disabled='disabled' /></li>";
             $ret .= '</ul>';
@@ -559,6 +562,7 @@ body<=
 			$ret .= "initial : \"$ML{'.section.textmsg.info'}\",";
 			$ret .= "badnum : \"$ML{'.section.textmsg.info.badnum'}\",";
 			$ret .= "unsupporteddef : \"$ML{'.section.textmsg.info.unsupporteddef'}\",";
+			$ret .= "already_use : \"$ML{'.section.textmsg.info.already_use'}\",";
 			$ret .= "correctNum : \"$ML{'.section.textmsg.info.correctNum'}\",";
 			$ret .= "requestsent : \"$ML{'.section.textmsg.info.requestsent'}\",";
 			$ret .= "smssent : \"$ML{'.section.textmsg.info.smssent'}\",";
@@ -834,7 +838,7 @@ body<=
         my $tminfo = LJ::TextMessage->tm_info($u);
         # Check that text messaging is turned off and either
         # the provider or number have been set to null
-        if ($LJ::DISABLED{'smsru'} || !$is_remote_sup) {
+        if ($LJ::DISABLED{'smsru'} || LJ::country_of_remote_ip() ne 'RU') {
             if ($txtmsg_status eq "off" &&
                 (($tminfo->{'provider'} && ! $POST{'txtmsg_provider'})
                 || ($tminfo->{'number'} && ! $POST{'txtmsg_number'}))
@@ -845,6 +849,7 @@ body<=
                 $dbh->do("REPLACE INTO txtmsg (userid, provider, number, security) VALUES (?, ?, ?, ?)",
                          undef, $u->{'userid'}, $POST{'txtmsg_provider'}, $POST{'txtmsg_number'}, $POST{'txtmsg_security'});
             }
+            LJ::SMS::API::RU::Phone->delete($u->userid);
         } else {
             if ($tminfo->{'number'} && ! $POST{'txtmsg_number'}) {
                 $dbh->do("DELETE FROM txtmsg WHERE userid=?", undef, $u->{'userid'});

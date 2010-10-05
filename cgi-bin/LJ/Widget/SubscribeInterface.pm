@@ -21,11 +21,17 @@ sub render_body {
     my $u = $opts->{'u'} || LJ::get_remote();
 
     my @ntypes = @LJ::NOTIFY_TYPES;
-    my (undef, $country) = LJ::GeoLocation->ip_class;
+    my $country = LJ::country_of_remote_ip();
+    my $phone = LJ::SMS::API::RU::Phone->get_phone($u->userid);
     if ($LJ::DISABLED{smsru} or
-        ($country ne 'RU' and
-         not LJ::SMS::API::RU::Phone->is_users_number_supported($u))
+        ($country ne 'RU'
+        and not ($phone && LJ::SMS::API::RU::Phone->get_cur_phone_statuses($phone) ne 'verified')
+        )
     ){
+        @ntypes = grep { $_ ne 'LJ::NotificationMethod::SMSru' ? 1 : 0 } @ntypes;
+    }
+    ## LJSUP-7040. We are disable using SMS Notifications for Basic accounts
+    if (!$u->get_cap('paid') && !$u->in_class('plus')) {
         @ntypes = grep { $_ ne 'LJ::NotificationMethod::SMSru' ? 1 : 0 } @ntypes;
     }
 
