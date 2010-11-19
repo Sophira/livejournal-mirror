@@ -239,11 +239,15 @@ sub load_by_uri {
 
 sub load_all {
     my $class = shift;
+    my $vertical = shift;
 
     my $dbh = LJ::get_db_reader()
         or die "unable to contact global db slave to load categories";
 
-    my $sth = $dbh->prepare("SELECT * FROM category");
+    my $vert_id = $vertical ? $vertical->vert_id : 0;
+        my $where = " WHERE vert_id = $vert_id ";
+
+    my $sth = $dbh->prepare("SELECT * FROM category" . $where);
     $sth->execute;
     die $dbh->errstr if $dbh->err;
 
