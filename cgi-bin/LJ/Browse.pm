@@ -60,7 +60,11 @@ sub create {
     foreach my $f (qw(url_path pretty_name parentcatid in_nav)) {
         $self->{$f} = delete $opts{$f} if exists $opts{$f};
     }
-    my $topcat = delete $opts{topcat} if exists $opts{topcat};
+    my $topcat = undef;
+    $topcat = delete $opts{topcat} if exists $opts{topcat};
+
+    my $vertical = undef;
+    $vertical = delete $opts{'vertical'} if exists $opts{'vertical'};
 
     croak("need to supply display name") unless defined $self->{pretty_name};
     croak("need to supply URL path") unless defined $self->{url_path};
@@ -85,6 +89,11 @@ sub create {
              undef, $self->{url_path}, $self->{pretty_name}, $self->{parentcatid});
     die $dbh->errstr if $dbh->err;
     my $catid = $dbh->{mysql_insertid};
+
+    ## Added for Landing Page
+    if ($vertical) {
+        $dbh->do("UPDATE category SET vert_id = ? WHERE catid = ?", undef, $vertical->vert_id, $catid);
+    }
 
     my $tm = $self->typemap;
     # Handle children prop
@@ -360,21 +369,11 @@ sub load_by_url {
 
     # 4 possibilities:
     # /browse
-    # /browse/vertical/
-    # /browse/vertical/topcategory/
-    # /browse/vertical/topcategory/subcategory/[subcategory]
-    if ($path =~ /^(\/browse.+)$/) {
+    # /browse/topcategory/
+    # /browse/topcategory/subcategory/[subcategory]
+    if ($path =~ /^\/browse\/(.+)$/) {
         my $p = $1;
         my $category;
-
-        $p =~ s#^(/browse/(?:[\w\-]|[^/])+)/?##;
-        my $v_uri = $1;
-
-        ## Vertical is not set
-        return undef unless $v_uri;
-
-        #my $vertical = LJ::Vertical->load_by_url ($v_uri);
-        #return $vertical;
 
         # check cache now for full URI
         my $c = $class->load_from_uri_cache("/" . $p);
@@ -799,17 +798,15 @@ sub path {
     } else {
         $v = $c->vert_id ? LJ::Vertical->load_by_id ($c->vert_id) : undef;
     }
+
     return $v ? $v->uri . $p : $p;
 }
 
 # returns full URL for a category
 sub url {
     my $self     = shift;
-    my $vertical = shift;
 
-    return undef unless $vertical;
-
-    my $base = "$LJ::SITEROOT/browse";
+    my $base = $self->vert_id ? "$LJ::SITEROOT/vertical" : "$LJ::SITEROOT/browse";
 
     return $base . $self->uri . "/";
 }
@@ -937,9 +934,9 @@ sub add_community {
 
     $self->clear_journals_memcache;
 
-    ## Add tags for added community
+    ## Add tags for added community if vertical selected
     my $v = $self->vertical;
-    $v->save_tags (is_seo => 0, tags => [ map { { tag => $_, journalid => $uid } } @$tags ] );
+    $v->save_tags (is_seo => 0, tags => [ map { { tag => $_, journalid => $uid } } @$tags ] ) if $v;
 
     return 1;
 }
