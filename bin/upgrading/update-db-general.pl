@@ -3154,6 +3154,18 @@ CREATE TABLE vertical_keywords (
 )
 EOC
 
+register_tablecreate("vertical_keymap", <<'EOC');
+CREATE TABLE vertical_keymap (
+  journalid int(11) NOT NULL,
+  jitemid int(11) NOT NULL,
+  vert_id int(11) NOT NULL,
+  kw_id int(11) NOT NULL,
+  PRIMARY KEY  (journalid,jitemid,vert_id,kw_id),
+  KEY kw_id (kw_id),
+  KEY vert_id (vert_id)
+)
+EOC
+
 ## --
 ## -- embedconten previews
 ## --
@@ -3243,9 +3255,10 @@ CREATE TABLE category (
    pretty_name VARCHAR(255) NOT NULL,
    url_path    VARCHAR(120) NOT NULL,
    parentcatid INT UNSIGNED,
+   vert_id     INT NOT NULL,
    PRIMARY KEY (catid),
-   INDEX       (url_path),
-   INDEX       (parentcatid)
+   UNIQUE KEY  url_path (url_path,parentcatid,vert_id),
+   KEY         (parentcatid)
 )
 EOC
 
@@ -4221,13 +4234,6 @@ register_alter(sub {
                  "MODIFY jtalkid INT UNSIGNED NOT NULL");
     }
 
-    # no row should have the same url_path and parentcatid
-    unless (index_name("category", "UNIQUE:url_path-parentcatid")) {
-        do_alter("category", "ALTER IGNORE TABLE category ".
-                 "DROP KEY `url_path`, ".
-                 "ADD UNIQUE `url_path` (url_path, parentcatid)");
-    }
-
     # add an index on 'country' column
     unless (index_name("schools_pending", "INDEX:country")) {
         do_alter("schools_pending",
@@ -4279,6 +4285,24 @@ register_alter(sub {
                     ADD show_entries INT NOT NULL, 
                     ADD not_deleted INT NOT NULL, 
                     ADD remove_after INT NOT NULL");
+    }
+
+    unless (column_type("vertical_keywords", "kw_id")) {
+        do_alter("vertical_keywords",
+            "ALTER TABLE vertical_keywords DROP PRIMARY KEY, DROP INDEX vert_id, DROP INDEX keyword, DROP journalid, DROP jitemid, DROP vert_id, DROP is_seo, ADD kw_id INT NOT NULL");
+        do_alter("vertical_keywords",
+            "ALTER TABLE vertical_keywords ADD PRIMARY KEY(kw_id), ADD UNIQUE(keyword), MODIFY kw_id INT NOT NULL AUTO_INCREMENT");
+    }
+    
+    ## category may have the same path in different verticals
+    unless (index_name("category", "UNIQUE:url_path-parentcatid-vert_id")) {
+        do_alter("category", "ALTER IGNORE TABLE category ".
+                 "DROP KEY `url_path`, ".
+                 "ADD UNIQUE `url_path` (url_path, parentcatid, vert_id)");
+    }
+
+    if (column_null("category", "parentcatid") eq 'YES') {
+        do_alter("category", "ALTER TABLE category MODIFY parentcatid INT UNSIGNED NOT NULL");
     }
 
 });

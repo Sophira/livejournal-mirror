@@ -12,7 +12,7 @@ body<=
         unless $remote;
 
     return "You are not allowed to view this page"
-        unless LJ::check_priv($remote, 'siteadmin', 'category_admin') || $LJ::IS_DEV_SERVER;
+        unless LJ::check_priv($remote, 'siteadmin', 'community_directory') || $LJ::IS_DEV_SERVER;
 
     $title = "Remove Category";
     my $ret = "";
@@ -37,7 +37,7 @@ body<=
             }
 
             # Has a valid category been chosen
-            my $category = LJ::Browse->load_by_url("/browse" . $caturl);
+            my $category = LJ::Browse->load_by_url("/browse" . $caturl, $vertical);
             push @errors, "Invalid category" unless $category;
 
             my @children = $category->children;
