@@ -408,8 +408,8 @@ sub get_communities {
 
     return                                  # 6. return result
         map {$_->[1]}                       # 5. get a cargo from temporary containers
-            sort {$a->[0] cmp $b->[0]}      # 4. sort it by a sort-keys
-                map {[lc $_->username, $_]} # 3. create list of [ sort-key, cargo-to-sort ]
+            sort {$b->[0] cmp $a->[0]}      # 4. sort it by a sort-keys
+                map {[lc $_->timeupdate, $_]} # 3. create list of [ sort-key, cargo-to-sort ]
                     grep { $_ }             # 2. remove empties from it, we don't want to die() on $_->username
                         (values %$cusers);  # 1. get communities list
 }
@@ -676,22 +676,6 @@ sub save_tags {
     my $tags = $args{'tags'};
 
     my $dbh = LJ::get_db_writer();
-    ## Get the diff between old and new tags list to delete that diff from DB
-    my $old_tags = $self->load_tags(%args);
-    if ($old_tags) {
-        my %new_tags = map { $_->{'tag'} => 1 } @$tags;
-        my $to_del_tags = [ grep { !$new_tags{$_->{keyword}} } @$old_tags ];
-        ## Need to delete some tags?
-        if (@$to_del_tags) {
-            my @bind = map { '?' } @$to_del_tags;
-            my @bind_vals = map { $_->{kw_id} } @$to_del_tags;
-            my $del = $dbh->do(
-                "DELETE FROM vertical_keymap 
-                WHERE kw_id IN (".(join ",", @bind).")",
-                undef, $self->vert_id, @bind_vals
-            );
-        }
-    }
 
     foreach my $tag (@$tags) {
         my $res = $dbh->selectall_arrayref(
@@ -1217,6 +1201,10 @@ sub delete_community {
 
     my $dbh = LJ::get_db_writer();
     my $res = $dbh->do("DELETE FROM vertical_comms WHERE vert_id = ? AND journalid = ?", undef, $self->vert_id, $journalid);
+
+    ## Need to delete linked keywords from key_map
+    $res = $dbh->do ("DELETE FROM vertical_keymap WHERE journalid = ? AND jitemid = 0 AND vert_id = ?", undef, $journalid, $self->vert_id);
+
     return $res;
 }
 

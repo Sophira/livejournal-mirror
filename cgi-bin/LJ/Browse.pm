@@ -859,7 +859,11 @@ sub delete_post {
 
     my $dbh = LJ::get_db_reader ();
     my $res = $dbh->do ("UPDATE category_recent_posts SET is_deleted = 1 WHERE journalid = ? AND jitemid = ?", undef, $commid, $jitemid);
-    return $res;
+
+    ## Need to delete linked keywords from key_map
+    $res = $dbh->do ("DELETE FROM vertical_keymap WHERE journalid = ? AND jitemid = ?", undef, $commid, $jitemid);
+
+    return 1;
 }
 
 sub search_posts {
@@ -963,7 +967,7 @@ sub add_community {
         or die "unable to contact global db master to create category";
 
     ## Add community to category
-    $dbh->do("REPLACE INTO categoryjournals VALUES (?,?)", undef,
+    my $res = $dbh->do("REPLACE INTO categoryjournals VALUES (?,?)", undef,
              $self->catid, $uid);
     die $dbh->errstr if $dbh->err;
 
@@ -1057,7 +1061,7 @@ sub submit_community {
 
     my $c = delete $opts{comm} || undef;
     my $u = delete $opts{submitter} || undef;
-    my $caturl = delete $opts{caturl} || undef;
+    my $catid = delete $opts{catid} || undef;
     my $status = delete $opts{status} || 'P';
 
     # need a journal user object
@@ -1065,7 +1069,7 @@ sub submit_community {
     # need a user object for submitter
     croak "invalid user object[u]" unless LJ::isu($u);
     # need a category
-    my $cat = LJ::Browse->load_by_url("/browse" . $caturl) if (defined $caturl);
+    my $cat = LJ::Browse->load_by_id($catid) if (defined $catid);
     die "invalid category" unless $cat;
 
     return if ($class->_is_community_in_pending($c->userid, $cat->catid));
