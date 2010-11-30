@@ -236,7 +236,8 @@ sub render_body {
             $post_count++;
             next if $post_count <= $post_skip || $post_count > $post_last;
 
-            my $secondsold = $entry->logtime_unix ? time() - $entry->logtime_unix : undef;
+            my $logtime = LJ::TimeUtil->mysqldate_to_time($entry->{logtime}, 0);
+            my $secondsold = $logtime ? time() - $logtime : undef;
             my $poster = $entry->poster;
             my $userpic = $entry->userpic;
             my @tags = $entry->tags;
@@ -248,7 +249,7 @@ sub render_body {
 
             my @images = ();
             my $fb_photo_big = '';
-            @images = $entry->event_raw =~ m#img\s+src="(.*?)"#gi;
+            @images = $entry->event_raw =~ m#img.*?src="(.*?)"#gi;
 
             if (scalar @images) {
                 my $r = LJ::crop_picture_from_web(
