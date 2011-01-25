@@ -786,16 +786,12 @@ sub is_closed {
         $cnt++;
     }
 
-    ## Not all maintainers have voted
-    return 0
-        if @items != $cnt;
-
     my @cnts = sort { $b <=> $a } values %results;
     my $max_votes_for = 0;
     ## Max votes
     my $max_votes = $cnts[0];
     ## Check for duplicate of votes count
-    foreach my $it (keys %results) {
+    foreach my $it (sort { $b <=> $a } keys %results) {
         if (
             $max_votes == $results{$it}     ## Found max votes count
             && $max_votes_for               ## User have selected already
@@ -804,8 +800,22 @@ sub is_closed {
             ## We have two equal votes count for diff users
             $max_votes_for = undef;
             last;
+        } elsif ($max_votes == $results{$it}) {
+            $max_votes_for = $it;
         }
-        $max_votes_for = $it;
+    }
+
+    ## We are on close date?
+    my $create = LJ::TimeUtil->mysqldate_to_time($self->prop('createdate'));
+    my $delta = time - $create;
+    ## Check for selected winner in a 3-week-end day
+    if (($delta % (21 * 86400) < 86400) && !$max_votes_for) {
+        return 0;
+    }
+    
+    ## Not all maintainers have voted and poll was prolonged
+    if ((@items != $cnt) && ($delta % (21 * 86400) > 86400)) {
+        return 0;
     }
 
     ## We found election winner. Set this user as supermaintainer and close election.
@@ -817,8 +827,11 @@ sub is_closed {
             LJ::set_rel($is_super, $winner->{userid}, 'S');
             $self->close_poll;
 
+            my $system = LJ::load_user('system');
+            $comm->log_event('set_owner', { actiontarget => $winner->{userid}, remote => $system });
+
             ## Poll is closed. Emailing to all maintainers about it.
-            my $subject = LJ::Lang::ml('Supermaintainer election is closed');
+            my $subject = LJ::Lang::ml('poll.election.email.subject.closed');
             my $maintainers = LJ::load_rel_user($comm->userid, 'A');
             foreach my $maint_id (@$maintainers) {
                 my $u = LJ::load_userid ($maint_id);
@@ -828,7 +841,7 @@ sub is_closed {
                                 'wrap'      => 1,
                                 'charset'   => $u->mailencoding || 'utf-8',
                                 'subject'   => $subject,
-                                'body'      => (LJ::Lang::ml('poll.election.end.email', {
+                                'html'      => (LJ::Lang::ml('poll.election.end.email', {
                                                         username        => LJ::ljuser($u),
                                                         communityname   => LJ::ljuser($comm),
                                                         winner          => LJ::ljuser($winner),
@@ -1094,7 +1107,7 @@ sub render {
     }
 
     if ($is_super) {
-        $ret = "<div class='poll-main'>";
+        $ret .= "<div class='poll-main'>";
     }
 
     $ret .= "<b><a href='$LJ::SITEROOT/poll/?id=$pollid'>" . LJ::Lang::ml('poll.pollnum', { 'num' => $pollid }) . "</a></b> "

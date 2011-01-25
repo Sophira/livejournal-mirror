@@ -3388,6 +3388,10 @@ poll.election.description.extend=If winner will not be found (in case of number 
 
 poll.election.received.votes=([[cnt]] vote received)
 
+poll.election.email.subject=Supermaintainer election
+
+poll.election.email.subject.closed=Supermaintainer election is closed
+
 poll.election.start.email<<
 Dear [[username]],
 

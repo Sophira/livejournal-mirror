@@ -272,7 +272,7 @@ sub _create_poll {
         or die "Can't edit post";
 
     ## All are ok. Emailing to all maintainers about election.
-    my $subject = LJ::Lang::ml('Supermaintainer election');
+    my $subject = LJ::Lang::ml('poll.election.email.subject');
     _log "Sending emails to all maintainers for community " . $comm->user . "\n";
     foreach my $maint_id (@$maintainers) {
         my $u = LJ::load_userid ($maint_id);
@@ -283,7 +283,7 @@ sub _create_poll {
                         'wrap'      => 1,
                         'charset'   => $u->mailencoding || 'utf-8',
                         'subject'   => $subject,
-                        'body'      => (LJ::Lang::ml('poll.election.start.email', {
+                        'html'      => (LJ::Lang::ml('poll.election.start.email', {
                                                 username        => LJ::ljuser($u),
                                                 communityname   => LJ::ljuser($comm),
                                                 faqlink         => '#',
