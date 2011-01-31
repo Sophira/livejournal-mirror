@@ -117,6 +117,9 @@ foreach my $c (@$communities) {
         ## Check for alone maintainer is normal user and if ok set to supermaintainer
         my $user = $alive_mainteiners[0];
         _log "Set user ".$user->user." as supermaintainer for ".$comm->user."\n";
+        my $system = LJ::load_user('system');
+        $comm->log_event('set_owner', { actiontarget => $user->{userid}, remote => $system });
+        LJ::statushistory_add($comm, $system, 'set_owner', "LJ script set owner as ".$user->{user});
         LJ::set_rel($c->{userid}, $user->{userid}, 'S');
     } else {
         ## Search for maintainer via userlog
@@ -124,7 +127,10 @@ foreach my $c (@$communities) {
         my $u = _check_maintainers ($comm);
         if ($u) {
             _log "Set user ".$u->user." as supermaintainer for ".$comm->user."\n";
+            my $system = LJ::load_user('system');
+            $comm->log_event('set_owner', { actiontarget => $u->{userid}, remote => $system });
             LJ::set_rel($c->{userid}, $u->{userid}, 'S');
+            LJ::statushistory_add($comm, $system, 'set_owner', "LJ script set owner as ".$u->{user});
         } else {
             _log "Create poll for supermaintainer election\n";
             my $poll_id = _create_poll ($c->{userid});
@@ -295,6 +301,7 @@ sub _create_poll {
     _log "Sending emails to all maintainers for community " . $comm->user . "\n";
     foreach my $maint_id (@$maintainers) {
         my $u = LJ::load_userid ($maint_id);
+        next unless $u && $u->is_visible && $u->can_manage($comm) && $u->check_activity(90);
         _log "\tSend email to maintainer ".$u->user."\n";
         LJ::send_mail({ 'to'        => $u->email_raw,
                         'from'      => $LJ::ACCOUNTS_EMAIL,
