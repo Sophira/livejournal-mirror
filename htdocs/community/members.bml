@@ -618,6 +618,8 @@ $LJ::SITEROOT
                     name => "uid_to_sm", style => "margin:0 5px",
                     selected => 0,
                     },
+                    { text => '',
+                    value => '',},
                     @users
                 );
 
@@ -649,9 +651,14 @@ $LJ::SITEROOT
     if ($elect_poll_id) {
         $elect_poll = LJ::Poll->new($elect_poll_id);
     }
-    if ($elect_poll && !$elect_poll->is_closed) {
+    my $super_maintainer = LJ::load_rel_user_cache($c->{userid}, 'S') || [];
+    if (($elect_poll && !$elect_poll->is_closed) || not scalar @$super_maintainer) {
         %disabled = ( disabled => 'disabled' );
     }
+    if (not scalar @$super_maintainer && $LJ::DISABLED{'add_new_maintainers'}) {
+        %disabled = ( disabled => 'disabled' );
+    }
+    %disabled = () unless $LJ::DISABLED{'add_new_maintainers'};
     foreach(@users) {
         my %disabled_maint = ();
         if ($_->{'admin'} && !$remote->can_super_manage($c)) {
@@ -683,7 +690,7 @@ $LJ::SITEROOT
                 if ($key eq 'member' || $key eq 'post') {
                     $ret .= LJ::html_check({ name => "add_${_}_$key", selected => 1, });
                 } else {
-                    $ret .= LJ::html_check({ name => "add_${_}_$key", %disabled });
+                    $ret .= LJ::html_check({ name => "add_${_}_$key", $key =~ /admin/ ? %disabled : () });
                 }
                 $ret .= "</td>";
             }

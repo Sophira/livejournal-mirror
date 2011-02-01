@@ -1,3 +1,4 @@
+
 <?_code
 {
     use strict;
@@ -1141,14 +1142,15 @@
     if ($com) {
         # get the list of maintainers and moderators (userid only)
         my $maintainers = LJ::load_rel_user_cache($userid, 'A') || [];
+        my $super_maintainers = LJ::load_rel_user_cache($userid, 'S') || [];
         my $moderators  = (LJ::load_rel_user_cache($userid, 'M') || [])
             if $u->{'moderated'};
 
-        if (scalar @$maintainers || ($u->{'moderated'} && scalar @$moderators)) {
+        if (scalar @$super_maintainers || scalar @$maintainers || ($u->{'moderated'} && scalar @$moderators)) {
             # now load all the usernames.
             my %userhash;
             LJ::load_userids_multiple([ map { $_, \$userhash{$_} }
-                                        @$maintainers, @$moderators ]);
+                                        @$super_maintainers, @$maintainers, @$moderators ]);
 
             my @maintlist = sort { $a->{'user'} cmp $b->{'user'} }
                             map { $userhash{$_} } @$maintainers;
@@ -1159,7 +1161,13 @@
             $body .= "</div>";
             $body .= "<div class='section_body'>";
 
-            $body .= "<p class='inner_section_header first'><span class='expandcollapse on' id='maints_header'>" . $arrowimg->("maints") .
+            if (scalar @$super_maintainers) {
+                $body .= "<p class='inner_section_header first'><span class='expandcollapse on' id='smaints_header'>" . $arrowimg->("smaints") .
+                         " $ML{'.label.super_maintainers'}:</span></p>";
+                $body .= "<div class='inner_section_body' id='smaints_body'>" . $listusers->([map { $userhash{$_} } @$super_maintainers], 'smaint') . "</div>";
+            }
+
+            $body .= "<p class='inner_section_header'><span class='expandcollapse on' id='maints_header'>" . $arrowimg->("maints") .
                      " $ML{'.label.maintainers'} (" . scalar @maintlist .
                      "):</span></p>";
             $body .= "<div class='inner_section_body' id='maints_body'>" . $listusers->(\@maintlist, 'maint') . "</div>";
