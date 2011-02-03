@@ -3403,6 +3403,21 @@ Regards,
 [[shortsite]] Team
 .
 
+poll.election.not.need.subject=Supermaintainer choosen
+
+poll.election.not.need.html<<
+Dear [[username]],<br><br> 
+
+You are receiving this email because you are a maintainer of the community [[communityname]]. <br><br> 
+
+According to the history for this community, you has been designated as the owner of this community.<br><br> 
+
+You can read more about this role here: [[faqlink]]<br><br> 
+
+Regards,<br> 
+[[shortsite]] Team
+.
+
 poll.election.end.email<<
 Dear [[username]],
 
@@ -4596,6 +4611,34 @@ tos.error=You must read and agree to the terms of service.
 tos.haveread=I have read and agree to the Terms of Service.
 
 tos.mustread=Before continuing you must read and agree to the <a [[aopts]]>Terms of Service.</a>
+
+trynbuy.expiring.notify_subject=LiveJournal paid account free trial
+
+trynbuy.expiring.notify_html<<
+Dear [[username]],<br>
+<br>
+We hope you enjoyed your free trial of LiveJournal Paid account. If you decide to upgrade to a Paid account, all of the settings and userpics you uploaded during your trial will be restored. . Just so you know, we have lots of flexible payment options. You can make a one-time manual payment of $5 for two months of Paid account service or sign up for automatic payments and get a full-year of LiveJournal Paid account time for $19.95.<br>
+<br>
+Thanks again!<br>
+<br>
+Regards,
+[[shortsite]] Team
+
+.
+
+trynbuy.expiring.notify_plain<<
+Dear [[username]],
+
+We hope you enjoyed your free trial of LiveJournal Paid account. If you decide to upgrade to a Paid account, all of the settings and userpics you uploaded during your trial will be restored. . Just so you know, we have lots of flexible payment options. You can make a one-time manual payment of $5 for two months of Paid account service or sign up for automatic payments and get a full-year of LiveJournal Paid account time for $19.95.
+
+Thanks again!
+
+Regards,
+[[shortsite]] Team
+
+.
+
+trynbuy.expiring.daysleft=You only have <strong>[[num]]&nbsp;[[?num|day|days]]</strong> left before <em>your trial period ends</em>.
 
 twitter.disconnect_letter.subject=You are disconnected from twitter account
 
@@ -6211,6 +6254,16 @@ widget.createaccount.tip.username=Your username is used in your journal URL. Use
 widget.createaccount.yearcheck|staleness=1
 widget.createaccount.yearcheck=The birth date you entered shows that you are under the age of 13. If this date is correct, then please proceed. But if it is not your actual date of birth, we suggest that you update the form with your real birth date. Some LiveJournal functionality is inaccessible for users under the age of 13 and you will need to complete one of the age verification processes described in this <a [[aopts]]>FAQ</a>
 
+widget.createaccount.error.underage.title=Age Verification
+
+widget.createaccount.error.underage.message=We no longer allow users under 13 to register for LiveJournal
+
+widget.createaccount.error.underage.links=Use the links to access more options
+
+widget.createaccount.error.underage.faq=You can read about it in <a href="[[faq]]">Faq</a>
+
+widget.createaccount.error.underage.ljhome=<a href="[[ljhome]]">LJ Home</a>
+
 widget.createaccountnextsteps.steps|staleness=1
 widget.createaccountnextsteps.steps=Now that your account is set up, you're ready to explore the rest of [[sitename]]. Here are some things to get you started:
 
@@ -7151,4 +7204,3 @@ widget.vgifts.title=Virtual Gifts
 
 widget.vgifts.viewall|staleness=1
 widget.vgifts.viewall=more
-
