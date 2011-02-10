@@ -1880,6 +1880,7 @@ sub talkform {
         'logout_url'            => $opts->{'logout_url'},
         'js_check_domain'       => $opts->{'js_check_domain'},
         'partner_domain'        => $opts->{'partner_domain'},
+        'partner_remote_ljuser' => $opts->{'partner_remote_ljuser'},
     );
 
     return $template->output;

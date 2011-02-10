@@ -375,6 +375,46 @@ __________________________________________*/
 	zoom: 1;
 	}
 
+/* Wishlist
+----------------------------------------------- */
+.whl-autocomplete-list,
+.whl-autocomplete-list .whl-autocomplete-wrapper,
+.whl-autocomplete-list .whl-autocomplete-desc,
+.whl-popup-inner,
+.whl-bar,
+.whl-items,
+.whl-item,
+.whl-item-def,
+.appwidget-wishrecommendations .whl-rec-item {
+	zoom: 1;
+	}
+* HTML .whl-edit-options .whl-popup-close {
+	right: 10px;
+	}
+* HTML .whl-edit-fields-wrapper {
+	zoom: 1;
+	}
+* HTML .whl-want-icon {
+	right: 7px;
+	}
+* HTML .whl-privacy-icon {
+	right: 8px;
+	}
+* HTML .whl-item-img {
+	width: 102px;
+	height: 102px;
+	}
+.whl-rec-def {
+	display: inline;
+	zoom: 1;
+	}
+* HTML .whl-autocomplete {
+	left: 157px;
+	}
+.whl-autocomplete-list .whl-autocomplete-item {
+	zoom: 1;
+	display: inline;
+	}
 
 
 

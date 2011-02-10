@@ -220,7 +220,7 @@ function docClicked () {
   // we didn't handle anything, who are we kidding
 }
 
-function createDeleteFunction (ae, dItemid, isS1) {
+function createDeleteFunction(ae, dItemid, isS1) {
     return function (e) {
 		e = jQuery.event.fix(e || window.event);
 
@@ -269,7 +269,8 @@ function createDeleteFunction (ae, dItemid, isS1) {
 			var de = jQuery('<div class="ljcmtmanage" style="text-align:left;position:absolute;visibility:hidden;width:250px;left:0;top:0;z-index:3"></div>')
 						.click(function(e){
 							e.stopPropagation()
-						});
+						})
+						.delegate('.i-popup-close', 'click', killPopup);
 			
             var inHTML = "<form style='display: inline' id='ljdelopts" + dItemid + "'><span style='font-face: Arial; font-size: 8pt'><b>Delete comment?</b><br />";
             var lbl;
@@ -395,13 +396,16 @@ function updateLink (ae, resObj, clickTarget) {
 }
 
 var tsInProg = {}  // dict of { ditemid => 1 }
-function createModerationFunction(ae, dItemid, isS1)
+function createModerationFunction(ae, dItemid, isS1, action)
 {
+	var action = action || 'screen'; // "screen" action by default
+	
 	return function(e)
 	{
 		var e = jQuery.event.fix(e || window.event);
 			pos = { x: e.pageX, y: e.pageY },
-			postUrl = ae.href.replace(/.+talkscreen\.bml/, LiveJournal.getAjaxUrl('talkscreen')),
+			bmlName = { 'screen' : 'talkscreen', 'spam' : 'spamcomment' }[action],
+			postUrl = ae.href.replace(new RegExp('.+' + bmlName + '\.bml'), LiveJournal.getAjaxUrl(bmlName)),
 			hourglass = jQuery(e).hourglass()[0];
 
 		var xhr = jQuery.post(postUrl + '&jsmode=1',
@@ -468,12 +472,13 @@ function createModerationFunction(ae, dItemid, isS1)
 									}
 
 									newNode = ExpanderEx.prepareCommentBlock(
-											result[i].html,
-											result[ i ].thread,
+											result[i].html || '',
+											result[i].thread || '',
 											showExpand
 									);
 
 									setupAjax( newNode[0], isS1 );
+									
 									jQuery("#ljcmtxt" + result[i].thread).replaceWith( newNode );
 								}
 							}
@@ -550,7 +555,7 @@ function setupAjax (node, isS1) {
             var id = reMatch[1];
             if (!document.getElementById('ljcmt' + id)) continue;
 
-            ae.onclick = createModerationFunction(ae, id, isS1);
+            ae.onclick = createModerationFunction(ae, id, isS1, 'screen');
         } else if (ae.href.indexOf('delcomment.bml') != -1) {
             if (LJ_cmtinfo && LJ_cmtinfo.disableInlineDelete) continue;
 
@@ -561,21 +566,34 @@ function setupAjax (node, isS1) {
             if (!document.getElementById('ljcmt' + id)) continue;
 
             ae.onclick = createDeleteFunction(ae, id, isS1);
-        }
+        } else if (ae.href.indexOf('spamcomment.bml') != -1) {
+            var reMatch = rex_id.exec(ae.href);
+            if (!reMatch) continue;
+
+            var id = reMatch[1];
+            if (!document.getElementById('ljcmt' + id)) continue;			
+			
+			ae.onclick = createModerationFunction(ae, id, isS1, 'spam');			
+		}
     }
 }
 
 function getThreadJSON(threadId, success, getSingle)
 {
     var postid = location.href.match(/\/(\d+).html/)[1],
+		modeParam = LiveJournal.parseGetArgs(location.href).mode,
         params = [
             'journal=' + Site.currentJournal,
             'itemid=' + postid,
             'thread=' + threadId,
             'depth=' + LJ_cmtinfo[ threadId ].depth
         ];
-    if( getSingle)
+		
+    if (getSingle)
         params.push( 'single=1' );
+		
+	if (modeParam)
+		params.push( 'mode=' + modeParam )
 
     var url = LiveJournal.getAjaxUrl('get_thread') + '?' + params.join( '&' );
     jQuery.get( url, success, 'json' );
