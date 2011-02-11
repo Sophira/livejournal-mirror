@@ -45,12 +45,14 @@ __________________________________________*/
 	}
 * HTML .b-ljtimes-update,
 * HTML .b-ljtimes-suggest,
+* HTML .b-ljtimes-suggestbbl,
 * HTML .b-ljtimes-inbox {
 	position: absolute;
 	bottom: auto;
 	}
 * HTML .b-ljtimes-update,
 * HTML .b-ljtimes-suggest,
+* HTML .b-ljtimes-suggestbbl,
 * HTML .b-ljtimes-inbox {
 	top: expression( ( -33 - this.offsetHeight + ( document.documentElement.clientHeight ? document.documentElement.clientHeight : document.body.clientHeight ) + ( ignoreMe = document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop ) ) + 'px' );
 	}
@@ -245,7 +247,8 @@ __________________________________________*/
 * HTML .appwidget-recentcomments .userpic-img,
 * HTML .b-catalogue-item DD.b-catalogue-item-img IMG,
 * HTML #lj_controlstrip_userpic IMG,
-* HTML .b-wishes-list DIV IMG {
+* HTML .b-wishes-list DIV IMG,
+* HTML .whl-autocomplete-list .whl-autocomplete-img {
 	zoom:expression(
 			function(t){
 				t.runtimeStyle.zoom = 1;
@@ -375,8 +378,76 @@ __________________________________________*/
 	zoom: 1;
 	}
 
+/* Wishlist
+----------------------------------------------- */
+.whl-autocomplete-list,
+.whl-autocomplete-list .whl-autocomplete-wrapper,
+.whl-autocomplete-list .whl-autocomplete-desc,
+.whl-popup-inner,
+.whl-bar,
+.whl-items,
+.whl-item,
+.whl-item-def {
+	zoom: 1;
+	}
+* HTML .whl-edit-want .whl-select {
+	left: 631px;
+	}
+* HTML .whl-edit-privacy .whl-select {
+	left: 628px;
+	}
+* HTML .whl-edit-options .whl-popup-close {
+	right: 10px;
+	}
+* HTML .whl-edit-fields-wrapper {
+	zoom: 1;
+	}
+* HTML .whl-want-icon {
+	right: 7px;
+	}
+* HTML .whl-privacy-icon {
+	right: 8px;
+	}
+* HTML .whl-item-img {
+	width: 102px;
+	height: 102px;
+	}
+.whl-rec-def {
+	display: inline;
+	zoom: 1;
+	}
+* HTML .whl-autocomplete {
+	left: 157px;
+	}
+.whl-autocomplete-list .whl-autocomplete-item {
+	zoom: 1;
+	display: inline;
+	}
 
-
+/* New controlstrip
+-----------------------------------------------*/
+.w-cs INPUT.text {
+	margin: 0 -3px;
+	}
+.w-cs INPUT.submit {
+	overflow: visible;
+	}
+.w-cs INPUT.checkbox {
+	margin: -4px 0 -3px -5px;
+	}
+.w-cs FORM.w-cs-login .remember {
+	top: 25px;
+	}
+* HTML .w-cs .w-cs-logo A {
+	background: url(/img/controlstrip-new/w-cs-logo-ie.png) no-repeat;
+	}
+* HTML .w-cs FORM.w-cs-login .submit-wrap,
+* HTML .w-cs FORM.w-cs-login .submit-wrap INPUT.submit {
+	background-image: url(/img/controlstrip-new/submit-ie.png);
+	}
+* HTML .w-cs .w-cs-hover .w-cs-hover-outer .arr {
+	top: -7px;
+	}
 
 /* Should be at bottom of the page! */
 * HTML .i-ljtimes-btn,

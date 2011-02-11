@@ -38,6 +38,16 @@ cleanhtml.suspend_msg=This is a suspended entry.
 cleanhtml.suspend_msg_with_supportid|staleness=1
 cleanhtml.suspend_msg_with_supportid=This is a suspended entry. <a [[aopts]]>An unsuspension request</a> has been opened, and your entry will be reviewed soon.
 
+comment.delete.q=Delete comment?
+comment.delete=Delete
+comment.delete.all=Delete all %username% comments in this post
+comment.delete.all.sub=Delete thread (all subcomments)
+comment.delete.no.options=Shift+click to delete without options
+comment.cancel=Cancel
+comment.ban.user=Ban %username% from commenting
+comment.mark.spam=Mark this comment as spam
+ 
+
 contentflag.viewingconcepts|staleness=1
 contentflag.viewingconcepts=You are about to view content that may not be appropriate for minors.
 
@@ -2583,9 +2593,13 @@ img.btn_freeze=Freeze
 
 img.btn_scr=Screen
 
+img.btn_spam=Spam
+
 img.btn_unfreeze=Unfreeze
 
 img.btn_unscr=Unscreen
+
+img.btn_unspam=Not Spam
 
 img.btn_up=Up
 
@@ -2725,6 +2739,8 @@ label.switch.workwith=Work with journal:
 label.warning=Warning:
 
 langname.en=English
+
+link.mobile=<a href="http://m.livejournal.com/?from_url=[[url]]">Go to mobile version</a>
 
 ljfeedback.text=Like to vote?  Join [[journal]] where we post polls and surveys that help influence and improve LJ.
 
@@ -3403,18 +3419,14 @@ Regards,
 [[shortsite]] Team
 .
 
-poll.election.not.need.subject=Supermaintainer choosen
+poll.election.start.email.plain<<
+Dear [[username]],
 
-poll.election.not.need.html<<
-Dear [[username]],<br><br> 
+You are receiving this email because you are a maintainer of the community [[communityname]]. LiveJournal has recently implemented a new role of community management, known as the 'Owner' of the community. The Owner of a community will be the only person who will be able to perform tasks such as deleting maintainers or deleting the community itself. You can read more about the Owner role here:  [[faqlink]]
 
-You are receiving this email because you are a maintainer of the community [[communityname]]. <br><br> 
+Since [[communityname]] is an existing community with multiple maintainers, it is now up to you and the other maintainers of the community to select which of you will be granted the Owner status. A poll has been created for your community <a href="[[siteroot]]/community/election.bml?authas=[[authas]]">at this page</a>. You simply need to visit this page and cast your vote for which current maintainer you believe should be made Owner of the community. More information on how the election process works can be found at the page above.
 
-According to the history for this community, you has been designated as the owner of this community.<br><br> 
-
-You can read more about this role here: [[faqlink]]<br><br> 
-
-Regards,<br> 
+Regards,
 [[shortsite]] Team
 .
 
@@ -3430,6 +3442,47 @@ You can read more about this role here:  [[faqlink]]
 Regards,
 [[shortsite]] Team
 .
+
+poll.election.end.email.plain<<
+Dear [[username]],
+
+You are receiving this email because you are a maintainer of the community [[communityname]]. 
+
+According to result of the Supermaintainer Election [[winner]] appointet to this role.
+
+You can read more about this role here:  [[faqlink]]
+
+Regards,
+[[shortsite]] Team
+.
+
+poll.election.not.need.subject=Owner choosen automatically
+
+poll.election.not.need.html<<
+Dear [[username]],<br><br> 
+
+You are receiving this email because you are a maintainer of the community [[communityname]]. <br><br> 
+
+According to the history for this community, you has been designated as the owner of this community.<br><br> 
+
+You can read more about this role here: [[faqlink]]<br><br> 
+
+Regards,<br> 
+[[shortsite]] Team
+.
+poll.election.not.need.html.plain<<
+Dear [[username]],
+
+You are receiving this email because you are a maintainer of the community [[communityname]].
+
+According to the history for this community, you has been designated as the owner of this community.
+
+You can read more about this role here: [[faqlink]]
+
+Regards,
+[[shortsite]] Team
+.
+
 
 poll.election.subject=<b>Choose your candidate:</b>
 
@@ -3728,7 +3781,7 @@ setting.birthdaydisplay.error.invalid=Invalid option
 setting.birthdaydisplay.question=Birthday display options:
 
 setting.commentcaptcha.label|staleness=1
-setting.commentcaptcha.label=Anti-Spam
+setting.commentcaptcha.label=CAPTCHA
 
 setting.commentcaptcha.option|staleness=1
 setting.commentcaptcha.option=Show CAPTCHA to

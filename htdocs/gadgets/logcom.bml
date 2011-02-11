@@ -63,12 +63,15 @@
                          'returnto=' . LJ::eurl($thispage) . '&' .
                          'sessid=' . $remote_sessid;
 
+        my $ljuser_html = $partner->ljuser_html($remote);
+
         return
             LJ::Talk::talkform({
                 'embedable_form'    => 1,
                 'logout_url'        => $logout_url,
                 'js_check_domain'   => $js_check_domain,
                 'partner_domain'    => $domain,
+                'partner_remote_ljuser' => $ljuser_html,
 
                 'remote'            => $remote,
                 'journalu'          => $journal,
@@ -81,6 +84,10 @@
           stc/lj_base.css
           stc/partners/login.css
         ));
+
+        # send out a P3P header thing so as to work around IE's
+        # unwillingness to receive our cookies while we're in an iframe
+        LJ::Session->allow_login_from_iframe;
 
         my $w = LJ::Widget::LoginMulti->new;
         $w->{'no_container_div'} = 1;
