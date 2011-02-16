@@ -39,8 +39,6 @@
 
 .select=Select
 
-.spamedpost=<b>(Spam)</b>
-
 .subjectdeleted=[deleted]
 
 .talkmulti.all|staleness=1
@@ -60,8 +58,6 @@
 
 .talkmulti.selected|staleness=1
 .talkmulti.selected=Selected
-
-.talkmulti.unspam=Mark as Not Spam
 
 .talkmulti.submit=Perform Action
 

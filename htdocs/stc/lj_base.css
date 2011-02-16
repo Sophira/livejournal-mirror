@@ -562,6 +562,51 @@ SUP.i-new {
 	}
 
 
+/* Popup Messages */
+.b-popup {
+	}
+.b-popup-messagebox {
+	position:absolute;
+	width:311px;
+	background:#FFF;
+	border:2px solid #8CB7DA;
+	font-size:12px;
+	z-index:9999;
+	}
+	.b-popup-messagebox .b-popup-head {
+		position:relative;
+		margin:0;
+		padding:5px;
+		border:1px solid #DBECFB;
+		border-width:1px 1px 0;
+		background:#C7E0F6;
+		font-size:15px;
+		}
+		.b-popup-messagebox .b-popup-head H4 {
+			margin:0;
+			}
+	.b-popup-messagebox .i-popup-close {
+		position:absolute;
+		top:9px;
+		right:5px;
+		width:12px;
+		height:12px;
+		background:url(/img/popup-close.gif?v=1) no-repeat 0 0;
+		cursor:pointer;
+		}
+	.b-popup-messagebox .b-popup-content {
+		margin:0;;
+		padding:5px;
+		font-size:13px;
+		}
+	.b-popup-messagebox .b-popup-footer {
+		margin:0;
+		padding:5px;
+		background:#ECF6FF;
+		text-align:center;
+		font-size:13px;
+		}
+
 /* Styles for messagers,
 Must be removed after implementation of Framework! */
 .appwidget-sitemessages {
@@ -1712,6 +1757,7 @@ DIV.lj_ippu_app {
 		font: 0/0 serif;
 		background-image: url(/img/popup-arr.gif?v=1);
 		background-repeat: no-repeat;
+		background-pos:;
 		}
 	.i-popup-arrt {
 		top: -7px;
@@ -1722,50 +1768,14 @@ DIV.lj_ippu_app {
 		padding: 0;
 		background-position: 0 0;
 		}
-	.i-popup-arrtl {
-		top: -7px;
-		left: 30px;
-		width: 13px;
-		height: 11px;
-		margin: 0;
-		padding: 0;
-		background-position: 0 0;
-		}
-	.i-popup-arrtr {
-		top: -7px;
-		right: 30px;
-		width: 13px;
-		height: 11px;
-		margin: 0;
-		padding: 0;
-		background-position: 0 0;
-		}
 	.i-popup-arrr {
-		top: 50%;
-		right: -7px;
-		width: 11px;
-		height: 13px;
-		margin: -6px 0 0;
-		padding: 0;
-		background-position: -11px -11px;
-		}
-	.i-popup-arrrt {
-		top: 15px;
-		right: -7px;
+		top: -7px;
+		left: 14px;
 		width: 11px;
 		height: 13px;
 		margin: 0;
 		padding: 0;
-		background-position: -11px -11px;
-		}
-	.i-popup-arrrb {
-		bottom: 15px;
-		right: -7px;
-		width: 11px;
-		height: 13px;
-		margin: 0;
-		padding: 0;
-		background-position: -11px -11px;
+		background-position: -13px -11px;
 		}
 	.i-popup-arrb {
 		bottom: -7px;
@@ -1776,48 +1786,12 @@ DIV.lj_ippu_app {
 		padding: 0;
 		background-position: -13px 0;
 		}
-	.i-popup-arrbl {
-		bottom: -7px;
-		left: 30px;
-		width: 13px;
-		height: 11px;
-		margin: 0;
-		padding: 0;
-		background-position: -13px 0;
-		}
-	.i-popup-arrbr {
-		bottom: -7px;
-		right: 30px;
-		width: 13px;
-		height: 11px;
-		margin: 0;
-		padding: 0;
-		background-position: -13px 0;
-		}
 	.i-popup-arrl {
 		top: 50%;
 		left: -7px;
 		width: 11px;
 		height: 13px;
 		margin: -6px 0 0;
-		padding: 0;
-		background-position: 0 -11px;
-		}
-	.i-popup-arrlt {
-		top: 15px;
-		left: -7px;
-		width: 11px;
-		height: 13px;
-		margin: 0;
-		padding: 0;
-		background-position: 0 -11px;
-		}
-	.i-popup-arrlb {
-		bottom: 15px;
-		left: -7px;
-		width: 11px;
-		height: 13px;
-		margin: 0;
 		padding: 0;
 		background-position: 0 -11px;
 		}
@@ -1833,87 +1807,10 @@ DIV.lj_ippu_app {
 		font: 0/0 serif;
 		cursor: pointer;
 		}
-	.b-popup-group {
-		position: static;
-		top: auto;
-		right: auto;
-		bottom: auto;
-		left: auto;
-		width: auto;
-		height: auto;
-		margin: 0 0 8px;
-		padding: 0;
-		text-align: left;
+	.ljcmtmanage .i-popup-arrt {
+		left: 30px;
+		margin: 0;
 		}
-	.b-popup-row {
-		position: static;
-		top: auto;
-		right: auto;
-		bottom: auto;
-		left: auto;
-		width: auto;
-		height: auto;
-		margin: 0 0 3px;
-		padding: 0;
-		}
-	.b-popup-row-head {	
-		margin: 0 0 5px;
-		font-weight: bold;
-		}
-
-/* Popup Messages */
-.b-popup-messagebox {
-	position:absolute;
-	width:311px;
-	background:#FFF;
-	border:2px solid #8CB7DA;
-	font-size:12px;
-	z-index:9999;
-	}
-	.b-popup-messagebox .b-popup-head {
-		position:relative;
-		margin:0;
-		padding:5px;
-		border:1px solid #DBECFB;
-		border-width:1px 1px 0;
-		background:#C7E0F6;
-		font-size:15px;
-		}
-		.b-popup-messagebox .b-popup-head H4 {
-			margin:0;
-			}
-	.b-popup-messagebox .i-popup-close {
-		position:absolute;
-		top:9px;
-		right:5px;
-		width:12px;
-		height:12px;
-		background:url(/img/popup-close.gif?v=1) no-repeat 0 0;
-		cursor:pointer;
-		}
-	.b-popup-messagebox .b-popup-content {
-		margin:0;;
-		padding:5px;
-		font-size:13px;
-		}
-	.b-popup-messagebox .b-popup-footer {
-		margin:0;
-		padding:5px;
-		background:#ECF6FF;
-		text-align:center;
-		font-size:13px;
-		}
-
-/* Delete bubble */
-.ljcmtmanage {
-	position: absolute;
-	visibility: hidden;
-	display: block;
-	width: 250px;
-	text-align: left;
-	z-index: 3;
-	}
-
 
 /* Fader
 --------------------------- */

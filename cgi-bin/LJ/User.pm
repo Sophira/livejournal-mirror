@@ -6087,13 +6087,6 @@ sub check_activity {
     return 0;
 }
 
-sub is_spamprotection_enabled {
-    my $u = shift;
-    return 0 if $LJ::DISABLED{'spamprotection'};
-    my $spamprotection = $u->prop('spamprotection');
-    $spamprotection = 1 unless defined $spamprotection;
-    return $spamprotection;
-}
 
 package LJ;
 

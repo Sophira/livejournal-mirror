@@ -1,6 +1,7 @@
 <?page
 body<=
 <?_code
+
     use strict;
     use vars qw($r_head $r_title %GET %ML $r_bodyopts);
 
@@ -221,19 +222,6 @@ body<=
             js/quickreply.js
         ));
     }
-    
-    if($remote) {
-        LJ::need_string(qw/ 
-                            comment.cancel
-                            comment.delete
-                            comment.delete.q
-                            comment.delete.all
-                            comment.delete.all.sub
-                            comment.delete.no.options
-                            comment.ban.user
-                            comment.mark.spam
-                            comment.delete/);
-    }
 
     my $showmultiform = $remote &&
                         ($remote->{'user'} eq $u->{'user'} ||
@@ -247,9 +235,9 @@ body<=
     my $no_cut_expand = !$GET{cut_expand} && $GET{page} && $GET{page} > 1 ? 1 : 0;
     
     if($no_cut_expand) {
-       $talkurl .= '?page=' . $GET{page} . '&cut_expand=1';
+    	$talkurl .= '?page=' . $GET{page} . '&cut_expand=1';
     }
-
+     
     LJ::CleanHTML::clean_event(
         \$event,
         {
@@ -502,8 +490,6 @@ body<=
             viewall       => $viewall,
             LJ_cmtinfo    => $LJ_cmtinfo,
             showmultiform => $showmultiform,
-            talkid        => $GET{talkid},
-            mode          => $GET{mode},
         },
         $output
     );
@@ -566,8 +552,6 @@ body<=
         $readlink .= ' - ' if $readlink && $allow_commenting;
 
         my $posturl = LJ::Talk::talkargs($talkurl, "mode=reply", $stylemine, $formatlight);
-        my $showspamurl = LJ::Talk::talkargs($talkurl, "mode=showspam", $stylemine, $formatlight);
-        my $hidespamurl = LJ::Talk::talkargs($talkurl, "", $stylemine, $formatlight);
 
         my $stylemine = $GET{'style'} eq 'mine' ? 1 : 0;
 
@@ -598,13 +582,6 @@ body<=
                 }
             } else {
                 $ret .= "(<a href='$posturl'>" . BML::ml('talk.commentpost') . "</a>)";
-            }
-        }
-        if ($remote && ($remote->can_manage($u) || $remote->can_moderate($u))) {
-            if ($GET{mode} eq 'showspam') {
-                $ret .= " - (<a href='$hidespamurl'>" . BML::ml('talk.hidespam') . "</a>)";
-            } else {
-                $ret .= " - (<a href='$showspamurl'>" . BML::ml('talk.showspam') . "</a>)";
             }
         }
 
@@ -673,13 +650,6 @@ body<=
                 } else {
                     $ret .= "(<a href='$posturl'>" . BML::ml('talk.commentpost') . "</a>)";
                 }
-                if ($remote && ($remote->can_manage($u) || $remote->can_moderate($u))) {
-                    if ($GET{mode} eq 'showspam') {
-                        $ret .= " - (<a href='$hidespamurl'>" . BML::ml('talk.hidespam') . "</a>)";
-                    } else {
-                        $ret .= " - (<a href='$showspamurl'>" . BML::ml('talk.showspam') . "</a>)";
-                    }
-                }
             }
             $ret .= $rated_count;
             $ret .= "</b></p>";
@@ -690,35 +660,20 @@ body<=
                 my $args = BML::get_query_string;
                 $args = '?' . $args if $args;
                 $ret .= LJ::html_hidden( returnto => $talkurl . $args );
-                if (LJ::is_enabled('spam_button') && $GET{mode} eq 'showspam') {
-                    $ret .= LJ::html_select(
-                        { 'name' => 'mode' },
-                        '' => $ML{'.talkmulti.please'},
-                        $ML{'.talkmulti.selected'} => [
-                            'unspam' => $ML{'.talkmulti.unspam'},
-                            'deletespam' => $ML{'.talkmulti.deletespam'},
-                        ],
-                        $ML{'.talkmulti.all'} => [
-                            'all:unspam' => $ML{'.talkmulti.unspam'},
-                            'all:deletespam' => $ML{'.talkmulti.deletespam'},
-                        ],
-                    );
-                } else {
-                    $ret .= LJ::html_select(
-                        { 'name' => 'mode' },
-                        '' => $ML{'.talkmulti.please'},
-                        $ML{'.talkmulti.selected'} => [
-                            'unscreen'   => $ML{'.talkmulti.unscreen'},
-                            'screen'     => $ML{'.talkmulti.screen'},
-                            'delete'     => $ML{'.talkmulti.delete'},
-                            'deletespam' => $ML{'.talkmulti.deletespam'},
-                        ],
-                        $ML{'.talkmulti.all'} => [
-                            'all:screen'   => $ML{'.talkmulti.screen'},
-                            'all:unscreen' => $ML{'.talkmulti.unscreen'},
-                        ],
-                    );
-                }
+                $ret .= LJ::html_select(
+                    { 'name' => 'mode' },
+                    '' => $ML{'.talkmulti.please'},
+                    $ML{'.talkmulti.selected'} => [
+                        'unscreen'   => $ML{'.talkmulti.unscreen'},
+                        'screen'     => $ML{'.talkmulti.screen'},
+                        'delete'     => $ML{'.talkmulti.delete'},
+                        'deletespam' => $ML{'.talkmulti.deletespam'},
+                    ],
+                    $ML{'.talkmulti.all'} => [
+                        'all:screen'   => $ML{'.talkmulti.screen'},
+                        'all:unscreen' => $ML{'.talkmulti.unscreen'},
+                    ],
+                );
                 $ret .= " " . LJ::html_submit('', $ML{'.talkmulti.submit'});
                 $ret .= "</p>";
             }
