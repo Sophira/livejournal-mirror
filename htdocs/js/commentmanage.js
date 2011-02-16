@@ -266,13 +266,13 @@ function createDeleteFunction(ae, dItemid, isS1) {
 				return Event.stop(e);
 			}
 			
-			var de = jQuery('<div class="ljcmtmanage b-popup" style="text-align:left;position:absolute;visibility:hidden;width:250px;left:0;top:0;z-index:3"><div class="b-popup-outer"><div class="b-popup-inner"><div class="ljcmtmanage-content"></div><i class="i-popup-arr i-popup-arrt"></i><i class="i-popup-close"></i></div></div></div>')
+			var de = jQuery('<div class="ljcmtmanage" style="text-align:left;position:absolute;visibility:hidden;width:250px;left:0;top:0;z-index:3"></div>')
 						.click(function(e){
 							e.stopPropagation()
 						})
 						.delegate('.i-popup-close', 'click', killPopup);
 			
-            var inHTML = "<form style='display: inline' id='ljdelopts" + dItemid + "'><span style='font-face: Arial; font-size: 8pt'><strong>Delete comment?</strong><br />";
+            var inHTML = "<form style='display: inline' id='ljdelopts" + dItemid + "'><span style='font-face: Arial; font-size: 8pt'><b>Delete comment?</b><br />";
             var lbl;
             if (com.username != "" && com.username != remoteUser && canAdmin) {
                 lbl = "ljpopdel" + dItemid + "ban";
@@ -301,9 +301,9 @@ function createDeleteFunction(ae, dItemid, isS1) {
                 finalHeight -= 15;
             }
 
-            inHTML += "<input type='button' value='Delete' onclick='deleteComment(" + dItemid + ", " + isS1.toString() + ");' /></span><br /><div class='b-bubble b-bubble-alert b-bubble-noarrow'><i class='i-bubble-arrow-border'></i><i class='i-bubble-arrow'></i>Shift+click to delete without options</div></form>";
+            inHTML += "<input type='button' value='Delete' onclick='deleteComment(" + dItemid + ", " + isS1.toString() + ");' /> <input type='button' value='Cancel' onclick='killPopup()' /></span><br /><span style='font-face: Arial; font-size: 8pt'><i>shift-click to delete without options</i></span></form>";
 			
-			de.find('.ljcmtmanage-content').html(inHTML).end().insertAfter(ae);
+			de.html(inHTML).insertAfter(ae);
 			
 			//calc with viewport
 			top = Math.min(top, $window.height() + $window.scrollTop() - de.outerHeight() + pos_offset.top - offset.top);
