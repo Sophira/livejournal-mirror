@@ -47,7 +47,7 @@
     my $remote = LJ::get_remote();
     
     # Should we show try and buy
-    my $show_trynbuy = LJ::TryNBuy->can_enable($remote);
+    my $show_trynbuy = LJ::TryNBuy->can_enable($remote) || LJ::TryNBuy->active($remote);
 
     # Errors that are unlikely to change between starting
     # to compose an entry and submitting it.
@@ -576,9 +576,9 @@ EMBED
         if ($ad) {
             my $width = $ad_details->[-1]->{width};
             my $adunit = $ad_details->[-1]->{adunit};
-            $$body .= "<td class='$adunit' style='width: ${width}px; padding-left: 1em;'>$ad $trynbuy";
+            $$body .= "<td class='$adunit' style='width: ${width}px; padding-left: 1em;'>$ad";
         } else {
-            $$body .= "<td>$trynbuy";
+            $$body .= "<td>";
         }
     }
 
