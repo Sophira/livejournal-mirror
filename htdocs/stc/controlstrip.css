@@ -1,8 +1,9 @@
-HTML BODY {
+html body
+{
     padding: 45px 0 0 0;
     margin-right: 0;
     margin-left: 0;
-	}
+}
 
 #lj_controlstrip
 {

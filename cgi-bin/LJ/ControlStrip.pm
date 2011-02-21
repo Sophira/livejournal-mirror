@@ -321,20 +321,8 @@ sub render
         die_on_bad_params => 1,
         strict => 0,
     ) or die "Can't open template: $!";
-
-    my $mobile_link = '';
-    if (!$LJ::DISABLED{'view_mobile_link_always'} || Apache::WURFL->is_mobile()) {
-        my $uri = LJ::Request->uri;
-        my $hostname = LJ::Request->hostname;
-        my $args = LJ::Request->args;
-        my $args_wq = $args ? "?$args" : "";
-        my $is_ssl = $LJ::IS_SSL = LJ::run_hook("ssl_check");
-        my $proto = $is_ssl ? "https://" : "http://";
-        my $url = LJ::eurl ($proto.$hostname.$uri.$args_wq);
-        $mobile_link = LJ::Lang::ml('link.mobile', { href => "href='http://m.livejournal.com/redirect?from=$url'" });
-    }
-
-    $tmpl->param(flatten($data), link_mobile => $mobile_link );
+        
+    $tmpl->param(flatten($data));
 
     # use Data::Dumper;
     # warn Dumper({flatten($data)}), "\n";
