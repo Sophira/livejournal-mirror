@@ -704,3 +704,14 @@ td.tabs {
         background: none;
         } 
 
+.b-tnb-getstart {
+	overflow: auto;
+	}
+	.b-tnb-getstart .appwidget-trynbuy {
+		float: left;
+		margin: 0 20px 0 0;
+		}
+	.b-tnb-getstart .appwidget-gettingstarted {
+		float: left;
+		margin-top: 0;
+		}
