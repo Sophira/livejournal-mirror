@@ -97,6 +97,7 @@ sub render_body {
         'current_type'      => $current_type,
         'returnto'          => $thispage,
         'js_check_domain'   => $opts{'js_check_domain'},
+        'resources_html'    => $opts{'resources_html'},
     );
 
     ## well cooked widget is here
@@ -118,10 +119,11 @@ sub do_login {
         ##
         my $u = LJ::load_user($username);
         unless ($u){
-            push @$errors => LJ::Lang::ml("/talkpost_do.bml.error.badusername2", {
-                                'sitename' => $LJ::SITENAMESHORT,
-                                'aopts'    => "href='$LJ::SITEROOT/lostinfo.bml'",
-                                });
+            push @$errors,
+                LJ::Lang::ml( '/identity/login.bml.user.error.badusername', {
+                    'sitename' => $LJ::SITENAMESHORT,
+                    'aopts'    => "href='$LJ::SITEROOT/lostinfo.bml'",
+                } );
             return;
         }
         ##
