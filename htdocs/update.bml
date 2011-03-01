@@ -33,6 +33,9 @@
     ## See also htdocs/preview/entry.bml.
     LJ::Request->header_out("X-XSS-Protection" => 0);
 
+    ## And this header is to prevent Clickjacking attacks
+    LJ::Request->header_out("X-Frame-Options" => 'deny');
+
     my $usejournalu;
     if (my $usejournal = $GET{'usejournal'} || $POST{'usejournal'}) {
         $usejournalu = LJ::load_user($usejournal);
@@ -640,6 +643,12 @@ head<=
     BML::noparse();
     $ret .= qq^
     <script type="text/javascript">
+        // ensure that we're not being displayed in an iframe;
+        // prevents clickjacking in some browsers
+        if (top.location != location) {
+            top.location.href = document.location.href;
+        }
+
         var restoredDraft = $draft;
 
         function init_update_bml() {
