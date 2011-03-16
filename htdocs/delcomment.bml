@@ -139,7 +139,7 @@ _info?><?_code
 
     # now, let's find out what remote can actually do with the comment
     my $can_manage = $remote->can_manage($journal);
-    my $can_sweep     = ($remote && $poster && $remote->can_sweep($poster));
+    my $can_sweep     = ($remote && $poster && $remote->can_sweep($journal));
 
     my %can = (
         'manage_journal' => $can_manage,
