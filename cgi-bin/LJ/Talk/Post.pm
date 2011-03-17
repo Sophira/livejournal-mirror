@@ -484,8 +484,8 @@ sub init {
 
     if ($state eq 'A' && $screening eq 'L' && !($up && LJ::is_friend($journalu, $up))) {
         my $spam = 0;
-        my $with_links = 0;
-        LJ::run_hook('spam_comment_detector', $form, \$spam, \$with_links, $journalu, $up)
+        my $with_links = 0;
+        LJ::run_hook('spam_comment_detector', $form, \$spam, \$with_links, $journalu, $up);
         $state = 'S' if $spam;
     }
 
