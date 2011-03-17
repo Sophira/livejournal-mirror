@@ -380,7 +380,7 @@ sub can_unfreeze {
     return LJ::Talk::can_unscreen(@_);
 }
 
- <LJFUNC>
+# <LJFUNC>
 # name: LJ::Talk::screening_level
 # des: Determines the screening level of a particular post given the relevant information.
 # args: journalu, jitemid
