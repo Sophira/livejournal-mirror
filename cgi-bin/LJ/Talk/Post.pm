@@ -482,19 +482,13 @@ sub init {
         $state = 'A' if LJ::Talk::can_unscreen($up, $journalu, $init->{entryu}, $init->{entryu}{user});
     }
 
-    my $spam = 0;
-    my $with_links = 0;
-    my $up_is_friend = $up && LJ::is_friend($journalu, $up);
-    LJ::run_hook('spam_comment_detector', $form, \$spam, \$with_links, $journalu, $up) 
-        if $state eq 'A' && $journalu->is_spamprotection_enabled && ( $journalu->is_community || !$up_is_friend);
-    LJ::run_hook('spam_in_friends_journals', \$spam, $journalu, $up)
-        if !$spam && $with_links && $journalu->is_person && $journalu->in_class('paid');
-    if ($spam) {
-        $state = 'B';
-        my $spam_counter = $entry->prop('spam_counter') || 0;
-        $entry->set_prop('spam_counter', $spam_counter + 1);
+    if ($state eq 'A' && $screening eq 'L' && !($up && LJ::is_friend($journalu, $up))) {
+        my $spam = 0;
+        my $with_links = 0;
+        LJ::run_hook('spam_comment_detector', $form, \$spam, \$with_links, $journalu, $up)
+        $state = 'S' if $spam;
     }
-    
+
     my $parent = {
         state     => $parpost->{state},
         talkid    => $partid,

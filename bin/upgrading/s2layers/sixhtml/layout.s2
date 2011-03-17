@@ -173,9 +173,6 @@ propgroup text {
         noui = 1;
     }
     set text_comments = "Comments";
-    property use text_showspam;
-    property use text_hidespam;
-    property use text_spam_comment;
 }
 
 propgroup customcss {
@@ -977,9 +974,9 @@ function Comment::print_linkbar() {
     var string text = "";
     foreach var string link_key ($.link_keyseq) {
         $link = $this->get_link($link_key);
+        $url = $link.url;
+        $text = $link.caption;
         if (defined $link) {
-            $url = $link.url;
-            $text = $link.caption;
             """ $sep <a href="$url">$text</a>""";
         }
     }
@@ -1000,19 +997,14 @@ function CommentInfo::print_postlink() {
 
 
 function EntryPage::print_comment(Comment e) {
-    var Page p = get_page();
-    if ((not $e.full) or ($e.full and $e.spam and not $p.showspam)) {
+    if (not $e.full) {
         # Collapsed mode
 
         "<div class='comment collapsed-comment'"+($e.dom_id ? " id='$e.dom_id'" : "")+">\n";
         "<div class='comment-footer'>";
-        if ($e.spam and not $p.showspam) {
-            """$*text_spam_comment <span class='separator'>-</span> """;
-        } else {
-            var string subject = $e.subject;
-            if ($subject == "") { $subject = $*text_nosubject; }
-            "<a href='$e.permalink_url' class='collapsed-comment-link'>$subject</a> <span class='separator'>-</span> ";
-        }
+        var string subject = $e.subject;
+        if ($subject == "") { $subject = $*text_nosubject; }
+        "<a href='$e.permalink_url' class='collapsed-comment-link'>$subject</a> <span class='separator'>-</span> ";
         print safe lang_posted_by($e.poster, $e.poster); " <span class='separator'>-</span> ";
         print lang_posted_date_and_time($e, $e.time, true, true);
         var Link expand_link = $e->get_link("expand_comments");
@@ -1135,7 +1127,6 @@ function Entry::print_linkbar() {
 }
 
 function Page::print_entry(Entry e) {
-    var Page p = get_page();
     "<div class='entry'" + ($e.dom_id ? " id='$e.dom_id'" : "") + ">\n";
 
       var bool showtime = $*opt_showtime;
@@ -1180,20 +1171,9 @@ function Page::print_entry(Entry e) {
          }
          "<a class='permalink' href='$e.permalink_url'>$*text_permalink</a>";
 
-         
-         if ($e.comments.show_postlink) { " $sep "; $e.comments->print_postlink(); }
-         if ($e.comments.show_readlink)   {
-            " $sep "; $e.comments->print_readlink();
-            if ($p.view == "entry" and $e.comments.read_spam_url != "") {
-                if ($p.showspam) {
-                    print safe """ $sep """ + get_plural_phrase($e.comments.spam_counter, "text_read_spam_comments");
-                } else {
-                    print safe """ $sep <a href=\"$e.comments.read_spam_url\">""" + get_plural_phrase($e.comments.spam_counter, "text_read_all_spam_comments") + """</a>""";
-                }
-            }
-         }
-         
 
+         if ($e.comments.show_postlink) { " $sep "; $e.comments->print_postlink(); }
+         if ($e.comments.show_readlink)   { " $sep "; $e.comments->print_readlink(); }
 
          $e->print_linkbar();
          "</p>";

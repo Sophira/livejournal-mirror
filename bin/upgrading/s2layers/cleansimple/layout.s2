@@ -243,8 +243,6 @@ propgroup text {
   property string datetime_format {
     des = "Date and time format for comments";
   }
-  property use text_showspam;
-  property use text_hidespam;
   property use text_view_games;
  
 }
@@ -850,22 +848,6 @@ function print_entry (Page p, Entry e, Color bgcolor, Color fgcolor, bool hide_t
         }
     }
 
-
-    var string comments_showspam = "";
-    if ($e.comments.count > 0 and $e.comments.read_spam_url != "") {
-        if ($p.showspam) {
-            $comments_showspam = """ | """ + get_plural_phrase($e.comments.spam_counter, "text_read_spam_comments");
-        } else {
-            $comments_showspam = """ | <a href="$e.comments.read_spam_url">""" + get_plural_phrase($e.comments.spam_counter, "text_read_all_spam_comments") + """</a>""";
-        }
-    } else {
-        $comments_showspam = "";
-    }
-
-    if ($p.view == "entry") {
-        $*opt_text_right_comments = "$comments_showspam";
-    }
-
     $e.comments->print(); "\n";
     $p->print_reply_container({"target" => "topcomment"});
     "</div></div>";
@@ -914,7 +896,6 @@ function CommentInfo::print() {
         if ($.show_postlink) {
             $this->print_postlink();
         }
-
         print safe "$*opt_text_right_comments</div>";
     }
 }

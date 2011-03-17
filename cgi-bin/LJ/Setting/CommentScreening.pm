@@ -26,22 +26,19 @@ sub option {
     my $key = $class->pkgkey;
 
     my $commentscreening = $class->get_arg($args, "commentscreening") || $u->prop("opt_whoscreened");
-    if ($commentscreening eq 'L') {
-        $u->set_prop( opt_whoscreened => 'R' );
-        $commentscreening = 'R';
-    }
 
     my @options = (
         N => $class->ml('setting.commentscreening.option.select.none'),
         R => $class->ml('setting.commentscreening.option.select.anon'),
         F => $u->is_community ? $class->ml('setting.commentscreening.option.select.nonmembers') : $class->ml('setting.commentscreening.option.select.nonfriends'),
+        L => $class->ml('setting.commentscreening.option.select.links'),
         A => $class->ml('setting.commentscreening.option.select.all'),
     );
 
     my $select = LJ::html_select({
         name => "${key}commentscreening",
         id => "${key}commentscreening",
-        selected => $commentscreening || 'R',
+        selected => $commentscreening || 'L',
     }, @options);
 
     return "<label for='${key}commentscreening'>" . $class->ml('setting.commentscreening.option', { options => $select }) . "</label>";
@@ -51,7 +48,7 @@ sub save {
     my ($class, $u, $args) = @_;
 
     my $val = $class->get_arg($args, "commentscreening");
-    $val = "R" unless $val =~ /^[NRFA]$/;
+    $val = "L" unless $val =~ /^[NRFLA]$/;
 
     $u->set_prop( opt_whoscreened => $val );
 

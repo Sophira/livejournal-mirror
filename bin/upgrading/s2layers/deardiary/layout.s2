@@ -237,9 +237,6 @@ propgroup text {
     property use text_post_comment_friends;
     property use text_read_comments_friends;
     property use text_website_default_name;
-    property use text_showspam;
-    property use text_hidespam;
-    property use text_spam_comment;
     property use text_view_games;
 }
 
@@ -831,7 +828,6 @@ function CommentInfo::print_postlink() {
 
 
 function Entry::lay_print_cmdlinks() {
-    var Page p = get_page();
     if ($.comments.show_readlink or $.comments.show_postlink) {
         """<ul class="entrycmdlinks">""";
         if ($.comments.show_readlink) {
@@ -839,20 +835,6 @@ function Entry::lay_print_cmdlinks() {
         }
         if ($.comments.show_postlink) {
             "<li>"; $.comments->print_postlink(); "</li>";
-        }
-        var string comments_showspam = "";
-        if ($.comments.count > 0 and $.comments.read_spam_url != "") {
-            if ($p.showspam) {
-                $comments_showspam = """<li>""" + get_plural_phrase($.comments.spam_counter, "text_read_spam_comments") + """</li>""";
-            } else {
-                $comments_showspam = """<li><a href="$.comments.read_spam_url">""" + get_plural_phrase($.comments.spam_counter, "text_read_all_spam_comments") + """</a></li>""";
-            }
-        } else {
-            $comments_showspam = "";
-        }
-
-        if ($p.view == "entry") {
-            print safe "$comments_showspam";
         }
         println """</ul>""";
     }
@@ -955,16 +937,7 @@ function have_collapsed(Comment e) : bool {
 }
 
 function EntryPage::print_comment(Comment c) {
-    var Page p = get_page();
-	if ($c.spam and not $p.showspam and (size $c.replies) > 0) {
-	    """<div class="entry ljcmt_full" id="$c.dom_id">
-                <div class="entrycontent">
-                    <strong>$*text_spam_comment</strong>
-                </div>
-            </div>""";
-	} elseif ($c.spam and not $p.showspam and (size $c.replies) < 1) {
-            # spam comment w/o children
-    } elseif ($c.full) {
+    if ($c.full) {
         #$this->lay_print_entrylite($c);
             """<div class="entry ljcmt_full" id="$c.dom_id">""";
             """<div class="entryheader">

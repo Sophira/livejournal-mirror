@@ -1,6 +1,7 @@
 <?page
 body<=
 <?_code
+
     use strict;
     use vars qw($r_head $r_title %GET %ML $r_bodyopts);
 
@@ -231,21 +232,6 @@ body<=
             js/quickreply.js
         ));
     }
-    
-    if($remote) {
-        LJ::need_string(qw/ 
-                            comment.cancel
-                            comment.delete
-                            comment.delete.q
-                            comment.delete.all
-                            comment.delete.all.sub
-                            comment.delete.no.options
-                            comment.ban.user
-                            comment.mark.spam
-                            comment.mark.spam.title
-                            comment.mark.spam.subject
-                            comment.delete/);
-    }
 
     my $showmultiform = $remote &&
                         ($remote->{'user'} eq $u->{'user'} ||
@@ -259,9 +245,9 @@ body<=
     my $no_cut_expand = !$GET{cut_expand} && $GET{page} && $GET{page} > 1 ? 1 : 0;
     
     if($no_cut_expand) {
-       $talkurl .= '?page=' . $GET{page} . '&cut_expand=1';
+    	$talkurl .= '?page=' . $GET{page} . '&cut_expand=1';
     }
-
+     
     LJ::CleanHTML::clean_event(
         \$event,
         {
@@ -514,8 +500,6 @@ body<=
             viewall       => $viewall,
             LJ_cmtinfo    => $LJ_cmtinfo,
             showmultiform => $showmultiform,
-            talkid        => $GET{talkid},
-            mode          => $GET{mode},
         },
         $output
     );
@@ -569,7 +553,7 @@ body<=
 	    my $readlink_text = BML::ml("talk.commentsread.counted", { replycount => $replycount });
 	    my $comments_count = BML::ml("talk.comments.counted", { replycount => $replycount });
 	
-	    if (($dthread && $pages == 1) || ($GET{mode} eq 'showspam')) {
+	    if ($dthread && $pages == 1) {
             my $readurl = LJ::Talk::talkargs($talkurl, $stylemine, $formatlight);
             $readlink = "(<a href='$readurl#comments'>$readlink_text</a>)";
         } elsif ($replycount > 0) {
@@ -578,19 +562,6 @@ body<=
         $readlink .= ' - ' if $readlink && $allow_commenting;
 
         my $posturl = LJ::Talk::talkargs($talkurl, "mode=reply", $stylemine, $formatlight);
-        my $showspamurl = LJ::Talk::talkargs($talkurl, "mode=showspam", $stylemine, $formatlight);
-        my $hidespamurl = LJ::Talk::talkargs($talkurl, "", $stylemine, $formatlight);
-        my $spam_counter = $entry->prop('spam_counter') || 0;
-        
-        my $readspamlink = '';
-        if ($remote && $spam_counter > 0 && ($remote->can_manage($u) || $remote->can_moderate($u))) {
-            if ($GET{mode} eq 'showspam') {
-                $readspamlink = "(" . BML::ml('talk.hidespam', { spam_counter => $spam_counter }) . ")";
-            } else {
-                $readspamlink = "(<a href='$showspamurl'>" . BML::ml('talk.showspam', { spam_counter => $spam_counter }) . "</a>)";
-            }
-        }
-        $readspamlink .= ' - ' if $readspamlink && $allow_commenting;
 
         my $stylemine = $GET{'style'} eq 'mine' ? 1 : 0;
 
@@ -609,7 +580,7 @@ body<=
 
         # Quick Reply when posting a new top level comment
         # requires setup when logged in.
-        $ret .= "<p class='lesstop' align='center'><b>$readlink$readspamlink";
+        $ret .= "<p class='lesstop' align='center'><b>$readlink";
         if ($allow_commenting) {
             if ($remote) {
                 # See if we want to force them to change their password
@@ -676,7 +647,7 @@ body<=
                           "</script>\n";
             }
 
-            $ret .= "<hr /><p class='lesstop' align='center'><b>$readlink$readspamlink";
+            $ret .= "<hr /><p class='lesstop' align='center'><b>$readlink";
             if ($allow_commenting) {
                 if ($remote) {
                     # See if we want to force them to change their password
@@ -699,35 +670,20 @@ body<=
                 my $args = BML::get_query_string;
                 $args = '?' . $args if $args;
                 $ret .= LJ::html_hidden( returnto => $talkurl . $args );
-                if (LJ::is_enabled('spam_button') && $GET{mode} eq 'showspam') {
-                    $ret .= LJ::html_select(
-                        { 'name' => 'mode' },
-                        '' => $ML{'.talkmulti.please'},
-                        $ML{'.talkmulti.selected'} => [
-                            'unspam' => $ML{'.talkmulti.unspam'},
-                            'deletespam' => $ML{'.talkmulti.deletespam'},
-                        ],
-                        $ML{'.talkmulti.all'} => [
-                            'all:unspam' => $ML{'.talkmulti.unspam'},
-                            'all:deletespam' => $ML{'.talkmulti.deletespam'},
-                        ],
-                    );
-                } else {
-                    $ret .= LJ::html_select(
-                        { 'name' => 'mode' },
-                        '' => $ML{'.talkmulti.please'},
-                        $ML{'.talkmulti.selected'} => [
-                            'unscreen'   => $ML{'.talkmulti.unscreen'},
-                            'screen'     => $ML{'.talkmulti.screen'},
-                            'delete'     => $ML{'.talkmulti.delete'},
-                            'deletespam' => $ML{'.talkmulti.deletespam'},
-                        ],
-                        $ML{'.talkmulti.all'} => [
-                            'all:screen'   => $ML{'.talkmulti.screen'},
-                            'all:unscreen' => $ML{'.talkmulti.unscreen'},
-                        ],
-                    );
-                }
+                $ret .= LJ::html_select(
+                    { 'name' => 'mode' },
+                    '' => $ML{'.talkmulti.please'},
+                    $ML{'.talkmulti.selected'} => [
+                        'unscreen'   => $ML{'.talkmulti.unscreen'},
+                        'screen'     => $ML{'.talkmulti.screen'},
+                        'delete'     => $ML{'.talkmulti.delete'},
+                        'deletespam' => $ML{'.talkmulti.deletespam'},
+                    ],
+                    $ML{'.talkmulti.all'} => [
+                        'all:screen'   => $ML{'.talkmulti.screen'},
+                        'all:unscreen' => $ML{'.talkmulti.unscreen'},
+                    ],
+                );
                 $ret .= " " . LJ::html_submit('', $ML{'.talkmulti.submit'});
                 $ret .= "</p>";
             }

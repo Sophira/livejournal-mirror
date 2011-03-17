@@ -61,9 +61,6 @@ propgroup presentation {
     property use linklist_support;
     property use external_stylesheet;
     property use custom_control_strip_colors;
-    property use text_showspam;
-    property use text_hidespam;
-    property use text_spam_comment;
     property use text_view_games;
 }
 
@@ -714,7 +711,6 @@ function CommentInfo::print_postlink() {
 }
 
 function CommentInfo::print() {
-    var Page p = get_page();
     if ($.show_readlink or $.show_postlink) {
         if ($.show_postlink) {
             $this->print_postlink();
@@ -723,13 +719,6 @@ function CommentInfo::print() {
             " | ";
         }
         if ($.show_readlink) {
-            if ($p.view == "entry" and $.read_spam_url != "") {
-                if ($p.showspam) {
-                    print safe get_plural_phrase($.spam_counter, "text_read_spam_comments") + """ | """;
-                } else {
-                    print safe """<a href=\"$.read_spam_url\">""" + get_plural_phrase($.spam_counter, "text_read_all_spam_comments") + """</a> | """;
-                }
-            }
             $this->print_readlink();
         }
     }
@@ -775,22 +764,14 @@ function EntryPage::print_body() {
 }
 
 function EntryPage::print_comments(Comment[] cs) {
-    var Page p = get_page();
     if (size $cs == 0) { return; }
     print "<div style=\"margin-left: 25px;\">";
     foreach var Comment c ($cs) {
         var int indent = ($c.depth - 1) * 25;
-        if ($c.spam and not $p.showspam) {
-            """<a name='$c.anchor'></a><div id="$c.dom_id" class="ljcmt_full"><div class="box"><div class="entry">$*text_spam_comment</div></div>""";
-            if ((size $c.replies) > 0) {
-                $this->print_comments($c.replies);
-            }
+        if ($c.full) {
+            $this->print_comment($c);
         } else {
-            if ($c.full) {
-                $this->print_comment($c);
-            } else {
-                $this->print_comment_partial($c);
-            }
+            $this->print_comment_partial($c);
         }
     }
     print "</div>";

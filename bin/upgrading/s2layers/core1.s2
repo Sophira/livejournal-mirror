@@ -231,10 +231,8 @@ class CommentInfo
 "Information about comments attached to something."
 {
     var readonly string read_url "URL pointer to the 'Read Comments' view.";
-    var readonly string read_spam_url "URL pointer to the 'Show/Hide Spam' view.";
     var readonly string post_url "URL pointer to the 'Post Comments' view.";
     var int count "Current number of comments available to be read by the viewer.";
-    var int spam_counter "Current number of spam comments.";
     var bool screened "Set to true if there are screened comments and remote user can unscreen them.";
     var bool enabled "Set to false if comments disabled journal-wide or just on this item.";
     var bool locked "Set to true if no further comments can be left on this entry.";
@@ -248,8 +246,6 @@ class CommentInfo
     "Print the formatted link to the 'Read Comments' view";
     function print_postlink
     "Print the formatted link to the 'Post Comments' view";
-    function print_spamlink
-    "Print the formatted link to the 'Show spam' view";
 }
 
 class UserLink
@@ -392,7 +388,6 @@ class Comment extends EntryLite
     var readonly string anchor "Direct link to comment, via HTML name anchors";
     var readonly bool comment_posted "True if comment was just posted by the current user.";
     var readonly bool edited "True if the comment has been edited.";
-    var readonly bool spam "This is spam message.";
 
     var readonly DateTime time_remote "The local time the comment appeared, in the remote user's (reader's) timezone.  Or undef if no remote user, or remote user hasn't set their timezone.";
     var readonly DateTime time_poster "The local time the comment appeared, in the commenter's timezone.  Or undef if anonymous comment, or commenter's timezone is unknown.";
@@ -567,9 +562,6 @@ class Page
     function builtin print_reply_link(string{} opts) "Prints a link to reply to the comment. You may specify the link text in the 'linktext' option, the link CSS class in 'class', and the target container in the 'target' option. You may also specify the url of an image to use as a button in 'img_url'.";
 
     function builtin print_reply_container(string{} opts) "Prints the area in which the quickreply box will go. Options you may specify are 'target' which will be the target id, and 'class' which will be the CSS class used by the container. If no container is available, quickreply will not work.";
-
-    function builtin print_show_spam_button()
-    "Show Spam Button.";
 
     function print_stylesheets
     "Prints all defined stylesheets, including default and user-defined ones.";
@@ -772,7 +764,6 @@ class EntryPage extends Page
     function builtin print_multiform_start "Prints start of form tag and hidden elements to do a multi-comment action (multiple delete, screen, unscreen, etc...)";
     function builtin print_multiform_end "Prints end of form tag to do a multi-comment action.";
     function builtin print_multiform_actionline "Prints the line of the multiform giving instructions, options, and the submit button, using the text of the different \$*text_multiform_ properties.";
-    
 }
 
 class ReplyForm
@@ -1170,19 +1161,6 @@ set text_max_comments = "Maximum comments reached";
 set text_read_comments = "1 comment // # comments";
 set text_read_all_comments = "Read 1 comment // Read # comments";
 
-property string text_read_spam_comments {
-    des = "Link text to read spam comments";
-    format = "plurals";
-    example = "1 spam comment // # spam comments";
-}
-property string text_read_all_spam_comments {
-    des = "Link text to read all spam comments";
-    format = "plurals";
-    example = "Read 1 spam comment // Read # spam comments";
-}
-set text_read_spam_comments = "1 spam comment // # spam comments";
-set text_read_all_spam_comments = "Read 1 spam comment // Read # spam comments";
-
 property string text_post_comment_friends {
     des = "Link text to leave a comment on friends view entry";
     example = "Leave a comment";
@@ -1194,23 +1172,6 @@ property string text_read_comments_friends {
 }
 set text_post_comment_friends = "Leave a comment";
 set text_read_comments_friends = "1 comment // # comments";
-
-property string text_showspam {
-    des = "Show spam messages";
-    example = "Show spam";
-}
-property string text_hidespam {
-    des = "Hide spam messages";
-    example = "Hide  spam";
-}
-set text_showspam = "Show spam";
-set text_hidespam = "Hide spam";
-
-property string text_spam_comment {
-    des = "Spam comment messages";
-    example = "Spam comment";
-}
-set text_spam_comment = "(Spam comment)";
 
 property string text_view_games {
     des = "Text for view games on profile page";
@@ -1488,16 +1449,6 @@ property string text_multiform_btn {
     des = "Text on the multiform action button.";
 }
 set text_multiform_btn = "Perform Action";
-
-property string text_multiform_opt_spam {
-    des = "Text for the comment mark as spam action";
-}
-set text_multiform_opt_spam = "Spam";
-
-property string text_multiform_opt_unspam {
-    des = "Text for the comment mark as unspam action";
-}
-set text_multiform_opt_unspam = "Unspam";
 
 property string text_multiform_opt_unscreen {
     des = "Text for the comment unscreening action";
@@ -2803,29 +2754,16 @@ function Redirector::end_form ()
 
 function EntryPage::print_comments (Comment[] cs) {
     if (size $cs == 0) { return; }
-    var Page p = get_page();
     foreach var Comment c ($cs) {
-        if ($p.showspam) {
-            if ($c.spam) {
-                "<div id='$c.dom_id' style='margin-left: 0px; margin-top: 5px'>\n";
-                $this->print_comment($c);
-                "</div>";
-            }
+        var int indent = ($c.depth - 1) * 25;
+        "<div id='$c.dom_id' style='margin-left: ${indent}px; margin-top: 5px'>\n";
+        if ($c.full) {
+            $this->print_comment($c);
         } else {
-            var int indent = ($c.depth - 1) * 25;
-            "<div id='$c.dom_id' style='margin-left: ${indent}px; margin-top: 5px'>\n";
-            if ($c.spam) {
-                if (size $c.replies > 0) {
-                    "(SPAM)";
-                }
-            } elseif ($c.full) {
-                $this->print_comment($c);
-            } else {
-                $this->print_comment_partial($c);
-            }
-            "</div>";
-            $this->print_comments($c.replies);
+            $this->print_comment_partial($c);
         }
+        "</div>";
+        $this->print_comments($c.replies);
     }
 }
 
