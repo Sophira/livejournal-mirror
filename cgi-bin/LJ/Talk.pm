@@ -354,13 +354,14 @@ sub can_screen {
     return 0 unless $remote;
     return 1 if $remote->{'user'} eq $u->{'user'} ||
                 $remote->{'user'} eq (ref $up ? $up->{'user'} : $up) ||
-                $remote->can_manage($u) || $remote->can_moderate($u);
+                $remote->can_manage($u) || $remote->can_moderate($u) || $remote->can_sweep($u);
     return 0;
 }
 
 sub can_unscreen {
     return 0 unless $_[0];
     return 0 if !($_[0]->can_manage($_[1]) || $_[0]->can_moderate($_[1])) && $_[0]->can_moderate($_[1]);
+    return 1 if $_[0]->can_sweep($_[1]);
     return LJ::Talk::can_screen(@_);
 }
 
