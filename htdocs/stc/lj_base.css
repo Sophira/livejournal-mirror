@@ -1102,6 +1102,7 @@ HTML BODY.logged-out {
 		border-top-left-radius: 5px;
 		border-top-right-radius: 5px;
 		background: transparent;
+		z-index: 99;
 		}
 	#js .b-postform-login-services-show {
 		border-color: #CCC;
@@ -1267,13 +1268,13 @@ HTML BODY.logged-out {
 					text-decoration: none;
 					}
 					.b-postform-login-services-item IMG {
-						position: static;
+						position: static !important;
 						width: auto;
 						height: auto;
-						margin: 0 5px 0 0;
-						padding: 0;
+						margin: 0 5px 0 0 !important;
+						padding: 0 !important;
 						vertical-align: -4px;
-						border: 0;
+						border: 0 !important;
 						}
 				BODY .b-postform-ability-disabled-anonymous .b-postform-login-services-anonymous A:link,
 				BODY .b-postform-ability-disabled-anonymous .b-postform-login-services-anonymous A:visited,
@@ -1306,6 +1307,7 @@ HTML BODY.logged-out {
 					-khtml-opacity: 0.5;
 					opacity: 0.5;
 					cursor: default;
+					zoom:1;
 					}
 	.b-postform-login-details {
 		overflow: auto;
@@ -1317,6 +1319,7 @@ HTML BODY.logged-out {
 		margin: 0;
 		padding: 0;
 		font: 12px/1.1 Arial,sans-serif;
+		z-index: 98;
 		}
 	#js .b-postform-login-details {
 		margin: 0 0 0 55px;
