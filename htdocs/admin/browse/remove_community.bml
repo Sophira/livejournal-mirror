@@ -38,6 +38,12 @@ body<=
         $vertical = LJ::Vertical->load_by_id($vert_id);
     }
 
+    if (LJ::did_post() and $POST{'select_v'}) {
+        $cat_id = undef;
+        @ids = ();
+        $category = undef;
+    }
+
     if (LJ::did_post() and $POST{'remove'}) {
         my @ids = sort { $b cmp $a } grep { $_ =~ /^catid\d+\_0$/ && $POST{$_} } keys %POST;
         my $cat_id = $POST{$ids[0]};
@@ -104,12 +110,12 @@ body<=
                 );
         $ret .= "</td><td>\n";
 
-        $ret .= LJ::html_submit('select', 'Select Vertical') . "</td></tr>";
+        $ret .= LJ::html_submit('select_v', 'Select Vertical') . "</td></tr>";
     }
 
     my @children = $category ? $category->children : ();
     # Get the full list of categories
-    my @categories = LJ::Browse->load_all($vertical);
+    my @categories = $vertical ? LJ::Browse->load_all($vertical) : ();
 
     $ret .= LJ::Browse->build_select_tree (0, \@categories, $category, undef, undef, 0);
     $ret .= "</table>\n";

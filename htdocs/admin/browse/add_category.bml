@@ -28,6 +28,12 @@ body<=
     my $cat_id = $POST{$ids[0]} ? $POST{$ids[0]} : $POST{$ids[1]};
     my $category = $cat_id ? LJ::Browse->load_by_id ($cat_id) : undef;
 
+    if (LJ::did_post() and $POST{'select_v'}) {
+        $cat_id = undef;
+        @ids = ();
+        $category = undef;
+    }
+
     if (LJ::did_post() and $POST{'add'}) {
         $parentcaturl = $POST{'parentcaturl'};
         $newcat = $POST{'newcat'};
@@ -105,12 +111,12 @@ body<=
                 );
         $ret .= "</td><td>\n";
 
-        $ret .= LJ::html_submit('select', 'Select Vertical') . "</td></tr>";
+        $ret .= LJ::html_submit('select_v', 'Select Vertical') . "</td></tr>";
     }
 
     my @children = $category ? $category->children : ();
     # Get the full list of categories
-    my @categories = LJ::Browse->load_all($vertical);
+    my @categories = $vertical ? LJ::Browse->load_all($vertical) : ();
 
     $ret .= LJ::Browse->build_select_tree (0, \@categories, $category, undef, undef, 0);
     if ($category) {
