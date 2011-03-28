@@ -1156,7 +1156,7 @@ sub load_comments
                     $post->{'state'} eq "S" && ! ($remote && ($remote->{'userid'} == $u->{'userid'} ||
                                                               $remote->{'userid'} == $uposterid ||
                                                               $remote->{'userid'} == $post->{'posterid'} ||
-                                                              $remote->can_manage($u) ) || $remote->can_sweep($u));
+                                                              $remote->can_manage($u) || $remote->can_sweep($u)));
             }
 
             $post->{'_show'} = $should_show;
