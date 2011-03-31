@@ -60,6 +60,7 @@ package LJ::CleanHTML;
 #        'transform_embed_wmode' => <value>, # define a wmode value for videos (usually 'transparent' is the value you want)
 #        'blocked_links' => [ qr/evil\.com/, qw/spammer\.com/ ], # list of sites which URL's will be blocked
 #        'blocked_link_substitute' => 'http://domain.com/error.html' # blocked links will be replaced by this URL
+#        'allowed_img_attrs'  => hashref of allowed img attibutes, other attrs are removed.
 #        'remove_all_attribs' => 1, # remove all attributes from html tags
 #        'remove_attribs' => [qw/id class style/], # remove specified attributes only
 #     });
@@ -154,7 +155,6 @@ sub clean
     my $remove_positioning = $opts->{'remove_positioning'} || 0;
     my $target = $opts->{'target'} || '';
     my $ljrepost_allowed = ($opts->{ljrepost_allowed} && ! $opts->{'textonly'}) || 0;
-    my $opt_no_img_wh = $opts->{img_no_wh};
 
     my $viewer_lang = $opts->{'viewer_lang'};
     unless ($viewer_lang) {
@@ -522,20 +522,21 @@ sub clean
 
                 ## Allow some iframes from trusted sources (if they are not eaten already)
                 ## YouTube (http://apiblog.youtube.com/2010/07/new-way-to-embed-youtube-videos.html),
-                ## Vimeo, VKontakte, Google Calendar, Google Docs, VK.com
+                ## Vimeo, VKontakte, Google Calendar, Google Docs, VK.com, etc.
+                ## see @LJ::EMBED_IFRAME_WHITELIST in lj-disabled-conf
                 my $src = $attr->{'src'};
-                if ($src &&
-                    (
-                        $src =~ m!^https?://(?:[\w.-]*\.)?youtube\.com/embed/[-_a-zA-Z0-9]{11,}(?:\?.*)?$!
-                        || $src =~ m!^http://player\.vimeo\.com/video/(?:\d+)!
-                        || $src =~ m!^http://vkontakte\.ru/video_ext\.php\?oid=(?:\d+)&id=(?:\d+)&hash=[a-zA-Z0-9]+!
-                        || $src =~ m!^http://www\.google\.com/calendar/embed\?src=!
-                        || $src =~ m!^https://docs\.google.com/document/pub\?id=!
-                        || $src =~ m!^http://vk.com/video_ext\.php\?oid=(?:\d+)&id=(?:\d+)&hash=[a-zA-Z0-9]+!
-                    )
-                ) {
-                    ## allow
-                } else {
+                my $src_allowed = 0;
+
+                if ($src) {
+                    foreach my $re ( @LJ::EMBED_IFRAME_WHITELIST ) {
+                        if ( $src =~ $re ) {
+                            $src_allowed = 1;
+                            last;
+                        }
+                    }
+                }
+
+                unless ( $src && $src_allowed ) {
                     ## eat this tag
                     if (!$attr->{'/'}) {
                         ## if not autoclosed tag (<iframe />),
@@ -761,11 +762,6 @@ sub clean
                         }
                     }
 
-                    if ($tag eq 'img' and $opt_no_img_wh and $attr =~ /^width|height$/){
-                    ## remove width and height attributes from img tag
-                        delete $hash->{$attr};
-                    }
-
                     ## warning: in commets left by anonymous users, <img src="something">
                     ## is replaced by <a href="something"> (see 'extractimages' param)
                     ## If "something" is "data:<script ...", we'll get a vulnerability
@@ -942,6 +938,13 @@ sub clean
                              $hash->{'height'} > $opts->{'maximgheight'})) { $img_bad = 1; }
                     }
                     if ($opts->{'extractimages'}) { $img_bad = 1; }
+
+                    ## Option 'allowed_img_attrs' provides a list of allowed attributes
+                    if (my $allowed = $opts->{'allowed_img_attrs'}){
+                        while (my ($attr, undef) = each %$hash){
+                            delete $hash->{$attr} unless $allowed->{$attr};
+                        }
+                    }
 
                     ## TODO: a better check of $hash->{src} is needed,
                     ## known (fixed) vulnerability is src="data:..."
