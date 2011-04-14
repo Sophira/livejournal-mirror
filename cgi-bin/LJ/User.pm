@@ -7410,7 +7410,7 @@ sub ljuser {
     ### populate userhead data
     if ($userhead !~ /^https?:\/\//) {
         my $imgroot = $opts->{'imgroot'} || $LJ::IMGPREFIX;
-        $userhead = $imgroot . '/' . $userhead . "?v=2";
+        $userhead = $imgroot . '/' . $userhead . "?v=3";
     }
 
     $userhead_h ||= $userhead_w;  # make square if only one dimension given
@@ -8087,6 +8087,8 @@ sub rate_log
 # returns 1 if action is permitted.  0 if above rate or fail.
 sub rate_check {
     my ($u, $ratename, $count, $opts) = @_;
+
+    return 1 if grep { $_ eq $u->username } @LJ::NO_RATE_CHECK_USERS;
 
     my $rateperiod = LJ::get_cap($u, "rateperiod-$ratename");
     return 1 unless $rateperiod;
