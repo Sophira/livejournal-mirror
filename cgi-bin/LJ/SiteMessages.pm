@@ -6,7 +6,6 @@ use constant AccountMask => {
     Permanent   => {    
                         value       => 1,
                         group       => 0,
-                        selected    => 1,
                         validate    => sub {
                                             my ($u) = @_;
                                             
@@ -17,7 +16,6 @@ use constant AccountMask => {
     Sponsored   => {    
                         value       => 2,
                         group       => 0,
-                        selected    => 1,
                         validate    => sub {
                                             my ($u) = @_;
                                             
@@ -28,7 +26,6 @@ use constant AccountMask => {
     Paid        => {    
                         value       => 4,
                         group       => 0,
-                        selected    => 1,
                         validate    => sub {
                                             my ($u) = @_;
                                             
@@ -39,7 +36,6 @@ use constant AccountMask => {
     Plus        => {    
                         value       => 8,
                         group       => 0,
-                        selected    => 1,
                         validate    => sub {
                                             my ($u) = @_;
                                             
@@ -51,7 +47,6 @@ use constant AccountMask => {
                         
                         value       => 16,
                         group       => 0,
-                        selected    => 1,
                         validate    => sub {
                                             my ($u) = @_;
 
@@ -62,7 +57,6 @@ use constant AccountMask => {
     SUP         => {    
                         value       => 32,
                         group       => 1,
-                        selected    => 1,
                         validate    => sub {
                                             my ($u) = @_;
                                             
@@ -73,7 +67,6 @@ use constant AccountMask => {
     NonSUP      => {    
                         value       => 64,
                         group       => 1,
-                        selected    => 1,
                         validate    => sub {
                                             my ($u) = @_;
                                             
@@ -101,7 +94,6 @@ use constant AccountMask => {
     TryNBuy     => {    
                         value       => 256,
                         group       => 3,
-                        selected    => 1,
                         validate    => sub {
                                             my ($u) = @_;
 
@@ -112,7 +104,6 @@ use constant AccountMask => {
     AlreadyTryNBuy => { 
                         value       => 512,
                         group       => 3,
-                        selected    => 1,
                         validate    => sub {
                                             my ($u) = @_;
 
@@ -123,7 +114,6 @@ use constant AccountMask => {
     NeverTryNBuy   => { 
                         value       => 1024,
                         group       => 3,
-                        selected    => 1,
                         validate    => sub {
                                             my ($u) = @_;
 
@@ -146,22 +136,10 @@ use constant AccountMask => {
 #   Get all options names for form output
 #
 sub get_options_list {
-    return sort { 
-            AccountMask->{$b}->{value} <=> AccountMask->{$a}->{value}
+    return sort {
+            AccountMask->{$a}->{group} <=> AccountMask->{$b}->{group} ||
+            AccountMask->{$a}->{value} <=> AccountMask->{$b}->{value}
          } keys %{&AccountMask};
-}
-
-#
-#   Get default selected masks bits together
-#
-sub get_default_masks_value {
-    my $result = 0;
-     
-    for my $name (keys %{&AccountMask}) {
-        $result += AccountMask->{$name}->{value} if ( AccountMask->{$name}->{selected});    
-    }
-    
-    return $result;
 }
 
 #
@@ -312,8 +290,6 @@ sub get_messages {
     return unless $u; # there are no messages for logged out users
 
     my @messages = $class->load_messages;
-    @messages = grep { ref $_ } @messages;
-
     @messages = $class->filter_messages($u, @messages);
     @messages = $class->filter_by_country($u, @messages);
 
@@ -324,31 +300,41 @@ sub get_messages {
 #   Filter the messages list for given remote
 #
 sub filter_messages {
-    my ($class, $u, @messages) = @_;
-    
-    return grep {
+    my $class = shift;
+    my $u = shift;
+   
+    my @messages;
+    MESSAGE:
+    foreach my $m (@_) {
         my $last_group = -1;
-        my $group_match = 1;
-        my $accept = 1;
+        my $group_is_not_empty = 0; ## group has at least 1 condition to test
+        my $group_matched = 0;      ## at least 1 condition from this group was met
 
         for my $key ($class->get_options_list) {
             # If entering a new group
             if ($last_group != AccountMask->{$key}->{group}) {
-                unless ($group_match) {
-                    $accept = 0;
-                    last;
+                if ($group_is_not_empty && !$group_matched) {
+                    next MESSAGE;
+                }
+                $last_group = AccountMask->{$key}->{group};
+                $group_is_not_empty = 0;
+                $group_matched = 0;
+            }
+
+            if (int($m->{accounts}) & AccountMask->{$key}->{value}) {
+                $group_is_not_empty = 1;
+                if (AccountMask->{$key}->{validate}($u)) {
+                    $group_matched = 1;
                 }
             }
-
-            if (int($_->{accounts}) & AccountMask->{$key}->{value}) {
-                $group_match = AccountMask->{$key}->{validate}($u);
-            }
-
-            $last_group = AccountMask->{$key}->{group};
         }
-
-        $accept;
-    } @messages;
+        ## the last group:
+        if ($group_is_not_empty && !$group_matched) {
+            next MESSAGE;
+        }
+        push @messages, $m;
+    };
+    return @messages;
 }
 
 #

@@ -482,22 +482,14 @@ sub init {
         $state = 'A' if LJ::Talk::can_unscreen($up, $journalu, $init->{entryu}, $init->{entryu}{user});
     }
 
-    my $up_is_friend = $up && LJ::is_friend($journalu, $up);
-    if ( $journalu->is_spamprotection_enabled &&
-         (!$up || !($up->prop('in_whitelist_for_spam') || $up->in_class("paid") || $up->in_class("perm"))) && 
-         ($journalu->is_community || !$up_is_friend) && 
-         !LJ::Talk::can_mark_spam($up, $journalu, $init->{entryu}, $init->{entryu}{user})) {
-
+    my $can_mark_spam = LJ::Talk::can_mark_spam($up, $journalu, $init->{entryu}, $init->{entryu}{user});
+    my $need_spam_check = 0;
+    LJ::run_hook('need_spam_check_comment', \$need_spam_check, $entry, $state, $journalu, $up);
+    if ( $need_spam_check && !$can_mark_spam ) {
         my $spam = 0;
-        LJ::run_hook('spam_comment_detector', $form, \$spam, $journalu, $up) 
-            if $state eq 'A';
-        LJ::run_hook('spam_in_all_journals', \$spam, $journalu, $up) 
-            unless $spam;
-        if ($spam) {
-            $state = 'B';
-            my $spam_counter = $entry->prop('spam_counter') || 0;
-            $entry->set_prop('spam_counter', $spam_counter + 1);
-        }
+        LJ::run_hook('spam_comment_detector', $form, \$spam, $journalu, $up);
+        LJ::run_hook('spam_in_all_journals', \$spam, $journalu, $up) unless $spam;
+        $state = 'B' if $spam;
     }
     
     my $parent = {
@@ -675,6 +667,12 @@ sub post_comment {
         $parent->{state} = 'A';
     }
 
+    # unban the parent comment if needed
+    if ($parent->{state} eq 'B') {
+        LJ::Talk::unspam_comment($journalu, $item->{itemid}, $parent->{talkid});
+        $parent->{state} = 'A';
+    }
+
     # make sure they're not underage
     if ($comment->{u} && $comment->{u}->underage) {
         $$errref = $LJ::UNDERAGE_ERROR;
@@ -712,6 +710,13 @@ sub post_comment {
 
         # save its identifying characteristics to protect against duplicates.
         LJ::MemCache::set($memkey, $jtalkid+0, time()+60*10);
+        
+        # update spam counter if needed
+        if ($comment->{state} eq 'B') {
+            my $entry = LJ::Entry->new($journalu, jitemid => $item->{itemid});
+            my $spam_counter = $entry->prop('spam_counter') || 0;
+            $entry->set_prop('spam_counter', $spam_counter + 1);
+        }
     }
 
     # the caller wants to know the comment's talkid.

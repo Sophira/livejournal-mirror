@@ -52,7 +52,7 @@
     my $itemid = int($ditemid / 256);
 
     my @talkids;
-    if ($mode eq 'all:screen' or $mode eq 'all:unscreen' or $mode eq 'all:unspam') {
+    if ($mode eq 'all:screen' or $mode eq 'all:unscreen' or $mode eq 'all:unspam' or $mode eq 'all:deletespam') {
         my $comments = LJ::Talk::get_talk_data($u, 'L', $itemid);
         @talkids = keys %$comments;
     } else {
@@ -62,11 +62,18 @@
     }
     return $err->($ML{'.error.none_selected'}) unless @talkids;
 
+    my $delete_all_spam = 0;
+
     # here 'all' cases are same as 'selected'
     $mode = 'screen' if $mode eq 'all:screen';
     $mode = 'unscreen' if $mode eq 'all:unscreen';
     $mode = 'unspam' if $mode eq 'all:unspam';
-    $mode = 'deletespam' if $mode eq 'all:deletespam';
+    if ($mode eq 'all:deletespam') {
+        $delete_all_spam = 1;
+        $mode = 'deletespam';
+        $POST{returnto} =~ s/mode=showspam//;
+        $POST{returnto} =~ s/[\?\&]$//;
+    }
 
     my $log = $dbcr->selectrow_hashref("SELECT * FROM log2 WHERE journalid=? AND jitemid=?",
                                        undef, $jid, $itemid);
@@ -92,6 +99,7 @@
     $sth->execute($jid, $itemid);
     my %talkinfo;
     while (my ($id, $state, $posterid) = $sth->fetchrow_array) {
+        next if $delete_all_spam && $state ne 'B';
         $talkinfo{$id} = [ $state, $posterid ];
     }
     @talkids = keys %talkinfo;
@@ -107,15 +115,20 @@
         # Mark as spam
         if ($mode eq 'deletespam') {
             # don't let $remote mark their own comments as spam
-            foreach (grep { $talkinfo{$_}->[1] != $remote->id } @talkids) {
-                my $poster = LJ::want_user($talkinfo{$_}->[1]);
+            my @new_talkids;
+            foreach my $id (grep { $talkinfo{$_}->[1] != $remote->id } @talkids) {
+                my $poster = LJ::want_user($talkinfo{$id}->[1]);
                 next if LJ::Talk::can_mark_spam($poster, $u);
-                LJ::Talk::mark_comment_as_spam($u, $poster);
-                LJ::Talk::delete_author( $u, $itemid, $poster->userid );
-                LJ::set_rel($u, $poster, 'D');
-                $u->ban_user($poster);
-                $u->log_event('spam_set', { actiontarget => $poster->id, remote => $remote });
+                push @new_talkids, $id;
+                LJ::Talk::mark_comment_as_spam($u, $id);
+                if ($poster) {
+                    LJ::Talk::delete_author( $u, $itemid, $poster->userid );
+                    LJ::set_rel($u, $poster, 'D');
+                    $u->ban_user($poster);
+                    $u->log_event('spam_set', { actiontarget => $poster->id, remote => $remote });
+                }
             }
+            @talkids = @new_talkids;
         }
 
         my ($num, $numspam) = LJ::delete_comments($u, "L", $itemid, @talkids);
