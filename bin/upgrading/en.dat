@@ -6205,6 +6205,8 @@ web.controlstrip.links.viewfriendspage=View my Friends Page
 web.controlstrip.links.viewfriendspage2|staleness=1
 web.controlstrip.links.viewfriendspage2=Friends Page
 
+web.controlstrip.links.upgrade=Upgrade Account
+
 web.controlstrip.links.watchcomm=Watch this community
 
 web.controlstrip.login.forgot=Forgot your password?

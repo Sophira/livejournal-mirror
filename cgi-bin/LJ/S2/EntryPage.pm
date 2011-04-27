@@ -90,6 +90,10 @@ sub EntryPage
                             comment.mark.spam.title
                             comment.mark.spam.subject
                             comment.mark.spam.button
+                            comment.mark.spam2
+                            comment.mark.spam2.title
+                            comment.mark.spam2.subject
+                            comment.mark.spam2.button
                             comment.delete/)
     }
 
@@ -239,6 +243,7 @@ sub EntryPage
                 'depth' => $depth,
                 'parent_url' => $par_url,
                 'spam' => $com->{'state'} eq "B" ? 1 : 0,
+                'can_marked_as_spam' => LJ::Talk::can_marked_as_spam($remote, $u, $entry->poster, $poster),
                 'screened' => $com->{'state'} eq "S" ? 1 : 0,
                 'frozen' => $com->{'state'} eq "F" || !$entry->posting_comments_allowed ? 1 : 0,
                 'deleted' => $com->{'state'} eq "D" ? 1 : 0,

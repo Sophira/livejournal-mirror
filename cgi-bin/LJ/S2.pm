@@ -2024,6 +2024,7 @@ sub Page
     my $linklist = [ map { UserLink($_) } @$linkobj ];
 
     my $remote = LJ::get_remote();
+    my $up = LJ::load_userid($opts->{ljentry}->{posterid}) if $opts->{ljentry};
 
     my $p = {
         '_type' => 'Page',
@@ -2050,9 +2051,8 @@ sub Page
         'head_content' => '',
         'data_link' => {},
         'data_links_order' => [],
-        'showspam' => $remote && ($remote->can_manage($u) || $remote->can_moderate($u)) && 
-                      LJ::is_enabled('spam_button') && $get->{mode} eq 'showspam',
-
+        'showspam' => $get->{mode} eq 'showspam' && LJ::is_enabled('spam_button')
+                      && LJ::Talk::can_unmark_spam($remote, $u, $up),
         'page_id' => 'journal-' . $u->username,
     };
 
@@ -3068,15 +3068,12 @@ sub _Comment__get_link
                             LJ::S2::Image("$LJ::IMGPREFIX/btn_del.gif", 24, 24));
     }
     if ($key eq "spam_comment") {
-        return $null_link unless $com_user;
-        return $null_link if $LJ::DISABLED{'spam_button'};
-        return $null_link unless LJ::Talk::can_mark_spam($remote, $u, $post_user, $com_user);
+        return $null_link unless LJ::Talk::can_marked_as_spam($remote, $u, $post_user, $com_user);
         return LJ::S2::Link("$LJ::SITEROOT/delcomment.bml?journal=$u->{'user'}&amp;id=$this->{'talkid'}&amp;spam=1",
                             $ctx->[S2::PROPS]->{"text_multiform_opt_spam"},
                             LJ::S2::Image("$LJ::IMGPREFIX/btn_spam.gif", 24, 24));
     }
     if ($key eq "unspam_comment") {
-        return $null_link if $LJ::DISABLED{'spam_button'};
         return $null_link unless LJ::Talk::can_unmark_spam($remote, $u, $post_user, $com_user);
         return LJ::S2::Link("$LJ::SITEROOT/spamcomment.bml?mode=unspam&amp;journal=$u->{'user'}&amp;talkid=$this->{'talkid'}",
                             $ctx->[S2::PROPS]->{"text_multiform_opt_unspam"},
@@ -3807,8 +3804,7 @@ sub _Entry__get_link
         my $entry = LJ::Entry->new($journalu->{'userid'}, ditemid => $this->{'itemid'});
         return $null_link unless $entry->security eq 'public';
         my $entry_url = LJ::eurl($entry->url);
-        my $entry_title = LJ::eurl($entry->subject_text);
-        my $url = "http://www.facebook.com/sharer.php?u=$entry_url&amp;t=$entry_title";
+        my $url = "http://www.facebook.com/sharer.php?u=$entry_url";
         my $link = LJ::S2::Link($url, $ctx->[S2::PROPS]->{"text_share_facebook"}, LJ::S2::Image("$LJ::IMGPREFIX/btn_facebook.gif", 24, 24));
         return $link;
     }
@@ -3817,16 +3813,18 @@ sub _Entry__get_link
         my $entry = LJ::Entry->new($journalu->{'userid'}, ditemid => $this->{'itemid'});
         return $null_link unless $entry->security eq 'public';
         my $post_id = $entry->journalid . ':' . $entry->ditemid;
-        my $entry_url = LJ::eurl($entry->url); # for js
-        my $link = LJ::S2::Link("http://twitter.com/share?url=$entry_url", $ctx->[S2::PROPS]->{"text_share_twitter"}, LJ::S2::Image("$LJ::IMGPREFIX/twitter.gif", 24, 24));
+        my $entry_url = LJ::eurl($entry->url);
+        my $entry_title = LJ::eurl($entry->subject_text);
+        my $link = LJ::S2::Link("http://twitter.com/share?url=$entry_url&text=$entry_title", $ctx->[S2::PROPS]->{"text_share_twitter"}, LJ::S2::Image("$LJ::IMGPREFIX/twitter.gif", 24, 24));
         return $link;
     }
 
     if ($key eq "share_email") {
         my $entry = LJ::Entry->new($journalu->{'userid'}, ditemid => $this->{'itemid'});
         return $null_link unless $entry->security eq 'public';
-        my $entry_url = LJ::eurl($entry->url); # for js
-        my $url = "$LJ::SITEROOT/tools/tellafriend.bml?journal=$journal&amp;itemid=$this->{'itemid'}&amp;u=$entry_url";
+        my $entry_url = LJ::eurl($entry->url);
+        my $entry_title = LJ::eurl($entry->subject_text);
+        my $url = "http://api.addthis.com/oexchange/0.8/forward/email/offer?username=internal&url=$entry_url&title=$entry_title";
         my $link = LJ::S2::Link($url, $ctx->[S2::PROPS]->{"text_share_email"}, LJ::S2::Image("$LJ::IMGPREFIX/btn_email.gif", 24, 24));
         return $link;
     }

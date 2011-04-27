@@ -728,19 +728,19 @@ function Page::lay_print_paraphernalia() "User layers can override this to chang
     $this->lay_print_viewspec();
     $this->lay_print_custom_paraphernalia();
     $this->lay_print_userlinks();
-    if (viewer_sees_ad_box("s2.vertical.2")) {
-        paraphernalia_box_open("", "");
-        """<div class="box-vertical2" style="margin-top: 8px;">""";
-        $this->print_ad_box("s2.vertical.2");
-        """</div>""";
-        paraphernalia_box_close("", "");
-    }
     if (viewer_sees_vbox()) {
         paraphernalia_box_open("", "");
-        """<div style="margin-top: 8px;">""";
+        """<div class="box-vertical1" style="margin-top: 8px;">""";
         $this->print_vbox();
         "</div>";
         paraphernalia_box_close("", "");
+        if (viewer_sees_ad_box("s2.vertical.2")) {
+            paraphernalia_box_open("", "");
+            """<div class="box-vertical2" style="margin-top: 8px;">""";
+            $this->print_ad_box("s2.vertical.2");
+            """</div>""";
+            paraphernalia_box_close("", "");
+        }
     }
 }
 
@@ -963,7 +963,7 @@ function have_collapsed(Comment e) : bool {
 
 function EntryPage::print_comment(Comment c) {
     var Page p = get_page();
-	if ($c.spam and not $p.showspam and (size $c.replies) > 0) {
+	if (($c.spam) and (not $p.showspam) and (not $c.can_marked_as_spam) and (size($c.replies) > 0)) {
 	    """<div class="entry ljcmt_full" id="$c.dom_id">
                 <div class="entrycontent">
                     <strong>$*text_spam_comment</strong>

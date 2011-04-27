@@ -576,6 +576,8 @@ sub require_captcha_test {
     ##             we shouldn't display captcha for him
             
     return if $commenter && LJ::is_friend($LJ::NOTASPAMMERS_COMM_UID, $commenter);
+    
+    return if $commenter && $commenter->prop('in_whitelist_for_spam');
 
     ## allow some users (our bots) to post without captchas in any rate
     return if $commenter and 
@@ -668,7 +670,7 @@ sub post_comment {
     }
 
     # unban the parent comment if needed
-    if ($parent->{state} eq 'B' && $comment->{u} && LJ::Talk::can_unmark_spam($comment->{u}, $journalu)) {
+    if ($parent->{state} eq 'B' && $comment->{u} && LJ::Talk::can_unmark_spam($comment->{u}, $journalu, $entryu)) {
         LJ::Talk::unspam_comment($journalu, $item->{itemid}, $parent->{talkid});
         $parent->{state} = 'A';
     }
