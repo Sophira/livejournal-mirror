@@ -78,6 +78,7 @@ sub render
     $data_journal->{view_tag} = $data_journal->{view} eq 'tag';
     $data_journal->{view_entry} = $data_journal->{view} eq 'entry';
     $data_journal->{display} = LJ::ljuser($journal);
+    $data_journal->{has_friendspage_per_day} = ($journal->get_cap('friendspage_per_day') ? 1 : 0);
 
     if ($remote)
     {
@@ -85,6 +86,7 @@ sub render
         $data_remote->{user}         = $remote->{user};
         $data_remote->{display}      = LJ::ljuser($remote);
         $data_remote->{sessid}       = ($remote->session ? $remote->{_session}->{sessid} : undef);
+        $data_remote->{is_sup}       = (LJ::SUP->is_sup_enabled($remote) ? 1 : 0);
         $data_remote->{is_paid}      = $remote->in_class('paid') || $remote->in_class('sponsored');
         $data_remote->{is_personal}  = ($remote->is_personal() ? 1 : 0); 
         $data_remote->{is_identity}  = ($remote->is_identity() ? 1 : 0);
@@ -235,7 +237,7 @@ sub render
                 BML::ml('web.controlstrip.links.watchcomm')
             );
             $data_remote->{link}->{unwatch_community} = html_link(
-                "$LJ::SITEROOT/community/leave.bml?comm=$journal->{user}",
+                "$LJ::SITEROOT/friends/add.bml?user=$journal->{user}",
                 BML::ml('web.controlstrip.links.removecomm')
             );
             $data_remote->{link}->{post_to_community} = html_link(
