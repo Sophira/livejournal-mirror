@@ -73,6 +73,7 @@ sub render
     $data_journal->{'is_' . $data_journal->{type}} = 1;
 
     $data_journal->{view} = LJ::Request->notes('view');
+    
     $data_journal->{view_friends} = $data_journal->{view} eq 'friends';
     $data_journal->{view_friendsfriends} = $data_journal->{view} eq 'friendsfriends';
     $data_journal->{view_tag} = $data_journal->{view} eq 'tag';
@@ -193,25 +194,24 @@ sub render
                     }
                 }
 
+                my $selected_group = undef;
+                if (LJ::Request->uri eq "/friends" && LJ::Request->args ne "") {
+                    my %GET = LJ::Request->args;
+                    $data_journal->{view_friends_show} = uc(substr($GET{show}, 0, 1)) if $GET{show};
+                } elsif (LJ::Request->uri =~ /^\/friends\/([^\/]+)/i) {
+                    $selected_group = LJ::durl($1);
+                    $data_journal->{view_friends_group} = $selected_group;
+                }
+
                 foreach my $g (sort { $group{$a}->{'sortorder'} <=> $group{$b}->{'sortorder'} } keys %group) {
                     push @filters, "filter:" . lc($group{$g}->{'name'}), $group{$g}->{'name'};
-                    push @{$data_remote->{friend_groups}}, {
+                    my $item = {
                         name  => lc($group{$g}->{name}),
                         value => $group{$g}->{name},
                     };
+                    $item->{selected} = 1 if $item->{name} eq lc($selected_group);
+                    push @{$data_remote->{friend_groups}}, $item;
                 }
-
-                my $selected = "all";
-                if (LJ::Request->uri eq "/friends" && LJ::Request->args ne "") {
-                    $selected = "showpeople"      if LJ::Request->args eq "show=P&filter=0";
-                    $selected = "showcommunities" if LJ::Request->args eq "show=C&filter=0";
-                    $selected = "showsyndicated"  if LJ::Request->args eq "show=Y&filter=0";
-                } elsif (LJ::Request->uri =~ /^\/friends\/?(.+)?/i) {
-                    my $filter = $1 || "default view";
-                    $selected = "filter:" . LJ::durl(lc($filter));
-                }
-
-                $data_remote->{friends_group_select} = LJ::html_select({'name' => "view", 'selected' => $selected }, @filters);
             }
         }
         elsif ($data_journal->{is_personal})
