@@ -623,6 +623,21 @@ sub get_or_set {
     return $value;
 }
 
+#add lock key with little expire, set if success, else wait and try another time
+#TODO
+sub get_or_set_with_lock {
+    my ( $key, $code, $expire ) = @_;
+
+    my $value = LJ::MemCache::get($key);
+
+    unless ($value) {
+        $value = $code->();
+        LJ::MemCache::set( $key, $value, $expire );
+    }
+
+    return $value;
+}
+
 ### OBJECT SERIALIZATION METHODS ###
 
 sub array_to_hash {

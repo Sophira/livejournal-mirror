@@ -51,6 +51,27 @@ sub _load_from_memcache {
     return $class->_memcache_hashref_to_object(\%hash);
 }
 
+sub _load_from_memcache_multi {
+    my $class = shift;
+    my $ids = shift;
+    my %ret = ();
+
+    my @keys = map { $class->_memcache_key($_) } @$ids;
+    my $data = LJ::MemCache::get_multi(@keys);
+    
+    my ($version, @props) = $class->_memcache_stored_props;
+    for my $key (keys %$data) {
+        unless ($ret{$key}->[0]==$version) {
+            $ret{$key} = undef;
+            next;
+        }
+        my %hash = map { $props[$_] => $data->[$_+1] } (0 .. $#props);
+        $ret{$key} = $class->_memcache_hashref_to_object(\%hash);
+    }
+
+    return \%ret;
+}
+
 ## warning: instance or class method. 
 ## $id may be absent when calling on instance.
 sub _remove_from_memcache {
