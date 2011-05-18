@@ -83,9 +83,7 @@ sub render_body {
             $type_display->{'errors'} = [ map { { 'error' => $_ } } @errors ];
         }
 
-        if ( $opts{'embedded'}
-          && $opts{'partner'}->identity_type_enabled($type) )
-      {
+        if ( $opts{'embedded'} ) {
             $template->param( 'type_' . $type => [ $type_display ] );
         }
         push @types, $type_display;
