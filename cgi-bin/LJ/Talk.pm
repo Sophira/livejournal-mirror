@@ -164,27 +164,11 @@ sub link_bar
     }
 
     ## Give features
-    if (LJ::is_enabled('give_features') && $remote && $entry->prop('give_features')) {
-        my $remote_balance = LJ::Pay::Wallet->get_user_balance($remote);
-        my $give_link = ($remote_balance < $LJ::GIVE_TOKENS) ?
-                        "$LJ::SITEROOT/shop/tokens.bml" :
-                        "$LJ::SITEROOT/give_tokens.bml?${jarg}itemid=$itemid";
-        my $give_count = $entry->prop('give_count') || 0;
-        my $give_button = '<script type="text/javascript">
-                            jQuery.extend(DonateButton, {
-                                ml_confirm_message: \''.BML::ml('/give_tokens.bml.confirm.submit.body', { 'give_count' => $LJ::GIVE_TOKENS, 'poster' => $entry->poster->user }).'\',
-                                have_tokens: '.(($remote_balance < $LJ::GIVE_TOKENS) ? 'false' : 'true' ).',
-                                lj_form_auth: "'.LJ::form_auth('raw').'"
-                            })
-                           </script> 
-                           <span class="lj-button light">
-                           <span class="lj-button-wrapper">
-                           <a class="lj-button-link" href="'.$give_link.'">
-                           <span class="lj-button-a"><span class="lj-button-b">'.$LJ::GIVE_TOKENS.' <img src="'.$LJ::IMGPREFIX.'/icons/donate.png" /></span><span class="lj-button-c">'.($give_count ? BML::ml('give_features.given', {'count' => $give_count}) : BML::ml('give_features.give')).'</span></span>
-                           </a>
-                           </span>
-                           </span>';
-        
+    if (LJ::is_enabled('give_features') && $remote && !$u->equals($remote) && $entry->prop('give_features')) {
+        my $give_button = LJ::run_hook("give_button", {
+            'journal' => $u->{'user'},
+            'itemid'  => $itemid,
+        });
         push @linkele, $give_button;
     }
 
@@ -1747,6 +1731,12 @@ sub talkform {
 
     my @author_options;
     my $usertype_default = $form->{'usertype'};
+
+    # LJSUP-8788; I admit this is a hack
+    if ( $usertype_default eq 'user' && !$form->{'userpost'} ) {
+        undef $usertype_default;
+    }
+
     foreach my $author_class (LJ::Talk::Author->all) {
         next unless $author_class->enabled;
 
