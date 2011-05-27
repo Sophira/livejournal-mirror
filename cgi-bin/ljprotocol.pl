@@ -337,54 +337,37 @@ sub addcomment
 sub getcomments {
     my ($req, $err, $flags) = @_;
     return undef unless authenticate($req, $err, $flags);
-    my $u = $flags->{'u'};
 
-    my $journal;
-    if($req->{journal}) {
-        return fail($err,100) unless LJ::canonical_username($req->{journal});
-        $journal = LJ::load_user($req->{journal}) or return fail($err, 100);
-    } elsif ( $req->{journalid} ) {
-        $journal = LJ::load_userid($req->{journalid}) or return fail($err, 100);
-    } else {
-        $journal = $u;
-    }
-
-    return fail($err,200,"ditemid") unless($req->{ditemid});
-    my $itemid = int($req->{ditemid} / 256); 
-
-    # load root post   
+    my $itemid = int($req->{ditemid} / 256);
+    my $output = {};
+    my $journal = $req->{journal} ? LJ::load_user($req->{journal}) : LJ::load_userid($req->{journalid});
+    
     my $jitem = LJ::Talk::get_journal_item($journal, $itemid);
-    return fail($err,203,"ditemid (specified post doesn't exist in requested journal)") unless($jitem);
     my $up = LJ::load_userid( $jitem->{'posterid'} );
 
-    # check permission to access post
-    return fail($err,300,"") unless( LJ::can_view($u, $jitem));
-
+    my $errtxt;
+    return {
+        status => 'OK',
+        error => $errtxt,
+    } unless LJ::Talk::check_viewable($flags->{'u'}, $jitem, undef, \$errtxt);
+    
     my $itemshow = $req->{itemshow} + 0;
-    $itemshow = 100 if $itemshow > 100 || $itemshow < 0;
-
     my $skip = $req->{skip} + 0;
     
-    my $talkid = int(($req->{dtalkid} + 0)/256);   # talkid
-    
-    my $expand = $req->{expand_strategy} ? $req->{expand_strategy} : ( $req->{dtalkid} ? 'single' : 'mobile' );    
-    return fail($err, 203, 'expand_strategy') unless ($expand =~ /^single|mobile|mobile_thread|by_level|detailed|default$/);
-
-    my $format = $req->{format} || 'thread'; # default value thread
-    return fail($err, 203, 'format') unless($format =~ /^thread|list$/ );
-
     my $mobile_thread = 0;
-    if( $expand eq 'mobile_thread' ){
-        undef $expand;
+    if( $req->{expand_strategy} eq 'mobile_thread' ){
+        undef $req->{expand_strategy};
         $mobile_thread = 1;
+        $itemshow = 100 if !$itemshow;
     }
-
+    $itemshow = 100 if $itemshow > 100 || $itemshow < 0;
+    
     my %extra;
     my $opts = {
-        thread          => $talkid,
+        thread          => int($req->{thread} / 256),
         page            => $req->{page},
         view            => $req->{view},
-        expand_strategy => $expand,
+        expand_strategy => $req->{expand_strategy},
         expand_level    => $req->{expand_level},
         expand_child    => $req->{expand_child},
         expand_all      => $mobile_thread,
@@ -397,43 +380,31 @@ sub getcomments {
         out_itemlast    => \$extra{itemlast},
         out_pagesize    => \$extra{pagesize},
         out_items       => \$extra{items},
-
-        page_size       => 500,             # max comments returned per call !
-        strict_page_size => 1,
     };
     
-    my @com = LJ::Talk::load_comments($journal, $u, "L", $itemid, $opts);
+    my @com = LJ::Talk::load_comments($journal, $flags->{'u'}, "L", int($req->{ditemid} / 256), $opts);
     my @comments;
     my @parent = ( \{ level => -1, children => \@comments } );
-
-  #  return { comm => \@com , flat => $opts->{flat} };
-
+    
     while (my $item = shift @com){        
         $item->{indent} ||= 0;
         shift( @parent ) while $item->{indent} <= ${$parent[0]}->{level};
         
         my $item_data = {
             parentdtalkid   => $item->{parenttalkid}?($item->{parenttalkid} * 256 + $jitem->{anum}):0,
-            postername      => $item->{userpost},
+            user            => $item->{userpost},
             level           => $item->{indent},
-            posterid        => $item->{posterid},
-            datepostunix    => $item->{datepost_unix},
+            userid          => $item->{posterid},
+            datepost_unix   => $item->{datepost_unix},
             datepost        => $item->{datepost},
             dtalkid         => $item->{talkid} * 256 + $jitem->{anum},
             state           => $item->{state},
-       #     is_show         => $item->{_show},
+            '_show'         => $item->{_show},
             subject         => $item->{subject},
             body            => $item->{body},
-       #     '_loaded'       => $item->{_loaded},
+            '_loaded'       => $item->{_loaded},
 
         };
-   
-        if($item->{upost} && $item->{upost}->identity ){
-            my $i = $item->{upost}->identity;
-            $item_data->{'identity_type'} = $i->pretty_type;
-            $item_data->{'identity_value'} = $i->value;
-            $item_data->{'identity_display'} = $item->{upost}->display_name;
-        }
 
         if ($item->{'_loaded'} && $req->{extra}) {
             my $comment = LJ::Comment->new($journal, dtalkid => $item_data->{dtalkid});
@@ -445,17 +416,17 @@ sub getcomments {
                      qw(edit_time deleted_poster picture_keyword opt_preformatted) };
             
             $item_data->{props}->{'poster_ip'} = $item->{'props'}->{'poster_ip'}
-                if $item->{'props'}->{'poster_ip'} && ( $u->{'user'} eq $up->{'user'} || $u->can_manage($journal) );
+                if $item->{'props'}->{'poster_ip'} && ( $flags->{'u'}->{'user'} eq $up->{'user'} || $flags->{'u'}->can_manage($journal) );
             
             $item_data->{privileges} = {};
-            $item_data->{privileges}->{delete}   = $comment->user_can_delete($u);
-            $item_data->{privileges}->{edit}     = $comment->user_can_edit($u);
-            $item_data->{privileges}->{freeze}   = (!$comment->is_frozen && LJ::Talk::can_freeze($u, $journal, $up, $item->{userpost}));
-            $item_data->{privileges}->{unfreeze} = ($comment->is_frozen && LJ::Talk::can_unfreeze($u, $journal, $up, $item->{userpost}));
+            $item_data->{privileges}->{delete}   = $comment->user_can_delete($flags->{'u'});
+            $item_data->{privileges}->{edit}     = $comment->user_can_edit($flags->{'u'});
+            $item_data->{privileges}->{freeze}   = (!$comment->is_frozen && LJ::Talk::can_freeze($flags->{'u'}, $journal, $up, $item->{userpost}));
+            $item_data->{privileges}->{unfreeze} = ($comment->is_frozen && LJ::Talk::can_unfreeze($flags->{'u'}, $journal, $up, $item->{userpost}));
             my $pu = $comment->poster;
             unless ($pu && $pu->is_suspended){
-                $item_data->{privileges}->{screen}   = (!$comment->is_screened && LJ::Talk::can_screen($u, $journal, $up, $item->{userpost}));
-                $item_data->{privileges}->{unscreen} = ($comment->is_screened && LJ::Talk::can_unscreen($u, $journal, $up, $item->{userpost})); 
+                $item_data->{privileges}->{screen}   = (!$comment->is_screened && LJ::Talk::can_screen($flags->{'u'}, $journal, $up, $item->{userpost}));
+                $item_data->{privileges}->{unscreen} = ($comment->is_screened && LJ::Talk::can_unscreen($flags->{'u'}, $journal, $up, $item->{userpost})); 
             }
         }
         
@@ -468,7 +439,7 @@ sub getcomments {
             my $hc = \${$parent[0]}->{has_children};
             $$hc = $$hc?$$hc+1:1;
             next unless $req->{calculate_count};
-        }elsif( $format eq 'list' ){ # list or thread
+        }elsif( $req->{format} eq 'list' ){ # list or thread
             push @comments, $item_data;
         }else{
             ${$parent[0]}->{children} = [] unless ${$parent[0]}->{children};
@@ -489,10 +460,9 @@ sub getcomments {
     }
 
     return {
-        skip => $skip,
+        status => 'OK',
         comments => \@comments,
-#        items => $extra{items},
-#        %extra,
+        %extra,
         xc3 => {
             u => $flags->{'u'}
         }
