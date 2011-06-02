@@ -26,7 +26,7 @@ LJ::register_hook( 'insert_html_after_body_open' => sub {
         my $language = LJ::Lang::get_remote_lang();
         my $locale = LJ::lang_to_locale($language);
         $locale =~ s/_.*//g;
-        $$after_body_open_ref .=  qq{<script type="text/javascript" src="http://apis.google.com/js/plusone.js">{lang: $locale}</script>};
+        $$after_body_open_ref .=  qq{<script type="text/javascript" src="http://apis.google.com/js/plusone.js">{lang: '$locale'}</script>};
     }
 } );
 
