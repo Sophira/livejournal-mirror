@@ -2,6 +2,7 @@ package LJ::Hooks::LJLike;
 use strict;
 use warnings;
 
+=comment
 LJ::register_hook( 'sitewide_resources' => sub {
     return if $LJ::REQ_GLOBAL{'sitewide_resources_ljlike_google'}++;
 
@@ -12,6 +13,7 @@ LJ::register_hook( 'sitewide_resources' => sub {
 
     LJ::include_raw( 'html' => qq{<script type="text/javascript" src="http://apis.google.com/js/plusone.js">{lang: $locale}</script>} );
 } );
+=cut
 
 LJ::register_hook( 'insert_html_after_body_open' => sub {
     my ($after_body_open_ref) = @_;
@@ -20,6 +22,12 @@ LJ::register_hook( 'insert_html_after_body_open' => sub {
     my $locale = LJ::lang_to_locale($language);
 
     $$after_body_open_ref .= qq{<div id="fb-root"></div><script src="http://connect.facebook.net/$locale/all.js#appId=214181831945836&amp;xfbml=1"></script>};
+    if (!$LJ::REQ_GLOBAL{'sitewide_resources_ljlike_google'}++) {
+        my $language = LJ::Lang::get_remote_lang();
+        my $locale = LJ::lang_to_locale($language);
+        $locale =~ s/_.*//g;
+        $$after_body_open_ref .=  qq{<script type="text/javascript" src="http://apis.google.com/js/plusone.js">{lang: $locale}</script>};
+    }
 } );
 
 LJ::register_hook( 'sitewide_resources' => sub {
