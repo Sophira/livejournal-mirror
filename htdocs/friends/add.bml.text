@@ -114,6 +114,10 @@
 
 .remove.title=Friend Removed!
 
+.tags.button.select=Select
+
+.tags.cross.tooltip=Remove tag from list
+
 .tags.input.tag=Input tag
 
 .tags.including=Including selected tags

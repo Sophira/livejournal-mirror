@@ -210,6 +210,8 @@ sub url {
     my $view = delete $opts{view};
     my $anchor = delete $opts{anchor};
     my $mode = delete $opts{mode};
+    my $style = delete $opts{style};
+    my $nc = delete $opts{nc};
 
     croak "Unknown args passed to url: " . join(",", keys %opts)
         if %opts;
@@ -829,13 +831,14 @@ sub event_html
 
     if($opts->{no_cut_expand}) {
         $opts->{expand_cut} = 0;
-        $opts->{cuturl} = $self->url . '?page=' . $opts->{page} . '&cut_expand=1';
+        $opts->{cuturl} = $self->prop('reposted_from') || $self->url . '?page=' . $opts->{page} . '&cut_expand=1';
     } elsif (!$opts->{cuturl}) {
         $opts->{expand_cut} = 1;
-        $opts->{cuturl}     = $self->url;
+        $opts->{cuturl}     = $self->prop('reposted_from') || $self->url;
     }
     $opts->{journalid} = $self->journalid;
     $opts->{posterid} = $self->posterid;
+    $opts->{entry_url} = $self->prop('reposted_from') || $self->url;
     
     $self->_load_text unless $self->{_loaded_text};
     my $event = $self->{event};
@@ -855,7 +858,14 @@ sub event_text
 {
     my $self = shift;
     my $event = $self->event_raw;
-    LJ::CleanHTML::clean_event( \$event, { textonly => 1, journalid => $self->journalid, posterid => $self->posterid } ) if $event;
+    if ( $event ) {
+        LJ::CleanHTML::clean_event( \$event, {
+            'textonly'  => 1,
+            'journalid' => $self->journalid,
+            'posterid'  => $self->posterid,
+            'entry_url' => $self->url,
+        } );
+    }
     return $event;
 }
 

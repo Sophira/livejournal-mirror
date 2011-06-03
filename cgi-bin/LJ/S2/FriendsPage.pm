@@ -166,7 +166,7 @@ sub FriendsPage
         'friendsoffriends'  => $opts->{'view'} eq "friendsfriends",
         'dateformat'        => 'S2',
         'events_date'       => $events_date,
-        $get->{notags} ? () : 'filter_by_tags' => LJ::FriendsTags->load($remote),
+        'filter_by_tags'    => ($get->{notags} ? 0 : 1),
     });
 
     # warn "[FriendsPage=$user] Items loaded. elapsed=" . Time::HiRes::tv_interval( $t0, [Time::HiRes::gettimeofday]) . " sec";
@@ -251,13 +251,22 @@ sub FriendsPage
         my $ditemid = $itemid * 256 + $item->{'anum'};
         my $entry_obj = LJ::Entry->new($friends{$friendid}, ditemid => $ditemid);
 
-        my $stylemine = "";
-        $stylemine .= "style=mine" if $remote && $remote->{'opt_stylemine'} &&
-                                      $remote->{'userid'} != $friendid;
+        my %urlopts_style;
+        if (    $remote && $remote->{'opt_stylemine'}
+             && $remote->{'userid'} != $friendid )
+        {
+            $urlopts_style{'style'} = 'mine';
+        }
+
+        my %urlopts_nc;
+        if ( $replycount && $remote && $remote->{'opt_nctalklinks'} ) {
+            $urlopts_nc{'nc'} .= $replycount;
+        }
 
         my $suspend_msg = $entry_obj && $entry_obj->should_show_suspend_msg_to($remote) ? 1 : 0;
         LJ::CleanHTML::clean_event(\$text, { 'preformatted' => $logprops{$datakey}->{'opt_preformatted'},
-                                             'cuturl' => LJ::item_link($friends{$friendid}, $itemid, $item->{'anum'}, $stylemine),
+                                             'cuturl' => $entry_obj->prop('reposted_from') || $entry_obj->url(%urlopts_style),
+                                             'entry_url' => $entry_obj->prop('reposted_from') || $entry_obj->url,
                                              'maximgwidth' => $maximgwidth,
                                              'maximgheight' => $maximgheight,
                                              'ljcut_disable' => $remote ? $remote->{'opt_ljcut_disable_friends'} : undef,
@@ -318,13 +327,10 @@ sub FriendsPage
             $picid = $eobj->userpic ? $eobj->userpic->picid : 0;
         }
 
-        my $nc = "";
-        $nc .= "nc=$replycount" if $replycount && $remote && $remote->{'opt_nctalklinks'};
-
         my $journalbase = LJ::journal_base($friends{$friendid});
         my $permalink = $eobj->url;
-        my $readurl = LJ::Talk::talkargs($permalink, $nc, $stylemine);
-        my $posturl = LJ::Talk::talkargs($permalink, "mode=reply", $stylemine);
+        my $readurl = $eobj->url( %urlopts_style, %urlopts_nc );
+        my $posturl = $eobj->url( %urlopts_style, 'mode' => 'reply' );
 
         my $comments = CommentInfo({
             'read_url' => $readurl,

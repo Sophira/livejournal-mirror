@@ -102,7 +102,7 @@ use vars qw($body $title $windowtitle %GET %POST);
          }
         
          $body .= LJ::get_ads({ 
-            location    => 'bml.friends.add/main', 
+            location    => 'bml.friends.add/done',
             ljadwrapper => 1,
             below_ad    => LJ::CProd->full_box_for($remote, width => 300) 
          });
@@ -152,12 +152,18 @@ use vars qw($body $title $windowtitle %GET %POST);
  if ($fr) {
      $title .= $ML{'.error3.title'};
      if ($u->is_visible) {
+         $body .= '<div class="b-addfriend-aside">';
          $body .= '<div class="b-addfriend-status">';
          $body .= "<?p " . BML::ml('.error3.text1', {'user' => LJ::ljuser($user)}) . " p?>";
          $body .= "</div>";
+         $body .= LJ::get_ads({ location => 'bml.friends.add/main', ljadwrapper => 1, });
+         $body .= "</div>";
      } else {
+         $body .= '<div class="b-addfriend-aside">';
          $body .= '<div class="b-addfriend-status">';
          $body .= "<?p " . BML::ml('.error3.text2', {'user' => LJ::ljuser($user)}) . " p?>";
+         $body .= "</div>";
+         $body .= LJ::get_ads({ location => 'bml.friends.add/main', ljadwrapper => 1, });
          $body .= "</div>";
      }
  } else {
@@ -172,8 +178,11 @@ use vars qw($body $title $windowtitle %GET %POST);
      if ($u->{journaltype} eq 'Y') {
          $windowtitle = BML::ml('.confirm.syn.title1', {'user'=> $user });
          $title = BML::ml('.confirm.syn.title1', {'icon'=> $icon, 'user'=> $user });
+         $body .= '<div class="b-addfriend-aside">';
          $body .= '<div class="b-addfriend-status">';
          $body .= "<?p $ML{'.confirm.text1.feed'} p?>";
+         $body .= "</div>";
+         $body .= LJ::get_ads({ location => 'bml.friends.add/main', ljadwrapper => 1, });
          $body .= "</div>";
 
      # Is this account redirected?
@@ -184,15 +193,21 @@ use vars qw($body $title $windowtitle %GET %POST);
          $windowtitle = BML::ml('.confirm.title.community', {'user'=> $user });
          $title = BML::ml('.confirm.title.community', {'icon'=> $icon, 'user'=> $user });
          unless (LJ::is_friend($userid, $remote->{userid})) {
+             $body .= '<div class="b-addfriend-aside">';
              $body .= '<div class="b-addfriend-status">';
              $body .= "<?p " . BML::ml('.confirm.text1.community2', {'aopts' => "href='$LJ::SITEROOT/community/join.bml?comm=$user'"}) . " p?>";
+             $body .= "</div>";
+             $body .= LJ::get_ads({ location => 'bml.friends.add/main', ljadwrapper => 1, });
              $body .= "</div>";
          }
      } elsif ($u->{'journaltype'} eq "N") {
          $windowtitle = BML::ml('.confirm.title.news', {'user'=> $user });
          $title = BML::ml('.confirm.title.news', {'icon'=> $icon, 'user'=> $user });
+         $body .= '<div class="b-addfriend-aside">';
          $body .= '<div class="b-addfriend-status">';
          $body .= "<?p " . BML::ml('.confirm.text1.news', {'user' => LJ::ljuser($user)}) . " p?>";
+         $body .= "</div>";
+         $body .= LJ::get_ads({ location => 'bml.friends.add/main', ljadwrapper => 1, });
          $body .= "</div>";
 
      } else {
@@ -203,14 +218,18 @@ use vars qw($body $title $windowtitle %GET %POST);
             $windowtitle = BML::ml('.confirm.title.person', {'user'=> $user });
             $title = BML::ml('.confirm.title.person', {'icon'=> $icon, 'user'=> $user });
          }
+         $body .= '<div class="b-addfriend-aside">';
          $body .= '<div class="b-addfriend-status">';
          $body .= "<?p $ML{'.confirm.text1.person'}";
          $body .= "<ul><li>$ML{'.confirm.action1.person'}</li>";
          $body .= "<li>$ML{'.confirm.action2.person'}</li>" if ($u->{'journaltype'} ne "I");
          $body .= "</ul> p?>";
          $body .= "</div>";
+         $body .= LJ::get_ads({ location => 'bml.friends.add/main', ljadwrapper => 1, });
+         $body .= '</div>';
      }
  }
+
 
  $body .= '<div class="b-addfriend-main">';
 
@@ -258,28 +277,24 @@ if ($u->is_visible) {
  }
 
  unless ($u->is_identity()) {
-     my $to_lower_case = sub {
-         my $s = shift;
-         return Encode::encode('utf-8', lc(Encode::decode('utf-8', $s)));
-     };
 
-     my $user_tags_map = LJ::Tags::get_usertags($u, { remote => $remote }) || {};
-     $user_tags_map = {
-         map {
-             $to_lower_case->($_->{name}) => (
-                 $_->{uses} < 2 ?
-                     '' :
-                     ($_->{uses} > 999 ? '(999+)' : "($_->{uses})")
-             )
+     my $user_tags_map = {};
+     {
+         my $tags = LJ::Tags::get_usertags($u, { remote => $remote }) || {};
+         foreach (values %$tags) { 
+             next unless $_->{display};
+             $user_tags_map->{ LJ::FriendsTags->normalize_tag($_->{name}) } += $_->{uses};
          }
-         grep { $_->{display} }
-         values %$user_tags_map
-     };
+         foreach (keys %$user_tags_map) {
+             my $uses = $user_tags_map->{$_};
+             $user_tags_map->{$_} = ($uses < 2 ? '' : ($uses > 999 ? '(999+)' : "($uses)"));
+         }
+     }
 
      my $friends_tags = LJ::FriendsTags->load($remote);
      my ($friend_tags_mode, $friend_tags_list) = $friends_tags->get_tags($u->{userid});
      my $friend_tags_map = {};
-     $friend_tags_list = [ map { $to_lower_case->($_) } @$friend_tags_list ];
+     $friend_tags_list = [ map { LJ::FriendsTags->normalize_tag($_) } @$friend_tags_list ];
 
      $body .= '<div class="b-addfriend-option b-addfriend-tags">';
      $body .= '<h3 class="b-addfriend-subhead">' . $ML{'.tags.read'} . '</h3>';
@@ -301,7 +316,7 @@ if ($u->is_visible) {
      {
          my $not_last = scalar(@$friend_tags_list);
          foreach (@$friend_tags_list) {
-             $body .= '<li><span><a target="_blank" href="#">' . LJ::ehtml($_) . '</a> ' . (exists $user_tags_map->{$_} ? $user_tags_map->{$_} : '(-)') . '<i title="Remove tag from list" class="i-pending-close"></i></span>' . (--$not_last ? '<b>,</b>' : '<b class="i-pending-users-comma">,</b>') . '</li>';
+             $body .= '<li><span><a target="_blank" href="#">' . LJ::ehtml($_) . '</a> ' . (exists $user_tags_map->{$_} ? $user_tags_map->{$_} : '(-)') . '<i title="' . $ML{'.tags.cross.tooltip'} . '" class="i-pending-close"></i></span>' . (--$not_last ? '<b>,</b>' : '<b class="i-pending-users-comma">,</b>') . '</li>';
              $friend_tags_map->{$_} = 1;
          }
      }
@@ -309,7 +324,7 @@ if ($u->is_visible) {
      $body .= '</ul>';
      $body .= '<p class="i-bubble b-bubble-alert b-bubble-noarrow">' . $ML{'.tags.remove.tags'} . '</p>';
      $body .= '<h4>' . $ML{'.tags.select.more'} . '</h4>';
-     $body .= '<p><input type="text" class="b-addfriend-input" id="searchTag" autocomplete="off" placeholder="' . $ML{'.tags.input.tag'} . '" /> <input id="selectTag" type="button" value="Select" /></p>';
+     $body .= '<p><input type="text" class="b-addfriend-input" id="searchTag" autocomplete="off" placeholder="' . $ML{'.tags.input.tag'} . '" /> <input id="selectTag" type="button" value="' . $ML{'.tags.button.select'} . '" /></p>';
      $body .= '<input type="hidden" id="selectedTags" name="friend_tags">';
      $body .= '<p class="i-bubble b-bubble-alert b-bubble-noarrow">' . $ML{'.tags.find.tags'} . '</p>';
      $body .= '<ul class="b-pending-users b-addfriend-alltags">';
@@ -318,7 +333,7 @@ if ($u->is_visible) {
          my @tags = sort grep { !$friend_tags_map->{$_} } keys %$user_tags_map;
          my $not_last = scalar(@tags);
          foreach my $tag (@tags) {
-             $body .= '<li><span><a target="_blank" href="#">' . LJ::ehtml($tag) . '</a> ' . (exists $user_tags_map->{$tag} ? $user_tags_map->{$tag} : '(-)') . '<i title="Remove tag from list" class="i-pending-close"></i></span>' . (--$not_last ? '<b>,</b>' : '<b class="i-pending-users-comma">,</b>') . '</li>';
+             $body .= '<li><span><a target="_blank" href="#">' . LJ::ehtml($tag) . '</a> ' . $user_tags_map->{$tag} . '<i title="' . $ML{'.tags.cross.tooltip'} . '" class="i-pending-close"></i></span>' . (--$not_last ? '<b>,</b>' : '<b class="i-pending-users-comma">,</b>') . '</li>';
          }
      }
 
@@ -333,9 +348,10 @@ if ($u->is_visible) {
                    <a href="#">${tagName}</a>
                    (-)
                    {{if hasCloseButton }}
-                   <i title="Remove tag from list" class="i-pending-close" ></i>
+                   <i title="' . $ML{'.tags.cross.tooltip'} . '" class="i-pending-close" ></i>
                    {{/if}}
            </span>
+           <b class="i-pending-users-comma">,</b>
            </li>
     </script>';
  }
@@ -588,7 +604,6 @@ $body .= "<?p ";
  $body .= "</form>";
  $body .= '</div>';
  $body .= '</div>';
- $body = $print_with_ad->($body);
  
  return;
 

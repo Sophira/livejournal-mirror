@@ -1334,7 +1334,8 @@ sub create_view_lastn
 
         my $suspend_msg = $entry_obj && $entry_obj->should_show_suspend_msg_to($remote) ? 1 : 0;
         LJ::CleanHTML::clean_event(\$event, { 'preformatted' => $logprops{$itemid}->{'opt_preformatted'},
-                                               'cuturl' => LJ::item_link($u, $itemid, $item->{'anum'}),
+                                               'cuturl' => $entry_obj->prop('reposted_from') || $entry_obj->url,
+                                               'entry_url' => $entry_obj->prop('reposted_from') || $entry_obj->url,
                                                'ljcut_disable' => ($remote) ? $remote->{'opt_ljcut_disable_lastn'} : undef,
                                                'suspend_msg' => $suspend_msg,
                                                'unsuspend_supportid' => $suspend_msg ? $entry_obj->prop("unsuspend_supportid") : 0,
@@ -1729,7 +1730,7 @@ sub create_view_friends
         'showtypes' => $get->{'show'},
         'friendsoffriends' => $opts->{'view'} eq "friendsfriends",
         'events_date' => $events_date,
-        $get->{notags} ? () : 'filter_by_tags' => LJ::FriendsTags->load($remote),
+        'filter_by_tags' => ($get->{notags} ? 0 : 1),
     });
 
     while ($_ = each %friends) {
@@ -1866,13 +1867,17 @@ sub create_view_friends
         my $itemargs = "journal=$friend&amp;itemid=$ditemid";
         $friends_event{'itemargs'} = $itemargs;
 
-        my $stylemine = "";
-        $stylemine .= "style=mine" if $remote && $remote->{'opt_stylemine'} &&
-                                      $remote->{'userid'} != $friendid;
+        my %urlopts_style;
+        if (    $remote && $remote->{'opt_stylemine'}
+             && $remote->{'userid'} != $friendid )
+        {
+            $urlopts_style{'style'} = 'mine';
+        }
 
         my $suspend_msg = $entry_obj && $entry_obj->should_show_suspend_msg_to($remote) ? 1 : 0;
         LJ::CleanHTML::clean_event(\$event, { 'preformatted' => $logprops{$datakey}->{'opt_preformatted'},
-                                              'cuturl' => LJ::item_link($friends{$friendid}, $itemid, $item->{'anum'}, $stylemine),
+                                              'cuturl' => $entry_obj->prop('reposted_from') || $entry_obj->url(%urlopts_style),
+                                              'entry_url' => $entry_obj->prop('reposted_from') || $entry_obj->url,
                                               'maximgwidth' => $maximgwidth,
                                               'maximgheight' => $maximgheight,
                                               'ljcut_disable' => ($remote) ? $remote->{'opt_ljcut_disable_friends'} : undef,
@@ -1943,11 +1948,13 @@ sub create_view_friends
             my $dispreadlink = $replycount ||
                 ($logprops{$datakey}->{'hasscreened'} && $remote && $remote->can_manage($friendid));
 
-            my $nc = "";
-            $nc .= "nc=$replycount" if $replycount && $remote && $remote->{'opt_nctalklinks'};
+            my %urlopts_nc;
+            if ( $replycount && $remote && $remote->{'opt_nctalklinks'} ) {
+                $urlopts_nc{'nc'} = $replycount;
+            }
 
-            my $readurl = LJ::Talk::talkargs($permalink, $nc, $stylemine);
-            my $posturl = LJ::Talk::talkargs($permalink, "mode=reply", $stylemine);
+            my $readurl = $entry_obj->url( %urlopts_style, %urlopts_nc );
+            my $posturl = $entry_obj->url( %urlopts_style, 'mode' => 'reply' );
 
             $friends_event{'talklinks'} = LJ::fill_var_props($vars, 'FRIENDS_TALK_LINKS', {
                 'itemid' => $ditemid,
@@ -2599,7 +2606,8 @@ sub create_view_day
 
         my $suspend_msg = $entry_obj && $entry_obj->should_show_suspend_msg_to($remote) ? 1 : 0;
         LJ::CleanHTML::clean_event(\$event, { 'preformatted' => $logprops{$itemid}->{'opt_preformatted'},
-                                              'cuturl' => LJ::item_link($u, $itemid, $anum),
+                                              'cuturl' => $entry_obj->prop('reposted_from') || $entry_obj->url,
+                                              'entry_url' => $entry_obj->prop('reposted_from') || $entry_obj->url,
                                               'ljcut_disable' => ($remote) ? $remote->{'opt_ljcut_disable_lastn'} : undef,
                                               'suspend_msg' => $suspend_msg,
                                               'unsuspend_supportid' => $suspend_msg ? $entry_obj->prop("unsuspend_supportid") : 0,

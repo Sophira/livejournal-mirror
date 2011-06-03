@@ -1138,6 +1138,15 @@ sub entry_form_decode
     $req->{'prop_copyright'} = $POST->{'prop_copyright'} ? 'P' : 'C' if LJ::is_enabled('default_copyright', LJ::get_remote()) 
                                     && $POST->{'defined_copyright'};
 
+    if ( my $reposted_from = $POST->{'reposted_from'} ) {
+        my $reposted_entry = LJ::Entry->new_from_url($reposted_from);
+
+        #TODO: check visibility? it's not a security concern, but still
+        if ($reposted_entry) {
+            $req->{'prop_reposted_from'} = $reposted_entry->url;
+        }
+    }
+
     if (LJ::is_enabled("content_flag")) {
         $req->{prop_adult_content} = $POST->{prop_adult_content};
         $req->{prop_adult_content} = ""
@@ -1281,7 +1290,7 @@ sub include_raw  {
     my $code = shift;
 
     die "Bogus include type: $type"
-        unless $type =~ m!^(js|css|js_link|css_link)$!;
+        unless $type =~ m!^(js|css|js_link|css_link|html)$!;
 
     push @LJ::INCLUDE_RAW => [$type, $code];
 }
@@ -1504,6 +1513,8 @@ sub res_includes {
             $ret .= qq{<script type="text/javascript" src="$code"></script>\r\n};
         } elsif ( $type eq 'css_link' ) {
             $ret .= qq{<link rel="stylesheet" type="text/css" href="$code" />};
+        } elsif ( $type eq 'html' ) {
+            $ret .= $code;
         }
     }
 
@@ -2394,6 +2405,12 @@ $LJ::COMMON_CODE{'autoradio_check'} = q{
 // -->
 </script>
 };
+
+sub initial_body_html {
+    my $after_body_open = '';
+    LJ::run_hooks('insert_html_after_body_open', \$after_body_open);
+    return $after_body_open;
+}
 
 # returns HTML which should appear before </body>
 sub final_body_html {

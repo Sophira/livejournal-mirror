@@ -611,6 +611,22 @@ sub get_style
     }
 
     my %style;
+
+    unless ($styleid) {
+        # special case here: styleid=0 is the default style, whatever
+        # it is
+
+        my $public = get_public_layers();
+        while (my ($layer, $name) = each %$LJ::DEFAULT_STYLE) {
+            next unless $name ne "";
+            next unless $public->{$name};
+            my $id = $public->{$name}->{'s2lid'};
+            $style{$layer} = $id if $id;
+        }
+
+        return %style;
+    }
+
     my $have_style = 0;
 
     if ($verify && $styleid) {
@@ -655,13 +671,7 @@ sub get_style
     }
 
     unless ($have_style) {
-        my $public = get_public_layers();
-        while (my ($layer, $name) = each %$LJ::DEFAULT_STYLE) {
-            next unless $name ne "";
-            next unless $public->{$name};
-            my $id = $public->{$name}->{'s2lid'};
-            $style{$layer} = $id if $id;
-        }
+        die "LJ::S2: style $styleid seems to be empty";
     }
 
     return %style;
@@ -1166,30 +1176,24 @@ sub get_style_layers
 
     my %stylay;
 
-    my $fetch = sub {
-        my ($db, $qry, @args) = @_;
+    my $udbh = LJ::get_cluster_master($u);
+    local $udbh->{'RaiseError'} = 1;
 
-        my $sth = $db->prepare($qry);
-        $sth->execute(@args);
-        die "ERROR: " . $sth->errstr if $sth->err;
-        while (my ($type, $s2lid) = $sth->fetchrow_array) {
-            $stylay{$type} = $s2lid;
-        }
-        return 0 unless %stylay;
-        return 1;
-    };
+    my $rows = $udbh->selectall_arrayref( qq{
+        SELECT type, s2lid FROM s2stylelayers2
+        WHERE userid=? AND styleid=?
+    }, { 'Slice' => {} }, $u->userid, $styleid );
 
-    unless ($fetch->($u, "SELECT type, s2lid FROM s2stylelayers2 " .
-                     "WHERE userid=? AND styleid=?", $u->{userid}, $styleid)) {
-        my $dbh = LJ::get_db_writer();
-        if ($fetch->($dbh, "SELECT type, s2lid FROM s2stylelayers WHERE styleid=?",
-                     $styleid)) {
-            LJ::S2::set_style_layers_raw($u, $styleid, %stylay);
-        }
+    foreach my $row (@$rows) {
+        $stylay{ $row->{'type'} } = $row->{'s2lid'};
     }
 
-    # set in memcache
-    LJ::MemCache::set($memkey, \%stylay);
+    # set in memcache, provided that we actually have something
+    # to store (empty styles is a rare case)
+    if (%stylay) {
+        LJ::MemCache::set($memkey, \%stylay);
+    }
+
     $LJ::S2::REQ_CACHE_STYLE_ID{$styleid} = \%stylay;
     return \%stylay;
 }
@@ -3972,18 +3976,18 @@ sub _Entry__get_link
     }
 }
 
-sub EntryLite__get_give_button
+sub EntryLite__print_give_button
 {
     my ($ctx, $this, $type, $image) = @_;
-    return LJ::run_hook("give_button", {
+    $S2::pout->(LJ::run_hook("give_button", {
         'journal' => $this->{'journal'}->{'username'},
         'itemid'  => $this->{itemid},
         'type'    => $type,
         'image'   => $image,
-    });
+    }));
 }
 
-*Entry__get_give_button = \&EntryLite__get_give_button;
+*Entry__print_give_button = \&EntryLite__print_give_button;
 
 sub Entry__plain_subject
 {
@@ -4419,7 +4423,8 @@ sub Page__get_entries_by_tags {
         my $text = $entry->event_raw;
         LJ::CleanHTML::clean_event( \$text, {
             'preformatted'          => $entry->prop('opt_preformatted'),
-            'cuturl'                => $entry->url,
+            'cuturl'                => $entry->prop('reposted_from') || $entry->url,
+            'entry_url'             => $entry->prop('reposted_from') || $entry->url,
             'ljcut_disable'         => 0,
             'journalid'             => $entry->journalid,
             'posterid'              => $entry->posterid,

@@ -273,10 +273,11 @@ body<=
             preformatted        => $props->{'opt_preformatted'},
             suspend_msg         => $suspend_msg,
             unsuspend_supportid => $suspend_msg ? $entry->prop("unsuspend_supportid") : 0, 
-            cuturl              => $talkurl, 
+            cuturl              => $entry->prop('reposted_from') || $talkurl, 
             expand_cut          => !$no_cut_expand,
             journalid           => $entry->journalid,
             posterid            => $entry->posterid,
+            entry_url           => $entry->prop('reposted_from') || $entry->url,
         }
     );
     LJ::expand_embedded($u, $ditemid, $remote, \$event);

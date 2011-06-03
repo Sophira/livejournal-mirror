@@ -142,6 +142,7 @@ DonateButton = {
 						$node = $node.closest( '.lj-button' );
 					}
 					$node.replaceWith( data.html );
+					LiveJournal.run_hook( 'update_wallet_balance' );
 				}
 			}, "json");
 		}
@@ -167,15 +168,19 @@ DonateButton = {
 
 FriendsTimes = {
 	prev_page_start: null,
+	have_prev: null,
 
 	init: function() {
 		jQuery(function(){
 			FriendsTimes.checkUnreaded({
 				timeout: 5000
 			});
-			FriendsTimes.bindLoadMore({
-				max_load: 4
-			});
+
+			if( FriendsTimes.have_prev ) {
+				FriendsTimes.bindLoadMore({
+					max_load: 4
+				});
+			}
 		});
 	},
 

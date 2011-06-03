@@ -919,7 +919,7 @@ sub trans
             LJ::get_remote();
             return redir(LJ::Session->setdomsess_handler()) if LJ::Request->uri eq "/__setdomsess";
 
-            return LJ::URI->bml_handler($LJ::AJAX_URI_MAP{$1}) if (LJ::Request->uri =~ /^\/__rpc_((?:ljapp|lj_times|ctxpopup|close).*)$/);
+            return LJ::URI->bml_handler($LJ::AJAX_URI_MAP{$1}) if (LJ::Request->uri =~ /^\/__rpc_((?:ljapp|lj_times|ctxpopup|close|get).*)$/);
 
     	    return remote_domsess_bounce() if LJ::remote_bounce_url();
             return $bml_handler->("$LJ::HOME/htdocs/games/game.bml");
@@ -1780,6 +1780,11 @@ sub journal_content
     if (my $cb = $LJ::TEMP_PARSE_MAKE_JOURNAL) {
         $cb->(\$html);
     }
+
+    # add crap right after <body>
+    my $after_body_open;
+    LJ::run_hooks('insert_html_after_body_open', \$after_body_open);
+    $html =~ s!(<body.*?>)!$1$after_body_open!i if $after_body_open;
 
     # add crap before </body>
     my $before_body_close = "";
