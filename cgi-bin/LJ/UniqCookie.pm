@@ -159,7 +159,7 @@ sub save_mapping {
     croak "invalid userid arg: $uid_arg"
         unless $uid;
 
-    my $dbh = LJ::get_uniq_db_writer()
+    my $dbh = LJ::get_db_writer()
         or die "unable to contact uniq master for uniq mapping";
 
     # allow tests to specify an insertion time callback which specifies 
@@ -272,7 +272,7 @@ sub _load_mapping_uid {
         return @$memval;
     }
 
-    my $dbh = LJ::get_uniq_db_writer() #FIXME should use reader when appropriate
+    my $dbh = LJ::get_db_writer()
         or die "unable to contact uniq writer";
 
     my $limit = $window_size + 1;
@@ -327,7 +327,7 @@ sub _load_mapping_uniq {
         return @$memval;
     }
 
-    my $dbh = LJ::get_uniq_db_writer() # FIXME switch to reader
+    my $dbh = LJ::get_db_writer()
         or die "unable to contact uniq reader";
 
     my $limit = $window_size + 1;
@@ -379,6 +379,8 @@ sub generate_uniq_ident {
 
 sub ensure_cookie_value {
     my $class = shift;
+    return;
+=head LJSUP-8676: set ljuniq cookie on client side. it allows to cached pages for logged-out users.
     return unless LJ::is_web_context();
 
     return unless LJ::Request->is_inited;
@@ -429,7 +431,6 @@ sub ensure_cookie_value {
     # set this new or transformed uniq in Apache request notes
     $class->set_current_uniq($uniq);
 
-=head LJSUP-8676: set ljuniq cookie on client side. it allows to cached pages for logged-out users.
     if ($setting_new && ! $hook_saved_mapping && ! $class->is_disabled) {
         my $remote = LJ::get_remote();
         $class->save_mapping($uniq => $remote) if $remote;
