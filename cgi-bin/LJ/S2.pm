@@ -4798,7 +4798,7 @@ sub Page__need_res {
         }
 
         my $args = delete $arguments->{'args'};
-        if ( $args && $args !~ /^media="\w+"$/ ) {
+        if ( $args && $args !~ /^media="[\w+\,\s]+"$/ ) {
             undef $args;
         }
 
@@ -4821,7 +4821,7 @@ sub _is_secure_resource {
 
     return $resource =~ /^
                             (?:\w+\/)*   # path
-                            [\w+\-]+     # filename
+                            [\w+\-\.]+     # filename
                             \.
                             (?:js|css)   # extension
                         $/x;

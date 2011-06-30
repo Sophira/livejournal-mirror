@@ -57,10 +57,12 @@ sub _page_head {
     my $head_content = '';
     my $base_url = $u->{'_journalbase'};
 
-    if ($LJ::UNICODE) {
+    if ( $LJ::UNICODE ) {
+        my $charset = $opts->{'saycharset'} || "utf-8";
+
         $head_content .= qq(<meta http-equiv="Content-Type" );
         $head_content .= qq(content="text/html;);
-        $head_content .= qq(charset=$opts->{'saycharset'}" />\n);
+        $head_content .= qq(charset=$charset" />\n);
     }
 
     if ( LJ::are_hooks('s2_head_content_extra') ) {
@@ -206,8 +208,9 @@ sub _friends_page_head {
     $head_content .= qq(/data/yadis/friends" />\n);
 
     my $get = $opts->{'getargs'};
+    my $mode = $get->{'mode'} || '';
 
-    if ( $get->{'mode'} eq "framed" ) {
+    if ( $mode eq "framed" ) {
         $head_content .= "<base target='_top' />";
     }
 
