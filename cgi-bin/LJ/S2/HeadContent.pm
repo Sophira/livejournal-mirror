@@ -133,7 +133,6 @@ sub _page_head {
     if ( $need_block_robots || $self->{type} eq 'FriendsPage' ) {
         $head_content .= LJ::robot_meta_tags();
     }
-
     return $head_content;
 }
 
@@ -144,9 +143,7 @@ sub _entry_page_head {
     my $remote = $self->{remote};
     my $opts = $self->{opts} || {};
 
-    my $head_content = '';
-
-    $head_content .= $opts->{entry_cmtinfo};
+    my $head_content = $opts->{entry_cmtinfo} || '';
 
     if ( $opts->{entry_metadata} ) {
         my %meta = %{ $opts->{entry_metadata} };
@@ -165,7 +162,26 @@ sub _entry_page_head {
         $head_content .= LJ::ehtml( $meta{'image'} );
         $head_content .= qq( " />\n);
     }
+
+    if ( $opts->{dont_show_nav_strip} ) {
+        $head_content .= _get_html_dont_show_navstrip();
+    }
     return $head_content;
+}
+
+sub _get_html_dont_show_navstrip {
+
+    return qq{<style type="text/css">
+                html body {
+                    padding-top: 0 !important;
+                }
+                #lj_controlstrip,
+                .w-cs,
+                .b-message-mobile,
+                .appwidget-sitemessages {
+                    display: none !important;
+                }
+            </style>};
 }
 
 sub _day_page_head {
