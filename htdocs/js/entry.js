@@ -119,16 +119,14 @@ function customboxes(e){
 		return false;
 	}
 
-	var security = $('security');
-
 	var custom_boxes = $('custom_boxes');
 	if(! custom_boxes){
 		return false;
 	}
 
-	updateRepostButtons(security.selectedIndex);
+	updateRepostButtons(f.security.selectedIndex);
 
-	if(security.selectedIndex != 3){
+	if(f.security.selectedIndex != 3){
 		custom_boxes.style.display = 'none';
 		return false;
 	}
@@ -136,7 +134,7 @@ function customboxes(e){
 	var altlogin_username = $('altlogin_username');
 	if(altlogin_username != undefined && (altlogin_username.style.display == 'table-row' || altlogin_username.style
 		.display == 'block')){
-		security.selectedIndex = 0;
+		f.security.selectedIndex = 0;
 		custom_boxes.style.display = 'none';
 		alert("Custom security is only available when posting as the logged in user.");
 	} else {
@@ -1368,6 +1366,8 @@ LJDraft.save = function (drafttext, cb){
 			callback();
 		}
 	};
+
+	drafttext = convertToDraft(drafttext);
 
 	HTTPReq.getJSON({
 		method: 'POST',

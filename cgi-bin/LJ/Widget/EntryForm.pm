@@ -148,7 +148,7 @@ sub need_res {
     push @ret, qw(
         js/ippu.js
         js/lj_ippu.js
-        js/ck/ckeditor.js
+        stc/ck/ckeditor.js
         js/rte.js
         stc/display_none.css
     );
@@ -623,7 +623,7 @@ sub render_subject_block {
     my $switch_rte_link = BML::ml("entryform.htmlokay.rich4", {
         'opts' => 'href="javascript:void(0);" '.
             'onclick="return useRichText(\'draft\', \'' .
-            $LJ::JSPREFIX. '\');"'
+            $LJ::WSTATPREFIX. '\');"'
     });
 
     my $switch_rte_tab = '';
@@ -1453,13 +1453,6 @@ sub render_body {
             'Poll_AccountLevelNotice' => 'poll.accountlevelnotice',
             'Poll_PollWizardTitle' => 'poll.pollwizardtitle',
             'Poll' => 'poll',
-            'LJLike_name' => 'ljlike.name',
-            'LJLike_dialogText' => 'ljlike.dialog.text',
-            'LJLike_button_google' => 'ljlike.button.google',
-            'LJLike_button_facebook' => 'ljlike.button.facebook',
-            'LJLike_button_vkontakte' => 'ljlike.button.vkontakte',
-            'LJLike_button_twitter' => 'ljlike.button.twitter',
-            'LJLike_button_give' => 'ljlike.button.give',
         );
 
         my %langmap_translated = map { $_ => BML::ml("fcklang.$langmap{$_}") }
@@ -1471,8 +1464,9 @@ sub render_body {
         $out .= $self->wrap_js(qq{
             var CKLang = CKEDITOR.lang[CKEDITOR.lang.detect()] || {};
             jQuery.extend(CKLang, $langmap);
-            document.getElementById('htmltools').style.display = 'block';
-            usePlainText('draft');
+						document.getElementById('htmltools').style.display = 'block';
+						document.write("$jnorich");
+						usePlainText('draft');
         });
 
         $out .= qq{
@@ -1483,7 +1477,7 @@ sub render_body {
         };
 
         if ($opts->{'richtext_default'}) {
-            $$onload .= 'useRichText("draft", "' . LJ::ejs($LJ::JSPREFIX) . '");';
+            $$onload .= 'useRichText("draft", "' . LJ::ejs($LJ::WSTATPREFIX) . '");';
         }
     }
 
