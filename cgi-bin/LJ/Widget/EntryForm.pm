@@ -148,7 +148,7 @@ sub need_res {
     push @ret, qw(
         js/ippu.js
         js/lj_ippu.js
-        stc/fck/fckeditor.js
+        js/ck/ckeditor.js
         js/rte.js
         stc/display_none.css
     );
@@ -623,7 +623,7 @@ sub render_subject_block {
     my $switch_rte_link = BML::ml("entryform.htmlokay.rich4", {
         'opts' => 'href="javascript:void(0);" '.
             'onclick="return useRichText(\'draft\', \'' .
-            $LJ::WSTATPREFIX. '\');"'
+            $LJ::JSPREFIX. '\');"'
     });
 
     my $switch_rte_tab = '';
@@ -1010,6 +1010,41 @@ sub render_options_block {
 
             $out .= LJ::help_icon_html("adult_content", "", " ");
             return $out;
+        },
+        'give_features' => sub {
+            my $out = '';
+
+            return unless LJ::is_enabled("give_features");
+            
+            my @give_menu = (
+                "enable"  => BML::ml('entryform.give.enable'),
+                "disable" => BML::ml('entryform.give.disable'),
+            );
+
+            $out .= "<label for='prop_give_features' class='left options'>" .
+                BML::ml('entryform.give') . "</label>\n";
+
+            my $is_enabled;
+            if ($opts->{'mode'} eq "edit") {
+                $is_enabled = $opts->{'prop_give_features'};
+            } else {
+                my $journalu = LJ::load_user($opts->{'usejournal'}) || $remote;
+                $is_enabled = $journalu ? 1 : 0; 
+            }
+
+            $out .= LJ::html_select({
+                name => 'prop_give_features',
+                id => 'prop_give_features',
+                class => 'select',
+                selected => ($is_enabled) ? "enable" : "disable",
+                tabindex => $self->tabindex,
+            }, @give_menu);
+
+            $out .= LJ::help_icon_html("give", "", " ");
+            return $out;
+        },
+        'blank' => sub {
+          return '';  
         },
         'lastfm_logo' => sub {
             return unless $self->should_show_lastfm;
@@ -1418,6 +1453,13 @@ sub render_body {
             'Poll_AccountLevelNotice' => 'poll.accountlevelnotice',
             'Poll_PollWizardTitle' => 'poll.pollwizardtitle',
             'Poll' => 'poll',
+            'LJLike_name' => 'ljlike.name',
+            'LJLike_dialogText' => 'ljlike.dialog.text',
+            'LJLike_button_google' => 'ljlike.button.google',
+            'LJLike_button_facebook' => 'ljlike.button.facebook',
+            'LJLike_button_vkontakte' => 'ljlike.button.vkontakte',
+            'LJLike_button_twitter' => 'ljlike.button.twitter',
+            'LJLike_button_give' => 'ljlike.button.give',
         );
 
         my %langmap_translated = map { $_ => BML::ml("fcklang.$langmap{$_}") }
@@ -1427,21 +1469,10 @@ sub render_body {
 
         my $jnorich = LJ::ejs(LJ::deemp(BML::ml('entryform.htmlokay.norich2')));
         $out .= $self->wrap_js(qq{
-            FCKeditor_IsCompatibleBrowser = (function(FCKeditor_IsCompatibleBrowser) {
-                return function() {
-                    if (/iPad|iPhone/.test(navigator.userAgent)) {
-                        return false;
-                    }
-                    return FCKeditor_IsCompatibleBrowser();
-                };
-            }(FCKeditor_IsCompatibleBrowser));
-            var FCKLang = FCKLang || {};
-            jQuery.extend(FCKLang, $langmap);
-            if (!FCKeditor_IsCompatibleBrowser()) {
-                document.getElementById('htmltools').style.display = 'block';
-                document.write("$jnorich");
-                usePlainText('draft');
-            }
+            var CKLang = CKEDITOR.lang[CKEDITOR.lang.detect()] || {};
+            jQuery.extend(CKLang, $langmap);
+            document.getElementById('htmltools').style.display = 'block';
+            usePlainText('draft');
         });
 
         $out .= qq{
@@ -1452,7 +1483,7 @@ sub render_body {
         };
 
         if ($opts->{'richtext_default'}) {
-            $$onload .= 'useRichText("draft", "' . LJ::ejs($LJ::WSTATPREFIX) . '");';
+            $$onload .= 'useRichText("draft", "' . LJ::ejs($LJ::JSPREFIX) . '");';
         }
     }
 

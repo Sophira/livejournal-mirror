@@ -622,6 +622,56 @@ sub trans
             return $bml_handler->("$LJ::HOME/htdocs/$file");
         }
 
+        if ($opts->{'mode'} eq "ljphotoalbums" && $opts->{'user'} ne 'pics') {
+            my $burl = LJ::remote_bounce_url();
+            return remote_domsess_bounce() if LJ::remote_bounce_url();
+            LJ::Request->notes("_journal" => $opts->{'user'});
+
+            my $u = LJ::load_user($opts->{user});
+            if ($u) {
+                LJ::Request->notes("journalid" => $u->{userid});
+            } else {
+                LJ::Request->pnotes ('error' => 'baduser');
+                LJ::Request->pnotes ('remote' => LJ::get_remote());
+                return LJ::Request::NOT_FOUND;
+            }
+
+            ## For beta-testers only.
+            my $comm = LJ::load_user($LJ::LJPHOTO_ALLOW_FROM_COMMUNITY);
+
+            my %post_params = LJ::Request->post_params;
+            if (!$remote && !LJ::Auth->check_sessionless_auth_token (
+                    $LJ::DOMAIN_WEB."/pics/upload",
+                    auth_token => $post_params{'form_auth'}, 
+                    user => $opts->{user})
+            ) {
+                LJ::Request->pnotes ('error' => 'members');
+                LJ::Request->pnotes ('remote' => LJ::load_user($opts->{'user'}));
+                return LJ::Request::FORBIDDEN;
+            }
+
+            LJ::set_remote (LJ::load_user($opts->{'user'}));
+            $remote = LJ::get_remote();
+
+            unless ($remote && $remote->is_mutual_friend($comm)) {
+                LJ::Request->pnotes ('error' => 'members');
+                LJ::Request->pnotes ('remote' => LJ::get_remote());
+                return LJ::Request::FORBIDDEN;
+            }
+            ##
+
+            unless ($u->is_person) {
+                LJ::Request->pnotes ('error' => 'e404');
+                LJ::Request->pnotes ('remote' => LJ::get_remote());
+                return LJ::Request::FORBIDDEN;
+            }
+
+            # handle normal URI mappings
+            if (my $bml_file = $LJ::URI_MAP{"/pics"}) {
+                return LJ::URI->bml_handler($bml_file);
+            }
+        }
+
         if ($opts->{'mode'} eq "wishlist") {
             return $bml_handler->("$LJ::HOME/htdocs/wishlist.bml");
         }
@@ -673,6 +723,12 @@ sub trans
             return redir(LJ::Session->setdomsess_handler());
         }
 
+        if (LJ::Request->uri eq '/crossdomain.xml') {
+            LJ::Request->handler("perl-script"); 
+            LJ::Request->set_handlers(PerlHandler => \&crossdomain_content); 
+            return LJ::Request::OK;
+        }
+
         if ($uuri =~ m#^/(\d+)\.html$#) { #
             my $u = LJ::load_user($user);
             unless ($u) {
@@ -687,6 +743,9 @@ sub trans
             } else {
                 $mode = "entry";
             }
+
+        } elsif ($uuri =~ m#^/pics#) {
+            $mode = "ljphotoalbums";
 
         } elsif ($uuri =~ m#^/(\d\d\d\d)(?:/(\d\d)(?:/(\d\d))?)?(/?)$#) {
             my ($year, $mon, $day, $slash) = ($1, $2, $3, $4);
@@ -908,7 +967,7 @@ sub trans
             LJ::Request->handler("perl-script");
             LJ::Request->push_handlers(PerlHandler => \&Apache::LiveJournal::Interface::Api::handler);
             return LJ::Request::OK;
-        
+
             LJ::Request->pnotes ('error' => 'e404');
             LJ::Request->pnotes ('remote' => LJ::get_remote());
             return LJ::Request::NOT_FOUND;
