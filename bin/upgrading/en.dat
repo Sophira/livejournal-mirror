@@ -2676,6 +2676,10 @@ fotki.album.close.without.saving.confirm=Do you really want to close without sav
 
 fotki.album.click.image=Click on image to remove it
 
+fotki.album.uploading.image=Uploading image
+
+fotki.album.available.now=Available now
+
 fotki.album.description=Add your description
 
 fotki.album.resize.to.post=Resize to post:
