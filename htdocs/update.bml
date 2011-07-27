@@ -205,7 +205,7 @@ EMBED
                 my $res = $photo->is_valid ? {
                     photo_desc  => $photo->desc,
                     photo_title => $photo->title,
-                    photo_url   => $photo->u100_url,
+                    photo_url   => @photos > 1 ? $photo->u100_url : $photo->u600_url,
                     photo_id    => $photo->url_id,
                 } : undef;
                 $res;
@@ -416,6 +416,10 @@ JS
             ."'fotki.album.resize.to.post': '".BML::ml('fotki.album.resize.to.post')."',"
             ."'fotki.album.stop.upload.confirm': '".BML::ml('fotki.album.stop.upload.confirm')."',"
             ."'fotki.album.close.without.saving.confirm': '".BML::ml('fotki.album.close.without.saving.confirm')."',"
+            ."'fotki.album.uploading.image': '".BML::ml('fotki.album.uploading.image')."',"
+            ."'fotki.album.available.now': '".BML::ml('fotki.album.available.now')."',"
+			."'fotki.album.click.image': '".BML::ml('fotki.album.click.image')."',"
+			."'fotki.album.remove.image': '".BML::ml('fotki.album.remove.image')."',"
             ."'fotki.album.create.new': '".BML::ml('fotki.album.create.new')."'";
         $$body .= <<JS;
         }
@@ -431,14 +435,7 @@ JS
 		.photouploader({
 			insertPhotosData: $insert_photos_json,
 	
-	        type: 'add',
-	        ml: {
-JS
-	            $$body .= "'fotki.album.remove.image': '".BML::ml('fotki.album.remove.image')."',"
-	            ."'fotki.album.close.without.saving.confirm': '".BML::ml('fotki.album.close.without.saving.confirm')."',"
-	            ."'fotki.album.create.new': '".BML::ml('fotki.album.create.new')."'";
-	        $$body .= <<JS;
-	        }
+	        type: 'add'
 	    })
 		.bind('htmlready', function (event, htmlOutput) {
 			if (window.switchedRteOn) {
