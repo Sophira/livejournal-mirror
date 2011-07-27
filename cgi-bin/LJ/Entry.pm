@@ -1445,6 +1445,13 @@ sub extract_metadata {
     return \%meta;
 }
 
+sub is_sticky {
+    my ($self) = @_;
+
+    my $u = $self->{u};
+    return $self->{jitemid} == $u->get_sticky_entry();
+}
+
 package LJ;
 
 use Class::Autouse qw (
@@ -1805,7 +1812,8 @@ sub get_log2_row
 
 sub get_log2_recent_log
 {
-    my ($u, $cid, $update, $notafter, $events_date) = @_;
+    my ($u, $cid, $update, $notafter, $events_date, $exclude_sticky) = @_;
+    $exclude_sticky = $exclude_sticky || 0; # optional
     my $jid = LJ::want_userid($u);
     $cid ||= $u->{'clusterid'} if ref $u;
 
@@ -1934,8 +1942,16 @@ sub get_log2_recent_log
                AND rlogtime >= ($LJ::EndOfTime - " . ($events_date + 24*3600) . ")"
             :
             "AND rlogtime <= ($LJ::EndOfTime - UNIX_TIMESTAMP()) + $max_age"
-         )
-         ;
+         );
+
+    if ( $exclude_sticky ) {
+        my $uobj = LJ::want_user($u);
+        my $sticky = $uobj->get_sticky_entry();
+
+        if ($sticky) {
+            $sql .= " AND jitemid <> $sticky";
+        }
+    }
 
     my $sth = $db->prepare($sql);
     $sth->execute($jid);
@@ -1984,7 +2000,8 @@ sub get_log2_recent_user
     my $ret = [];
 
     my $log = LJ::get_log2_recent_log($opts->{'userid'}, $opts->{'clusterid'},
-              $opts->{'update'}, $opts->{'notafter'}, $opts->{events_date});
+              $opts->{'update'}, $opts->{'notafter'}, $opts->{events_date},
+              $opts->{'exclude_sticky'});
 
     ## UNUSED: my $left     = $opts->{'itemshow'};
     my $notafter = $opts->{'notafter'};
@@ -2331,6 +2348,10 @@ sub delete_entry
 
     # delete all comments
     LJ::delete_all_comments($u, 'L', $jitemid);
+
+    if ( $jitemid == $u->get_sticky_entry() ){
+        $u->remove_sticky_entry();
+    }
 
     return 1;
 }

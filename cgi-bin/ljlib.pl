@@ -916,6 +916,7 @@ sub get_friend_items {
             'dateformat'  => $opts->{'dateformat'},
             'update'      => $LJ::EndOfTime - $fr->[1], # reverse back to normal
             'events_date' => $events_date,
+            'exclude_sticky'   => 1,
         });
 
         # stamp each with clusterid if from cluster, so ljviews and other
@@ -1096,6 +1097,8 @@ sub get_recent_items
         $remote = LJ::load_userid($remoteid);
     }
 
+    my $exclude_sticky = $opts->{exclude_sticky} || 0;
+
     my $max_hints = $LJ::MAX_SCROLLBACK_LASTN;  # temporary
     my $sort_key = "revttime";
 
@@ -1126,6 +1129,9 @@ sub get_recent_items
     #   with 32 bit time_t structs dies)
     my $notafter = $opts->{'notafter'} + 0 || $LJ::EndOfTime - 1;
 
+    # sticky entries array
+    my $sticky = $u->get_sticky_entry();
+
     my $skip = $opts->{'skip'}+0;
     my $itemshow = $opts->{'itemshow'}+0;
     if ($itemshow > $max_hints) { $itemshow = $max_hints; }
@@ -1133,6 +1139,15 @@ sub get_recent_items
     if ($skip < 0) { $skip = 0; }
     if ($skip > $maxskip) { $skip = $maxskip; }
     my $itemload = $itemshow + $skip;
+
+    #
+    # modificate 'usual elements to be shown'
+    #
+    
+    # begin point
+    $skip = ($skip - 1) if ( $sticky && $skip > 0);
+    # elements count
+    my $usual_show = $skip > 0 ? $itemshow  : $itemshow - 1;
 
     my $mask = 0;
     if ($remote && ($remote->{'journaltype'} eq "P" || $remote->{'journaltype'} eq "I") && $remoteid != $userid) {
@@ -1229,6 +1244,7 @@ sub get_recent_items
     }
 
     my $sql;
+    my $sticky_sql;
 
     my $dateformat = "%a %W %b %M %y %Y %c %m %e %d %D %p %i %l %h %k %H";
     if ($opts->{'dateformat'} eq "S2") {
@@ -1256,7 +1272,7 @@ sub get_recent_items
         $sql_select = "AND year=$year AND month=$month AND day=$day";
         $extra_sql .= "allowmask, ";
     } else {
-        $sql_limit  = "LIMIT $skip,$itemshow";
+        $sql_limit  = "LIMIT $skip, $usual_show";
         $sql_select = "AND $sort_key <= $notafter";
     }
 
@@ -1288,20 +1304,28 @@ sub get_recent_items
                allowmask, eventtime, logtime
         FROM log2 USE INDEX ($sort_key)
         WHERE journalid=$userid $sql_select $secwhere $jitemidwhere $securitywhere $posterwhere $after_sql $suspend_where
-        ORDER BY journalid, $sort_key
-        $sql_limit
     };
+
+    if ($sticky) {
+        # build request to receive sticky entries
+        if (!$skip && !$exclude_sticky) {
+            $sticky_sql = "$sql AND jitemid = $sticky ";
+            $sticky_sql .= "ORDER BY journalid, $sort_key ";
+        }
+
+        # sticky exculustion
+        $sql .= "AND jitemid <> $sticky";
+    }
+    
+    $sql .= qq{
+        ORDER BY journalid, $sort_key
+        $sql_limit};
 
     unless ($logdb) {
         $$err = "nodb" if ref $err eq "SCALAR";
         return ();
     }
-
-    $sth = $logdb->prepare($sql);
-    $sth->execute;
-    if ($logdb->err) { die $logdb->errstr; }
-
-    # keep track of the last alldatepart, and a per-minute buffer
+    
     my $last_time;
     my @buf;
 
@@ -1311,19 +1335,29 @@ sub get_recent_items
         @buf = ();
     };
 
-    while (my $li = $sth->fetchrow_hashref) {
-        push @{$opts->{'itemids'}}, $li->{'itemid'};
+    my $absorb_data = sub {
+        my ($sql_request) = @_;
+        $sth = $logdb->prepare($sql_request);
+        $sth->execute;
+        if ($logdb->err) { die $logdb->errstr; }
+    
+        # keep track of the last alldatepart, and a per-minute buffer
+        while (my $li = $sth->fetchrow_hashref) {
+            push @{$opts->{'itemids'}}, $li->{'itemid'};
+    
+            $flush->() if $li->{alldatepart} ne $last_time;
+            push @buf, $li;
+            $last_time = $li->{alldatepart};
+    
+            # construct an LJ::Entry singleton
+            my $entry = LJ::Entry->new($userid, jitemid => $li->{itemid}, rlogtime => $li->{rlogtime});
+            $entry->absorb_row($li);
+            push @{$opts->{'entry_objects'}}, $entry;
+        }
+    };
 
-        $flush->() if $li->{alldatepart} ne $last_time;
-        push @buf, $li;
-        $last_time = $li->{alldatepart};
-
-        # construct an LJ::Entry singleton
-        my $entry = LJ::Entry->new($userid, jitemid => $li->{itemid}, rlogtime => $li->{rlogtime});
-        $entry->absorb_row($li);
-        push @{$opts->{'entry_objects'}}, $entry;
-    }
-
+    $absorb_data->($sticky_sql) if ( $sticky && !$skip && !$exclude_sticky );
+    $absorb_data->($sql);
     $flush->();
 
     if ( exists $opts->{load_props} && $opts->{load_props} ) {

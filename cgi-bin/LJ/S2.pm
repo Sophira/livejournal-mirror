@@ -1971,6 +1971,10 @@ sub Entry
     #   untrusted layers.
     $e->{text_must_print_trusted} = 1 if $e->{text} =~ m!<(script|object|applet|embed|iframe)\b!i;
 
+    if ($entry->is_sticky()) {
+       $e->{'sticky_icon'} = Image_std("sticky-entry");
+    }
+
     return $e;
 }
 
@@ -2109,6 +2113,7 @@ sub Image_std
             'security-protected' => Image("$LJ::IMGPREFIX/icon_protected.gif", 14, 15, $ctx->[S2::PROPS]->{'text_icon_alt_protected'}),
             'security-private' => Image("$LJ::IMGPREFIX/icon_private.gif", 16, 16, $ctx->[S2::PROPS]->{'text_icon_alt_private'}),
             'security-groups' => Image("$LJ::IMGPREFIX/icon_groups.gif", 19, 16, $ctx->[S2::PROPS]->{'text_icon_alt_groups'}),
+            'sticky-entry' => Image("$LJ::IMGPREFIX/icon_sticky.gif", 19, 16, $ctx->[S2::PROPS]->{'text_icon_alt_sticky'}),
         };
     }
     return $LJ::S2::RES_CACHE->{$name};

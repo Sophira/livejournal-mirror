@@ -520,6 +520,19 @@ sub render_metainfo_block {
         </noscript>
     };
 
+    my $sticky = '';
+    if ($opts->{jitemid}) {
+        my $journalu = LJ::load_user($opts->{'usejournal'}) || $remote;
+        my $sticky_entry = $journalu->get_sticky_entry();
+        $sticky = 'checked' if ( $sticky_entry eq $opts->{jitemid});
+    }
+
+    $out .= qq{ <p id='sticky_checkbox'class='pkg'>
+                    <input type='checkbox' name='type' value='sticky' $sticky>
+                        $BML::ML{'entryform.sticky.edit'}
+                    </input> 
+                </p> };
+
     $$onload .= " defaultDate();";
 
     # User Picture

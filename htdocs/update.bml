@@ -12,8 +12,9 @@
     my $body     = \$_[0]->{'body'};
     my $bodyopts = \$_[0]->{'bodyopts'};
     my $onload   = \$_[0]->{'onload'};
-
-    $$title = $ML{'.title2'};
+    
+    my $update_type = $POST{'type'} || $GET{'type'};
+    $$title = ($update_type eq 'sticky') ?  $ML{'.title2_sticky'} : $ML{'.title2'};
 
     # server down?
     if ($LJ::SERVER_DOWN) {
@@ -345,6 +346,10 @@ EMBED
             $$body .= LJ::html_hidden( 'reposted_from' => $reposted_from );
         }
 
+        if ($update_type) {
+            $$body .= LJ::html_hidden( 'type' => $update_type );
+        }
+
         if ($opts->{require_tos}){
             $$body .= LJ::tosagree_html('update', $POST{agree_tos}, $errors->{require_tos});
         }
@@ -456,6 +461,7 @@ EMBED
                     'password'    => $POST{'password'},
                     'usejournal'  => ($usejournalu) ? $usejournalu->user : undef,
                     'tz'          => 'guess',
+                    'type'        => $POST{'type'} || $POST{'type'},
                     );
 
         LJ::entry_form_decode(\%req, \%POST);

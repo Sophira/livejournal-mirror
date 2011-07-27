@@ -1964,6 +1964,14 @@ sub postevent
         !$req->{'props'}->{'opt_backdated'}) {
         return fail($err, 153, "You have an entry which was posted at $u->{'newesteventtime'}, but you're trying to post an entry before this. Please check the date and time of both entries. If the other entry is set in the future on purpose, edit that entry to use the \"Date Out of Order\" option. Otherwise, use the \"Date Out of Order\" option for this entry instead.");
     }
+    
+    if ( $req->{type} && $req->{type} eq 'sticky' &&
+         $uowner->{'journaltype'} eq 'C' &&
+          !( LJ::check_rel($ownerid, $posterid, 'S') ||
+             LJ::check_rel($ownerid, $posterid, 'M') ) )
+    {
+        return fail($err, 174);
+    }
 
     my $qallowmask = $req->{'allowmask'}+0;
     my $security = "public";
@@ -2224,6 +2232,11 @@ sub postevent
                      "0, $req->{'year'}, $req->{'mon'}, $req->{'day'}, $LJ::EndOfTime-".
                      "UNIX_TIMESTAMP($qeventtime), $rlogtime, $anum)");
     return $fail->($err,501,$dberr) if $dberr;
+
+    # post become 'sticky post'
+    if ( $req->{type} && $req->{type} eq 'sticky' ) {
+        $uowner->set_sticky($jitemid);
+    }
 
     LJ::MemCache::incr([$ownerid, "log2ct:$ownerid"]);
     LJ::memcache_kill($ownerid, "dayct2");
@@ -2622,6 +2635,10 @@ sub editevent
             }
         };
 
+        if ( $itemid == $uowner->get_sticky_entry() ) {
+            $u->remove_sticky();
+        }
+
         return $res;
     }
 
@@ -2652,6 +2669,17 @@ sub editevent
     ### load existing meta-data
     my %curprops;
     LJ::load_log_props2($dbcm, $ownerid, [ $itemid ], \%curprops);
+
+    # make post sticky
+    if ( $req->{type} && $req->{type} eq 'sticky') {
+        if( $uowner->get_sticky_entry() != $itemid ) {
+            $uowner->set_sticky($itemid);
+            LJ::MemCache::delete([$ownerid, "log2lt:$ownerid"]);
+        }
+    } elsif ( $itemid == $uowner->get_sticky_entry() ) {
+        $uowner->remove_sticky();
+        LJ::MemCache::delete([$ownerid, "log2lt:$ownerid"]);
+    }
 
     ## give features
     my $give_features = $req->{'props'}->{'give_features'};

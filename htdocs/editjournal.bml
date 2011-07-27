@@ -201,10 +201,11 @@ body<=
                 return LJ::bad_input($ML{'error.invalidform'}) unless LJ::check_form_auth();
 
                 my %req = (
-                            'ver' => $LJ::PROTOCOL_VER,
-                            'username' => $u->{'user'},
+                            'ver'        => $LJ::PROTOCOL_VER,
+                            'username'   => $u->{'user'},
                             'usejournal' => $usejournal,
-                            'itemid' => $itemid,
+                            'itemid'     => $itemid,
+                            'type'       => $POST{'type'} || $POST{'type'},
                             );
                 LJ::entry_form_decode(\%req, \%POST);
 
@@ -381,6 +382,7 @@ body<=
                 'disabled_spamdelete' => $disabled_spamdelete,
                 'suspended' => $suspend_msg,
                 'unsuspend_supportid' => $suspend_msg ? $entry_obj->prop("unsuspend_supportid") : 0,
+                'jitemid' => $itemid,
             };
             for (my $i = 1; $i <= $res{'prop_count'}; $i++) {
                 $entry->{"prop_" . $res{"prop_${i}_name"}} = $res{"prop_${i}_value"};

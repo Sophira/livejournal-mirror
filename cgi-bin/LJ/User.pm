@@ -6148,6 +6148,25 @@ sub is_spamprotection_enabled {
     return 0;
 }
 
+# returns sticky entry jitemid
+sub get_sticky_entry {
+    my ($self) = @_;
+    return $self->prop("sticky_entries") || '';
+}
+
+# returns sticky entry jitemid
+sub remove_sticky {
+    my ($self) = @_;
+    $self->clear_prop("sticky_entries");
+}
+
+# set sticky entry? 
+sub set_sticky {
+    my ($self, $itemid) = @_;
+    die "itemid is not set" unless ($itemid);
+    $self->set_prop( sticky_entries => $itemid );
+}
+
 package LJ;
 
 use Carp;

@@ -1694,3 +1694,10 @@ userproplist.javascript:
   indexed: 0
   multihomed: 1
   cldversion: 8
+
+userproplist.sticky_entries:
+  datatype: char
+  des: Sticky entries ids
+  indexed: 0
+  prettyname: Sticky enries
+
