@@ -2642,6 +2642,8 @@ fotki.album.album_cover=Album cover
 
 fotki.album.albums_of=albums of
 
+fotki.album.default_album_name=Unsorted
+
 fotki.album.edit.save=Save
 
 fotki.album.edit.cancel=Cancel

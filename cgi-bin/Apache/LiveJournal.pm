@@ -650,6 +650,7 @@ sub trans
                 return LJ::Request::FORBIDDEN;
             }
 
+            LJ::set_remote ($u) unless $remote;
             $remote = LJ::get_remote();
             unless ($remote && $remote->is_mutual_friend($comm)) {
                 LJ::Request->pnotes ('error' => 'members');
