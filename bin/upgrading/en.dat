@@ -2650,6 +2650,14 @@ fotki.album.edit.cancel=Cancel
 
 fotki.album.edit.empty=&nbsp;
 
+fotki.album.edit.empty.photo.title=(no title)
+
+fotki.album.edit.empty.photo.desc=(no description)
+
+fotki.album.edit.empty.album.title=(no title)
+
+fotki.album.edit.empty.album.desc=(no description)
+
 fotki.album.create.new=(Create new)
 
 fotki.album.add.photos=You can add one or more photos at once using "Ctrl" button or "Shift"
@@ -2683,6 +2691,8 @@ fotki.album.uploading.image=Uploading image
 fotki.album.available.now=Available now
 
 fotki.album.description=Add your description
+
+fotki.album.no.photo=No photo
 
 fotki.album.resize.to.post=Resize to post:
 
