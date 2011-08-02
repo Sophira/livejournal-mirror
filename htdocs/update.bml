@@ -385,16 +385,18 @@ EMBED
         # TODO If remote not exist?
         #####
         my $auth_token = LJ::Auth->sessionless_auth_token ($LJ::DOMAIN_WEB."/pics/upload", user => $remote ? $remote->user : undef);
+        my $user_groups = LJ::JSON->to_json (LJ::Widget::Fotki::Photo->get_user_groups ($remote));
         LJ::need_res('stc/pics/pics.css', 'js/swfupload/swfupload.js', 'js/swfupload/swfupload.queue.js', 'js/jquery/jquery.lj.photouploader.js');
         $$body .= <<JS;
 <script type="text/javascript">
 // TODO: remove after new PhotoHosting release
 window.ljphotoEnabled = true;	
 	
-    jQuery('#content').photouploader({
+    jQuery('body').photouploader({
 		availableSpace: '$available_space',
 		sizesData: $photo_sizes,
         albumsData: $album_list_json,
+        privacyData: $user_groups,
 
         type: 'upload',
         guid: '$auth_token',
@@ -431,7 +433,7 @@ JS
             my $insert_photos_json = LJ::JSON->to_json ( $insert_photos );
 			$$body .= <<JS;
 <script type="text/javascript">
-    jQuery('#content')
+    jQuery('body')
 		.photouploader({
 			insertPhotosData: $insert_photos_json,
 	
