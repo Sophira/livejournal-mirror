@@ -963,7 +963,7 @@ InOb.handleInsertEmbed = function (){
 InOb.handleInsertImage = function (){
 	// if PhotoHosting enabled - show new popup
 	if (window.ljphotoEnabled) {
-		jQuery('#content')
+		jQuery('body')
 			.photouploader('option', 'type', 'upload')
 			.bind('htmlready', function (event, htmlOutput) {
 				jQuery('#draft').val(jQuery('#draft').val() + htmlOutput);
