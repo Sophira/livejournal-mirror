@@ -387,12 +387,23 @@ EMBED
         my $auth_token = LJ::Auth->sessionless_auth_token ($LJ::DOMAIN_WEB."/pics/upload", user => $remote ? $remote->user : undef);
         my $user_groups = LJ::JSON->to_json (LJ::Widget::Fotki::Photo->get_user_groups ($remote));
         LJ::need_res('stc/pics/pics.css', 'js/swfupload/swfupload.js', 'js/swfupload/swfupload.queue.js', 'js/jquery/jquery.lj.photouploader.js');
+		
+		$$body .= "\n\n<form method='post' action='update.bml$getextra' id='updateForm' name='updateForm'>\n\n";
+        $$body .= LJ::form_auth();
+
+        if ($opts->{require_tos}){
+            $$body .= LJ::tosagree_html('update', $POST{agree_tos}, $errors->{require_tos});
+        }
+
+        $$body .= LJ::entry_form($entry, \$$head, $onload, $errors);
+        $$body .= "</form><!-- end #updateForm -->\n";
+		
         $$body .= <<JS;
 <script type="text/javascript">
 // TODO: remove after new PhotoHosting release
 window.ljphotoEnabled = true;	
-	
-    jQuery('body').photouploader({
+
+    jQuery('#updateForm').photouploader({
 		availableSpace: '$available_space',
 		sizesData: $photo_sizes,
         albumsData: $album_list_json,
@@ -400,6 +411,7 @@ window.ljphotoEnabled = true;
 
         type: 'upload',
         guid: '$auth_token',
+		
         ml: {
 JS
             $$body .= "'fotki.album.add.images': '".BML::ml('fotki.album.albums')."',"
@@ -433,7 +445,7 @@ JS
             my $insert_photos_json = LJ::JSON->to_json ( $insert_photos );
 			$$body .= <<JS;
 <script type="text/javascript">
-    jQuery('body')
+    jQuery('#updateForm')
 		.photouploader({
 			insertPhotosData: $insert_photos_json,
 	
@@ -446,22 +458,11 @@ JS
 				jQuery('#draft').val(jQuery('#draft').val() + htmlOutput);
 			}
 		})
-		.photouploader('show');
-	
+		.photouploader('show');		
 </script>
 JS
 			
         }
-		
-		$$body .= "\n\n<form method='post' action='update.bml$getextra' id='updateForm' name='updateForm'>\n\n";
-        $$body .= LJ::form_auth();
-
-        if ($opts->{require_tos}){
-            $$body .= LJ::tosagree_html('update', $POST{agree_tos}, $errors->{require_tos});
-        }
-
-        $$body .= LJ::entry_form($entry, \$$head, $onload, $errors);
-        $$body .= "</form><!-- end #updateForm -->\n";
 
         $$body .= LJ::Widget::SettingProdDisplay->render;
 
