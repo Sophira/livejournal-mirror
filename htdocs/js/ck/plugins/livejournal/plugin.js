@@ -230,7 +230,7 @@
 			//////////  LJ Image Button //////////////
 			editor.addCommand('LJImage', {
 				exec : function(editor){
-					jQuery('body')
+					jQuery('#updateForm')
 						.photouploader({
 							type: 'upload'
 						})
