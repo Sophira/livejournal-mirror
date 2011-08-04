@@ -430,6 +430,7 @@ JS
             ."'fotki.album.resize.to.post': '".BML::ml('fotki.album.resize.to.post')."',"
             ."'fotki.album.stop.upload.confirm': '".BML::ml('fotki.album.stop.upload.confirm')."',"
             ."'fotki.album.close.without.saving.confirm': '".BML::ml('fotki.album.close.without.saving.confirm')."',"
+            ."'fotki.album.upload.unknown.error': '".BML::ml('fotki.album.upload.unknown.error')."',"
             ."'fotki.album.uploading.image': '".BML::ml('fotki.album.uploading.image')."',"
             ."'fotki.album.available.now': '".BML::ml('fotki.album.available.now')."',"
 			."'fotki.album.click.image': '".BML::ml('fotki.album.click.image')."',"
