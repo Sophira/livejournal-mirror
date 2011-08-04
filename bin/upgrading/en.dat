@@ -2680,6 +2680,8 @@ fotki.album.add.to.entry=Add to entry
 
 fotki.album.btn.upload=Upload
 
+fotki.album.upload.unknown.error=Unknown error
+
 fotki.album.stop.upload.confirm=Do you really want to stop upload and close without saving?
 
 fotki.album.close.without.saving.confirm=Do you really want to close without saving?
