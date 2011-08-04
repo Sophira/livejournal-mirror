@@ -386,6 +386,8 @@ EMBED
         #####
         my $auth_token = LJ::Auth->sessionless_auth_token ($LJ::DOMAIN_WEB."/pics/upload", user => $remote ? $remote->user : undef);
         my $user_groups = LJ::JSON->to_json (LJ::Widget::Fotki::Photo->get_user_groups ($remote));
+		my $comm = LJ::load_user($LJ::LJPHOTO_ALLOW_FROM_COMMUNITY);
+		my $ljphoto_enabled = $remote && $remote->is_mutual_friend($comm) ? 1 : 0;
         LJ::need_res('stc/pics/pics.css', 'js/swfupload/swfupload.js', 'js/swfupload/swfupload.queue.js', 'js/jquery/jquery.lj.photouploader.js');
 		
 		$$body .= "\n\n<form method='post' action='update.bml$getextra' id='updateForm' name='updateForm'>\n\n";
@@ -400,9 +402,7 @@ EMBED
 		
         $$body .= <<JS;
 <script type="text/javascript">
-// TODO: remove after new PhotoHosting release
-window.ljphotoEnabled = true;	
-
+	window.ljphotoEnabled = $ljphoto_enabled;
     jQuery('#updateForm').photouploader({
 		availableSpace: '$available_space',
 		sizesData: $photo_sizes,
