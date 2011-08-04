@@ -230,19 +230,27 @@
 			//////////  LJ Image Button //////////////
 			editor.addCommand('LJImage', {
 				exec : function(editor){
-					jQuery('#updateForm')
-						.photouploader({
-							type: 'upload'
-						})
-						.photouploader('show')
-							.bind('htmlready', function (event, html) {
-								editor.insertHtml(html);
-							});
+					if (window.ljphotoEnabled){
+						jQuery('#updateForm')
+							.photouploader({
+								type: 'upload'
+							})
+							.photouploader('show')
+								.bind('htmlready', function (event, html) {
+									editor.insertHtml(html);
+								});
+					} else {
+						if (ljNoteData.LJImage.node){
+							editor.getSelection().selectElement(ljNoteData.LJImage.node);
+						}
+
+						editor.getCommand('image').exec();
+					}					
 				}
 			});
 
 			editor.ui.addButton('LJImage', {
-				label: 'Add Image',
+				label: editor.lang.common.imageButton,
 				command: 'LJImage'
 			});
 
