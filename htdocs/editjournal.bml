@@ -425,7 +425,7 @@ body<=
     </script>
 };
 
-            $ret .= LJ::Widget::SettingProdDisplay->render;
+            $ret .= LJ::Widget::SettingWindow->render;
 
             return $ret;
         }
@@ -582,7 +582,7 @@ body<=
 
         $ret .= "</td></tr></table>";
 
-        $ret .= LJ::Widget::SettingProdDisplay->render;
+        $ret .= LJ::Widget::SettingWindow->render;
 
         return $ret;
     }
