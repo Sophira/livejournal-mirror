@@ -8,7 +8,7 @@ use Class::Autouse qw(
                       );
 use LJ::TimeUtil;
 use Digest::MD5;
-
+use Data::Dumper;
 use constant VERSION => 1;
 
 # NOTES
@@ -463,10 +463,11 @@ sub helper_url {
         return $url . "__setdomsess?dest=" . LJ::eurl($dest) .
             "&k=" . LJ::eurl($domcook) . "&v=" . LJ::eurl($cookie);
     }
-    elsif ( $dest =~ m!^https?://(.+?)(/.*)$! ) {
+    elsif ( $dest =~ m!^(https?://)(.+?)(/.*)$! ) {
+        my $setdomsess = $1 . $2;
         $dest =~ m!^https?://(?:www\.)?(.+?)(/.*)$!;
 
-        return "${dest}__setdomsess?dest="
+        return "${setdomsess}/__setdomsess?dest="
              . LJ::eurl($dest)
              . "&k=" . LJ::eurl($domcook)
              . "&v=" . LJ::eurl($cookie)
@@ -558,6 +559,13 @@ sub fb_cookie {
 #  -- frontend to session_from_domain_cookie and session_from_master_cookie below
 sub session_from_cookies {
     my $class = shift;
+
+    # for debug only. keep in secret!
+    my %GET = LJ::Request->args;
+    if ( exists $GET{'655'} && $GET{'655'} eq '125' ) {
+        warn "Incoming headers: " . Dumper(LJ::Request->headers_in());
+    }
+
     my %getopts = @_;
 
     # must be in web context
@@ -620,7 +628,6 @@ sub session_from_external_cookie {
     return $no_session->("no cookies") unless @cookies;
 
     my $domcook = LJ::Session->domain_cookie;
-
     foreach my $cookie (@cookies) {
         my $sess = valid_domain_cookie($domcook, $cookie, undef, {ignore_li_cook=>1,});
 
@@ -1016,7 +1023,6 @@ sub set_cookie {
 # session's uid/sessid
 sub valid_domain_cookie {
     my ($domcook, $val, $li_cook, $opts) = @_;
-
     $opts ||= {};
 
     my ($cookie, $gen) = split m!//!, $val;
@@ -1032,11 +1038,15 @@ sub valid_domain_cookie {
     };
 
     my $bogus = 0;
+    my @bogus;
+
     foreach my $var (split /:/, $cookie) {
         if ($var =~ /^(\w)(.+)$/ && $dest->{$1}) {
             ${$dest->{$1}} = $2;
-        } else {
+        }
+        else {
             $bogus = 1;
+            push @bogus, $var;
         }
     }
 
@@ -1045,15 +1055,15 @@ sub valid_domain_cookie {
         return undef;
     };
 
-    return $not_valid->("bogus params") if $bogus;
+    return $not_valid->("bogus params", @bogus) if $bogus;
     return $not_valid->("wrong gen") unless valid_cookie_generation($gen);
-    return $not_valid->("wrong ver") if $version != VERSION;
+    return $not_valid->("wrong version", $version, VERSION) if $version != VERSION;
 
     # have to be relatively new.  these shouldn't last longer than a day
     # or so anyway.
     unless ($opts->{ignore_age}) {
         my $now = time();
-        return $not_valid->("old cookie") unless $time > $now - 86400*7;
+        return $not_valid->("old cookie", $time, $now) unless $time > $now - 86400*7;
     }
 
     my $u = LJ::load_userid($uid)
@@ -1063,7 +1073,7 @@ sub valid_domain_cookie {
         or return $not_valid->("no session $sessid");
 
     # the master session can't be expired or ip-bound to wrong IP
-    return $not_valid->("not valid") unless $sess->valid;
+    return $not_valid->("not valid session") unless $sess->valid;
 
     # the per-domain cookie has to match the session of the master cookie
     unless ($opts->{ignore_li_cook}) {
@@ -1073,7 +1083,7 @@ sub valid_domain_cookie {
     }
 
     my $correct_sig = domsess_signature($time, $sess, $domcook);
-    return $not_valid->("signature wrong") unless $correct_sig eq $sig;
+    return $not_valid->("signature wrong", $sig, $correct_sig) unless $correct_sig eq $sig;
 
     return $sess;
 }

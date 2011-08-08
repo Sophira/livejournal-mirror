@@ -9984,6 +9984,7 @@ sub can_delete_journal_item {
 # </LJFUNC>
 sub get_remote {
     my $opts = ref $_[0] eq "HASH" ? shift : {};
+
     return $LJ::CACHE_REMOTE if $LJ::CACHED_REMOTE && ! $opts->{'ignore_ip'};
 
     my $no_remote = sub {

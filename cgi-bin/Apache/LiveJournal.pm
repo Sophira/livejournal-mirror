@@ -195,18 +195,19 @@ sub handler
     # try to match controller
     LJ::Mob::Router::match_controller();
 
-    if(my $controller = LJ::Request->notes('controller')) {
+    if ( my $controller = LJ::Request->notes('controller') ) {
         my $url = $controller->check_access(LJ::Request->notes('branding_id'), LJ::get_remote_ip);
-        if(LJ::Request->notes('method') eq '__setdomsess') {
+        if ( LJ::Request->notes('method') eq '__setdomsess' ) {
             return redir(LJ::Session->setdomsess_handler())
-        } else {
+        }
+        else {
             my $session = LJ::Session->session_from_cookies(
                 tried_fast   => 0,
                 redirect_ref => \$LJ::CACHE_REMOTE_BOUNCE_URL,
                 ignore_ip    => 1
             );
 
-            if( !$session && $LJ::CACHE_REMOTE_BOUNCE_URL ) {
+            if ( !$session && $LJ::CACHE_REMOTE_BOUNCE_URL ) {
                 return redir($LJ::CACHE_REMOTE_BOUNCE_URL);
             }
         }
