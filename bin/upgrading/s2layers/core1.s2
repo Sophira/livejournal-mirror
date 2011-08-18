@@ -351,6 +351,7 @@ class Entry extends EntryLite
     var readonly string security "The security level of the entry ('private', 'protected'), or blank if public.";
     var Image security_icon "A little icon which should be displayed somewhere on an entry to represent the security setting";
     var Image sticky_icon "A little icon which should be displyaed somewhere on an entry to represent the sticky setting";
+    var Image delayed_icon "A little icon which should be displyaed somewhere on an entry to represent the delayed entry";
 
     var Image mood_icon "Mood icon, or null.";
     var CommentInfo comments "Comment information on this entry";
@@ -2522,7 +2523,7 @@ function Page::print_entry_poster(Entry e) {
 function Page::print_entry(Entry e) {
     ## For most styles, this will be overridden by FriendsPage::print_entry and such.
     """<div class="entry" id="$e.dom_id">\n""";
-    "<h3>$e.sticky_icon $e.security_icon $e.subject</h3>\n";
+    "<h3>#e.delayed_icon $e.sticky_icon $e.security_icon $e.subject</h3>\n";
     if ($.view == "friends" or $e.poster.username != $e.journal.username) {
         "<div>"; $this->print_entry_poster($e); "</div>";
     }
