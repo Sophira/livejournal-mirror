@@ -104,7 +104,7 @@ sub END { LJ::end_request(); }
                     "logprop_history",
                     "comet_history", "pingrel",
                     "eventrates", "eventratescounters",
-                    "friending_actions_q",
+                    "friending_actions_q", "delayedlog2", "delayedblob2",
                     );
 
 # keep track of what db locks we have out
@@ -916,7 +916,6 @@ sub get_friend_items {
             'dateformat'  => $opts->{'dateformat'},
             'update'      => $LJ::EndOfTime - $fr->[1], # reverse back to normal
             'events_date' => $events_date,
-            'exclude_sticky'   => 1,
         });
 
         # stamp each with clusterid if from cluster, so ljviews and other
@@ -1097,7 +1096,7 @@ sub get_recent_items
         $remote = LJ::load_userid($remoteid);
     }
 
-    my $exclude_sticky = $opts->{exclude_sticky} || 0;
+    my $show_sticky_on_top = $opts->{show_sticky_on_top} || 0;
 
     my $max_hints = $LJ::MAX_SCROLLBACK_LASTN;  # temporary
     my $sort_key = "revttime";
@@ -1139,18 +1138,18 @@ sub get_recent_items
     if ($skip < 0) { $skip = 0; }
     if ($skip > $maxskip) { $skip = $maxskip; }
     my $itemload = $itemshow + $skip;
-
-    #
-    # modificate 'usual elements to be shown'
-    #
+    my $usual_show  = $itemshow;
     
-    # begin point
-    $skip = ($skip - 1) if ( $sticky && $skip > 0);
-    # elements count
-    my $usual_show = $skip > 0 ? $itemshow  : $itemshow - 1;
-
+    if ($show_sticky_on_top && $sticky && $skip > 0)
+    {
+        $skip -= 1;
+    } else {
+        $usual_show -= 1 if $sticky;
+    }
+    
     my $mask = 0;
-    if ($remote && ($remote->{'journaltype'} eq "P" || $remote->{'journaltype'} eq "I") && $remoteid != $userid) {
+    if ($remote && ($remote->{'journaltype'} eq "P" || 
+        $remote->{'journaltype'} eq "I") && $remoteid != $userid) {
         $mask = LJ::get_groupmask($userid, $remoteid);
     }
 
@@ -1306,9 +1305,9 @@ sub get_recent_items
         WHERE journalid=$userid $sql_select $secwhere $jitemidwhere $securitywhere $posterwhere $after_sql $suspend_where
     };
 
-    if ($sticky) {
+    if ( $sticky && $show_sticky_on_top ) {
         # build request to receive sticky entries
-        if (!$skip && !$exclude_sticky) {
+        if (!$skip) {
             $sticky_sql = "$sql AND jitemid = $sticky ";
             $sticky_sql .= "ORDER BY journalid, $sort_key ";
         }
@@ -1319,7 +1318,7 @@ sub get_recent_items
     
     $sql .= qq{
         ORDER BY journalid, $sort_key
-        $sql_limit};
+        $sql_limit };
 
     unless ($logdb) {
         $$err = "nodb" if ref $err eq "SCALAR";
@@ -1356,7 +1355,7 @@ sub get_recent_items
         }
     };
 
-    $absorb_data->($sticky_sql) if ( $sticky && !$skip && !$exclude_sticky );
+    $absorb_data->($sticky_sql) if ( $sticky && !$skip && $show_sticky_on_top);
     $absorb_data->($sql);
     $flush->();
 

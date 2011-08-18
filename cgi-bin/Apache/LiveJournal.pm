@@ -788,8 +788,23 @@ sub trans {
                 $mode = "entry";
             }
 
-        }
-        elsif ( $uuri =~ m|^/(\d\d\d\d)(?:/(\d\d)(?:/(\d\d))?)?(/?)$| ) {
+        } elsif ($uuri =~ m|^/d(\d+)\.html$|)  { 
+            my $u = LJ::load_user($user);
+            
+            unless ($u) {
+                LJ::Request->pnotes ('error' => 'baduser');
+                LJ::Request->pnotes ('remote' => LJ::get_remote());
+                return LJ::Request::NOT_FOUND;
+            }
+            
+            $ljentry = LJ::DelayedEntry->get_entry_by_id($u, $1);
+            
+            if ( $GET{'mode'} eq "reply" || $GET{'replyto'} || $GET{'edit'} ) {
+                $mode = "reply";
+            } else {
+                $mode = "entry";
+            }
+        } elsif ( $uuri =~ m|^/(\d\d\d\d)(?:/(\d\d)(?:/(\d\d))?)?(/?)$| ) {
             my ($year, $mon, $day, $slash) = ($1, $2, $3, $4);
 
             unless ( $slash ) {

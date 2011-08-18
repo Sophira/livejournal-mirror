@@ -6148,6 +6148,12 @@ sub is_spamprotection_enabled {
     return 0;
 }
 
+# return sticky entries existing
+sub has_sticky_entry {
+    my ($self) = @_;
+    return !!$self->prop("sticky_entries");
+}
+
 # returns sticky entry jitemid
 sub get_sticky_entry {
     my ($self) = @_;
@@ -7029,6 +7035,7 @@ sub remote_has_priv
 #       'O' == pOrtal box id, 'V' == 'vgift', 'E' == ESN subscription id
 #       'Q' == Notification Inbox, 'G' == 'SMS messaGe'
 #       'D' == 'moDule embed contents', 'W' == 'Wish-list element'
+#       'Y' == delaYed entries
 #
 # FIXME: both phonepost and vgift are ljcom.  need hooks. but then also
 #        need a separate namespace.  perhaps a separate function/table?
@@ -7039,7 +7046,7 @@ sub alloc_user_counter
 
     ##################################################################
     # IF YOU UPDATE THIS MAKE SURE YOU ADD INITIALIZATION CODE BELOW #
-    return undef unless $dom =~ /^[LTMPSRKCOVEQGDW]$/;               #
+    return undef unless $dom =~ /^[LTMPSRKCOVEQGDWY]$/;               #
     ##################################################################
 
     my $dbh = LJ::get_db_writer();
@@ -7156,6 +7163,9 @@ sub alloc_user_counter
                                       undef, $uid);
     } elsif ($dom eq "W") {
         $newmax = $u->selectrow_array("SELECT MAX(wishid) FROM wishlist2 WHERE userid=?",
+                                      undef, $uid);
+    } elsif ($dom eq "Y") {
+        $newmax = $u->selectrow_array("SELECT MAX(delayedid) FROM delayedlog2 WHERE journalid=?",
                                       undef, $uid);
     } else {
         die "No user counter initializer defined for area '$dom'.\n";
@@ -7768,6 +7778,14 @@ sub get_daycounts
         # so they store smaller in memcache
         push @days, [ int($y), int($m), int($d), int($c) ];
     }
+    
+    $sth = LJ::DelayedEntry->get_daycount_query($u, $secwhere);
+    while (my ($y, $m, $d, $c) = $sth->fetchrow_array) {
+        # we force each number from string scalars (from DBI) to int scalars,
+        # so they store smaller in memcache
+        push @days, [ int($y), int($m), int($d), int($c) ];
+    }
+    
     LJ::MemCache::set($memkey, [time, @days]);
     $release_lock->();
     return \@days;

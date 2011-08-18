@@ -480,16 +480,8 @@ sub render_metainfo_block {
     $datetime .= "<noscript>" .  LJ::html_hidden("date_diff_nojs", "1") .
         "</noscript>";
 
-    my $backdate_check = LJ::html_check({
-        'type' => "check",
-        'id' => "prop_opt_backdated",
-        'name' => "prop_opt_backdated",
-        "value" => 1,
-        'selected' => $opts->{'prop_opt_backdated'},
-        'tabindex' => $self->tabindex
-    });
-
-    my $backdate_help_icon = LJ::help_icon_html("backdate", "", "");
+    my $timeZones = option($remote);
+    my $help_icon = LJ::help_icon("24hourshelp");
 
     $out .= qq{
         <p class='pkg'>
@@ -502,15 +494,13 @@ sub render_metainfo_block {
                 </span>
                 <a href='javascript:void(0)' onclick='editdate();'
                     id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
+                $help_icon
             </span>
             <span id='modifydate'>$datetime
                 <?de $BML::ML{'entryform.date.24hournote'} de?>
+                
             <br />
-            $backdate_check
-            <label for='prop_opt_backdated' class='right'>
-                $BML::ML{'entryform.backdated3'}
-            </label>
-            $backdate_help_icon
+            $timeZones
             </span><!-- end #modifydate -->
         </p>
         <noscript>
@@ -519,19 +509,6 @@ sub render_metainfo_block {
             </p>
         </noscript>
     };
-
-    my $sticky = '';
-    if ($opts->{jitemid}) {
-        my $journalu = LJ::load_user($opts->{'usejournal'}) || $remote;
-        my $sticky_entry = $journalu->get_sticky_entry();
-        $sticky = 'checked' if ( $sticky_entry eq $opts->{jitemid});
-    }
-
-    $out .= qq{ <p id='sticky_checkbox'class='pkg'>
-                    <input type='checkbox' name='type' value='sticky' $sticky>
-                        $BML::ML{'entryform.sticky.edit'}
-                    </input> 
-                </p> };
 
     $$onload .= " defaultDate();";
 
@@ -744,6 +721,36 @@ sub render_options_block {
     $out .= "<div id='options' class='pkg'>";
 
     my %blocks = (
+        'sticky' => sub {
+            my $is_checked = sub {
+                if ($opts->{jitemid}) {
+                    my $journalu = LJ::load_user($opts->{'usejournal'}) || $remote;
+                    my $sticky_entry = $journalu->get_sticky_entry();
+                    if ( $sticky_entry eq $opts->{jitemid} ) {
+                        return 'checked' 
+                    }
+                }
+                
+                if ($opts->{delayed_sticky}) {
+                    return 'checked'
+                }
+            };
+                
+            my $sticky_check = LJ::html_check({
+                'type' => "check",
+                'class' => 'sticky_type',
+                'value' => 'sticky',
+                'name' => 'type',
+                'id' => 'sticky_type',
+                'selected' => $is_checked->(),
+                $opts->{'prop_opt_preformatted'} || $opts->{'event_format'},
+                'label' => "",
+            });
+            
+            return qq{$sticky_check <label for='prop_sticky' class='right options'>
+                    $BML::ML{'entryform.sticky.edit'}
+                </label>};
+        },
         'tags' => sub {
             return if $LJ::DISABLED{'tags'};
 
@@ -1074,40 +1081,6 @@ sub render_options_block {
         },
         'spellcheck' => sub {
             my $out = '';
-
-            # extra submit button so make sure it posts the form when
-            # person presses enter key
-            my %action_map = (
-                'edit' => 'save',
-                'update' => 'update',
-            );
-            if (my $action = $action_map{$opts->{'mode'}}) {
-                $out .= qq{
-                    <input type='submit' name='action:$action'
-                        class='hidden_submit' />
-                };
-            }
-            my $preview_tabindex = $self->tabindex;
-            my $preview = qq{
-                <input
-                    type="button"
-                    value="$BML::ML{'entryform.preview'}"
-                    onclick="entryPreview(this.form)"
-                    tabindex="$preview_tabindex"
-                />
-            };
-            $preview =~ s/\s+/ /sg; # JS doesn't like newlines in string
-                                    # literals
-
-            unless ($opts->{'disabled_save'}) {
-                $out .= $self->wrap_js(qq{
-                    if (document.getElementById) {
-                        setTimeout( function() {
-                            jQuery( '$preview' ).prependTo( '#entryform-spellcheck-wrapper' );
-                        }, 0 );
-                    }
-                });
-            }
             if ($LJ::SPELLER && !$opts->{'disabled_save'}) {
                 $out .= LJ::html_submit(
                     'action:spellcheck',
@@ -1115,8 +1088,10 @@ sub render_options_block {
                     { 'tabindex' => $self->tabindex }
                 ) . "&nbsp;";
             }
-
-            return $out;
+            
+            return qq{<label for='prop_sticky' class='right options'>
+                $BML::ML{'entryform.spellcheck'}
+                </label> $out};
         },
     );
 
@@ -1125,8 +1100,9 @@ sub render_options_block {
         [ 'mood', 'comment_settings' ],
         [ 'location', 'comment_screening' ],
         [ 'music', 'content_flag' ],
+        [ 'spellcheck', 'sticky' ], 
         'extra',
-        [ 'lastfm_logo', 'spellcheck' ],
+        [ 'lastfm_logo'  ],
     );
 
     unless ($opts->{'disabled_save'}) {
@@ -1278,7 +1254,44 @@ sub render_submitbar_block {
 
     $out .= "<div id='security_container'>\n";
     $out .= "<label for='security'>" . BML::ml('entryform.security2') . " </label>\n";
+    
+    # preview button 
+    
+    # extra submit button so make sure it posts the form when
+    # person presses enter key
+    my %action_map = (  'edit' => 'save',
+                        'update' => 'update', );
+    
+    if (my $action = $action_map{$opts->{'mode'}}) {
+        $out .= qq{
+            <input type='submit' name='action:$action'
+            class='hidden_submit' />
+        };
+    }
+    
+    my $preview_tabindex = $self->tabindex;
+    my $preview = qq{
+        <input
+        type="button"
+        value="$BML::ML{'entryform.preview'}"
+        onclick="entryPreview(this.form)"
+        tabindex="$preview_tabindex"
+        />
+    };
+    $preview =~ s/\s+/ /sg; # JS doesn't like newlines in string
+    # literals
+        
+    unless ($opts->{'disabled_save'}) {
+        $out .= $self->wrap_js(qq{
+            if (document.getElementById) {
+                setTimeout( function() {
+                    jQuery( '$preview' ).prependTo('#entryform-update-and-edit' );
+                }, 0 );
+            }
+        });
+    }
 
+   
     $out .= $self->render_security_container_block;
     if ($opts->{'mode'} eq "update") {
         my $onclick = "";
@@ -1297,6 +1310,7 @@ sub render_submitbar_block {
         }
 
         my $disabled = $remote && $remote->is_identity && !$self->usejournal;
+        $out .= qq{ <div id="entryform-update-and-edit"> };
 
         $out .= LJ::html_submit(
             'action:update',
@@ -1309,11 +1323,12 @@ sub render_submitbar_block {
                 'disabled' => $disabled,
             }
         ) . "&nbsp;\n";
+        $out .= qq{</div>};
     }
 
     if ($opts->{'mode'} eq "edit") {
         my $onclick = $LJ::IS_SSL ? '' : 'return true;';
-
+        $out .= qq{ <div id="entryform-update-and-edit"> };
         $out .= LJ::html_submit(
             'action:save',
             BML::ml('entryform.save'),
@@ -1358,7 +1373,9 @@ sub render_submitbar_block {
                 }
             ) . "\n";
         }
+        $out .= qq{</div>};
     }
+
 
     $out .= "</div><!-- end #security_container -->\n\n";
     $out .= "</div><!-- end #submitbar -->\n\n";
@@ -1516,6 +1533,53 @@ sub render_body {
 
     $out .= $self->wrap_js("jQuery(init_update_bml);");
     return $out;
+}
+
+# this one returns a $key => $value list, ordered by keys this way:
+# US goes first, then Canada, then all the rest
+sub timezone_options {
+    my $map = DateTime::TimeZone::links();
+    
+    my ( @options, %options );
+    
+    push @options, '' => BML::ml('setting.timezone.option.select');
+    
+    foreach my $key ( sort keys %$map ) {
+        if ( $key =~ m!^US/! && $key ne 'US/Pacific-New' ) {
+            $options{ $map->{$key} } = $key;
+            push @options, $map->{$key} => $key;
+        }
+    }
+    
+    foreach my $key ( sort keys %$map ) {
+        if ( $key =~ m!^Canada/! ) {
+            $options{ $map->{$key} } = $key;
+            push @options, $map->{$key} => $key;
+        }
+    }
+    
+    foreach my $key ( DateTime::TimeZone::all_names() ) {
+        next if $options{$key};
+        push @options, $key => $key;
+    }
+    
+    return @options;
+}
+
+sub option {
+    my ($u) = @_;
+    
+    my $timezone = $u->prop("timezone");
+    my @options = timezone_options;
+    
+    my $ret = LJ::html_select({
+        name => "delayed_timezone",
+        selected => $timezone,
+    }, @options);
+    
+    $ret .= "<br />";
+    
+    return $ret;
 }
 
 1;

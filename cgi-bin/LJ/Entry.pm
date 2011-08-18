@@ -157,6 +157,17 @@ sub new_from_item_hash {
     return $entry;
 }
 
+sub is_delayed {
+    my ($class) = @_;
+    return 0;
+}
+
+sub delayedid { 
+    my ($class) = @_;
+    return 0;
+}
+
+
 sub new_from_url {
     my ($class, $url) = @_;
 
@@ -277,7 +288,7 @@ sub journal {
 sub eventtime_mysql {
     my $self = shift;
     __PACKAGE__->preload_rows([ $self ]) unless $self->{_loaded_row};
-    return $self->{eventtime};
+    return $self->{eventtime}; 
 }
 
 sub logtime_mysql {
@@ -1812,8 +1823,7 @@ sub get_log2_row
 
 sub get_log2_recent_log
 {
-    my ($u, $cid, $update, $notafter, $events_date, $exclude_sticky) = @_;
-    $exclude_sticky = $exclude_sticky || 0; # optional
+    my ($u, $cid, $update, $notafter, $events_date) = @_;
     my $jid = LJ::want_userid($u);
     $cid ||= $u->{'clusterid'} if ref $u;
 
@@ -1944,15 +1954,6 @@ sub get_log2_recent_log
             "AND rlogtime <= ($LJ::EndOfTime - UNIX_TIMESTAMP()) + $max_age"
          );
 
-    if ( $exclude_sticky ) {
-        my $uobj = LJ::want_user($u);
-        my $sticky = $uobj->get_sticky_entry();
-
-        if ($sticky) {
-            $sql .= " AND jitemid <> $sticky";
-        }
-    }
-
     my $sth = $db->prepare($sql);
     $sth->execute($jid);
     my @row = ();
@@ -2000,8 +2001,7 @@ sub get_log2_recent_user
     my $ret = [];
 
     my $log = LJ::get_log2_recent_log($opts->{'userid'}, $opts->{'clusterid'},
-              $opts->{'update'}, $opts->{'notafter'}, $opts->{events_date},
-              $opts->{'exclude_sticky'});
+              $opts->{'update'}, $opts->{'notafter'}, $opts->{events_date},);
 
     ## UNUSED: my $left     = $opts->{'itemshow'};
     my $notafter = $opts->{'notafter'};
