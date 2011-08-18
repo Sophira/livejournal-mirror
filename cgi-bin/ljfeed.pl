@@ -150,7 +150,6 @@ sub make_feed {
             'entry_objects' => \@objs,
             'load_props'    => 1,
             'load_text'     => 1,
-            'exclude_sticky' => 1,
         });
     }
 
