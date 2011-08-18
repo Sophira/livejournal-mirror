@@ -1819,14 +1819,13 @@ sub Tag
 {
     my ($u, $kwid, $kw) = @_;
     return undef unless $u && $kwid && $kw;
-
+    
     my $t = {
         _type => 'Tag',
         _id => $kwid,
         name => LJ::ehtml($kw),
         url => LJ::journal_base($u) . '/tag/' . LJ::eurl($kw),
     };
-
     return $t;
 }
 
@@ -1863,7 +1862,7 @@ sub Entry
         'metadata' => {},
     };
     foreach (qw(subject text journal poster new_day end_day
-                comments userpic permalink_url itemid tags)) {
+                comments userpic permalink_url itemid tags delayedid )) {
         $e->{$_} = $arg->{$_};
     }
 
@@ -1960,19 +1959,29 @@ sub Entry
         }
     }
 
-    # custom friend groups
-    my $entry = LJ::Entry->new($e->{journal}->{_u}, ditemid => $e->{itemid});
-    my $group_names = $entry->group_names;
-    $e->{metadata}->{groups} = $group_names if $group_names;
+    if (!$e->{delayedid}) {
+        # custom friend groups
+        my $entry = LJ::Entry->new($e->{journal}->{_u}, ditemid => $e->{itemid});
+        my $group_names = $entry->group_names;
+        $e->{metadata}->{groups} = $group_names if $group_names;
 
-    # TODO: Populate this field more intelligently later, but for now this will
-    #   hopefully disuade people from hardcoding logic like this into their S2
-    #   layers when they do weird parsing/manipulation of the text member in
-    #   untrusted layers.
-    $e->{text_must_print_trusted} = 1 if $e->{text} =~ m!<(script|object|applet|embed|iframe)\b!i;
+        # TODO: Populate this field more intelligently later, but for now this will
+        #   hopefully disuade people from hardcoding logic like this into their S2
+        #   layers when they do weird parsing/manipulation of the text member in
+        #   untrusted layers.
+        $e->{text_must_print_trusted} = 1 if $e->{text} =~ m!<(script|object|applet|embed|iframe)\b!i;
+            
+        if ($entry->is_sticky()) {
+           $e->{'sticky_icon'} = Image_std("sticky-entry");
+        }
+    } else {
+        my $entry = LJ::DelayedEntry->get_entry_by_id( $e->{journal}->{_u}, 
+                                                        $e->{delayedid} );
+        if ( $entry->is_sticky) {
+            $e->{'sticky_icon'} = Image_std("sticky-entry");
+        }
 
-    if ($entry->is_sticky()) {
-       $e->{'sticky_icon'} = Image_std("sticky-entry");
+        $e->{'delayed_icon'} = Image_std("delayed-entry");
     }
 
     return $e;
@@ -2113,7 +2122,8 @@ sub Image_std
             'security-protected' => Image("$LJ::IMGPREFIX/icon_protected.gif", 14, 15, $ctx->[S2::PROPS]->{'text_icon_alt_protected'}),
             'security-private' => Image("$LJ::IMGPREFIX/icon_private.gif", 16, 16, $ctx->[S2::PROPS]->{'text_icon_alt_private'}),
             'security-groups' => Image("$LJ::IMGPREFIX/icon_groups.gif", 19, 16, $ctx->[S2::PROPS]->{'text_icon_alt_groups'}),
-            'sticky-entry' => Image("$LJ::IMGPREFIX/icon_sticky.gif", 19, 16, $ctx->[S2::PROPS]->{'text_icon_alt_sticky'}),
+            'sticky-entry' => Image("$LJ::IMGPREFIX/icon_sticky.gif", 11, 15, $ctx->[S2::PROPS]->{'text_icon_alt_sticky'}),
+            'delayed-entry' => Image("$LJ::IMGPREFIX/icon_delayed.gif", 11, 15, $ctx->[S2::PROPS]->{'text_icon_alt_delayed'}),
         };
     }
     return $LJ::S2::RES_CACHE->{$name};
@@ -3768,6 +3778,7 @@ sub UserLite__get_link
     my $remote = LJ::get_remote();
     my $is_remote = defined($remote) && $remote->{userid} eq $u->{userid};
     my $has_journal = $u->{journaltype} ne 'I';
+    my $null_link = { '_type' => 'Link', '_isnull' => 1 };
 
     my $button = sub {
         return LJ::S2::Link($_[0], $_[1], LJ::S2::Image("$LJ::IMGPREFIX/$_[2]", 24, 24));
@@ -3803,7 +3814,7 @@ sub UserLite__get_link
     }
 
     # Else?
-    return undef;
+    return $null_link;
 }
 *User__get_link = \&UserLite__get_link;
 
@@ -3871,7 +3882,13 @@ sub _Entry__get_link
     my $remote = LJ::get_remote();
     my $null_link = { '_type' => 'Link', '_isnull' => 1 };
     my $journalu = LJ::load_user($journal);
-    my $entry = LJ::Entry->new($journalu, ditemid => $this->{itemid});
+    my $entry;
+
+    if ( $this->{itemid} ) {
+        $entry = LJ::Entry->new($journalu, ditemid => $this->{itemid});
+    } else {
+        $entry = LJ::DelayedEntry->get_entry_by_id($journalu, $this->{delayedid});
+    }
 
     if ($key eq "edit_entry") {
         return $null_link unless $remote &&
@@ -3879,16 +3896,31 @@ sub _Entry__get_link
                                       LJ::u_equals( $remote, $posteru ) ||
                                       $remote->can_manage($journalu)
                                     );
-        return LJ::S2::Link("$LJ::SITEROOT/editjournal.bml?journal=$journal&amp;itemid=$this->{'itemid'}",
+        
+        if ($entry->is_delayed) {
+            return LJ::S2::Link("$LJ::SITEROOT/editjournal.bml?journal=$journal&amp;delayedid=" . $entry->delayedid,
+                        $ctx->[S2::PROPS]->{"text_edit_entry"},
+                        LJ::S2::Image("$LJ::IMGPREFIX/btn_edit.gif", 24, 24));  
+        } else {
+            return LJ::S2::Link("$LJ::SITEROOT/editjournal.bml?journal=$journal&amp;itemid=$this->{'itemid'}",
                             $ctx->[S2::PROPS]->{"text_edit_entry"},
                             LJ::S2::Image("$LJ::IMGPREFIX/btn_edit.gif", 24, 24));
+        }
     }
 
     if ($key eq "edit_tags") {
-        return $null_link unless $remote && LJ::Tags::can_add_entry_tags($remote, $entry);
-        return LJ::S2::Link("$LJ::SITEROOT/edittags.bml?journal=$journal&amp;itemid=$this->{'itemid'}",
+        return $null_link 
+            unless $remote && LJ::Tags::can_add_entry_tags( $remote, $entry );
+        if ($entry->is_delayed) {
+            return LJ::S2::Link("$LJ::SITEROOT/edittags.bml?journal=$journal&amp;delayedid=" . $entry->delayedid,
+                                $ctx->[S2::PROPS]->{"text_edit_tags"},
+                                LJ::S2::Image("$LJ::IMGPREFIX/btn_edittags.gif", 24, 24));
+
+        } else {
+            return LJ::S2::Link("$LJ::SITEROOT/edittags.bml?journal=$journal&amp;itemid=$this->{'itemid'}",
                             $ctx->[S2::PROPS]->{"text_edit_tags"},
                             LJ::S2::Image("$LJ::IMGPREFIX/btn_edittags.gif", 24, 24));
+        }
     }
 
     if ($key eq "tell_friend") {
@@ -3896,7 +3928,8 @@ sub _Entry__get_link
         return $null_link;
     }
 
-    if ( $key eq 'share' ) {
+    if ( $key eq 'share') {
+        return $null_link if $entry->is_delayed;
         return $null_link
             unless LJ::is_enabled('sharing') && $entry->is_public;
 
@@ -3911,6 +3944,8 @@ sub _Entry__get_link
     }
 
     if ($key eq "share_facebook") {
+        return $null_link if $entry->is_delayed;
+
         my $entry = LJ::Entry->new($journalu->{'userid'}, ditemid => $this->{'itemid'});
         return $null_link unless $entry->security eq 'public';
         my $entry_url = LJ::eurl($entry->url);
@@ -3920,6 +3955,8 @@ sub _Entry__get_link
     }
 
     if ($key eq "share_twitter") {
+        return $null_link if $entry->is_delayed;
+
         my $entry = LJ::Entry->new($journalu->{'userid'}, ditemid => $this->{'itemid'});
         return $null_link unless $entry->security eq 'public';
         my $post_id = $entry->journalid . ':' . $entry->ditemid;
@@ -3930,6 +3967,8 @@ sub _Entry__get_link
     }
 
     if ($key eq "share_email") {
+        return $null_link if $entry->is_delayed;
+
         my $entry = LJ::Entry->new($journalu->{'userid'}, ditemid => $this->{'itemid'});
         return $null_link unless $entry->security eq 'public';
         my $entry_url = LJ::eurl($entry->url);
@@ -3940,6 +3979,8 @@ sub _Entry__get_link
     }
 
     if ($key eq "facebook_like") {
+        return $null_link if $entry->is_delayed;
+
         my $entry = LJ::Entry->new($journalu->{'userid'}, ditemid => $this->{'itemid'});
         return $null_link unless $entry->security eq 'public';
         my $entry_url = LJ::eurl($entry->url);
@@ -3950,6 +3991,7 @@ sub _Entry__get_link
     }
 
     if ($key eq "mem_add") {
+        return $null_link if $entry->is_delayed;
         return $null_link if $LJ::DISABLED{'memories'};
         return LJ::S2::Link("$LJ::SITEROOT/tools/memadd.bml?journal=$journal&amp;itemid=$this->{'itemid'}",
                             $ctx->[S2::PROPS]->{"text_mem_add"},
@@ -3957,7 +3999,14 @@ sub _Entry__get_link
     }
 
     if ($key eq "nav_prev") {
-        my $jumpid = LJ::get_itemid_before2($journalu, int($this->{'itemid'}/256));
+        my $jumpid;
+        if ($entry->is_delayed) {
+            my $nextid = $entry->get_itemid_before2();
+            return $null_link unless $nextid;
+            $jumpid = "d" . $nextid;
+        } else {
+            $jumpid = LJ::get_itemid_before2($journalu, int($this->{'itemid'}/256));
+        }
         if ($jumpid) {
             return LJ::S2::Link($journalu->journal_base . "/$jumpid.html",
                             $ctx->[S2::PROPS]->{"text_entry_prev"},
@@ -3968,7 +4017,16 @@ sub _Entry__get_link
     }
 
     if ($key eq "nav_next") {
-        my $jumpid = LJ::get_itemid_after2($journalu, int($this->{'itemid'}/256));
+        my $jumpid;
+        if ($entry->is_delayed) {
+            my $nextid = $entry->get_itemid_after2();
+            return $null_link unless $nextid;
+
+            $jumpid = "d" . $nextid;
+        } else {
+            $jumpid = LJ::get_itemid_after2($journalu, int($this->{'itemid'}/256));
+        }
+        
         if ($jumpid) {
             return LJ::S2::Link($journalu->journal_base . "/$jumpid.html",,
                             $ctx->[S2::PROPS]->{"text_entry_next"},
@@ -3979,8 +4037,8 @@ sub _Entry__get_link
     }
 
     if ($key eq "flag") {
+        return $null_link if $entry->is_delayed;
         return $null_link unless LJ::is_enabled("content_flag");
-
         return $null_link unless $remote && $remote->can_see_content_flag_button( content => $entry );
         return LJ::S2::Link(LJ::ContentFlag->adult_flag_url($entry),
                             $ctx->[S2::PROPS]->{"text_flag"},
@@ -4005,17 +4063,16 @@ sub _Entry__get_link
     if ($newentry_sub) {
         $newentry_auth_token = LJ::Auth->ajax_auth_token($remote, '/__rpc_esn_subs',
                                                          subid     => $newentry_sub->id,
-                                                         action    => 'delsub',
-                                                         );
+                                                         action    => 'delsub',);
     } elsif ($remote) {
         $newentry_auth_token = LJ::Auth->ajax_auth_token($remote, '/__rpc_esn_subs',
                                                          journalid => $journalu->id,
                                                          action    => 'addsub',
-                                                         etypeid   => $newentry_etypeid,
-                                                         );
+                                                         etypeid   => $newentry_etypeid,);
     }
 
     if ($key eq "watch_comments") {
+        return $null_link if $entry->is_delayed;
         return $null_link if $LJ::DISABLED{'esn'};
         return $null_link unless $remote && $remote->can_use_esn;
         return $null_link if $remote->has_subscription(
@@ -4047,6 +4104,7 @@ sub _Entry__get_link
                                           'class'               => 'TrackButton'));
     }
     if ($key eq "unwatch_comments") {
+        return $null_link if $entry->is_delayed;
         return $null_link if $LJ::DISABLED{'esn'};
         return $null_link unless $remote && $remote->can_use_esn;
         my @subs = $remote->has_subscription(
@@ -4076,6 +4134,8 @@ sub _Entry__get_link
                                           'lj_newentry_subid'   => $newentry_sub ? $newentry_sub->id : 0,
                                           'class'               => 'TrackButton'));
     }
+    
+    return $null_link;
 }
 
 sub EntryLite__print_give_button
@@ -4402,7 +4462,7 @@ sub Page__visible_tag_list
             1;
         };
 
-        return [] unless $parse_result;
+        return unless $parse_result;
     } else {
         $tags = LJ::Tags::get_usertags($u, { remote => $remote });
     }
