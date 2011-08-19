@@ -1463,6 +1463,11 @@ sub is_sticky {
     return $self->{jitemid} == $u->get_sticky_entry();
 }
 
+sub can_delete_journal_item {
+    my $class = shift;
+    return LJ::can_delete_journal_item(@_);
+}
+
 package LJ;
 
 use Class::Autouse qw (

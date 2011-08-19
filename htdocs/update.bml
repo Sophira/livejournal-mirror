@@ -12,7 +12,7 @@
     my $body     = \$_[0]->{'body'};
     my $bodyopts = \$_[0]->{'bodyopts'};
     my $onload   = \$_[0]->{'onload'};
-    
+
     my $update_type = $POST{'type'} || $GET{'type'};
     $$title = ($update_type eq 'sticky') ?  $ML{'.title2_sticky'} : $ML{'.title2'};
 
@@ -29,7 +29,7 @@
         $$body = "<?badinput?>";
         return;
     }
-    
+
     ## This header is to pass page content through IE8 XSS Filter.
     ## See also htdocs/preview/entry.bml.
     LJ::Request->header_out("X-XSS-Protection" => 0);
@@ -49,7 +49,7 @@
 
     # get remote and see if they can post right now
     my $remote = LJ::get_remote();
-    
+
     # Should we show try and buy
     my $show_trynbuy = LJ::TryNBuy->can_enable($remote) || LJ::TryNBuy->active($remote);
 
@@ -146,7 +146,7 @@
         my $text = LJ::Widget::QotD->qotd_display_embed( questions => [ $qotd ], form_disabled => 1 );
         $$head .= "<script type=\"text/javascript\">LiveJournal.qotdText = \"" . LJ::ejs($text) . "\";</script>";
     }
-    
+
     if ($url) {
         ## currently, the URL is for YouTube only.
         ## in future support for other quick embeds will be added.
@@ -179,7 +179,7 @@ EMBED
                     LJ::EmbedModule->add_user_to_embed($journalu, \$event);
                 }
 
-                $event = LJ::Lang::ml("repost.wrapper", { 
+                $event = LJ::Lang::ml("repost.wrapper", {
                                             username => $entry->poster->username,
                                             url      => $entry->url,
                                             subject  => $subject,
@@ -188,7 +188,6 @@ EMBED
                 $reposted_from = $entry->url;
             }
         }
-        
     }
 
     # try to call a hook to fill in the fields
@@ -223,7 +222,7 @@ EMBED
     my $errors = {};
     my $showform = $POST{'showform'} || $auth_missing;                            # show entry form
     my $preview = $POST{'action:preview'};
-    
+
         # are we spellchecking before we post?
     my $did_spellcheck; my $spellcheck_html;
     if ($LJ::SPELLER && $POST{'action:spellcheck'}) {
@@ -461,6 +460,7 @@ EMBED
                     'password'    => $POST{'password'},
                     'usejournal'  => ($usejournalu) ? $usejournalu->user : undef,
                     'tz'          => 'guess',
+                    'timezone'    => $POST{'delayed_timezone'} || $POST{'delayed_timezone'},
                     'type'        => $POST{'type'} || $POST{'type'},
                     );
 

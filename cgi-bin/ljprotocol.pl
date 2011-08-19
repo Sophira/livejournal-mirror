@@ -16,6 +16,7 @@ use Class::Autouse qw(
                       LJ::Comment
                       LJ::RateLimit
                       LJ::EmbedModule
+                      LJ::DelayedEntry
                       );
 
 use LJ::TimeUtil;
@@ -81,6 +82,7 @@ my %e = (
      "212" => [ E_PERM, "Message body is too long" ],
      "213" => [ E_PERM, "Message body is empty" ],
      "214" => [ E_PERM, "Message looks like spam" ],
+     "215" => [ E_PERM, "Timezone is not set"],
 
 
      # Access Errors
@@ -1958,12 +1960,12 @@ sub postevent
     }
 
     # are they trying to post back in time?
-    if ($posterid == $ownerid && $u->{'journaltype'} ne 'Y' &&
-        !$time_was_faked && $u->{'newesteventtime'} &&
-        $eventtime lt $u->{'newesteventtime'} &&
-        !$req->{'props'}->{'opt_backdated'}) {
-        return fail($err, 153, "You have an entry which was posted at $u->{'newesteventtime'}, but you're trying to post an entry before this. Please check the date and time of both entries. If the other entry is set in the future on purpose, edit that entry to use the \"Date Out of Order\" option. Otherwise, use the \"Date Out of Order\" option for this entry instead.");
-    }
+    #if ($posterid == $ownerid && $u->{'journaltype'} ne 'Y' &&
+    #    !$time_was_faked && $u->{'newesteventtime'} &&
+    #    $eventtime lt $u->{'newesteventtime'} &&
+    #    !$req->{'props'}->{'opt_backdated'}) {
+    #    return fail($err, 153, "You have an entry which was posted at $u->{'newesteventtime'}, but you're trying to post an entry before this. Please check the date and time of both entries. If the other entry is set in the future on purpose, edit that entry to use the \"Date Out of Order\" option. Otherwise, use the \"Date Out of Order\" option for this entry instead.");
+    #}
     
     if ( $req->{type} && $req->{type} eq 'sticky' &&
          $uowner->{'journaltype'} eq 'C' &&
@@ -2064,6 +2066,22 @@ sub postevent
 
     my $res = {};
     my $res_done = 0;  # set true by getlock when post was duplicate, or error getting lock
+    
+    unless ($req->{timezone}) {
+        return fail( $err, 215);
+    }
+
+
+    if ( LJ::DelayedEntry::is_future_date($req) ) {
+        $req->{ext}->{flags} = $flags;
+        $req->{ext}->{flags}->{u} = undef; # it's no need to be stored
+        $req->{usejournal} = $req->{usejournal} || '';
+  
+        LJ::DelayedEntry->create( $req, {   journal => $uowner,
+                                            poster  => $u,} );
+        return $res;
+        
+    }
 
     my $getlock = sub {
         my $r = $dbcm->selectrow_array("SELECT GET_LOCK(?, 2)", undef, $lock_key);
@@ -2519,13 +2537,35 @@ sub editevent
     return fail($err,102)
         if ($LJ::JOURNALS_WITH_PROTECTED_CONTENT{ $uowner->{user} } &&
             !LJ::is_friend($uowner, $u));
-        
 
     # make sure the new entry's under the char limit
     # NOTE: as in postevent, this requires $req->{event} to be binary data
     # but we've already removed the utf-8 flag in the XML-RPC path, and it
     # never gets set in the "flat" protocol path
     return fail($err,409) if length($req->{event}) >= LJ::BMAX_EVENT;
+    
+    if ( $req->{delayedid} ) {
+        
+        my $res = {};
+        my $delayedid = delete $req->{delayedid};
+        
+        $req->{ext}->{flags} = $flags;
+        $req->{ext}->{flags}->{u} = undef; # it's no need to be stored
+        
+        unless ($req->{timezone}) {
+            return fail( $err, 215);
+        }
+        $req->{usejournal} = $req->{usejournal}  || '';
+        
+        my $entry = LJ::DelayedEntry->get_entry_by_id($uowner, $delayedid);
+        if ($req->{'event'} !~ /\S/ ) {
+            $entry->delete();
+        } else {
+            $entry->update($req);
+        }
+        
+        return $res;
+    }
 
     # fetch the old entry from master database so we know what we
     # really have to update later.  usually people just edit one part,
@@ -4991,40 +5031,46 @@ sub getevents
 {
     my ($req, $res, $flags) = @_;
 
-    my $err = 0;
-    my $rq = upgrade_request($req);
-
-    my $rs = LJ::Protocol::do_request("getevents", $rq, \$err, $flags);
-    unless ($rs) {
-        $res->{'success'} = "FAIL";
-        $res->{'errmsg'} = LJ::Protocol::error_message($err);
-        return 0;
-    }
-
-    my $ect = 0;
+    my $err = 0;    
     my $pct = 0;
-    foreach my $evt (@{$rs->{'events'}}) {
-        $ect++;
-        foreach my $f (qw(itemid eventtime security allowmask subject anum url poster)) {
-            if (defined $evt->{$f}) {
-                $res->{"events_${ect}_$f"} = $evt->{$f};
+    my $rq = upgrade_request($req);
+    my $ect = LJ::DelayedEntry->getevents($rq, $flags, \$err, $res);
+    my $many = $rq->{'howmany'} || 0;
+
+    if ( $many == 0 || $many > $ect ) {
+        $rq->{'howmany'} -= $ect if $rq->{'howmany'};
+        
+        my $rs = LJ::Protocol::do_request("getevents", $rq, \$err, $flags);
+        unless ($rs) {
+            $res->{'success'} = "FAIL";
+            $res->{'errmsg'} = LJ::Protocol::error_message($err);
+            return 0;
+        }
+    
+        foreach my $evt (@{$rs->{'events'}}) {
+            $ect++;
+            foreach my $f (qw(itemid eventtime security allowmask subject anum url poster)) {
+                if (defined $evt->{$f}) {
+                    $res->{"events_${ect}_$f"} = $evt->{$f};
+                }
+            }
+            $res->{"events_${ect}_event"} = LJ::eurl($evt->{'event'});
+    
+            if ($evt->{'props'}) {
+                foreach my $k (sort keys %{$evt->{'props'}}) {
+                    $pct++;
+                    $res->{"prop_${pct}_itemid"} = $evt->{'itemid'};
+                    $res->{"prop_${pct}_name"} = $k;
+                    $res->{"prop_${pct}_value"} = $evt->{'props'}->{$k};
+                }
             }
         }
-        $res->{"events_${ect}_event"} = LJ::eurl($evt->{'event'});
-
-        if ($evt->{'props'}) {
-            foreach my $k (sort keys %{$evt->{'props'}}) {
-                $pct++;
-                $res->{"prop_${pct}_itemid"} = $evt->{'itemid'};
-                $res->{"prop_${pct}_name"} = $k;
-                $res->{"prop_${pct}_value"} = $evt->{'props'}->{$k};
-            }
+    
+        unless ($req->{'noprops'}) {
+            $res->{'prop_count'} = $pct;
         }
     }
-
-    unless ($req->{'noprops'}) {
-        $res->{'prop_count'} = $pct;
-    }
+    
     $res->{'events_count'} = $ect;
     $res->{'success'} = "OK";
 

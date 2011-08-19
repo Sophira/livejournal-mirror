@@ -722,33 +722,38 @@ sub render_options_block {
 
     my %blocks = (
         'sticky' => sub {
+            my $journalu = LJ::load_user($opts->{'usejournal'}) || $remote;
             my $is_checked = sub {
+                if ($opts->{sticky}) {
+                    return 'checked'
+                }
+
                 if ($opts->{jitemid}) {
-                    my $journalu = LJ::load_user($opts->{'usejournal'}) || $remote;
                     my $sticky_entry = $journalu->get_sticky_entry();
                     if ( $sticky_entry eq $opts->{jitemid} ) {
                         return 'checked' 
                     }
                 }
                 
-                if ($opts->{delayed_sticky}) {
-                    return 'checked'
-                }
             };
-                
+
+            my $selected = $is_checked->();
             my $sticky_check = LJ::html_check({
                 'type' => "check",
                 'class' => 'sticky_type',
                 'value' => 'sticky',
                 'name' => 'type',
                 'id' => 'sticky_type',
-                'selected' => $is_checked->(),
+                'selected' => $selected,
                 $opts->{'prop_opt_preformatted'} || $opts->{'event_format'},
                 'label' => "",
             });
-            
+
+            my $sticky_exists = $journalu->has_sticky_entry && !$selected;
+            my $sticky_text = $sticky_exists ? $BML::ML{'entryform.sticky_replace.edit'} :
+                                               $BML::ML{'entryform.sticky.edit'};
             return qq{$sticky_check <label for='prop_sticky' class='right options'>
-                    $BML::ML{'entryform.sticky.edit'}
+                   $sticky_text
                 </label>};
         },
         'tags' => sub {
