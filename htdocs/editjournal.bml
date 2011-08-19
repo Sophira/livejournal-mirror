@@ -269,6 +269,7 @@ body<=
                             'usejournal' => $usejournal,
                             'timezone'   => $POST{'delayed_timezone'} || $POST{'delayed_timezone'},
                             'itemid'     => $itemid,
+                            'delayedid'  => $delayedid,
                             'type'       => $POST{'type'} || $POST{'type'},
                             );
                 LJ::entry_form_decode(\%req, \%POST);
