@@ -460,7 +460,7 @@ EMBED
                     'password'    => $POST{'password'},
                     'usejournal'  => ($usejournalu) ? $usejournalu->user : undef,
                     'tz'          => 'guess',
-                    'timezone'    => $POST{'delayed_timezone'} || $POST{'delayed_timezone'},
+                    'timezone'    => $POST{'timezone'} || $POST{'timezone'},
                     'type'        => $POST{'type'} || $POST{'type'},
                     );
 

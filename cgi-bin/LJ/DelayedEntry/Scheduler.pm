@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 
-my $PULSE_TIME = 1 * 10;
+my $PULSE_TIME = 1 * 60; 
 
 sub pulse_time {
     return $PULSE_TIME;

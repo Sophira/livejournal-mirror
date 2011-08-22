@@ -1389,10 +1389,6 @@ sub __deserialize {
 sub __get_now {
     my $dt = DateTime->now->set_time_zone('UTC');
 
-    if ($dt->is_dst) {
-        $dt->subtract( hours => 1 );
-    }
-
     # make the proper date format
     return sprintf("%04d-%02d-%02d %02d:%02d",  $dt->year, 
                                                 $dt->month,
@@ -1413,9 +1409,9 @@ sub __get_datatime {
                               minute    => $req->{'min'},
                               time_zone => $req->{timezone}, );
 
-    if ($dt->is_dst) {
-        $dt->subtract( hours => 1 );
-    }
+    #if ($dt->is_dst) {
+    #    $dt->subtract( hours => 1 );
+    #}
 
     $dt->set_time_zone( 'UTC' );
 

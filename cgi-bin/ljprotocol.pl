@@ -65,6 +65,7 @@ my %e = (
          LJ::tosagree_str('protocol' => 'title')
      } ],
      "157" => [ E_TEMP, "Tags error" ],
+     "158" => [ E_TEMP, "You have no rights to make this entry sticky"],
 
      # Client Errors
      "200" => [ E_PERM, "Missing required argument(s)" ],
@@ -1972,7 +1973,7 @@ sub postevent
           !( LJ::check_rel($ownerid, $posterid, 'S') ||
              LJ::check_rel($ownerid, $posterid, 'M') ) )
     {
-        return fail($err, 174);
+        return fail($err, 158);
     }
 
     my $qallowmask = $req->{'allowmask'}+0;
@@ -2250,6 +2251,14 @@ sub postevent
                      "0, $req->{'year'}, $req->{'mon'}, $req->{'day'}, $LJ::EndOfTime-".
                      "UNIX_TIMESTAMP($qeventtime), $rlogtime, $anum)");
     return $fail->($err,501,$dberr) if $dberr;
+
+    if ( $req->{type} && $req->{type} eq 'sticky' &&
+         $uowner->{'journaltype'} eq 'C' &&
+          !( LJ::check_rel($ownerid, $posterid, 'S') ||
+             LJ::check_rel($ownerid, $posterid, 'M') ) )
+    {
+        return fail($err, 158);
+    }
 
     # post become 'sticky post'
     if ( $req->{type} && $req->{type} eq 'sticky' ) {
