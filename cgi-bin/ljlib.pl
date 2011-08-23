@@ -1140,11 +1140,13 @@ sub get_recent_items
     my $itemload = $itemshow + $skip;
     my $usual_show  = $itemshow;
     
-    if ($show_sticky_on_top && $sticky && $skip > 0)
+    if ( $show_sticky_on_top && $sticky )
     {
-        $skip -= 1;
-    } else {
-        $usual_show -= 1 if $sticky;
+        if($skip > 0) {
+            $skip -= 1;
+        } else {
+            $usual_show -= 1;
+        }
     }
     
     my $mask = 0;

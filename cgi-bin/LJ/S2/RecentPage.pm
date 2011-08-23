@@ -72,16 +72,13 @@ sub RecentPage
     }
 
     my $delayed_entries = [];
-    
 
-    if ($u->equals($remote)) {
-        if ($u->has_sticky_entry && !$skip) {
-            $delayed_entries = LJ::DelayedEntry->get_entries_by_journal($u, $skip, $itemshow - 1);
-        } else {
-            $delayed_entries = LJ::DelayedEntry->get_entries_by_journal($u, $skip, $itemshow + 1);
-        }
+    if ($u->has_sticky_entry && !$skip) {
+        $delayed_entries = LJ::DelayedEntry->get_entries_by_journal($u, $skip, $itemshow - 1) || [];
+    } else {
+        $delayed_entries = LJ::DelayedEntry->get_entries_by_journal($u, $skip, $itemshow + 1) || [];
     }
-    
+
     my $itemshow_usual = $itemshow - scalar(@$delayed_entries);
     if ( $itemshow <= scalar(@$delayed_entries) ) {
             $itemshow_usual = -1;
@@ -377,7 +374,6 @@ sub __append_delayed {
                 push @tags, Tag($delayed_entry->journal, $key => $tags->{$key});
             }
         }
-        
         
         my $entry = Entry($delayed_entry->journal, {
             'subject' => $delayed_entry->subject,

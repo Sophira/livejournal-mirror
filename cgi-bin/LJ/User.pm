@@ -7748,6 +7748,12 @@ sub get_daycounts
     my $list = LJ::MemCache::get($memkey);
     if ($list) {
         my $list_create_time = shift @$list;
+        my $sth = LJ::DelayedEntry->get_daycount_query($u, $secwhere);
+        if ($sth) {
+            while (my ($y, $m, $d, $c) = $sth->fetchrow_array) {
+                push @$list, [ int($y), int($m), int($d), int($c) ];
+            }
+        }
         return $list if $list_create_time >= $u->timeupdate;
     }
 
@@ -7778,15 +7784,18 @@ sub get_daycounts
         # so they store smaller in memcache
         push @days, [ int($y), int($m), int($d), int($c) ];
     }
-    
-    $sth = LJ::DelayedEntry->get_daycount_query($u, $secwhere);
-    while (my ($y, $m, $d, $c) = $sth->fetchrow_array) {
-        # we force each number from string scalars (from DBI) to int scalars,
-        # so they store smaller in memcache
-        push @days, [ int($y), int($m), int($d), int($c) ];
-    }
-    
+
     LJ::MemCache::set($memkey, [time, @days]);
+
+    # not cached part
+    $sth = LJ::DelayedEntry->get_daycount_query($u, $secwhere);
+    if ($sth) {
+        while (my ($y, $m, $d, $c) = $sth->fetchrow_array) {
+            # we force each number from string scalars (from DBI) to int scalars,
+            # so they store smaller in memcache
+            push @days, [ int($y), int($m), int($d), int($c) ];
+        }
+    }
     $release_lock->();
     return \@days;
 }
