@@ -554,8 +554,10 @@ sub EntryPage_entry
     my $s2entry = Entry($u, {
         'subject' => $subject,
         'text' => $event,
-        'dateparts' => LJ::TimeUtil->alldatepart_s2($entry->eventtime_mysql),
-        'system_dateparts' => LJ::TimeUtil->alldatepart_s2($entry->logtime_mysql),
+        'dateparts' => $entry->is_delayed ? $entry->alldatepart :
+                    LJ::TimeUtil->alldatepart_s2($entry->eventtime_mysql),
+        'system_dateparts' => $entry->is_delayed ? $entry->system_alldatepart :
+                    LJ::TimeUtil->alldatepart_s2($entry->logtime_mysql),
         'security' => $entry->security,
         'allowmask' => $entry->allowmask,
         'props' => $entry->props,
