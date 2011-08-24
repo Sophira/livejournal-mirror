@@ -615,12 +615,12 @@ sub load_data {
 
 
 sub get_entry_by_id {
-    my ($class, $journal, $delayedid, $settings) = @_;
+    my ($class, $journal, $delayedid, $options) = @_;
     __assert($journal);
     return undef unless $delayedid;
 
     my $journalid = $journal->userid;
-    my $dateformat_type = $settings->{'dateformat'} || '';
+    my $dateformat_type = $options->{'dateformat'} || '';
     my $dbcr = LJ::get_cluster_def_reader($journal) 
         or die "get cluster for journal failed";
 
@@ -629,10 +629,10 @@ sub get_entry_by_id {
         $dateformat = "%Y %m %d %H %i %s %w"; # yyyy mm dd hh mm ss day_of_week
     }
 
-    my $userid = $settings->{userid} || 0;
-    my $remote = LJ::get_remote();
-    return undef unless $remote;
-    $userid = $remote->userid unless $userid;
+    my $userid = $options->{userid} || 0;
+    my $user = LJ::get_remote() || $options->{user};
+    return undef unless $user;
+    $userid = $user->userid unless $userid;
 
     return undef unless __delayed_entry_can_see( $journal,
                                                   $journal->userid,
@@ -714,7 +714,7 @@ sub extract_metadata {
 sub get_entries_by_journal {
     my ( $class, $journal, $skip, $elements_to_show, $userid ) = @_;
     __assert($journal);
-    my $journalid = $journal->userid;    
+    my $journalid = $journal->userid;
 
     my $dbcr = LJ::get_cluster_def_reader($journal) 
         or die "get cluster for journal failed";
@@ -723,8 +723,12 @@ sub get_entries_by_journal {
     if ($skip || $elements_to_show) {
         $sql_limit = "LIMIT $skip, $elements_to_show";
     }
-    
-    $userid = LJ::get_remote()->userid unless $userid;
+
+    unless ($userid) {
+        my $remote = LJ::get_remote();
+        return undef unless $remote;
+        $userid = $remote->userid ;
+    }
 
     return undef unless __delayed_entry_can_see( $journal,
                                               $journal->userid,

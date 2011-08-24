@@ -788,7 +788,8 @@ sub trans {
                 $mode = "entry";
             }
 
-        } elsif ($uuri =~ m|^/d(\d+)\.html$|)  { 
+        } elsif ($uuri =~ m|^/d(\d+)\.html$|)  {
+            my $delayedid = $1;
             my $u = LJ::load_user($user);
             
             unless ($u) {
@@ -797,7 +798,9 @@ sub trans {
                 return LJ::Request::NOT_FOUND;
             }
             
-            $ljentry = LJ::DelayedEntry->get_entry_by_id($u, $1, { 'dateformat' => 'S2'});
+            $ljentry = LJ::DelayedEntry->get_entry_by_id($u,
+                                                         $delayedid,
+                                                         { 'dateformat' => 'S2'});
             
             if ( $GET{'mode'} eq "reply" || $GET{'replyto'} || $GET{'edit'} ) {
                 $mode = "reply";
