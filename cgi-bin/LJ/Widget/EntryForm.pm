@@ -1309,13 +1309,14 @@ sub render_submitbar_block {
             $defaultjournal = $remote->user;
         }
 
+        $out .= qq{ <div id="entryform-update-and-edit"> };
         if ($defaultjournal) {
             $$onload .= " changeSubmit('$BML::ML{'entryform.update3'}', '$defaultjournal', '$BML::ML{'entryform.update4'}');";
             $$onload .= " changeSecurityOptions('$defaultjournal');";
         }
+        $out .= qq{</div>};
 
         my $disabled = $remote && $remote->is_identity && !$self->usejournal;
-        $out .= qq{ <div id="entryform-update-and-edit"> };
 
         $out .= LJ::html_submit(
             'action:update',
@@ -1328,7 +1329,6 @@ sub render_submitbar_block {
                 'disabled' => $disabled,
             }
         ) . "&nbsp;\n";
-        $out .= qq{</div>};
     }
 
     if ($opts->{'mode'} eq "edit") {
