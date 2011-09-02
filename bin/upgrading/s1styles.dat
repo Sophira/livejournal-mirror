@@ -1645,7 +1645,7 @@ DAY_EVENT<=
 DAY_EVENT_DELAYED<=
 <div class="entry" id="entry%%itemid%%" clear="all">
 <div class="entrytext">
-<span class="entryheading"><span class="timestamp">%%datetime%%</span>: <img src="%%cons:img%%/icon_delayed.gif" width=16 height=16 vspace=0 hspace=0 alt="[Delayed]">  %%subject%%</span>
+<span class="entryheading"><span class="timestamp">%%datetime%%</span>: <img src="%%cons:img%%/icon_delayed.png" width=13 height=15 vspace=0 hspace=0 alt="[Delayed]">  %%subject%%</span>
 %%event%%
 %%currents%%</div>
 %%talklinks%%
@@ -1702,7 +1702,7 @@ DAY_EVENT_PRIVATE_DELAYED<=
 <div class="entry" id="entry%%itemid%%">
 <div class="entrytext">
 <span class="entryheading">
-<span class="timestamp">%%datetime%%</span>: <img src="%%cons:img%%/icon_delayed.gif" width=16 height=16 vspace=0 hspace=0 alt="[Delayed]"> <img src="%%cons:img%%/icon_private.gif" width=16 height=16 vspace=0 hspace=0 alt="[Private]"> %%subject%%</span>
+<span class="timestamp">%%datetime%%</span>: <img src="%%cons:img%%/icon_delayed.png" width=13 height=15 vspace=0 hspace=0 alt="[Delayed]"> <img src="%%cons:img%%/icon_private.gif" width=16 height=16 vspace=0 hspace=0 alt="[Private]"> %%subject%%</span>
 %%event%%
 %%currents%%</div>
 %%talklinks%%
@@ -1735,7 +1735,7 @@ DAY_EVENT_PROTECTED_DELAYED<=
 <div class="entry" id="entry%%itemid%%">
 <div class="entrytext">
 <span class="entryheading">
-<span class="timestamp">%%datetime%%</span>: <img src="%%cons:img%%/icon_delayed.gif" width=16 height=16 vspace=0 hspace=0 alt="[Delayed]"> <img src="%%cons:img%%/icon_protected.gif" width=16 height=16 vspace=0 hspace=0 alt="[Protected]"> %%subject%%</span>
+<span class="timestamp">%%datetime%%</span>: <img src="%%cons:img%%/icon_delayed.png" width=13 height=15 vspace=0 hspace=0 alt="[Delayed]"> <img src="%%cons:img%%/icon_protected.gif" width=16 height=16 vspace=0 hspace=0 alt="[Protected]"> %%subject%%</span>
 %%event%%
 %%currents%%</div>
 %%talklinks%%
@@ -1966,7 +1966,7 @@ DAY_EVENT<=
 
 DAY_EVENT_DELAYED<=
 <TR VALIGN=TOP><TD BGCOLOR=%%color:weak_back%% ALIGN=RIGHT><FONT COLOR=%%color:weak_text%%><tt><I>%%datetime%%</I></tt></FONT>
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=11 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed"></TD>
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed"></TD>
 <TD><DIV STYLE="text-align:left">%%subject%% %%event%% %%currents%%</DIV>%%talklinks%%</TD></TR>
 <=DAY_EVENT_DELAYED
 
@@ -2019,7 +2019,7 @@ DAY_EVENT_PRIVATE<=
 
 DAY_EVENT_PRIVATE_DELAYED<=
 <TR VALIGN=TOP><TD BGCOLOR=%%color:weak_back%% ALIGN=RIGHT><FONT COLOR=%%color:weak_text%%><tt><I>%%datetime%%</I></tt></FONT><BR>
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=11 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
 <IMG SRC="%%cons:img%%/icon_private.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 ALT="Private"></TD>
 <TD><DIV STYLE="text-align:left">%%subject%% %%event%% %%currents%%</DIV>%%talklinks%%</TD></TR>
 <=DAY_EVENT_PRIVATE_DELAYED
@@ -2036,7 +2036,7 @@ DAY_EVENT_PROTECTED<=
 
 DAY_EVENT_PROTECTED_DELAYED<=
 <TR VALIGN=TOP><TD BGCOLOR=%%color:weak_back%% ALIGN=RIGHT><FONT COLOR=%%color:weak_text%%><tt><I>%%datetime%%</I></tt></FONT><BR>
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=14 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
 <IMG SRC="%%cons:img%%/icon_protected.gif" WIDTH=14 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Protected"></TD>
 <TD><DIV STYLE="text-align:left">%%subject%% %%event%% %%currents%%</DIV>%%talklinks%%</TD></TR>
 <=DAY_EVENT_PROTECTED_DELAYED
@@ -2145,7 +2145,7 @@ DAY_EVENT<=
 DAY_EVENT_DELAYED<=
 <table cellspacing=0 class="entries">
  <tr>
-  <td colspan=2 rowspan=2 class="metabox"><img src="%%cons:img%%/icon_delayed.gif">%%subject%%&nbsp;</td>
+  <td colspan=2 rowspan=2 class="metabox"><img src="%%cons:img%%/icon_delayed.png">%%subject%%&nbsp;</td>
   <td colspan=2>&nbsp;</td>
  </tr>
  <tr>
@@ -2241,7 +2241,7 @@ DAY_EVENT_PRIVATE<=
 DAY_EVENT_PRIVATE_DELAYED<=
 <table cellspacing=0 class="entries">
  <tr>
-  <td colspan=2 rowspan=2 class="metabox"><img src="%%cons:img%%/icon_delayed.gif"><img src="%%cons:img%%/icon_private.gif">%%subject%%&nbsp;</td>
+  <td colspan=2 rowspan=2 class="metabox"><img src="%%cons:img%%/icon_delayed.png"><img src="%%cons:img%%/icon_private.gif">%%subject%%&nbsp;</td>
   <td colspan=2>&nbsp;</td>
  </tr>
  <tr>
@@ -2304,7 +2304,7 @@ DAY_EVENT_PROTECTED<=
 DAY_EVENT_PROTECTED_DELAYED<=
 <table cellspacing=0 class="entries">
  <tr>
-  <td colspan=2 rowspan=2 class="metabox"><img src="%%cons:img%%/icon_delayed.gif"><img src="%%cons:img%%/icon_protected.gif">%%subject%%&nbsp;</td>
+  <td colspan=2 rowspan=2 class="metabox"><img src="%%cons:img%%/icon_delayed.png"><img src="%%cons:img%%/icon_protected.gif">%%subject%%&nbsp;</td>
   <td colspan=2>&nbsp;</td>
  </tr>
  <tr>
@@ -2538,7 +2538,7 @@ border="0" summary="" class="entrybox">
 border="0"
 summary="">
 <tr>
-<td class="caption"><img src="%%cons:img%%/icon_delayed.gif" width="11" height="15"> %%subject%%</td>
+<td class="caption"><img src="%%cons:img%%/icon_delayed.png" width="13" height="15"> %%subject%%</td>
 <td align="right" class="index">[%%datetime%%]</td>
 </tr>
 <tr>
@@ -2669,7 +2669,7 @@ border="0"
 summary="">
 <tr>
 <td class="caption">
-<img src="%%cons:img%%/icon_delayed.gif" width="11" height="15"> 
+<img src="%%cons:img%%/icon_delayed.png" width="13" height="15"> 
 <img src="%%cons:img%%/icon_private.gif" width="14" height="15"> %%subject%%</td>
 <td align="right" class="index">[%%datetime%%]</td>
 </tr>
@@ -2734,7 +2734,7 @@ border="0"
 summary="">
 <tr>
 <td class="caption">
-<img src="%%cons:img%%/icon_delayed.gif" width="11" height="15">
+<img src="%%cons:img%%/icon_delayed.png" width="13" height="15">
 <img src="%%cons:img%%/icon_protected.gif" width="14" height="15"> %%subject%%</td>
 <td align="right" class="index">[%%datetime%%]</td>
 </tr>
@@ -2941,7 +2941,7 @@ DAY_EVENT_DELAYED<=
 
 ADS_EVENT<=
   <div class="H3Holder">
-<p>%%event%%</p> <img src="%%cons:img%%/icon_delayed.gif" style="width: 11px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Delayed">
+<p>%%event%%</p> <img src="%%cons:img%%/icon_delayed.png" style="width: 13px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Delayed">
   </div>
 <=ADS_EVENT
 
@@ -2984,7 +2984,7 @@ DAY_EVENT_PRIVATE<=
 DAY_EVENT_PRIVATE_DELAYED<=
   <div class="H3Holder">
    <h3><span>%%datetime%%%%subject%%</span>
-      <img src="%%cons:img%%/icon_delayed.gif" style="width: 11px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Delayed">\
+      <img src="%%cons:img%%/icon_delayed.png" style="width: 13px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Delayed">\
    <img src="%%cons:img%%/icon_private.gif" style="width: 16px; height: 16px; margin: 2px; vertical-align: bottom;" alt="Private"></h3>
 <p>%%event%%</p>
 %%currents%%
@@ -3010,7 +3010,7 @@ DAY_EVENT_PROTECTED<=
 DAY_EVENT_PROTECTED_DELAYED<=
   <div class="H3Holder">
    <h3><span>%%datetime%%%%subject%%</span>
-   <img src="%%cons:img%%/icon_delayed.gif" style="width: 11px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Private">
+   <img src="%%cons:img%%/icon_delayed.png" style="width: 13px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Private">
    <img src="%%cons:img%%/icon_protected.gif" style="width: 14px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Protected"></h3>
 <p>%%event%%</p>
 %%currents%%
@@ -3097,7 +3097,7 @@ DAY_EVENT<=
 <=DAY_EVENT
 
 DAY_EVENT_DELAYED<=
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=14 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed"> <FONT SIZE="+1">%%datetime%%%%subject%%</FONT><BR><BR>
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed"> <FONT SIZE="+1">%%datetime%%%%subject%%</FONT><BR><BR>
 %%event%%
 %%currents%%
 %%talklinks%%
@@ -3135,7 +3135,7 @@ DAY_EVENT_PRIVATE<=
 <=DAY_EVENT_PRIVATE
 
 DAY_EVENT_PRIVATE_DELAYED<=
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=11 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
 <IMG SRC="%%cons:img%%/icon_private.gif" WIDTH=14 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Private"> <FONT SIZE="+1">%%datetime%%%%subject%%</FONT><BR><BR>
 %%event%%
 %%currents%%
@@ -3157,7 +3157,7 @@ DAY_EVENT_PROTECTED<=
 <=DAY_EVENT_PROTECTED
 
 DAY_EVENT_PROTECTED_DELAYED<=
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=14 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
 <IMG SRC="%%cons:img%%/icon_protected.gif" WIDTH=14 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Protected"> <FONT SIZE="+1">%%datetime%%%%subject%%</FONT><BR><BR>
 %%event%%
 %%currents%%
@@ -3260,7 +3260,7 @@ DAY_EVENT<=
 DAY_EVENT_DELAYED<=
 <TR><TD VALIGN=TOP>
 <FONT FACE="Verdana,Arial,Helvetica" SIZE="2">
-<B>%%datetime%%</B>%%subject%% &nbsp;<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 ALT="Delayed">
+<B>%%datetime%%</B>%%subject%% &nbsp;<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
 </FONT>
 <BR>
 <FONT FACE="Verdana,Arial,Helvetica" SIZE="2">
@@ -3316,7 +3316,7 @@ DAY_EVENT_PRIVATE_DELAYED<=
 <TR><TD VALIGN=TOP>
 <FONT FACE="Verdana,Arial,Helvetica" SIZE="2">
 <B>%%datetime%%</B>%%subject%% &nbsp;
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=11 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
 <IMG SRC="%%cons:img%%/icon_private.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 ALT="Private"></FONT>
 <BR>
 <FONT FACE="Verdana,Arial,Helvetica" SIZE="2">
@@ -3350,7 +3350,7 @@ DAY_EVENT_PROTECTED_DELAYED<=
 <TR><TD VALIGN=TOP>
 <FONT FACE="Verdana,Arial,Helvetica" SIZE="2">
 <B>%%datetime%%</B>%%subject%% &nbsp;
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=11 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
 <IMG SRC="%%cons:img%%/icon_protected.gif" WIDTH=14 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Protected"></FONT>
 <BR>
 <FONT FACE="Verdana,Arial,Helvetica" SIZE="2">
@@ -3810,7 +3810,7 @@ DAY_EVENT_DELAYED<=
 <TR>
 <TD BGCOLOR="%%color:weak_back%%">
 <TABLE BORDER="0">
-<TR><TD ROWSPAN="4" VALIGN="top"><IMG SRC="%%cons:img%%/icon_delayed.gif"></TD></TR>
+<TR><TD ROWSPAN="4" VALIGN="top"><IMG SRC="%%cons:img%%/icon_delayed.png"></TD></TR>
 %%subject%%
 %%altposter%%
 <TR><TD ALIGN="right"><FONT COLOR="%%color:weak_text%%">Time:</FONT></TD><TD><FONT COLOR="%%color:weak_text%%">%%datetime%%</FONT></TD></TR>
@@ -3908,7 +3908,7 @@ DAY_EVENT_PRIVATE_DELAYED<=
 <TR>
 <TD BGCOLOR="%%color:weak_back%%">
 <TABLE BORDER="0">
-<TR><TD ROWSPAN="4" VALIGN="top"><IMG SRC="%%cons:img%%/icon_delayed.gif"><IMG SRC="%%cons:img%%/icon_private.gif"></TD></TR>
+<TR><TD ROWSPAN="4" VALIGN="top"><IMG SRC="%%cons:img%%/icon_delayed.png"><IMG SRC="%%cons:img%%/icon_private.gif"></TD></TR>
 %%subject%%
 %%altposter%%
 <TR><TD ALIGN="right"><FONT COLOR="%%color:weak_text%%">Time:</FONT></TD><TD><FONT COLOR="%%color:weak_text%%">%%datetime%%</FONT></TD></TR>
@@ -3938,7 +3938,7 @@ DAY_EVENT_PROTECTED<=
 <TR>
 <TD BGCOLOR="%%color:weak_back%%">
 <TABLE BORDER="0">
-<TR><TD ROWSPAN="4" VALIGN="top"><IMG SRC="%%cons:img%%/icon_delayed.gif"><IMG SRC="%%cons:img%%/icon_protected.gif"></TD></TR>
+<TR><TD ROWSPAN="4" VALIGN="top"><IMG SRC="%%cons:img%%/icon_delayed.png"><IMG SRC="%%cons:img%%/icon_protected.gif"></TD></TR>
 %%subject%%
 %%altposter%%
 <TR><TD ALIGN="right"><FONT COLOR="%%color:weak_text%%">Time:</FONT></TD><TD><FONT COLOR="%%color:weak_text%%">%%datetime%%</FONT></TD></TR>
@@ -3963,7 +3963,7 @@ DAY_EVENT_PROTECTED_DELAYED<=
 <TR>
 <TD BGCOLOR="%%color:weak_back%%">
 <TABLE BORDER="0">
-<TR><TD ROWSPAN="4" VALIGN="top"><IMG SRC="%%cons:img%%/icon_delayed.gif"><IMG SRC="%%cons:img%%/icon_protected.gif"></TD></TR>
+<TR><TD ROWSPAN="4" VALIGN="top"><IMG SRC="%%cons:img%%/icon_delayed.png"><IMG SRC="%%cons:img%%/icon_protected.gif"></TD></TR>
 %%subject%%
 %%altposter%%
 <TR><TD ALIGN="right"><FONT COLOR="%%color:weak_text%%">Time:</FONT></TD><TD><FONT COLOR="%%color:weak_text%%">%%datetime%%</FONT></TD></TR>
@@ -6547,7 +6547,7 @@ LASTN_EVENT_STICKY<=
 <div class="entrytext">
 <span class="entryheading">
 %%altposter%%<span class="timestamp">%%datetime%%</span>:
-<img src="%%cons:img%%/icon_sticky.gif" width=11 height=15 vspace=0 hspace=0 alt="[Sticky]">
+<img src="%%cons:img%%/icon_sticky.png" width=13 height=15 vspace=0 hspace=0 alt="[Sticky]">
 %%subject%%</span>
 %%event%%
 %%currents%%</div>
@@ -6560,7 +6560,7 @@ LASTN_EVENT_DELAYED<=
 <div class="entrytext">
 <span class="entryheading">
 %%altposter%%<span class="timestamp">%%datetime%%</span>:
-<img src="%%cons:img%%/icon_delayed.gif" width=11 height=15 vspace=0 hspace=0 alt="[Delayed]">
+<img src="%%cons:img%%/icon_delayed.png" width=13 height=15 vspace=0 hspace=0 alt="[Delayed]">
 %%subject%%</span>
 %%event%%
 %%currents%%</div>
@@ -6573,8 +6573,8 @@ LASTN_EVENT_STICKY_DELAYED<=
 <div class="entrytext">
 <span class="entryheading">
 %%altposter%%<span class="timestamp">%%datetime%%</span>:
-<img src="%%cons:img%%/icon_sticky.gif" width=11 height=15 vspace=0 hspace=0 alt="[Sticky]"> 
-<img src="%%cons:img%%/icon_delayed.gif" width=11 height=15 vspace=0 hspace=0 alt="[Delayed]">
+<img src="%%cons:img%%/icon_sticky.png" width=13 height=15 vspace=0 hspace=0 alt="[Sticky]"> 
+<img src="%%cons:img%%/icon_delayed.png" width=13 height=15 vspace=0 hspace=0 alt="[Delayed]">
 %%subject%%</span>
 %%event%%
 %%currents%%</div>
@@ -6624,7 +6624,7 @@ LASTN_EVENT_PRIVATE_STICKY<=
 <div class="entrytext">
 <span class="entryheading">
 %%altposter%%<span class="timestamp">%%datetime%%</span>:
-<img src="%%cons:img%%/icon_sticky.gif" width=16 height=16 vspace=0 hspace=0 alt="[Sticky]"> 
+<img src="%%cons:img%%/icon_sticky.png" width=13 height=15 vspace=0 hspace=0 alt="[Sticky]"> 
 <img src="%%cons:img%%/icon_private.gif" width=16 height=16 vspace=0 hspace=0 alt="[Private]"> %%subject%%</span>
 %%event%%
 %%currents%%</div>
@@ -6638,7 +6638,7 @@ LASTN_EVENT_PRIVATE_DELAYED<=
 <div class="entrytext">
 <span class="entryheading">
 %%altposter%%<span class="timestamp">%%datetime%%</span>:
-<img src="%%cons:img%%/icon_delayed.gif" width=16 height=16 vspace=0 hspace=0 alt="[Delayed]">
+<img src="%%cons:img%%/icon_delayed.png" width=13 height=15 vspace=0 hspace=0 alt="[Delayed]">
 <img src="%%cons:img%%/icon_private.gif" width=16 height=16 vspace=0 hspace=0 alt="[Private]"> %%subject%%</span>
 %%event%%
 %%currents%%</div>
@@ -6652,8 +6652,8 @@ LASTN_EVENT_PRIVATE_STICKY_DELAYED<=
 <div class="entrytext">
 <span class="entryheading">
 %%altposter%%<span class="timestamp">%%datetime%%</span>:
-<img src="%%cons:img%%/icon_sticky.gif" width=16 height=16 vspace=0 hspace=0 alt="[Sticky]">
-<img src="%%cons:img%%/icon_delayed.gif" width=16 height=16 vspace=0 hspace=0 alt="[Delayed]"> 
+<img src="%%cons:img%%/icon_sticky.png" width=13 height=15 vspace=0 hspace=0 alt="[Sticky]">
+<img src="%%cons:img%%/icon_delayed.png" width=13 height=15 vspace=0 hspace=0 alt="[Delayed]"> 
 <img src="%%cons:img%%/icon_private.gif" width=16 height=16 vspace=0 hspace=0 alt="[Private]"> %%subject%%</span>
 %%event%%
 %%currents%%</div>
@@ -6697,7 +6697,7 @@ LASTN_EVENT_PROTECTED_STICKY<=
 <div class="entrytext">
 <span class="entryheading">
 %%altposter%%<span class="timestamp">%%datetime%%</span>:
-<img src="%%cons:img%%/icon_sticky.gif" width=16 height=16 vspace=0 hspace=0 alt="[Sticky]">
+<img src="%%cons:img%%/icon_sticky.png" width=13 height=15 vspace=0 hspace=0 alt="[Sticky]">
 <img src="%%cons:img%%/icon_protected.gif" width=16 height=16 vspace=0 hspace=0 alt="[Protected]"> %%subject%%</span>
 %%event%%
 %%currents%%</div>
@@ -6723,7 +6723,7 @@ LASTN_EVENT_PROTECTED_STICKY_DELAYED<=
 <div class="entrytext">
 <span class="entryheading">
 %%altposter%%<span class="timestamp">%%datetime%%</span>:
-<img src="%%cons:img%%/icon_delayed.gif" width=16 height=16 vspace=0 hspace=0 alt="[Delayed]"> 
+<img src="%%cons:img%%/icon_delayed.png" width=13 height=15 vspace=0 hspace=0 alt="[Delayed]"> 
 <img src="%%cons:img%%/icon_protected.gif" width=16 height=16 vspace=0 hspace=0 alt="[Protected]"> %%subject%%</span>
 %%event%%
 %%currents%%</div>
@@ -7005,14 +7005,14 @@ LASTN_EVENT<=
 
 LASTN_EVENT_STICKY<=
 <TR VALIGN=TOP><TD style="text-align: right;" NOWRAP BGCOLOR="%%color:weak_back%%"><FONT COLOR="%%color:weak_text%%" FACE="Arial,Helvetica" SIZE=-1><I>%%datetime%%</I></FONT>%%altposter%%<BR/>
-<IMG SRC="%%cons:img%%/icon_sticky.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 ALT="Sticky">
+<IMG SRC="%%cons:img%%/icon_sticky.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Sticky">
 </TD>
 <TD><DIV STYLE="text-align:left">%%subject%% %%event%% %%currents%%</DIV>%%talklinks%%</TD></TR>
 <=LASTN_EVENT_STICKY
 
 LASTN_EVENT_DELAYED<=
 <TR VALIGN=TOP><TD style="text-align: right;" NOWRAP BGCOLOR="%%color:weak_back%%"><FONT COLOR="%%color:weak_text%%" FACE="Arial,Helvetica" SIZE=-1><I>%%datetime%%</I></FONT>%%altposter%%<BR/>
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 ALT="Delayed">
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
 </TD>
 <TD><DIV STYLE="text-align:left">%%subject%% %%event%% %%currents%%</DIV>%%talklinks%%</TD></TR>
 <=LASTN_EVENT_DELAYED
@@ -7020,8 +7020,8 @@ LASTN_EVENT_DELAYED<=
 
 LASTN_EVENT_STICKY_DELAYED<=
 <TR VALIGN=TOP><TD style="text-align: right;" NOWRAP BGCOLOR="%%color:weak_back%%"><FONT COLOR="%%color:weak_text%%" FACE="Arial,Helvetica" SIZE=-1><I>%%datetime%%</I></FONT>%%altposter%%<BR/>
-<IMG SRC="%%cons:img%%/icon_sticky.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 ALT="Sticky">
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 ALT="Delayed">
+<IMG SRC="%%cons:img%%/icon_sticky.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Sticky">
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
 </TD>
 <TD><DIV STYLE="text-align:left">%%subject%% %%event%% %%currents%%</DIV>%%talklinks%%</TD></TR>
 <=LASTN_EVENT_STICKY_DELAYED
@@ -7046,7 +7046,7 @@ LASTN_EVENT_PRIVATE<=
 
 LASTN_EVENT_PRIVATE_STICKY<=
 <TR VALIGN=TOP><TD style="text-align: right;" NOWRAP BGCOLOR=%%color:weak_back%%><FONT COLOR=%%color:weak_text%% FACE="Arial,Helvetica" SIZE=-1><I>%%datetime%%</I></FONT>%%altposter%%<BR>
-<IMG SRC="%%cons:img%%/icon_sticky.gif" WIDTH=11 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Sticky">
+<IMG SRC="%%cons:img%%/icon_sticky.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Sticky">
 <IMG SRC="%%cons:img%%/icon_private.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 ALT="Private">
 </TD>
 <TD><DIV STYLE="text-align:left">%%subject%% %%event%% %%currents%%</DIV>%%talklinks%%</TD></TR>
@@ -7054,7 +7054,7 @@ LASTN_EVENT_PRIVATE_STICKY<=
 
 LASTN_EVENT_PRIVATE_DELAYED<=
 <TR VALIGN=TOP><TD style="text-align: right;" NOWRAP BGCOLOR=%%color:weak_back%%><FONT COLOR=%%color:weak_text%% FACE="Arial,Helvetica" SIZE=-1><I>%%datetime%%</I></FONT>%%altposter%%<BR>
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 ALT="Delayed">
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
 <IMG SRC="%%cons:img%%/icon_private.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 ALT="Private">
 </TD>
 <TD><DIV STYLE="text-align:left">%%subject%% %%event%% %%currents%%</DIV>%%talklinks%%</TD></TR>
@@ -7062,8 +7062,8 @@ LASTN_EVENT_PRIVATE_DELAYED<=
 
 LASTN_EVENT_PRIVATE_STICKY_DELAYED<=
 <TR VALIGN=TOP><TD style="text-align: right;" NOWRAP BGCOLOR=%%color:weak_back%%><FONT COLOR=%%color:weak_text%% FACE="Arial,Helvetica" SIZE=-1><I>%%datetime%%</I></FONT>%%altposter%%<BR>
-<IMG SRC="%%cons:img%%/icon_sticky.gif" WIDTH=11 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Sticky">
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 ALT="Delayed">
+<IMG SRC="%%cons:img%%/icon_sticky.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Sticky">
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
 <IMG SRC="%%cons:img%%/icon_private.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 ALT="Private">
 </TD>
 <TD><DIV STYLE="text-align:left">%%subject%% %%event%% %%currents%%</DIV>%%talklinks%%</TD></TR>
@@ -7098,7 +7098,7 @@ LASTN_EVENT_PROTECTED<=
 
 LASTN_EVENT_PROTECTED_STICKY<=
 <TR VALIGN=TOP><TD style="text-align: right;" NOWRAP BGCOLOR=%%color:weak_back%%><FONT COLOR=%%color:weak_text%% FACE="Arial,Helvetica" SIZE=-1><I>%%datetime%%</I></FONT>%%altposter%%<BR>
-<IMG SRC="%%cons:img%%/icon_sticky.gif" WIDTH=11 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Sticky">
+<IMG SRC="%%cons:img%%/icon_sticky.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Sticky">
 <IMG SRC="%%cons:img%%/icon_protected.gif" WIDTH=14 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Protected">
 </TD>
 <TD><DIV STYLE="text-align:left">%%subject%% %%event%% %%currents%%</DIV>%%talklinks%%</TD></TR>
@@ -7106,7 +7106,7 @@ LASTN_EVENT_PROTECTED_STICKY<=
 
 LASTN_EVENT_PROTECTED_DELAYED<=
 <TR VALIGN=TOP><TD style="text-align: right;" NOWRAP BGCOLOR=%%color:weak_back%%><FONT COLOR=%%color:weak_text%% FACE="Arial,Helvetica" SIZE=-1><I>%%datetime%%</I></FONT>%%altposter%%<BR>
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=14 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
 <IMG SRC="%%cons:img%%/icon_protected.gif" WIDTH=14 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Protected">
 </TD>
 <TD><DIV STYLE="text-align:left">%%subject%% %%event%% %%currents%%</DIV>%%talklinks%%</TD></TR>
@@ -7114,8 +7114,8 @@ LASTN_EVENT_PROTECTED_DELAYED<=
 
 LASTN_EVENT_PROTECTED_STICKY_DELAYED<=
 <TR VALIGN=TOP><TD style="text-align: right;" NOWRAP BGCOLOR=%%color:weak_back%%><FONT COLOR=%%color:weak_text%% FACE="Arial,Helvetica" SIZE=-1><I>%%datetime%%</I></FONT>%%altposter%%<BR>
-<IMG SRC="%%cons:img%%/icon_sticky.gif" WIDTH=14 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Sticky">
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=14 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
+<IMG SRC="%%cons:img%%/icon_sticky.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Sticky">
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Delayed">
 <IMG SRC="%%cons:img%%/icon_protected.gif" WIDTH=14 HEIGHT=15 VSPACE=2 HSPACE=2 ALT="Protected">
 </TD>
 <TD><DIV STYLE="text-align:left">%%subject%% %%event%% %%currents%%</DIV>%%talklinks%%</TD></TR>
@@ -7251,7 +7251,7 @@ LASTN_EVENT<=
 LASTN_EVENT_STICKY<=
 <table cellspacing=0 class="entries">
  <tr>
-  <td colspan=2 rowspan=2 class="metabox"><img src="%%cons:img%%/icon_sticky.gif">%%subject%%&nbsp;</td>
+  <td colspan=2 rowspan=2 class="metabox"><img src="%%cons:img%%/icon_sticky.png">%%subject%%&nbsp;</td>
   <td class="nopad">%%altposter%%</td>
   <td>&nbsp;</td>
  </tr>
@@ -7279,7 +7279,7 @@ LASTN_EVENT_STICKY<=
 LASTN_EVENT_DELAYED<=
 <table cellspacing=0 class="entries">
  <tr>
-  <td colspan=2 rowspan=2 class="metabox"><img src="%%cons:img%%/icon_delayed.gif">%%subject%%&nbsp;</td>
+  <td colspan=2 rowspan=2 class="metabox"><img src="%%cons:img%%/icon_delayed.png">%%subject%%&nbsp;</td>
   <td class="nopad">%%altposter%%</td>
   <td>&nbsp;</td>
  </tr>
@@ -7308,8 +7308,8 @@ LASTN_EVENT_STICKY_DELAYED<=
 <table cellspacing=0 class="entries">
  <tr>
   <td colspan=2 rowspan=2 class="metabox">
-    <img src="%%cons:img%%/icon_sticky.gif">
-      <img src="%%cons:img%%/icon_delayed.gif">%%subject%%&nbsp;</td>
+    <img src="%%cons:img%%/icon_sticky.png">
+      <img src="%%cons:img%%/icon_delayed.png">%%subject%%&nbsp;</td>
   <td class="nopad">%%altposter%%</td>
   <td>&nbsp;</td>
  </tr>
@@ -7385,7 +7385,7 @@ LASTN_EVENT_PRIVATE_STICKY<=
 <table cellspacing=0 class="entries">
  <tr>
   <td colspan=2 rowspan=2 class="metabox">
-  <img src="%%cons:img%%/icon_sticky.gif">
+  <img src="%%cons:img%%/icon_sticky.png">
   <img src="%%cons:img%%/icon_private.gif">%%subject%%&nbsp;</td>
   <td class="nopad">%%altposter%%</td>
   <td>&nbsp;</td>
@@ -7416,7 +7416,7 @@ LASTN_EVENT_PRIVATE_DELAYED<=
 <table cellspacing=0 class="entries">
  <tr>
   <td colspan=2 rowspan=2 class="metabox">
-  <img src="%%cons:img%%/icon_delayed.gif">
+  <img src="%%cons:img%%/icon_delayed.png">
   <img src="%%cons:img%%/icon_private.gif">%%subject%%&nbsp;</td>
   <td class="nopad">%%altposter%%</td>
   <td>&nbsp;</td>
@@ -7446,8 +7446,8 @@ LASTN_EVENT_PRIVATE_STICKY_DELAYED<=
 <table cellspacing=0 class="entries">
  <tr>
   <td colspan=2 rowspan=2 class="metabox">
-  <img src="%%cons:img%%/icon_sticky.gif">
-  <img src="%%cons:img%%/icon_delayed.gif">
+  <img src="%%cons:img%%/icon_sticky.png">
+  <img src="%%cons:img%%/icon_delayed.png">
   <img src="%%cons:img%%/icon_private.gif">%%subject%%&nbsp;</td>
   <td class="nopad">%%altposter%%</td>
   <td>&nbsp;</td>
@@ -7521,7 +7521,7 @@ LASTN_EVENT_PROTECTED_STICKY<=
 <table cellspacing=0 class="entries">
  <tr>
   <td colspan=2 rowspan=2 class="metabox">
-  <img src="%%cons:img%%/icon_sticky.gif">
+  <img src="%%cons:img%%/icon_sticky.png">
   <img src="%%cons:img%%/icon_protected.gif">%%subject%%&nbsp;</td>
   <td class="nopad">%%altposter%%</td>
   <td>&nbsp;</td>
@@ -7551,7 +7551,7 @@ LASTN_EVENT_PROTECTED_DELAYED<=
 <table cellspacing=0 class="entries">
  <tr>
   <td colspan=2 rowspan=2 class="metabox">
-  <img src="%%cons:img%%/icon_delayed.gif">
+  <img src="%%cons:img%%/icon_delayed.png">
   <img src="%%cons:img%%/icon_protected.gif">%%subject%%&nbsp;</td>
   <td class="nopad">%%altposter%%</td>
   <td>&nbsp;</td>
@@ -7581,8 +7581,8 @@ LASTN_EVENT_PROTECTED_STICKY_DELAYED<=
 <table cellspacing=0 class="entries">
  <tr>
   <td colspan=2 rowspan=2 class="metabox">
-  <img src="%%cons:img%%/icon_sticky.gif">
-  <img src="%%cons:img%%/icon_delayed.gif">
+  <img src="%%cons:img%%/icon_sticky.png">
+  <img src="%%cons:img%%/icon_delayed.png">
   <img src="%%cons:img%%/icon_protected.gif">%%subject%%&nbsp;</td>
   <td class="nopad">%%altposter%%</td>
   <td>&nbsp;</td>
@@ -7876,7 +7876,7 @@ summary="" class="entrybox">
 border="0"
 summary="">
 <tr align='left'>
-<td class="caption"><img src="%%cons:img%%/icon_delayed.gif" width="14"
+<td class="caption"><img src="%%cons:img%%/icon_delayed.png" width="13"
 height="15">%%subject%%</td>
 <td align="right" class="index">[%%datetime%%]</td>
 </tr>
@@ -7904,7 +7904,7 @@ summary="" class="entrybox">
 border="0"
 summary="">
 <tr align='left'>
-<td class="caption"><img src="%%cons:img%%/icon_sticky.gif" width="14"
+<td class="caption"><img src="%%cons:img%%/icon_sticky.png" width="13"
 height="15">%%subject%%</td>
 <td align="right" class="index">[%%datetime%%]</td>
 </tr>
@@ -7932,8 +7932,8 @@ summary="" class="entrybox">
 border="0"
 summary="">
 <tr align='left'>
-<td class="caption"><img src="%%cons:img%%/icon_sticky.gif" width="14"
-height="15"><img src="%%cons:img%%/icon_delayed.gif" width="14"
+<td class="caption"><img src="%%cons:img%%/icon_sticky.png" width="13"
+height="15"><img src="%%cons:img%%/icon_delayed.png" width="13"
 height="15">%%subject%%</td>
 <td align="right" class="index">[%%datetime%%]</td>
 </tr>
@@ -8039,7 +8039,7 @@ summary="" class="entrybox">
 border="0"
 summary="">
 <tr align='left'>
-<td class="caption"><img src="%%cons:img%%/icon_sticky.gif" width="14"
+<td class="caption"><img src="%%cons:img%%/icon_sticky.png" width="13"
 height="15"><img src="%%cons:img%%/icon_private.gif" width="14"
 height="15"> %%subject%%</td>
 <td align="right" class="index">[%%datetime%%]</td>
@@ -8069,7 +8069,7 @@ summary="" class="entrybox">
 border="0"
 summary="">
 <tr align='left'>
-<td class="caption"><img src="%%cons:img%%/icon_delayed.gif" width="14"
+<td class="caption"><img src="%%cons:img%%/icon_delayed.png" width="13"
 height="15"><img src="%%cons:img%%/icon_private.gif" width="14"
 height="15"> %%subject%%</td>
 <td align="right" class="index">[%%datetime%%]</td>
@@ -8099,8 +8099,8 @@ summary="" class="entrybox">
 border="0"
 summary="">
 <tr align='left'>
-<td class="caption"><img src="%%cons:img%%/icon_sticky.gif" width="14"
-height="15"><img src="%%cons:img%%/icon_delayed.gif" width="14"
+<td class="caption"><img src="%%cons:img%%/icon_sticky.png" width="13"
+height="15"><img src="%%cons:img%%/icon_delayed.png" width="13"
 height="15"><img src="%%cons:img%%/icon_private.gif" width="14"
 height="15"> %%subject%%</td>
 <td align="right" class="index">[%%datetime%%]</td>
@@ -8192,7 +8192,7 @@ summary="" class="entrybox">
 border="0"
 summary="">
 <tr align='left'>
-<td class="caption"><img src="%%cons:img%%/icon_sticky.gif" width="14"
+<td class="caption"><img src="%%cons:img%%/icon_sticky.png" width="13"
 height="15"><img src="%%cons:img%%/icon_protected.gif" width="14"
 height="15"> %%subject%%</td>
 <td align="right" class="index">[%%datetime%%]</td>
@@ -8221,7 +8221,7 @@ summary="" class="entrybox">
 border="0"
 summary="">
 <tr align='left'>
-<td class="caption"><img src="%%cons:img%%/icon_delayed.gif" width="14"
+<td class="caption"><img src="%%cons:img%%/icon_delayed.png" width="13"
 height="15"><img src="%%cons:img%%/icon_protected.gif" width="14"
 height="15"> %%subject%%</td>
 <td align="right" class="index">[%%datetime%%]</td>
@@ -8250,8 +8250,8 @@ summary="" class="entrybox">
 border="0"
 summary="">
 <tr align='left'>
-<td class="caption"><img src="%%cons:img%%/icon_sticky.gif" width="14"
-height="15"><img src="%%cons:img%%/icon_delayed.gif" width="14"
+<td class="caption"><img src="%%cons:img%%/icon_sticky.png" width="13"
+height="15"><img src="%%cons:img%%/icon_delayed.png" width="13"
 height="15"><img src="%%cons:img%%/icon_protected.gif" width="14"
 height="15"> %%subject%%</td>
 <td align="right" class="index">[%%datetime%%]</td>
@@ -8503,7 +8503,7 @@ LASTN_EVENT_DELAYED<=
   <div class="H3Holder">
 %%altposter%%
    <h3><span>%%datetime%%%%subject%%</span>
-   <img src="%%cons:img%%/icon_delayed.gif" style="width: 16px; height: 16px; margin: 2px; vertical-align: bottom;" alt="Delayed">
+   <img src="%%cons:img%%/icon_delayed.png" style="width: 13px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Delayed">
    </h3>
 <p>%%event%%</p>
 %%currents%%
@@ -8516,7 +8516,7 @@ LASTN_EVENT_STICKY<=
   <div class="H3Holder">
 %%altposter%%
    <h3><span>%%datetime%%%%subject%%</span>
-   <img src="%%cons:img%%/icon_sticky.gif" style="width: 16px; height: 16px; margin: 2px; vertical-align: bottom;" alt="Sticky">
+   <img src="%%cons:img%%/icon_sticky.png" style="width: 13px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Sticky">
    </h3>
 <p>%%event%%</p>
 %%currents%%
@@ -8529,8 +8529,8 @@ LASTN_EVENT_STICKY_DELAYED<=
   <div class="H3Holder">
 %%altposter%%
    <h3><span>%%datetime%%%%subject%%</span>
-   <img src="%%cons:img%%/icon_sticky.gif" style="width: 16px; height: 16px; margin: 2px; vertical-align: bottom;" alt="Sticky">
-   <img src="%%cons:img%%/icon_delayed.gif" style="width: 16px; height: 16px; margin: 2px; vertical-align: bottom;" alt="Delayed">
+   <img src="%%cons:img%%/icon_sticky.png" style="width: 13px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Sticky">
+   <img src="%%cons:img%%/icon_delayed.png" style="width: 13px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Delayed">
    </h3>
 <p>%%event%%</p>
 %%currents%%
@@ -8578,7 +8578,7 @@ LASTN_EVENT_PRIVATE_STICKY<=
   <div class="H3Holder">
 %%altposter%%
    <h3><span>%%datetime%%%%subject%%</span>
-   <img src="%%cons:img%%/icon_sticky.gif" style="width: 16px; height: 16px; margin: 2px; vertical-align: bottom;" alt="Sticky">
+   <img src="%%cons:img%%/icon_sticky.png" style="width: 13px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Sticky">
    <img src="%%cons:img%%/icon_private.gif" style="width: 16px; height: 16px; margin: 2px; vertical-align: bottom;" alt="Private"></h3>
 <p>%%event%%</p>
 %%currents%%
@@ -8591,7 +8591,7 @@ LASTN_EVENT_PRIVATE_DELAYED<=
   <div class="H3Holder">
 %%altposter%%
    <h3><span>%%datetime%%%%subject%%</span>
-   <img src="%%cons:img%%/icon_delayed.gif" style="width: 16px; height: 16px; margin: 2px; vertical-align: bottom;" alt="Delayed">
+   <img src="%%cons:img%%/icon_delayed.png" style="width: 13px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Delayed">
    <img src="%%cons:img%%/icon_private.gif" style="width: 16px; height: 16px; margin: 2px; vertical-align: bottom;" alt="Private"></h3>
 <p>%%event%%</p>
 %%currents%%
@@ -8604,8 +8604,8 @@ LASTN_EVENT_PRIVATE_STICKY_DELAYED<=
   <div class="H3Holder">
 %%altposter%%
    <h3><span>%%datetime%%%%subject%%</span>
-   <img src="%%cons:img%%/icon_sticky.gif" style="width: 16px; height: 16px; margin: 2px; vertical-align: bottom;" alt="Sticky">
-   <img src="%%cons:img%%/icon_delayed.gif" style="width: 16px; height: 16px; margin: 2px; vertical-align: bottom;" alt="Delayed">
+   <img src="%%cons:img%%/icon_sticky.png" style="width: 13px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Sticky">
+   <img src="%%cons:img%%/icon_delayed.png" style="width: 13px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Delayed">
    <img src="%%cons:img%%/icon_private.gif" style="width: 16px; height: 16px; margin: 2px; vertical-align: bottom;" alt="Private"></h3>
 <p>%%event%%</p>
 %%currents%%
@@ -8647,7 +8647,7 @@ LASTN_EVENT_PROTECTED_STICKY<=
   <div class="H3Holder">
 %%altposter%%
    <h3><span>%%datetime%%%%subject%%</span>
-   <img src="%%cons:img%%/icon_sticky.gif" style="width: 16px; height: 16px; margin: 2px; vertical-align: bottom;" alt="Sticky">
+   <img src="%%cons:img%%/icon_sticky.png" style="width: 13px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Sticky">
    <img src="%%cons:img%%/icon_protected.gif" style="width: 14px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Protected"></h3>
 <p>%%event%%</p>
 %%currents%%
@@ -8660,7 +8660,7 @@ LASTN_EVENT_PROTECTED_DELAYED<=
   <div class="H3Holder">
 %%altposter%%
    <h3><span>%%datetime%%%%subject%%</span>
-   <img src="%%cons:img%%/icon_delayed.gif" style="width: 16px; height: 16px; margin: 2px; vertical-align: bottom;" alt="Delayed">
+   <img src="%%cons:img%%/icon_delayed.png" style="width: 13px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Delayed">
    <img src="%%cons:img%%/icon_protected.gif" style="width: 14px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Protected"></h3>
 <p>%%event%%</p>
 %%currents%%
@@ -8674,8 +8674,8 @@ LASTN_EVENT_PROTECTED_STICKY_DELAYED<=
   <div class="H3Holder">
 %%altposter%%
    <h3><span>%%datetime%%%%subject%%</span>
-   <img src="%%cons:img%%/icon_sticky.gif" style="width: 16px; height: 16px; margin: 2px; vertical-align: bottom;" alt="Delayed">
-   <img src="%%cons:img%%/icon_delayed.gif" style="width: 16px; height: 16px; margin: 2px; vertical-align: bottom;" alt="Delayed">
+   <img src="%%cons:img%%/icon_sticky.png" style="width: 13px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Delayed">
+   <img src="%%cons:img%%/icon_delayed.png" style="width: 13px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Delayed">
    <img src="%%cons:img%%/icon_protected.gif" style="width: 14px; height: 15px; margin: 2px; vertical-align: bottom;" alt="Protected"></h3>
 <p>%%event%%</p>
 %%currents%%
@@ -8798,7 +8798,7 @@ HEIGHT="23"></CENTER></P>
 <=LASTN_EVENT
 
 LASTN_EVENT_STICKY<=
-<IMG SRC="%%cons:img%%/icon_sticky.gif" WIDTH=14 HEIGHT=15 VSPACE=2 
+<IMG SRC="%%cons:img%%/icon_sticky.png" WIDTH=13 HEIGHT=15 VSPACE=2 
 HSPACE=2 ALT="Sticky">
 <FONT SIZE="+1">%%datetime%%%%subject%%%%altposter%%</FONT><BR><BR>
 %%event%%
@@ -8809,7 +8809,7 @@ HEIGHT="23"></CENTER></P>
 <=LASTN_EVENT_STICKY
 
 LASTN_EVENT_DELAYED<=
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=14 HEIGHT=15 VSPACE=2 
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 
 HSPACE=2 ALT="Delayed">
 <FONT SIZE="+1">%%datetime%%%%subject%%%%altposter%%</FONT><BR><BR>
 %%event%%
@@ -8820,9 +8820,9 @@ HEIGHT="23"></CENTER></P>
 <=LASTN_EVENT_DELAYED
 
 LASTN_EVENT_STICKY_DELAYED<=
-<IMG SRC="%%cons:img%%/icon_sticky.gif" WIDTH=14 HEIGHT=15 VSPACE=2 
+<IMG SRC="%%cons:img%%/icon_sticky.png" WIDTH=13 HEIGHT=15 VSPACE=2 
 HSPACE=2 ALT="Sticky">
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=14 HEIGHT=15 VSPACE=2 
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 
 HSPACE=2 ALT="Delayed">
 <FONT SIZE="+1">%%datetime%%%%subject%%%%altposter%%</FONT><BR><BR>
 %%event%%
@@ -8880,7 +8880,7 @@ HEIGHT="23"></CENTER></P>
 <=LASTN_EVENT_PROTECTED
 
 LASTN_EVENT_PROTECTED_STICKY<=
-<IMG SRC="%%cons:img%%/icon_sticky.gif" WIDTH=14 HEIGHT=15 VSPACE=2 
+<IMG SRC="%%cons:img%%/icon_sticky.png" WIDTH=13 HEIGHT=15 VSPACE=2 
 HSPACE=2 ALT="Sticky">
 <IMG SRC="%%cons:img%%/icon_protected.gif" WIDTH=14 HEIGHT=15 VSPACE=2
 HSPACE=2 ALT="Protected"> <FONT
@@ -8893,7 +8893,7 @@ HEIGHT="23"></CENTER></P>
 <=LASTN_EVENT_PROTECTED_STICKY
 
 LASTN_EVENT_PROTECTED_DELAYED<=
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=14 HEIGHT=15 VSPACE=2 
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 
 HSPACE=2 ALT="Delayed">
 <IMG SRC="%%cons:img%%/icon_protected.gif" WIDTH=14 HEIGHT=15 VSPACE=2
 HSPACE=2 ALT="Protected"> <FONT
@@ -8906,9 +8906,9 @@ HEIGHT="23"></CENTER></P>
 <=LASTN_EVENT_PROTECTED_DELAYED
 
 LASTN_EVENT_PROTECTED_STICKY_DELAYED<=
-<IMG SRC="%%cons:img%%/icon_sticky.gif" WIDTH=14 HEIGHT=15 VSPACE=2 
+<IMG SRC="%%cons:img%%/icon_sticky.png" WIDTH=13 HEIGHT=15 VSPACE=2 
 HSPACE=2 ALT="Sticky">
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=14 HEIGHT=15 VSPACE=2 
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 
 HSPACE=2 ALT="Delayed">
 <IMG SRC="%%cons:img%%/icon_protected.gif" WIDTH=14 HEIGHT=15 VSPACE=2
 HSPACE=2 ALT="Protected"> <FONT
@@ -9057,7 +9057,7 @@ LASTN_EVENT_STICKY<=
 <tr><td><table border="0" width="100%" cellspacing="0" cellpadding="4"><tr>
 %%altposter%%
 <td width="100%"><FONT FACE="Verdana,Arial,Helvetica" SIZE="2">
-<IMG  SRC="%%cons:img%%/icon_sticky.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 
+<IMG  SRC="%%cons:img%%/icon_sticky.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 
 ALT="Delayed">
 %%event%%
 %%currents%%
@@ -9073,7 +9073,7 @@ LASTN_EVENT_DELAYED<=
 <TR><TD VALIGN=TOP>
 <FONT FACE="Verdana,Arial,Helvetica" SIZE="2">
 <B>%%datetime%%</B>%%subject%%
-<IMG  SRC="%%cons:img%%/icon_delayed.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 
+<IMG  SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 
 ALT="Delayed">
 </FONT></td></tr>
 <tr><td><table border="0" width="100%" cellspacing="0" cellpadding="4"><tr>
@@ -9096,7 +9096,7 @@ LASTN_EVENT_STICKY_DELAYED<=
 <IMG 
 SRC="%%cons:img%%/icon_private.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 
 ALT="Sticky">
-<IMG  SRC="%%cons:img%%/icon_sticky.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 
+<IMG  SRC="%%cons:img%%/icon_sticky.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 
 ALT="Delayed">
 </FONT></td></tr>
 <tr><td><table border="0" width="100%" cellspacing="0" cellpadding="4"><tr>
@@ -9155,7 +9155,7 @@ LASTN_EVENT_PRIVATE_STICKY<=
 <TR><TD VALIGN=TOP>
 <FONT FACE="Verdana,Arial,Helvetica" SIZE="2">
 <B>%%datetime%%</B>%%subject%% &nbsp;
-<IMG  SRC="%%cons:img%%/icon_sticky.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 
+<IMG  SRC="%%cons:img%%/icon_sticky.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 
 ALT="Sticky"> <IMG
 SRC="%%cons:img%%/icon_private.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2
 ALT="Private">
@@ -9177,7 +9177,7 @@ LASTN_EVENT_PRIVATE_DELAYED<=
 <TR><TD VALIGN=TOP>
 <FONT FACE="Verdana,Arial,Helvetica" SIZE="2">
 <B>%%datetime%%</B>%%subject%% &nbsp;
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 
 ALT="Delayed">
 <IMG SRC="%%cons:img%%/icon_private.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2
 ALT="Private">
@@ -9199,9 +9199,9 @@ LASTN_EVENT_PRIVATE_STICKY_DELAYED<=
 <TR><TD VALIGN=TOP>
 <FONT FACE="Verdana,Arial,Helvetica" SIZE="2">
 <B>%%datetime%%</B>%%subject%% &nbsp;
-<IMG  SRC="%%cons:img%%/icon_sticky.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 
+<IMG  SRC="%%cons:img%%/icon_sticky.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 
 ALT="Sticky">
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 
 ALT="Delayed">
 <IMG SRC="%%cons:img%%/icon_private.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2
 ALT="Private">
@@ -9258,7 +9258,7 @@ LASTN_EVENT_PROTECTED_STICKY<=
 <TR><TD VALIGN=TOP>
 <FONT FACE="Verdana,Arial,Helvetica" SIZE="2">
 <B>%%datetime%%</B>%%subject%% &nbsp;
-<IMG SRC="%%cons:img%%/icon_sticky.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 
+<IMG SRC="%%cons:img%%/icon_sticky.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 
 ALT="Sticky">
 <IMG SRC="%%cons:img%%/icon_protected.gif" WIDTH=14 HEIGHT=15 VSPACE=2 HSPACE=2
 ALT="Protected">
@@ -9280,7 +9280,7 @@ LASTN_EVENT_PROTECTED_DELAYED<=
 <TR><TD VALIGN=TOP>
 <FONT FACE="Verdana,Arial,Helvetica" SIZE="2">
 <B>%%datetime%%</B>%%subject%% &nbsp;
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 
 ALT="Delayed">
 <IMG SRC="%%cons:img%%/icon_protected.gif" WIDTH=14 HEIGHT=15 VSPACE=2 HSPACE=2
 ALT="Protected">
@@ -9302,9 +9302,9 @@ LASTN_EVENT_PROTECTED_STICKY_DELAYED<=
 <TR><TD VALIGN=TOP>
 <FONT FACE="Verdana,Arial,Helvetica" SIZE="2">
 <B>%%datetime%%</B>%%subject%% &nbsp;
-<IMG SRC="%%cons:img%%/icon_sticky.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 
+<IMG SRC="%%cons:img%%/icon_sticky.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 
 ALT="Sticky">
-<IMG SRC="%%cons:img%%/icon_delayed.gif" WIDTH=16 HEIGHT=16 VSPACE=2 HSPACE=2 
+<IMG SRC="%%cons:img%%/icon_delayed.png" WIDTH=13 HEIGHT=15 VSPACE=2 HSPACE=2 
 ALT="Delayed">
 <IMG SRC="%%cons:img%%/icon_protected.gif" WIDTH=14 HEIGHT=15 VSPACE=2 HSPACE=2
 ALT="Protected">
@@ -9907,7 +9907,7 @@ LASTN_EVENT_DELAYED<=
 <TD BGCOLOR="%%color:weak_back%%">
 <TABLE BORDER="0">
 <TR><TD ROWSPAN="5" VALIGN="top">
-<IMG SRC="%%cons:img%%/icon_delayed.gif"></TD></TR>
+<IMG SRC="%%cons:img%%/icon_delayed.png"></TD></TR>
 %%subject%%
 %%altposter%%
 <TR><TD ALIGN="right"><FONT COLOR="%%color:weak_text%%">Time:</FONT></TD><TD><FONT COLOR="%%color:weak_text%%">%%datetime%%</FONT></TD></TR>
@@ -9934,7 +9934,7 @@ LASTN_EVENT_STICKY<=
 <TD BGCOLOR="%%color:weak_back%%">
 <TABLE BORDER="0">
 <TR><TD ROWSPAN="5" VALIGN="top">
-<IMG SRC="%%cons:img%%/icon_sticky.gif"></TD></TR>%%subject%%
+<IMG SRC="%%cons:img%%/icon_sticky.png"></TD></TR>%%subject%%
 %%altposter%%
 <TR><TD ALIGN="right"><FONT COLOR="%%color:weak_text%%">Time:</FONT></TD><TD><FONT COLOR="%%color:weak_text%%">%%datetime%%</FONT></TD></TR>
 %%currents%%
@@ -9959,8 +9959,8 @@ LASTN_EVENT_STICKY_DELAYED<=
 <TD BGCOLOR="%%color:weak_back%%">
 <TABLE BORDER="0">
 <TR><TD ROWSPAN="5" VALIGN="top">
-<IMG SRC="%%cons:img%%/icon_sticky.gif">
-<IMG SRC="%%cons:img%%/icon_delayed.gif"></TD></TR>
+<IMG SRC="%%cons:img%%/icon_sticky.png">
+<IMG SRC="%%cons:img%%/icon_delayed.png"></TD></TR>
 %%subject%%
 %%altposter%%
 <TR><TD ALIGN="right"><FONT COLOR="%%color:weak_text%%">Time:</FONT></TD><TD><FONT COLOR="%%color:weak_text%%">%%datetime%%</FONT></TD></TR>
@@ -10037,7 +10037,7 @@ LASTN_EVENT_PRIVATE_STICKY<=
 <TABLE BORDER="0">
 <TR>
 <TD ROWSPAN="5" VALIGN="top">
-<IMG SRC="%%cons:img%%/icon_sticky.gif">
+<IMG SRC="%%cons:img%%/icon_sticky.png">
 <IMG SRC="%%cons:img%%/icon_private.gif"></TD></TR>
 %%subject%%
 %%altposter%%
@@ -10065,7 +10065,7 @@ LASTN_EVENT_PRIVATE_DELAYED<=
 <TABLE BORDER="0">
 <TR>
     <TD ROWSPAN="5" VALIGN="top">
-    <IMG SRC="%%cons:img%%/icon_delayed.gif">
+    <IMG SRC="%%cons:img%%/icon_delayed.png">
     <IMG SRC="%%cons:img%%/icon_private.gif">
     </TD></TR>
 %%subject%%
@@ -10093,8 +10093,8 @@ LASTN_EVENT_PRIVATE_STICKY_DELAYED<=
 <TD BGCOLOR="%%color:weak_back%%">
 <TABLE BORDER="0">
 <TR><TD ROWSPAN="5" VALIGN="top">
-<IMG SRC="%%cons:img%%/icon_sticky.gif">
-<IMG SRC="%%cons:img%%/icon_delayed.gif">
+<IMG SRC="%%cons:img%%/icon_sticky.png">
+<IMG SRC="%%cons:img%%/icon_delayed.png">
 <IMG SRC="%%cons:img%%/icon_private.gif"></TD></TR>
 %%subject%%
 %%altposter%%
@@ -10171,7 +10171,7 @@ LASTN_EVENT_PROTECTED_STICKY<=
 <TD BGCOLOR="%%color:weak_back%%">
 <TABLE BORDER="0">
 <TR><TD ROWSPAN="5" VALIGN="top">
-<IMG SRC="%%cons:img%%/icon_sticky.gif">
+<IMG SRC="%%cons:img%%/icon_sticky.png">
 <IMG SRC="%%cons:img%%/icon_protected.gif"></TD></TR>
 %%subject%%
 %%altposter%%
@@ -10198,7 +10198,7 @@ LASTN_EVENT_PROTECTED_DELAYED<=
 <TD BGCOLOR="%%color:weak_back%%">
 <TABLE BORDER="0">
 <TR><TD ROWSPAN="5" VALIGN="top">
-<IMG SRC="%%cons:img%%/icon_delayed.gif">
+<IMG SRC="%%cons:img%%/icon_delayed.png">
 <IMG SRC="%%cons:img%%/icon_protected.gif"></TD></TR>
 %%subject%%
 %%altposter%%
@@ -10225,8 +10225,8 @@ LASTN_EVENT_PROTECTED_STICKY_DELAYED<=
 <TD BGCOLOR="%%color:weak_back%%">
 <TABLE BORDER="0">
 <TR><TD ROWSPAN="5" VALIGN="top">
-<IMG SRC="%%cons:img%%/icon_sticky.gif">
-<IMG SRC="%%cons:img%%/icon_delayed.gif">
+<IMG SRC="%%cons:img%%/icon_sticky.png">
+<IMG SRC="%%cons:img%%/icon_delayed.png">
 <IMG SRC="%%cons:img%%/icon_protected.gif"></TD></TR>
 %%subject%%
 %%altposter%%
