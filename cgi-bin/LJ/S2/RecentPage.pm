@@ -364,14 +364,14 @@ sub __append_delayed {
             'show_postlink' => 0,
         });
         
-        my $tags =  $delayed_entry->get_tags;
-        $tags = $tags->{$delayed_entry->delayedid} if $tags;
+        my $entry_tags =  $delayed_entry->get_tags;
+        $entry_tags = $entry_tags->{$delayed_entry->delayedid} if $entry_tags;
         
         my @tags = (); 
-        if ($tags) {
-            my @keys = keys %$tags;
+        if ($entry_tags) {
+            my @keys = keys %$entry_tags;
             foreach my $key (@keys) {
-                push @tags, Tag($delayed_entry->journal, $key => $tags->{$key});
+                push @tags, Tag($delayed_entry->journal, $key => $entry_tags->{$key});
             }
         }
         
@@ -387,7 +387,7 @@ sub __append_delayed {
             'comments' => $comments,
             'new_day' => 1,
             'end_day' => 0,   # if true, set later
-            'tags' => $tags,
+            'tags' => \@tags,
             'userpic' => $delayed_entry->userpic,
             'permalink_url' => "d$delayedid.html",
             'sticky' => $delayed_entry->is_sticky,

@@ -194,6 +194,7 @@ sub MonthPage
             'comments' => $comments,
             'userpic' => $userpic,
             'permalink_url' => $permalink,
+            'delayedid' => $entry_obj->is_delayed ? $entry_obj->delayedid : undef,
         });
 
         push @{$day_entries{$day}}, $entry;

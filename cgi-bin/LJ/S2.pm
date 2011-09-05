@@ -1972,18 +1972,19 @@ sub Entry
         $e->{text_must_print_trusted} = 1 if $e->{text} =~ m!<(script|object|applet|embed|iframe)\b!i;
             
         if ($entry->is_sticky()) {
+           $e->{'sticky'} = 1;
            $e->{'sticky_icon'} = Image_std("sticky-entry");
         }
     } else {
         my $entry = LJ::DelayedEntry->get_entry_by_id( $e->{journal}->{_u}, 
                                                         $e->{delayedid} );
         if ( $entry->is_sticky) {
+            $e->{'sticky'} = 1;
             $e->{'sticky_icon'} = Image_std("sticky-entry");
         }
-
+        $e->{'delayed'} = 1;
         $e->{'delayed_icon'} = Image_std("delayed-entry");
     }
-
     return $e;
 }
 
@@ -2119,11 +2120,11 @@ sub Image_std
 
     unless ($LJ::S2::RES_MADE++) {
         $LJ::S2::RES_CACHE = {
-            'security-protected' => Image("$LJ::IMGPREFIX/icon_protected.gif", 14, 15, $ctx->[S2::PROPS]->{'text_icon_alt_protected'}),
-            'security-private' => Image("$LJ::IMGPREFIX/icon_private.gif", 16, 16, $ctx->[S2::PROPS]->{'text_icon_alt_private'}),
-            'security-groups' => Image("$LJ::IMGPREFIX/icon_groups.gif", 19, 16, $ctx->[S2::PROPS]->{'text_icon_alt_groups'}),
-            'sticky-entry' => Image("$LJ::IMGPREFIX/icon_sticky.gif", 11, 15, $ctx->[S2::PROPS]->{'text_icon_alt_sticky'}),
-            'delayed-entry' => Image("$LJ::IMGPREFIX/icon_delayed.gif", 11, 15, $ctx->[S2::PROPS]->{'text_icon_alt_delayed'}),
+            'security-protected' => Image("$LJ::IMGPREFIX/icon_protected.gif", 14, 15, $ctx->[S2::PROPS]->{'text_icon_alt_protected'}, 'title' => $ctx->[S2::PROPS]->{'text_icon_alt_protected'}),
+            'security-private' => Image("$LJ::IMGPREFIX/icon_private.gif", 16, 16, $ctx->[S2::PROPS]->{'text_icon_alt_private'}, 'title' => $ctx->[S2::PROPS]->{'text_icon_alt_private'}),
+            'security-groups' => Image("$LJ::IMGPREFIX/icon_groups.gif", 19, 16, $ctx->[S2::PROPS]->{'text_icon_alt_groups'}, 'title' => $ctx->[S2::PROPS]->{'text_icon_alt_groups'}),
+            'sticky-entry' => Image("$LJ::IMGPREFIX/icon_sticky.png", 13, 15, $ctx->[S2::PROPS]->{'text_icon_alt_sticky'}, 'title' => $ctx->[S2::PROPS]->{'text_icon_alt_sticky'}),
+            'delayed-entry' => Image("$LJ::IMGPREFIX/icon_delayed.png", 13, 15, $ctx->[S2::PROPS]->{'text_icon_alt_delayed'}, 'title' => $ctx->[S2::PROPS]->{'text_icon_alt_delayed'}),
         };
     }
     return $LJ::S2::RES_CACHE->{$name};

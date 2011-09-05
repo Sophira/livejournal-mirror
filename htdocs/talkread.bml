@@ -478,6 +478,14 @@ body<=
             $sec = BML::fill_template("securityprotected");
         }
     }
+    
+    if ($entry->is_delayed) {
+        $sec =  BML::fill_template("typedelayed") . $sec;
+    }
+
+    if ($entry->is_sticky) {
+         $sec =  BML::fill_template("typesticky") . $sec;
+    }
 
     $sec .= "<br />\n" unless $sec eq "" or $item->{'subject'};
     $ret .= $sec;

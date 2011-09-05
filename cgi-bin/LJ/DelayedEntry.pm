@@ -6,7 +6,6 @@ require 'ljprotocol.pl';
 use DateTime;
 use Storable;
 use POSIX;
-use Data::Dumper;
 use LJ::User;
 
 sub create {
