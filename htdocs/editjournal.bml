@@ -381,12 +381,12 @@ body<=
             ### SHOW EDIT FORM
             ###
 
-            my $auth = "<p class='pkg'><label for='' class='left'>$ML{'.auth.poster'}</label>";
-            $auth   .= "<span id='poster' class='float-left'>";
+            my $auth = "<li class='pkg'><label for='' class='title'>$ML{'.auth.poster'}</label>";
+            $auth   .= "<span class='wrap'><span id='poster' class='float-left'>";
             $auth   .= $usejournal ? LJ::ljuser($res{'events_1_poster'}) . " in community " . LJ::ljuser($usejournal)
                                    :  LJ::ljuser($remote);
             $auth .= LJ::html_hidden("usejournal", $usejournal);
-            $auth   .= "</span></p>";
+            $auth   .= "</span></span></li>";
 
             # Tags
             my @tag_names;

@@ -246,19 +246,18 @@ EMBED
         my $auth = '';
 
         if ($altlogin_display eq 'none') {
-            $auth.= "<p id='remotelogin' class='pkg'>\n";
-            $auth .= "<label for='current_username' class='left'>" . BML::ml('entryform.postas') . "</label>\n";
-            $auth .= "<strong id='current_username'>" . $remote->display_name . "</strong> <a href='$LJ::SITEROOT/update.bml?altlogin=1' id='remotelogin_content' class='small'>$ML{'entryform.switchuser'}</a>\n";
-            $auth .= "</p>\n\n";
+            $auth.= "<li id='remotelogin' class='pkg'>\n";
+            $auth .= "<label for='current_username' class='title'>" . BML::ml('entryform.postas') . "</label>\n";
+            $auth .= "<span class='wrap'><strong id='current_username' class='current-username'>" . $remote->display_name . "</strong> <a href='$LJ::SITEROOT/update.bml?altlogin=1' id='remotelogin_content' class='small'>$ML{'entryform.switchuser'}</a></span>\n";
+            $auth .= "</li>\n\n";
         }
         # table with username/password fields
-        $auth .= "<div id='altlogin_wrapper' style='display: $altlogin_display;'>";
-        $auth .= "<p class='pkg'>\n";
+        $auth .= "<li id='altlogin_wrapper' class='pkg' style='display: $altlogin_display;'>\n";
         $auth .= "<label for='altlogin_username' class='left'>$ML{'.username'}</label>\n";
         $auth .=  LJ::html_text({ 'name' => 'user', 'id' => 'altlogin_username', 'class' => 'text', 'size' => '15', 
                 'maxlength' => '15', 'tabindex' => '5', 'value' => $POST{'user'} || $GET{'user'} }) . "\n";
-        $auth .= "</p>\n";
-        $auth .= "<p class='pkg'>\n";
+        $auth .= "</li>\n";
+        $auth .= "<li id='altlogin_wrapper' class='pkg' style='display: $altlogin_display;'>\n";
         $auth .= "<label for='altlogin_password' class='left'>$ML{'.password'}</label>\n";
         $auth .= LJ::html_text({ 'type' => 'password', 'id' => 'altlogin_password', 'class' => 'text',  
                 'name' => 'password', 'tabindex' => '6', 'size' => '15', 'maxlength' => '30' }) . "\n";
@@ -266,8 +265,7 @@ EMBED
         if ($did_post && $auth_missing) {
             $auth .= "<br /><?inerr $ML{'.error.nopass'} inerr?>";
         }
-        $auth .= "</p>\n\n";
-        $auth .= "</div>";
+        $auth .= "</li>\n\n";
 
         # if they submit the form and are spellchecking, remember
         # their settings from the GET requests
@@ -460,8 +458,8 @@ EMBED
                     'password'    => $POST{'password'},
                     'usejournal'  => ($usejournalu) ? $usejournalu->user : undef,
                     'tz'          => 'guess',
-                    'timezone'    => $POST{'timezone'} || $POST{'timezone'},
-                    'type'        => $POST{'type'} || $POST{'type'},
+                    'timezone'    => $POST{'delayed_timezone'} || $GET{'delayed_timezone'},
+                    'type'        => $POST{'type'} || $GET{'type'},
                     );
 
         LJ::entry_form_decode(\%req, \%POST);
