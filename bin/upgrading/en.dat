@@ -1358,6 +1358,12 @@ entryform.postto=Post to:
 
 entryform.postto.select=Select a community
 
+entryform.post=Publish
+
+entryform.post.right.now=Now
+
+entryform.postponed.until=Postpone untill
+
 entryform.preview=Preview
 
 entryform.public|staleness=1
