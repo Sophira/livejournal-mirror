@@ -1358,7 +1358,7 @@ entryform.postto=Post to:
 
 entryform.postto.select=Select a community
 
-entryform.post=Publish
+entryform.post=Publish:
 
 entryform.post.right.now=Now
 

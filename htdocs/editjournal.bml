@@ -382,7 +382,7 @@ body<=
             ###
 
             my $auth = "<li class='pkg'><label for='' class='title'>$ML{'.auth.poster'}</label>";
-            $auth   .= "<span class='wrap'><span id='poster' class='float-left'>";
+            $auth   .= "<span class='wrap'><span id='poster'>";
             $auth   .= $usejournal ? LJ::ljuser($res{'events_1_poster'}) . " in community " . LJ::ljuser($usejournal)
                                    :  LJ::ljuser($remote);
             $auth .= LJ::html_hidden("usejournal", $usejournal);

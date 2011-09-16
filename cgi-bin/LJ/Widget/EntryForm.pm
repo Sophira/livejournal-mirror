@@ -2,6 +2,7 @@ package LJ::Widget::EntryForm;
 
 use strict;
 use base 'LJ::Widget';
+use LJ::Widget::Calendar;
 
 sub set_data {
     my ($self, $opts, $head, $onload, $errors) = @_;
@@ -441,6 +442,7 @@ sub render_metainfo_block {
     # Date / Time
     my ($year, $mon, $mday, $hour, $min) = split(/\D/, $opts->{'datetime'});
     my $monthlong = LJ::Lang::month_long($mon);
+    
     # date entry boxes / formatting note
     my $datetime = LJ::html_datetime({
         'name' => "date_ymd",
@@ -475,10 +477,10 @@ sub render_metainfo_block {
     my $date_diff = ($opts->{'mode'} eq "edit" || $opts->{'spellcheck_html'}) ?
         1 : 0;
 
-    $datetime .= LJ::html_hidden("date_diff", $date_diff);
+    my $date_diff_input = LJ::html_hidden("date_diff", $date_diff);
 
     # but if we don't have JS, give a signal to trust the given time
-    $datetime .= "<noscript>" .  LJ::html_hidden("date_diff_nojs", "1") .
+    $date_diff_input .= "<noscript>" .  LJ::html_hidden("date_diff_nojs", "1") .
         "</noscript>";
 
     my $timeZones = option($remote);
@@ -487,7 +489,7 @@ sub render_metainfo_block {
     $out .= qq{
         <li class='pkg'>
             <span id='currentdate'>
-                <label class='title'>$BML::ML{'entryform.post'}</label>
+                <label class='title'>$BML::ML{'entryform.post.test'}</label>
                 <span class='wrap'>
                     $BML::ML{'entryform.post.right.now'}
                     <a href='javascript:void(0)' onclick='editdate();' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
@@ -497,9 +499,13 @@ sub render_metainfo_block {
             <span id='modifydate'>
                 <label class='title'>$BML::ML{'entryform.postponed.until'}</label>
                 <span class='wrap'>
-                    <a href="#">$monthlong $mday, $year</a><i class='i-calendar'></i>
+                    <input type="hidden" name="date_ymd_mm" value="$mon" />
+                    <input type="hidden" name="date_ymd_dd" value="$mday" />
+                    <input type="hidden" name="date_ymd_yyyy" value="$year" />
+                    $date_diff_input
+                    <span class="wrap-calendar"><a id="currentdate-date" href="#">$monthlong $mday, $year</a><i class='i-calendar'></i></span>
                     <span class='datetime'>
-                        <input type='text' value='$hour' class='input-num' /> : <input type='text' value='$min' class='input-num' />
+                        <input type='text' name='hour' value='$hour' class='input-num' /> : <input type='text' value='$min' name='min' class='input-num' />
                         <?de $BML::ML{'entryform.date.24hournote'} de?>
                     </span>
                     <span class='timezone'>$timeZones</span>
@@ -545,6 +551,7 @@ sub render_metainfo_block {
                 </label>
                 <span class='wrap'>
                     $pickw_select
+                    <a href='javascript:void(0);' id='lj_userpicselect'> </a>
                     $userpics_help
                 </span>
             </li>
@@ -575,6 +582,7 @@ sub render_top_block {
 
     my $out = '';
 
+    $out .= LJ::Widget::Calendar->render();
     $out .= $self->render_userpics_block;
     $out .= $self->render_metainfo_block;
     $out .= $self->render_infobox_block;
