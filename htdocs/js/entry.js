@@ -13,8 +13,28 @@ if(! ("$" in window)){
 
 function editdate(){
 	clearInterval(settime.interval);
-	$('currentdate').style.display = 'none';
-	$('modifydate').style.display = 'inline';
+	var currentDate = jQuery('#currentdate'),
+		modifyDate = jQuery('#modifydate'),
+		cal = modifyDate.find('.wrap-calendar'),
+		calVal = modifyDate.find('.wrap a');
+
+	currentDate.hide();
+	modifyDate.css('display', 'inline');
+
+	f = document.updateForm;
+	var month = f.date_ymd_mm.selectedIndex || f.date_ymd_mm.value;
+	var dateStr = f.date_ymd_yyyy.value + "/" + month + "/" + f.date_ymd_dd.value;
+
+	cal.calendar({
+		currentDate: new Date(dateStr),
+		ml: {
+			caption: 'Choose date:'
+		},
+		endMonth: new Date(2037,11,31),
+		showCellHovers: true
+	}).bind("daySelected", function(ev, date) {
+		settime(date);
+	});
 }
 
 function showEntryTabs(){
@@ -559,40 +579,40 @@ function setColumns(number){
 	listWrapper.removeChild(listObj);
 }
 
-function settime(){
+function settime(time){
 	function twodigit(n){
-		if(n < 10){
+		if (n < 10) {
 			return "0" + n;
 		} else {
 			return n;
 		}
 	}
 
-	now = new Date();
-	if(! now){
+	newTime = time || new Date();
+	if (!newTime) {
 		return false;
 	}
 	f = document.updateForm;
-	if(! f){
+	if (!f) {
 		return false;
 	}
 
-	f.date_ymd_yyyy.value = now.getYear() < 1900 ? now.getYear() + 1900 : now.getYear();
-	f.date_ymd_mm.selectedIndex = twodigit(now.getMonth());
-	f.date_ymd_dd.value = twodigit(now.getDate());
-	f.hour.value = twodigit(now.getHours());
-	f.min.value = twodigit(now.getMinutes());
+	f.date_ymd_yyyy.value = newTime.getYear() < 1900 ? newTime.getYear() + 1900 : newTime.getYear();
+	f.date_ymd_mm.selectedIndex = twodigit(newTime.getMonth() + 1);
+	f.date_ymd_dd.value = twodigit(newTime.getDate());
+	if (!newTime) {
+		f.hour.value = twodigit(newTime.getHours());
+		f.min.value = twodigit(newTime.getMinutes());
+	}
 
 	f.date_diff.value = 1;
 
 	var mNames = new Array("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December");
 	var currentdate = document.getElementById('currentdate-date');
-	var cMonth = now.getMonth();
-	var cDay = now.getDate();
-	var cYear = now.getYear() < 1900 ? now.getYear() + 1900 : now.getYear();
-	var cHour = now.getHours();
-	var cMinute = twodigit(now.getMinutes());
-	currentdate.innerHTML = mNames[cMonth] + " " + cDay + ", " + cYear + ", " + cHour + ":" + cMinute;
+	var cMonth = newTime.getMonth();
+	var cDay = newTime.getDate();
+	var cYear = newTime.getYear() < 1900 ? newTime.getYear() + 1900 : newTime.getYear();
+	currentdate.innerHTML = mNames[cMonth] + " " + cDay + ", " + cYear;
 
 	return false;
 }
