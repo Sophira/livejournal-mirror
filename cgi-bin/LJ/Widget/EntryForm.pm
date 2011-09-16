@@ -488,15 +488,26 @@ sub render_metainfo_block {
 
     $out .= qq{
         <li class='pkg'>
-            <span id='currentdate'>
-                <label class='title'>$BML::ML{'entryform.post.test'}</label>
+            <span id='currentdate'>};
+
+    if ( $opts->{'mode'} eq "edit" ) {
+        $out .= qq{ <label class='title'>$BML::ML{'entryform.date'}</label> 
+                <span class='wrap'>
+                    $monthlong, $mday, $year, $hour:$min
+                    <a href='javascript:void(0)' onclick='editdate();' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
+                    $help_icon
+                  </span>
+                </span> };
+    } else {
+        $out .= qq{ <label class='title'>$BML::ML{'entryform.post'}</label> 
                 <span class='wrap'>
                     $BML::ML{'entryform.post.right.now'}
                     <a href='javascript:void(0)' onclick='editdate();' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
                     $help_icon
                 </span>
-            </span>
-            <span id='modifydate'>
+            </span>};
+    }
+    $out .= qq{ <span id='modifydate'>
                 <label class='title'>$BML::ML{'entryform.postponed.until'}</label>
                 <span class='wrap'>
                     <input type="hidden" name="date_ymd_mm" value="$mon" />

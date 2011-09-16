@@ -199,6 +199,7 @@
 				text-align: center;
 				}
 			#updateForm #metainfo LI .datetime .de {
+				white-space: nowrap;
 				font-size: 11px;
 				}
 		#updateForm #metainfo LI .timezone {
