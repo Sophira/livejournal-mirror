@@ -755,7 +755,7 @@ sub render_options_block {
                 'label' => "",
             });
 
-            my $sticky_exists = $journalu->has_sticky_entry && !$selected;
+            my $sticky_exists = $journalu ? $journalu->has_sticky_entry && !$selected : undef;
             my $sticky_text = $sticky_exists ? $BML::ML{'entryform.sticky_replace.edit'} :
                                                $BML::ML{'entryform.sticky.edit'};
             return qq{$sticky_check <label for='sticky_type' class='right options'>
@@ -1590,7 +1590,7 @@ sub timezone_options {
 sub option {
     my ($u) = @_;
     
-    my $timezone = $u->prop("timezone");
+    my $timezone = $u ? $u->prop("timezone") : undef;
     my @options = timezone_options;
     
     my $ret = LJ::html_select({
