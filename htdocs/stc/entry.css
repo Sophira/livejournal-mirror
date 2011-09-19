@@ -134,78 +134,82 @@
 
 /* Metainfo
 ----------------------------------------------- */
-#updateForm #metainfo {
+#updateForm #metainfo-wrap {
 	float: left;
-	width: 61%;
-	margin: -3px 10px 20px 0;
 	}
-	#updateForm #metainfo LI {
-		padding: 0;
-		margin: 0 0 10px 0;
-		list-style: none;
-		line-height: 22px;
+	#updateForm #metainfo {
+		display: table;
+		margin: -3px 10px 20px 0;
 		}
-		#updateForm #metainfo LI .title {
-			float: left;
-			min-width: 8.5em;
-			padding: 3px 7px 0 0;
-			text-align: right;
-			line-height: 20px;
-		    font-size: 14px;
+		#updateForm #metainfo LI {
+			display: table-row;
+			padding: 0;
+			margin: 0 0 10px 0;
+			list-style: none;
+			line-height: 22px;
 			}
-		#updateForm #metainfo LI .wrap {
-			display: block;
-			overflow: hidden;
-			padding: 3px;
-			}
-		#updateForm #metainfo LI .current-username {
-			line-height: 20px;
-			font-size: 14px;
-			}
-		#updateForm #metainfo LI .select {
-			float: none;
-			display: inline-block;
-			vertical-align: top;
-			}
-		#updateForm #metainfo LI .select-timezone {
-			width: 133px;
-			font-size: 12px;
-			}
-		#updateForm #metainfo LI .helplink {
-			float: none;
-			display: inline-block;
-			margin: 4px 0 0 4px;
-			border: none;
-			vertical-align: top;
-			}
-		#updateForm #metainfo LI #modifydate .wrap {
-			padding-top: 1px;
-			}
-		#updateForm #metainfo LI .i-calendar {
-			display: inline-block;
-			width: 10px;
-			height: 10px;
-			margin-left: 5px;
-			background: url(/img/widget/wishlist/date-icon.gif?ver=1) no-repeat;
-			vertical-align: moddle;
-			cursor: pointer;
-			}
-		#updateForm #metainfo LI .datetime {
-			margin-left: 10px;
-			}
-			#updateForm #metainfo LI .datetime .input-num {
-				width: 22px;
-				padding: 2px 1px;
-				text-align: center;
+			#updateForm #metainfo LI .title {
+				display: table-cell;
+				padding: 3px 7px 0 0;
+				vertical-align: top;
+				text-align: right;
+				line-height: 20px;
+			    font-size: 14px;
 				}
-			#updateForm #metainfo LI .datetime .de {
-				white-space: nowrap;
-				font-size: 11px;
+			#updateForm #metainfo LI .wrap {
+				display: table-cell;
+				padding: 3px;
+				vertical-align: top;
 				}
-		#updateForm #metainfo LI .timezone {
-			display: block;
-			padding-top: 5px;
-			}
+			#updateForm #metainfo LI .current-username {
+				line-height: 20px;
+				font-size: 14px;
+				}
+			#updateForm #metainfo LI .select {
+				float: none;
+				display: inline-block;
+				vertical-align: top;
+				}
+			#updateForm #metainfo LI .select-timezone {
+				width: 133px;
+				font-size: 12px;
+				}
+			#updateForm #metainfo LI .helplink {
+				float: none;
+				display: inline-block;
+				margin: 4px 0 0 4px;
+				border: none;
+				vertical-align: top;
+				}
+			#updateForm #metainfo LI #modifydate .wrap {
+				padding-top: 1px;
+				}
+			#updateForm #metainfo LI .i-calendar {
+				display: inline-block;
+				width: 10px;
+				height: 10px;
+				margin-left: 5px;
+				background: url(/img/widget/wishlist/date-icon.gif?ver=1) no-repeat;
+				vertical-align: moddle;
+				cursor: pointer;
+				}
+			#updateForm #metainfo LI .datetime {
+				margin-left: 10px;
+				vertical-align: middle;
+				}
+				#updateForm #metainfo LI .datetime .input-num {
+					width: 22px;
+					padding: 2px 1px;
+					text-align: center;
+					}
+				#updateForm #metainfo LI .datetime .de {
+					white-space: nowrap;
+					font-size: 11px;
+					}
+			#updateForm #metainfo LI .timezone {
+				display: block;
+				padding-top: 5px;
+				}
 
 /* Options
 ----------------------------------------------- */

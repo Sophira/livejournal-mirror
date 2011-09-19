@@ -532,6 +532,14 @@ __________________________________________*/
 	behavior: expression((this.runtimeStyle.behavior="none")&&(this.pngSet?this.pngSet=true:(this.nodeName == "IMG" && this.src.toLowerCase().indexOf('.png')>-1?(this.runtimeStyle.backgroundImage = "none", this.runtimeStyle.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + this.src + "', sizingMethod='image')", this.src = "transparent.gif"):(this.origBg = this.origBg? this.origBg : this.currentStyle.backgroundImage.toString().replace('url("','').replace('")',''), this.runtimeStyle.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + this.origBg + "', sizingMethod='crop')", this.runtimeStyle.backgroundImage = "none")),this.pngSet=true));
 	}
 
+#updateForm #metainfo LI .title {
+	display: inline-block;
+	min-width: 8.5em;
+	}
+#updateForm #metainfo LI .wrap {
+	overflow: hidden;
+	zoom: 1;
+	}
 
 /* LJ like buttons 
 -----------------------------------------------*/

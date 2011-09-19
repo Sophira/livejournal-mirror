@@ -380,7 +380,7 @@ sub render_metainfo_block {
     my $errors = $self->errors;
     my $onload = $self->onload;
 
-    $out .= "<ul id='metainfo'>";
+    $out .= "<div id='metainfo-wrap'><ul id='metainfo'>";
     # login info
     $out .= $opts->{'auth'};
     if ($opts->{'mode'} eq "update") {
@@ -486,29 +486,24 @@ sub render_metainfo_block {
     my $timeZones = option($remote);
     my $help_icon = LJ::help_icon("24hourshelp");
 
-    $out .= qq{
-        <li class='pkg'>
-            <span id='currentdate'>};
-
     if ( $opts->{'mode'} eq "edit" ) {
-        $out .= qq{ <label class='title'>$BML::ML{'entryform.date'}</label> 
+        $out .= qq{ <li class='pkg' id='currentdate'><label class='title'>$BML::ML{'entryform.date'}</label> 
                 <span class='wrap'>
                     $monthlong, $mday, $year, $hour:$min
                     <a href='javascript:void(0)' onclick='editdate();' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
                     $help_icon
                   </span>
-                </span> };
+                </li> };
     } else {
-        $out .= qq{ <label class='title'>$BML::ML{'entryform.post'}</label> 
+        $out .= qq{ <li class='pkg' id='currentdate'><label class='title'>$BML::ML{'entryform.post'}</label> 
                 <span class='wrap'>
                     $BML::ML{'entryform.post.right.now'}
                     <a href='javascript:void(0)' onclick='editdate();' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
                     $help_icon
                 </span>
-            </span>};
+            </li>};
     }
-    $out .= qq{ <span id='modifydate'>
-                <label class='title'>$BML::ML{'entryform.postponed.until'}</label>
+    $out .= qq{ <li class='pkg' id='modifydate'><label class='title'>$BML::ML{'entryform.postponed.until'}</label>
                 <span class='wrap'>
                     <input type="hidden" name="date_ymd_mm" value="$mon" />
                     <input type="hidden" name="date_ymd_dd" value="$mday" />
@@ -521,8 +516,7 @@ sub render_metainfo_block {
                     </span>
                     <span class='timezone'>$timeZones</span>
                 </span>
-            </span>
-        </li>
+            </li>
         <li>
         <noscript>
             <p id='time-correct' class='small'>
@@ -571,7 +565,7 @@ sub render_metainfo_block {
         $$onload .= " insertViewThumbs();" if $self->should_show_userpicselect;
     }
 
-    $out .= "</ul>";
+    $out .= "</ul></div>";
 }
 
 sub render_infobox_block {
