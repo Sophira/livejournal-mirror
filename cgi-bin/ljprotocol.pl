@@ -2950,6 +2950,8 @@ sub getevents {
         $ownerid = $req->{journalid};
         $uowner = LJ::load_userid( $req->{journalid} );
     }
+
+    my $sticky_id = $uowner->prop("sticky_entries") || undef;
     
     my $dbr = LJ::get_db_reader();
     my $sth;
@@ -3069,6 +3071,10 @@ sub getevents {
         }
         $where .= "AND $rtime_what > $rtime_after ";
         $orderby = "ORDER BY $rtime_what";
+
+	unless ($skip) {
+	    $where .= "OR jitemid=$sticky_id";
+	}
     }
     elsif ($req->{'selecttype'} eq "one" && $req->{'itemid'} eq "-1") 
     {
@@ -3246,7 +3252,13 @@ sub getevents {
         $evt->{'poster'} = LJ::get_username($dbr, $jposterid) if $jposterid != $ownerid;
         $evt->{'url'} = LJ::item_link($uowner, $itemid, $anum);
         $evt->{'reply_count'} = $replycount;
-        push @$events, $evt;
+
+        if ( $itemid == $sticky_id && $req->{'selecttype'} eq "lastn") {
+    	    unshift @$events, $evt,
+        }
+        else {
+    	    push @$events, $evt;
+	}
     }
 
     # load properties. Even if the caller doesn't want them, we need
@@ -3284,6 +3296,10 @@ sub getevents {
                 $value =~ s/\n/ /g;
                 $evt->{'props'}->{$name} = $value;
             }
+
+	    if ( $itemid == $sticky_id ) {
+		$evt->{'props'}->{'sticky'} = 1;
+	    }
         }
     }
 
