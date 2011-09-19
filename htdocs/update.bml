@@ -253,12 +253,12 @@ EMBED
         }
         # table with username/password fields
         $auth .= "<li id='altlogin_wrapper' class='pkg' style='display: $altlogin_display;'>\n";
-        $auth .= "<label for='altlogin_username' class='title'>$ML{'.username'}</label>\n";
+        $auth .= "<label for='altlogin_username' class='left'>$ML{'.username'}</label>\n";
         $auth .=  LJ::html_text({ 'name' => 'user', 'id' => 'altlogin_username', 'class' => 'text', 'size' => '15', 
                 'maxlength' => '15', 'tabindex' => '5', 'value' => $POST{'user'} || $GET{'user'} }) . "\n";
         $auth .= "</li>\n";
         $auth .= "<li id='altlogin_wrapper' class='pkg' style='display: $altlogin_display;'>\n";
-        $auth .= "<label for='altlogin_password' class='title'>$ML{'.password'}</label>\n";
+        $auth .= "<label for='altlogin_password' class='left'>$ML{'.password'}</label>\n";
         $auth .= LJ::html_text({ 'type' => 'password', 'id' => 'altlogin_password', 'class' => 'text',  
                 'name' => 'password', 'tabindex' => '6', 'size' => '15', 'maxlength' => '30' }) . "\n";
         # posted with a user, but no password
@@ -543,7 +543,14 @@ EMBED
 
                     my $juser = $ju->{'user'};
                     my ($itemid, $anum) = ($res->{'itemid'}, $res->{'anum'});
-                    $itemlink = LJ::item_link($ju, $itemid, $anum);
+                    if ($res->{'itemid'})
+                    {
+                        $itemlink = LJ::item_link($ju, $itemid, $anum);
+                    }
+                    else
+                    {
+                        $itemlink = LJ::DelayedEntry::item_link($ju, $res->{'delayedid'});
+                    }
                     $itemid = $itemid * 256 + $anum;
 
                     my $writersblocklink = '';
