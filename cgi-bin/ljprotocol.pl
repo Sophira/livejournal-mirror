@@ -1951,7 +1951,7 @@ sub postevent
     # load userprops all at once
     my @poster_props = qw(newesteventtime dupsig_post);
     my @owner_props = qw(newpost_minsecurity moderated);
-    push @owner_props, 'opt_weblogscom' unless $req->{'props'}->{'opt_backdated'};
+    push @owner_props, 'opt_weblogscom';
 
     LJ::load_user_props($u, @poster_props, @owner_props);
     if ($uowner->{'userid'} == $u->{'userid'}) {
@@ -1963,8 +1963,7 @@ sub postevent
     # are they trying to post back in time?
     #if ($posterid == $ownerid && $u->{'journaltype'} ne 'Y' &&
     #    !$time_was_faked && $u->{'newesteventtime'} &&
-    #    $eventtime lt $u->{'newesteventtime'} &&
-    #    !$req->{'props'}->{'opt_backdated'}) {
+    #    $eventtime lt $u->{'newesteventtime'} ) {
     #    return fail($err, 153, "You have an entry which was posted at $u->{'newesteventtime'}, but you're trying to post an entry before this. Please check the date and time of both entries. If the other entry is set in the future on purpose, edit that entry to use the \"Date Out of Order\" option. Otherwise, use the \"Date Out of Order\" option for this entry instead.");
     #}
     
@@ -2011,11 +2010,6 @@ sub postevent
     return fail($err,151) if
         LJ::is_banned($posterid, $ownerid);
 
-    # don't allow backdated posts in communities
-    return fail($err,152) if
-        ($req->{'props'}->{"opt_backdated"} &&
-         $uowner->{'journaltype'} ne "P");
-
     # do processing of embedded polls (doesn't add to database, just
     # does validity checking)
     my @polls = ();
@@ -2050,10 +2044,7 @@ sub postevent
     # it... where clause there is: < $LJ::EndOfTime).  but this way we can
     # have entries that don't show up on friends view, now that we don't have
     # the hints table to not insert into.
-    my $rlogtime = $LJ::EndOfTime;
-    unless ($req->{'props'}->{"opt_backdated"}) {
-        $rlogtime -= $now;
-    }
+    my $rlogtime = $LJ::EndOfTime - $now;
 
     my $dupsig = Digest::MD5::md5_hex(join('', map { $req->{$_} }
                                            qw(subject event usejournal security allowmask)));
@@ -2072,14 +2063,14 @@ sub postevent
         return fail( $err, 215);
     }
 
-
     if ( LJ::DelayedEntry::is_future_date($req) ) {
         $req->{ext}->{flags} = $flags;
         $req->{ext}->{flags}->{u} = undef; # it's no need to be stored
         $req->{usejournal} = $req->{usejournal} || '';
   
-        LJ::DelayedEntry->create( $req, {   journal => $uowner,
-                                            poster  => $u,} );
+        my $entry = LJ::DelayedEntry->create( $req, { journal => $uowner,
+                                                      poster  => $u,} );
+        $res->{delayedid} = $entry->delayedid;
         return $res;
         
     }
@@ -2277,7 +2268,7 @@ sub postevent
 
         # record the eventtime of the last update (for own journals only)
         $set_userprop{"newesteventtime"} = $eventtime
-            if $posterid == $ownerid and not $req->{'props'}->{'opt_backdated'} and not $time_was_faked;
+            if $posterid == $ownerid and not $time_was_faked;
 
         $u->set_prop(\%set_userprop);
     }
@@ -2425,8 +2416,10 @@ sub postevent
     my @jobs;  # jobs to add into TheSchwartz
 
     # notify weblogs.com of post if necessary
-    if (!$LJ::DISABLED{'weblogs_com'} && $u->{'opt_weblogscom'} && LJ::get_cap($u, "weblogscom") &&
-        $security eq "public" && !$req->{'props'}->{'opt_backdated'}) {
+    if (!$LJ::DISABLED{'weblogs_com'} &&
+         $u->{'opt_weblogscom'} &&
+         LJ::get_cap($u, "weblogscom") &&
+        $security eq "public" ) {
         push @jobs, TheSchwartz::Job->new_from_array("LJ::Worker::Ping::WeblogsCom", {
             'user' => $u->{'user'},
             'title' => $u->{'journaltitle'} || $u->{'name'},
@@ -2463,7 +2456,10 @@ sub postevent
     $res->{'url'} = $entry->url;
 
     push @jobs, LJ::Event::JournalNewEntry->new($entry)->fire_job;
-    push @jobs, LJ::Event::UserNewEntry->new($entry)->fire_job if (!$LJ::DISABLED{'esn-userevents'} || $LJ::_T_FIRE_USERNEWENTRY);
+    if (!$LJ::DISABLED{'esn-userevents'} || $LJ::_T_FIRE_USERNEWENTRY) {
+        push @jobs, LJ::Event::UserNewEntry->new($entry)->fire_job
+    }
+
     push @jobs, LJ::EventLogRecord::NewEntry->new($entry)->fire_job;
 
     # PubSubHubbub Support
@@ -2695,11 +2691,6 @@ sub editevent
     return fail($err, 210)
         if $req->{event} eq $CannotBeShown;
 
-    # don't allow backdated posts in communities
-    return fail($err,152) if
-        ($req->{'props'}->{"opt_backdated"} &&
-         $uowner->{'journaltype'} ne "P");
-
     # make year/mon/day/hour/min optional in an edit event,
     # and just inherit their old values
     {
@@ -2780,22 +2771,15 @@ sub editevent
 
     if ($eventtime ne $oldevent->{'eventtime'} ||
         $security ne $oldevent->{'security'} ||
-        (!$curprops{$itemid}->{opt_backdated} && $req->{props}{opt_backdated}) ||
         $qallowmask != $oldevent->{'allowmask'})
     {
         # are they changing their most recent post?
         LJ::load_user_props($u, "newesteventtime");
         if ($u->{userid} == $uowner->{userid} &&
             $u->{newesteventtime} eq $oldevent->{eventtime}) {
-            if (!$curprops{$itemid}->{opt_backdated} && $req->{props}{opt_backdated}) {
-                # if they set the backdated flag, then we no longer know
-                # the newesteventtime.
-                $u->clear_prop('newesteventtime');
-            } elsif ($eventtime ne $oldevent->{eventtime}) {
                 # otherwise, if they changed time on this event,
                 # the newesteventtime is this event's new time.
                 $u->set_prop( 'newesteventtime' => $eventtime );
-            }
         }
 
         my $qsecurity = $uowner->quote($security);
@@ -2902,20 +2886,8 @@ sub editevent
         }
     }
 
-    # deal with backdated changes.  if the entry's rlogtime is
-    # $EndOfTime, then it's backdated.  if they want that off, need to
-    # reset rlogtime to real reverse log time.  also need to set
-    # rlogtime to $EndOfTime if they're turning backdate on.
-    if ($req->{'props'}->{'opt_backdated'} eq "1" &&
-        $oldevent->{'rlogtime'} != $LJ::EndOfTime) {
-        my $dberr;
-        LJ::run_hooks('report_entry_update', $ownerid, $itemid);
-        $uowner->log2_do(undef, "UPDATE log2 SET rlogtime=$LJ::EndOfTime WHERE ".
-                         "journalid=$ownerid AND jitemid=$itemid");
-        return fail($err,501,$dberr) if $dberr;
-    }
-    if ($req->{'props'}->{'opt_backdated'} eq "0" &&
-        $oldevent->{'rlogtime'} == $LJ::EndOfTime) {
+    # compatible with depricated 'opt_backdated'
+    if ( $oldevent->{'rlogtime'} == $LJ::EndOfTime ) {
         my $dberr;
         LJ::run_hooks('report_entry_update', $ownerid, $itemid);
         $uowner->log2_do(\$dberr, "UPDATE log2 SET rlogtime=$LJ::EndOfTime-UNIX_TIMESTAMP(logtime) ".
@@ -2958,8 +2930,7 @@ sub editevent
     return $res;
 }
 
-sub getevents
-{
+sub getevents {
     my ($req, $err, $flags) = @_;
 
     $flags->{allow_anonymous} = 1;
@@ -2974,6 +2945,7 @@ sub getevents
     ### shared-journal support
     my $posterid = ($u ? $u->{'userid'} : 0);
     my $ownerid = $flags->{'ownerid'};
+
     if( $req->{journalid} ){
         $ownerid = $req->{journalid};
         $uowner = LJ::load_userid( $req->{journalid} );
@@ -3002,23 +2974,27 @@ sub getevents
     # decide what level of security the remote user can see
     # 'getevents' used in small count of places and we will not pass 'viewall' through their call chain
     my $secwhere = "";
+
     if ($posterid == $ownerid) {
         # no extra where restrictions... user can see all their own stuff
-    } elsif ($secmask) {
+    }
+    elsif ($secmask) {
         # can see public or things with them in the mask
         # and own posts in non-sensitive communities
         if ($LJ::JOURNALS_WITH_PROTECTED_CONTENT{ $uowner->{user} }) {
             $secwhere = "AND (security='public' OR (security='usemask' AND allowmask & $secmask != 0))";
-        } else {
+        }
+        else {
             $secwhere = "AND (security='public' OR (security='usemask' AND allowmask & $secmask != 0) OR posterid=$posterid)";
         }
-    } else {
+    }
+    else {
         # not a friend?  only see public.
         # and own posts in non-sensitive communities
-
         if ($LJ::JOURNALS_WITH_PROTECTED_CONTENT{ $uowner->{user} } || !$posterid) {
             $secwhere = "AND (security='public')";
-        } else{
+        }
+        else{
             $secwhere = "AND (security='public' OR posterid=$posterid)";
         }
     }
@@ -3040,8 +3016,10 @@ sub getevents
         $req->{'selecttype'} = 'lastn' unless $req->{'selecttype'};
         $req->{'howmany'} = $req->{'itemshow'};
     }
+
     my $skip = $req->{'skip'} + 0;
-    if ($skip > 500) { $skip = 500; }
+
+    $skip = 500 if $skip > 500;
     
     # build the query to get log rows.  each selecttype branch is
     # responsible for either populating the following 3 variables

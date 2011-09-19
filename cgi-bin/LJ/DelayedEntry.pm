@@ -170,6 +170,11 @@ sub is_future_date {
     my $now = __get_now();
     my $request_time = __get_datatime($req);
 
+    warn "now: $now\n".
+         "time: $request_time";
+    
+    warn "true" if $request_time ge $now;
+
     return $request_time ge $now;
 }
 
@@ -710,6 +715,35 @@ sub extract_metadata {
     return \%meta;
 }
 
+
+sub get_entries_count {
+    my ( $class, $journal, $skip, $elements_to_show, $userid ) = @_;
+    __assert($journal);
+    my $journalid = $journal->userid;
+
+    my $dbcr = LJ::get_cluster_def_reader($journal) 
+        or die "get cluster for journal failed";
+
+
+    unless ($userid) {
+        my $remote = LJ::get_remote();
+        return undef unless $remote;
+        $userid = $remote->userid ;
+    }
+
+    return undef unless __delayed_entry_can_see( $journal,
+                                              $journal->userid,
+                                              $userid );
+
+    my $secwhere = __delayed_entry_secwhere( $journal,
+                                             $journal->userid,
+                                             $userid );
+
+    return $dbcr->selectrow_array(" SELECT count(delayedid) " .
+                                    "FROM delayedlog2 ".
+                                    "WHERE journalid=$journalid $secwhere ");
+}
+
 sub get_entries_by_journal {
     my ( $class, $journal, $skip, $elements_to_show, $userid ) = @_;
     __assert($journal);
@@ -717,6 +751,8 @@ sub get_entries_by_journal {
 
     my $dbcr = LJ::get_cluster_def_reader($journal) 
         or die "get cluster for journal failed";
+
+    $elements_to_show += 1 if $skip > 0;
 
     my $sql_limit = '';
     if ($skip || $elements_to_show) {
@@ -1198,8 +1234,8 @@ sub convert {
     #### /embedding
 
     ### extract links for meme tracking
-    unless ($req->{'security'} eq "usemask" ||
-    $req->{'security'} eq "private")
+    unless ( $req->{'security'} eq "usemask" ||
+             $req->{'security'} eq "private" )
     {
         foreach my $url (LJ::get_urls($event)) {
             LJ::record_meme($url, $posterid, $ditemid, $journalid);
@@ -1314,13 +1350,13 @@ sub convert {
     my @jobs;  # jobs to add into TheSchwartz
 
     # notify weblogs.com of post if necessary
-    if (!$LJ::DISABLED{'weblogs_com'} && $poster->{'opt_weblogscom'} 
-        && LJ::get_cap($poster, "weblogscom") &&
-    $security eq "public" && !$req->{'props'}->{'opt_backdated'}) {
-        push @jobs, TheSchwartz::Job->new_from_array("LJ::Worker::Ping::WeblogsCom", {
-            'user' => $poster->{'user'},
-            'title' => $poster->{'journaltitle'} || $poster->{'name'},
-            'url' => LJ::journal_base($poster) . "/",
+    if ( !$LJ::DISABLED{'weblogs_com'} && $poster->{'opt_weblogscom'} 
+         && LJ::get_cap($poster, "weblogscom") &&
+         $security eq "public" ) {
+            push @jobs, TheSchwartz::Job->new_from_array("LJ::Worker::Ping::WeblogsCom", {
+                'user' => $poster->{'user'},
+                'title' => $poster->{'journaltitle'} || $poster->{'name'},
+                'url' => LJ::journal_base($poster) . "/",
         });
     }
 
@@ -1370,19 +1406,18 @@ sub convert {
 
 sub __delayed_entry_can_see {
     my ( $uowner, $ownerid, $posterid ) = @_;
-    
+
     my $poster = LJ::want_user($posterid);
     if ($poster->can_manage($uowner)) {
         return 1;
     }
-    
+
     if ($ownerid == $posterid) {
         return 1;
     }
 
     return 0;
 }
-
 
 sub __delayed_entry_secwhere {
     my ( $uowner, $ownerid, $posterid ) = @_;
@@ -1437,6 +1472,7 @@ sub __serialize {
     #return LJ::JSON->to_json( $data );
 }
 
+
 sub __deserialize {
     my ($journal, $req) = @_;
     __assert($journal);
@@ -1445,6 +1481,19 @@ sub __deserialize {
     #return LJ::JSON->from_json( $data );
     return Storable::thaw($req);
 }
+
+
+sub item_link
+{
+    my ($u, $delayedid, @args) = @_;
+
+    # XXX: should have an option of returning a url with escaped (&amp;)
+    #      or non-escaped (&) arguments.  a new link object would be best.
+    my $args = @args ? "?" . join("&amp;", @args) : "";
+    return LJ::journal_base($u) . "/d$delayedid.html$args";
+}
+
+
 
 sub __get_now {
     my $dt = DateTime->now->set_time_zone('UTC');
