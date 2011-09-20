@@ -19,7 +19,7 @@ function editdate(){
 		calVal = modifyDate.find('.wrap a');
 
 	currentDate.hide();
-	modifyDate.css('display', 'inline');
+	modifyDate.css('display', '');
 
 	f = document.updateForm;
 	var month = f.date_ymd_mm.selectedIndex || f.date_ymd_mm.value;
@@ -346,11 +346,13 @@ function altlogin(e){
 		return false;
 	}
 
-	var altlogin_wrapper = $('altlogin_wrapper');
-	if(! altlogin_wrapper){
+	var altlogin_wrapper = $('altlogin_wrapper_login'),
+	    altlogin_wrapper = $('altlogin_wrapper_password');
+	if (!altlogin_wrapper_login || !altlogin_wrapper_password) {
 		return false;
 	}
-	altlogin_wrapper.style.display = 'block';
+	altlogin_wrapper_login.style.display = '';
+	altlogin_wrapper_password.style.display = '';
 
 	var remotelogin = $('remotelogin');
 	if(! remotelogin){
@@ -425,7 +427,7 @@ function insertFormHints(){
 }
 
 function defaultDate(){
-	$('currentdate').style.display = 'block';
+	$('currentdate').style.display = '';
 	$('modifydate').style.display = 'none';
 }
 

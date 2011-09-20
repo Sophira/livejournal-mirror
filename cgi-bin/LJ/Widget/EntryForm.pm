@@ -546,7 +546,7 @@ sub render_metainfo_block {
         );
 
         my $userpics_help = LJ::help_icon_html("userpics", "", " ");
-        my $userpic_display = $self->altlogin ? 'none' : 'block';
+        my $userpic_display = $self->altlogin ? 'none' : '';
         my $style = "display: $userpic_display;";
 
         $out .= qq{
