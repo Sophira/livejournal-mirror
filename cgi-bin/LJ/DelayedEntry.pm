@@ -169,18 +169,12 @@ sub is_future_date {
     my ($req) = @_;
     my $now = __get_now();
     my $request_time = __get_datatime($req);
-
-    warn "now: $now\n".
-         "time: $request_time";
-    
-    warn "true" if $request_time ge $now;
-
     return $request_time ge $now;
 }
 
 sub visible_to {
     my ($self, $remote, $opts) = @_;
-    return $self->journal->equals($remote);
+    return __delayed_entry_can_see($self->journal, $remote);
 }
 
 # defined by the entry poster
@@ -636,15 +630,13 @@ sub get_entry_by_id {
     my $userid = $options->{userid} || 0;
     my $user = LJ::get_remote() || $options->{user};
     return undef unless $user;
-    $userid = $user->userid unless $userid;
 
     return undef unless __delayed_entry_can_see( $journal,
-                                                  $journal->userid,
-                                                  $userid );
+                                                  $user );
 
-    my $secwhere = __delayed_entry_secwhere( $journal,
-                                             $journal->userid,
-                                             $userid );
+    #my $secwhere = __delayed_entry_can_see() __delayed_entry_secwhere( $journal,
+    #                                         $journal->userid,
+    #                                         $userid );
 
     my $opts = $dbcr->selectrow_arrayref("SELECT journalid, delayedid, posterid, " .
                                          "DATE_FORMAT(posttime, \"$dateformat\") AS 'alldatepart', " .
@@ -652,10 +644,11 @@ sub get_entry_by_id {
                                          "logtime " .
                                          "FROM delayedlog2 ".
                                          "WHERE journalid=$journalid AND ".
-                                         "delayedid = $delayedid $secwhere");
+                                         "delayedid = $delayedid");
 
+    warn "oops!" unless $opts;
     return undef unless $opts;
-
+    warn "all ok!";
     my $data_ser = $dbcr->selectrow_array("SELECT request_stor " .
                                           "FROM delayedblob2 ".
                                           "WHERE journalid=$journalid AND ".
@@ -729,19 +722,24 @@ sub get_entries_count {
         my $remote = LJ::get_remote();
         return undef unless $remote;
         $userid = $remote->userid ;
+
+        return undef unless __delayed_entry_can_see( $journal,
+                                                     $remote );
+    } else {
+        my $u = LJ::want_user($userid);
+        return undef unless __delayed_entry_can_see( $journal,
+                                                      $u );
     }
 
-    return undef unless __delayed_entry_can_see( $journal,
-                                              $journal->userid,
-                                              $userid );
 
-    my $secwhere = __delayed_entry_secwhere( $journal,
-                                             $journal->userid,
-                                             $userid );
+
+    #my $secwhere = __delayed_entry_secwhere( $journal,
+    #                                         $journal->userid,
+    #                                         $userid );
 
     return $dbcr->selectrow_array(" SELECT count(delayedid) " .
                                     "FROM delayedlog2 ".
-                                    "WHERE journalid=$journalid $secwhere ");
+                                    "WHERE journalid=$journalid ");
 }
 
 sub get_entries_by_journal {
@@ -763,11 +761,15 @@ sub get_entries_by_journal {
         my $remote = LJ::get_remote();
         return undef unless $remote;
         $userid = $remote->userid ;
+
+        return undef unless __delayed_entry_can_see( $journal,
+                                                     $remote );
+    } else {
+        my $u = LJ::want_user($userid);
+        return undef unless __delayed_entry_can_see( $journal,
+                                                     $u );
     }
 
-    return undef unless __delayed_entry_can_see( $journal,
-                                              $journal->userid,
-                                              $userid );
 
     my $secwhere = __delayed_entry_secwhere( $journal,
                                              $journal->userid,
@@ -785,8 +787,7 @@ sub get_daycount_query {
     my $remote = LJ::get_remote();
     return undef unless $remote;
     return undef unless __delayed_entry_can_see( $journal,
-                                                    $journal->userid,
-                                                    $remote->userid  );
+                                                 $remote  );
     
     my $secwhere = __delayed_entry_secwhere( $journal,
                                              $journal->userid,
@@ -804,8 +805,7 @@ sub get_entries_for_day_row {
     my $remote = LJ::get_remote();
     return undef unless $remote;
     return undef unless __delayed_entry_can_see( $journal,
-                                                $journal->userid,
-                                                $remote->userid );
+                                                 $remote );
 
     my $secwhere = __delayed_entry_secwhere( $journal,
                                              $journal->userid,
@@ -829,8 +829,7 @@ sub get_entries_for_day {
     my $remote = LJ::get_remote();
     return undef unless $remote;
     return undef unless __delayed_entry_can_see( $journal,
-                                                $journal->userid,
-                                                $remote->userid );
+                                                 $remote );
 
     my $secwhere = __delayed_entry_secwhere( $journal,
                                              $journal->userid,
@@ -898,9 +897,9 @@ sub getevents {
         $date_limit .= "AND day = " . $req->{day} . " ";
     }
 
+    my $u = LJ::want_user($userid);
     return undef unless __delayed_entry_can_see( $uowner,
-                                                  $ownerid,
-                                                  $userid );
+                                                  $u );
 
     my $secwhere = __delayed_entry_secwhere( $uowner,
                                              $ownerid,
@@ -943,8 +942,7 @@ sub get_entries_for_month {
     my $remote = LJ::get_remote();
     
     return undef unless __delayed_entry_can_see( $journal,
-                                                $journal->userid,
-                                                $remote->userid );
+                                                 $remote );
     
     my $secwhere = __delayed_entry_secwhere( $journal,
                                              $journal->userid,
@@ -1405,17 +1403,19 @@ sub convert {
 }
 
 sub __delayed_entry_can_see {
-    my ( $uowner, $ownerid, $posterid ) = @_;
+    my ( $uowner, $poster ) = @_;
 
-    my $poster = LJ::want_user($posterid);
+    if ( $uowner->equals( $poster) ){
+        warn "allowed\n";
+        return 1;
+    }
+
     if ($poster->can_manage($uowner)) {
+        warn "allowed by can_manage\n";
         return 1;
     }
-
-    if ($ownerid == $posterid) {
-        return 1;
-    }
-
+    
+    warn "forbitten\n";
     return 0;
 }
 
@@ -1472,7 +1472,6 @@ sub __serialize {
     #return LJ::JSON->to_json( $data );
 }
 
-
 sub __deserialize {
     my ($journal, $req) = @_;
     __assert($journal);
@@ -1481,19 +1480,6 @@ sub __deserialize {
     #return LJ::JSON->from_json( $data );
     return Storable::thaw($req);
 }
-
-
-sub item_link
-{
-    my ($u, $delayedid, @args) = @_;
-
-    # XXX: should have an option of returning a url with escaped (&amp;)
-    #      or non-escaped (&) arguments.  a new link object would be best.
-    my $args = @args ? "?" . join("&amp;", @args) : "";
-    return LJ::journal_base($u) . "/d$delayedid.html$args";
-}
-
-
 
 sub __get_now {
     my $dt = DateTime->now->set_time_zone('UTC');
