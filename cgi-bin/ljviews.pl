@@ -1208,17 +1208,21 @@ sub create_view_lastn
         $viewsome = $viewall || LJ::check_priv($remote, 'canview', 'suspended');
     }
     
-    my $delayed_entries = [];
+    my $delayed_entries;
 
     if ($u->has_sticky_entry && !$skip) {
         $delayed_entries = LJ::DelayedEntry->get_entries_by_journal($u, $skip, $itemshow - 1);
     } else {
         $delayed_entries = LJ::DelayedEntry->get_entries_by_journal($u, $skip, $itemshow + 1);
     }
+    
+    if (!$delayed_entries) {
+        $delayed_entries = [];
+    }
 
     my $itemshow_usual = $itemshow - scalar(@$delayed_entries);
     if ( $itemshow <= scalar(@$delayed_entries) ) {
-            $itemshow_usual = -1;
+       $itemshow_usual = -1;
     }
 
     ## load the itemids
