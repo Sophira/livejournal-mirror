@@ -109,8 +109,10 @@ sub DayPage
     my $tags = LJ::Tags::get_logtags($u, \@itemids);
     
     my @ditems = LJ::DelayedEntry->get_entries_for_day($u, $year, $month, $day, $dateformat, $secwhere);
-    foreach my $ditem (@ditems)
-        push @items, $ditem if $ditem;
+    foreach my $ditem (@ditems) {
+        if ($ditem) {
+            push @items, $ditem;
+        }
     }
 
     my $userlite_journal = UserLite($u);
