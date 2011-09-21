@@ -85,7 +85,6 @@ my %e = (
      "214" => [ E_PERM, "Message looks like spam" ],
      "215" => [ E_PERM, "Timezone is not set"],
 
-
      # Access Errors
      "300" => [ E_TEMP, "Don't have access to requested journal" ],
      "301" => [ E_TEMP, "Access of restricted feature" ],
@@ -109,6 +108,7 @@ my %e = (
      "319" => [ E_TEMP, "Journal is read-only and its entries cannot be edited." ],
      "320" => [ E_TEMP, "Sorry, there was a problem with content of the entry" ],
      "321" => [ E_TEMP, "Sorry, deleting is temporary disabled. Entry is 'private' now" ],
+     "322" => [ E_PERM, "Not allowed to post to community with moderation queue"],
 
      # Limit errors
      "402" => [ E_TEMP, "Your IP address is temporarily banned for exceeding the login failure rate." ],
@@ -129,6 +129,8 @@ my %e = (
      "504" => [ E_PERM, "Protocol mode no longer supported." ],
      "505" => [ E_TEMP, "Account data format on server is old and needs to be upgraded." ], # cluster0
      "506" => [ E_TEMP, "Journal sync temporarily unavailable." ],
+     "507" => [ E_PERM, "Delayed entry 'create' failed"],
+     "508" => [ E_PERM, "Delayed entry 'edit' failed"],
 );
 
 my %HANDLERS = (
@@ -2058,22 +2060,6 @@ sub postevent
 
     my $res = {};
     my $res_done = 0;  # set true by getlock when post was duplicate, or error getting lock
-    
-    unless ($req->{timezone}) {
-        return fail( $err, 215);
-    }
-
-    if ( LJ::DelayedEntry::is_future_date($req) ) {
-        $req->{ext}->{flags} = $flags;
-        $req->{ext}->{flags}->{u} = undef; # it's no need to be stored
-        $req->{usejournal} = $req->{usejournal} || '';
-  
-        my $entry = LJ::DelayedEntry->create( $req, { journal => $uowner,
-                                                      poster  => $u,} );
-        $res->{delayedid} = $entry->delayedid;
-        return $res;
-        
-    }
 
     my $getlock = sub {
         my $r = $dbcm->selectrow_array("SELECT GET_LOCK(?, 2)", undef, $lock_key);
@@ -2103,6 +2089,25 @@ sub postevent
         ## Scan post for spam
         LJ::run_hook('spam_community_detector', $uowner, $req, \$need_moderated);
     }
+
+    if ( $req->{timezone} && LJ::DelayedEntry::is_future_date($req) ) {
+        # if posting to a moderated community, store and bail out here
+        if ($uowner->{'journaltype'} eq 'C' && $need_moderated && !$flags->{'nomod'}) {
+            return fail($err,322);
+        }
+
+        $req->{ext}->{flags} = $flags;
+        $req->{ext}->{flags}->{u} = undef; # it's no need to be stored
+        $req->{usejournal} = $req->{usejournal} || '';
+  
+        my $entry = LJ::DelayedEntry->create( $req, { journal => $uowner,
+                                                      poster  => $u,} );
+        return fail($err, 507) unless $entry;
+        $res->{delayedid} = $entry->delayedid;
+        return $res;
+        
+    }
+
     # if posting to a moderated community, store and bail out here
     if ($uowner->{'journaltype'} eq 'C' && $need_moderated && !$flags->{'nomod'}) {
         # don't moderate admins, moderators & pre-approved users
@@ -2550,7 +2555,6 @@ sub editevent
     return fail($err,409) if length($req->{event}) >= LJ::BMAX_EVENT;
     
     if ( $req->{delayedid} ) {
-        
         my $res = {};
         my $delayedid = delete $req->{delayedid};
         
@@ -2562,7 +2566,10 @@ sub editevent
         }
         $req->{usejournal} = $req->{usejournal}  || '';
         
-        my $entry = LJ::DelayedEntry->get_entry_by_id($uowner, $delayedid);
+        my $entry = LJ::DelayedEntry->get_entry_by_id( $uowner,
+                                                       $delayedid,
+                                                       { userid => $posterid });
+        return fail($err, 508) unless $entry;
         if ($req->{'event'} !~ /\S/ ) {
             $entry->delete();
         } else {

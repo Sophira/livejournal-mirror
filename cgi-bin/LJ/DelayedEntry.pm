@@ -633,9 +633,9 @@ sub get_entry_by_id {
     }
 
     my $userid = $options->{userid} || 0;
-    my $user = LJ::get_remote() || $options->{user};
-    return undef unless $user;
+    my $user = LJ::get_remote() || LJ::want_user($userid);
 
+    return undef unless $user;
     return undef unless __delayed_entry_can_see( $journal,
                                                   $user );
 
@@ -650,7 +650,6 @@ sub get_entry_by_id {
                                          "FROM delayedlog2 ".
                                          "WHERE journalid=$journalid AND ".
                                          "delayedid = $delayedid");
-
 
     return undef unless $opts;
 
@@ -735,8 +734,6 @@ sub get_entries_count {
         return undef unless __delayed_entry_can_see( $journal,
                                                       $u );
     }
-
-
 
     #my $secwhere = __delayed_entry_secwhere( $journal,
     #                                         $journal->userid,
