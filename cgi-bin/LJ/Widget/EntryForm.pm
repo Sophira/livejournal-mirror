@@ -788,7 +788,7 @@ sub render_options_block {
                 'label' => "",
             });
 
-            my $added_to_rss_text = $BML::ML{'entryform.do_not_add_rss_friends.edit'};
+            my $added_to_rss_text = $BML::ML{'entryform.do_not_add_rss_friends'};
             return qq{$dot_add_check <label for='do_not_add_type' class='right options'>
                    $added_to_rss_text
                 </label>};
