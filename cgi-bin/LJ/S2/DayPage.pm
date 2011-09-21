@@ -109,8 +109,8 @@ sub DayPage
     my $tags = LJ::Tags::get_logtags($u, \@itemids);
     
     my @ditems = LJ::DelayedEntry->get_entries_for_day($u, $year, $month, $day, $dateformat, $secwhere);
-    foreach my $ditem (@ditems) {
-        push @items, $ditem;
+    foreach my $ditem (@ditems)
+        push @items, $ditem if $ditem;
     }
 
     my $userlite_journal = UserLite($u);
@@ -161,7 +161,7 @@ sub DayPage
             next ENTRY if $purge_community_entries;
         }
 
-       if ($LJ::UNICODE && $logprops{$itemid}->{'unknown8bit'}) {
+        if ($LJ::UNICODE && $logprops{$itemid}->{'unknown8bit'}) {
             LJ::item_toutf8($u, \$subject, \$text, $logprops{$itemid});
         }
 
