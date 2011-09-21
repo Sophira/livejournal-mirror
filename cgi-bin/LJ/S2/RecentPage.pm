@@ -72,18 +72,32 @@ sub RecentPage
     }
 
     my $delayed_entries = [];
+    my $delayed_entries_count = LJ::DelayedEntry->get_entries_count($u);
+    my $usual_skip = $delayed_entries_count ? $skip - $delayed_entries_count : 0;
 
-    if ($u->has_sticky_entry && !$skip) {
-        $delayed_entries = LJ::DelayedEntry->get_entries_by_journal($u, $skip, $itemshow - 1) || [];
+    if ( $u->has_sticky_entry && !$skip) {
+        $delayed_entries = LJ::DelayedEntry->get_entries_by_journal($u, $skip, $itemshow - 1) ;
+    } elsif ( $u->has_sticky_entry && $skip) {
+        $delayed_entries = LJ::DelayedEntry->get_entries_by_journal($u, $skip - 1, $itemshow + 1);
     } else {
-        $delayed_entries = LJ::DelayedEntry->get_entries_by_journal($u, $skip, $itemshow + 1) || [];
+        $delayed_entries = LJ::DelayedEntry->get_entries_by_journal($u, $skip, $itemshow + 1);
+    }
+
+    if (!$delayed_entries) {
+        $delayed_entries = [];
+    }
+
+    if ( $skip && $usual_skip < 0 && $u->has_sticky_entry ) {
+        $usual_skip = 1;
+    } elsif ( $skip && $usual_skip < 0) {
+        $usual_skip = 0;
     }
 
     my $itemshow_usual = $itemshow - scalar(@$delayed_entries);
     if ( $itemshow <= scalar(@$delayed_entries) ) {
-            $itemshow_usual = -1;
+            $itemshow_usual -= 1;
     }
-    
+
     ## load the itemids
     my @itemids;
     my $err;
@@ -95,7 +109,7 @@ sub RecentPage
         'userid' => $u->{'userid'},
         'remote' => $remote,
         'itemshow' => $itemshow_usual + 1,
-        'skip' => $skip,
+        'skip' => $usual_skip,
         'tagids' => $opts->{tagids},
         'tagmode' => $opts->{tagmode},
         'security' => $opts->{'securityfilter'},
@@ -105,14 +119,15 @@ sub RecentPage
             ? "logtime" : "",
         'err' => \$err,
         'poster'  => $get->{'poster'} || '',
-        'show_sticky_on_top' => 1,
+        'show_sticky_on_top' => !$skip,
     }) if ($itemshow_usual >= 0) ;
     
     my $is_prev_exist = scalar @items + scalar(@$delayed_entries) - $itemshow > 0 ? 1 : 0;
     if ($is_prev_exist) {
-        pop @items;
         if ( scalar(@$delayed_entries) > $itemshow ) {
             pop @$delayed_entries;
+        } elsif ( scalar(@items) + scalar(@$delayed_entries) > $itemshow ) {
+            pop @items;
         }
     }
 
@@ -145,10 +160,10 @@ sub RecentPage
     my $tags = LJ::Tags::get_logtagsmulti($idsbyc);
 
     my $userlite_journal = UserLite($u);
-    my $sticky_appended = 0;
+    my $sticky_appended = !$u->has_sticky_entry() || $skip;
     
-    if (scalar(@$delayed_entries) > 0 && $itemshow_usual < 0) {
-        __append_delayed( $u, $delayed_entries,  $p->{'entries'});
+    if ( scalar(@$delayed_entries) > 0 && ( $sticky_appended && $u->has_sticky_entry()) ) {
+        __append_delayed( $u, $delayed_entries,  $p->{'entries'} );
     }
     
   ENTRY:
@@ -161,7 +176,7 @@ sub RecentPage
         my $entry_obj = LJ::Entry->new($u, ditemid => $ditemid);
         
         # append delayed entries
-        if ( !$entry_obj->is_sticky() && !$sticky_appended) {
+        if ( $entry_obj->is_sticky() && $sticky_appended) {
             __append_delayed( $u, $delayed_entries,  $p->{'entries'});
             $sticky_appended = 1;
         }
@@ -280,14 +295,14 @@ sub RecentPage
         
         push @{$p->{'entries'}}, $entry;
         LJ::run_hook('notify_event_displayed', $entry_obj);
+
+        # append delayed entries
+        if ( !$sticky_appended) {
+            __append_delayed( $u, $delayed_entries,  $p->{'entries'});
+            $sticky_appended = 1;
+        }
         
     } # end huge while loop
-    
-    # append delayed entries
-    if ( !$sticky_appended) {
-        __append_delayed( $u, $delayed_entries,  $p->{'entries'});
-        $sticky_appended = 1;
-    }
 
     # mark last entry as closing.
     $p->{'entries'}->[-1]->{'end_day'} = 1 if @{$p->{'entries'} || []};

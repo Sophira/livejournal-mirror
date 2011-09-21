@@ -772,7 +772,6 @@ sub get_entries_by_journal {
                                                      $u );
     }
 
-
     my $secwhere = __delayed_entry_secwhere( $journal,
                                              $journal->userid,
                                              $userid );
@@ -967,11 +966,15 @@ sub get_entries_for_month {
     return @items;
 }
 
-sub get_itemid_after2  { return get_itemid_near2(@_, "after");  }
-sub get_itemid_before2 { return get_itemid_near2(@_, "before"); }
+sub get_itemid_after2  {
+    return get_itemid_near2(@_, "after");
+}
 
-sub get_itemid_near2
-{
+sub get_itemid_before2 {
+    return get_itemid_near2(@_, "before");
+}
+
+sub get_itemid_near2{
     my ($self, $after_before) = @_;
     my $u = $self->journal;
     my $delayedid = $self->delayedid;
@@ -1082,55 +1085,58 @@ sub convert {
     my $poster     = $self->poster;
     my $posterid   = $poster->userid;
 
-    my $dbh = LJ::get_db_writer();
+    my $dbh  = LJ::get_db_writer();
     my $dbcm = LJ::get_cluster_master($journal);
 
     my $ext = $req->{data_d_ext};
 
-    my $flags       = $ext->{flags};
-    my $event       = $req->{event};
-    my $eventtime   = __get_datatime($req);
+    my $flags     = $ext->{flags};
+    my $event     = $req->{event};
+    my $eventtime = __get_datatime($req);
 
-    my $security = "public";
+    my $security  = "public";
     my $uselogsec = 0;
+
     if ($req->{'security'} eq "usemask" || $req->{'security'} eq "private") {
         $security = $req->{'security'};
     }
+
     if ($req->{'security'} eq "usemask") {
         $uselogsec = 1;
     }
 
-    my $qsecurity   = $dbh->quote($security);
-    my $qallowmask  = $req->{'allowmask'}+0;
-    my $qeventtime  = $dbh->quote($eventtime);
-    my $now         = $dbcm->selectrow_array("SELECT UNIX_TIMESTAMP()");
-    my $anum        = int(rand(256));
-    my $jitemid     = LJ::alloc_user_counter($journal, "L");
-    my $rlogtime    = $LJ::EndOfTime;
+    my $qsecurity  = $dbh->quote($security);
+    my $qallowmask = $req->{'allowmask'}+0;
+    my $qeventtime = $dbh->quote($eventtime);
+    my $now        = $dbcm->selectrow_array("SELECT UNIX_TIMESTAMP()");
+    my $anum       = int(rand(256));
+    my $jitemid    = LJ::alloc_user_counter($journal, "L");
+    my $rlogtime   = $LJ::EndOfTime;
 
     # do processing of embedded polls (doesn't add to database, just
     # does validity checking)
     my @polls = ();
-    if (LJ::Poll->contains_new_poll(\$event))
-    {
+
+    if (LJ::Poll->contains_new_poll(\$event)) {
         return "Your account type doesn't permit creating polls."
-        unless (LJ::get_cap($poster, "makepoll")
-        || ($journal->{'journaltype'} eq "C"
-        && LJ::get_cap($journal, "makepoll")
-        && LJ::can_manage_other($poster, $journal)));
+            unless (LJ::get_cap($poster, "makepoll")
+                    || ($journal->{'journaltype'} eq "C"
+                    && LJ::get_cap($journal, "makepoll")
+                    && LJ::can_manage_other($poster, $journal)));
 
         my $error = "";
         @polls = LJ::Poll->new_from_html(\$event, \$error, {
             'journalid' => $journalid,
             'posterid' => $posterid,
         });
+
         return $error if $error;
     }
 
-    $req->{subject} = $req->{subject} || '';
+    $req->{subject}    = $req->{subject} || '';
     $req->{usejournal} = $req->{usejournal} || '';
-    $req->{allowmask} = $req->{allowmask} || '';
-    $req->{security} = $req->{security} || '';
+    $req->{allowmask}  = $req->{allowmask} || '';
+    $req->{security}   = $req->{security} || '';
 
     my $dupsig = Digest::MD5::md5_hex(join('', map { $req->{$_} }
                             qw(subject event usejournal security allowmask)));
@@ -1148,19 +1154,30 @@ sub convert {
 
     my $getlock = sub {
         my $r = $dbcm->selectrow_array("SELECT GET_LOCK(?, 2)", undef, $lock_key);
+
         unless ($r) {
             $res = undef;    # a failure case has an undef result
             $res_done = 1;   # tell caller to bail out
-            return { error_message =>  "can't get lock", delete_entry => 0 } 
+
+            return {
+                error_message => "can't get lock",
+                delete_entry  => 0,
+            }; 
         }
+
         my @parts = split(/:/, $poster->{'dupsig_post'});
+
         if ($parts[0] eq $dupsig) {
             # duplicate!  let's make the client think this was just the
             # normal first response.
             $res->{'itemid'} = $parts[1];
-            $res->{'anum'} = $parts[2];
+            $res->{'anum'}   = $parts[2];
             
-            my $dup_entry = LJ::Entry->new($journal, jitemid => $res->{'itemid'}, anum => $res->{'anum'});
+            my $dup_entry = LJ::Entry->new(
+                $journal,
+                jitemid => $res->{'itemid'},
+                anum    => $res->{'anum'},
+            );
             $res->{'url'} = $dup_entry->url;
             
             $res_done = 1;
@@ -1183,7 +1200,10 @@ sub convert {
                                 "0, $req->{'year'}, $req->{'mon'}, $req->{'day'}, $LJ::EndOfTime-".
                                 "UNIX_TIMESTAMP($qeventtime), $rlogtime, $anum)");
 
-    return { error_message =>  $dberr, delete_entry => 0 } if $dberr;
+    return {
+        error_message => $dberr,
+        delete_entry  => 0,
+    } if $dberr;
 
     # post become 'sticky post'
     if ( $req->{type} && $req->{type} eq 'sticky' ) {
