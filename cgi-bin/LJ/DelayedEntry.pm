@@ -942,7 +942,8 @@ sub get_entries_for_month {
     my $entries = [];
     
     my $remote = LJ::get_remote();
-    
+
+    return undef unless $remote;
     return undef unless __delayed_entry_can_see( $journal,
                                                  $remote );
     
