@@ -775,6 +775,24 @@ sub render_options_block {
                    $sticky_text
                 </label>};
         },
+         'do_not_add' => sub {
+            my $selected = $opts->{'opt_backdated'} || 0;
+            my $dot_add_check = LJ::html_check({
+                'type' => "check",
+                'class' => 'do_not_add_type',
+                'value' => '1',
+                'name' => 'prop_opt_backdated',
+                'id' => 'do_not_add_type',
+                'selected' => $selected,
+                $opts->{'prop_opt_preformatted'} || $opts->{'event_format'},
+                'label' => "",
+            });
+
+            my $added_to_rss_text = $BML::ML{'entryform.do_not_add_rss_friends.edit'};
+            return qq{$dot_add_check <label for='do_not_add_type' class='right options'>
+                   $added_to_rss_text
+                </label>};
+        },
         'tags' => sub {
             return if $LJ::DISABLED{'tags'};
 
@@ -1117,6 +1135,7 @@ sub render_options_block {
                 $BML::ML{'entryform.spellcheck'}
                 </label> $out};
         },
+        'none' => sub {return qq{};},
     );
 
     my @schema = (
@@ -1124,7 +1143,8 @@ sub render_options_block {
         [ 'mood', 'comment_settings' ],
         [ 'location', 'comment_screening' ],
         [ 'music', 'content_flag' ],
-        [ 'spellcheck', 'sticky' ], 
+        [ 'spellcheck', 'do_not_add' ],
+        [ 'none','sticky'],
         'extra',
         [ 'lastfm_logo'  ],
     );

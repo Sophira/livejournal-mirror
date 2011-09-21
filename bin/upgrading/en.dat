@@ -1415,6 +1415,8 @@ entryform.userpic.choose=Choose userpic
 
 entryform.userpics=User Picture Icon:
 
+entryform.do_not_add_rss_friends=Do not add to friends lists and RSS
+
 Error|notes=typically used inside an H1 tag to announce an error.
 Error=Error
 

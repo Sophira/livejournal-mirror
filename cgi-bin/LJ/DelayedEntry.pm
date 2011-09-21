@@ -543,7 +543,11 @@ sub update {
     my $qposttime   = $dbh->quote($posttime);
     my $utime       = $dbh->selectrow_array("SELECT UNIX_TIMESTAMP($qposttime)");
 
-    my $rlogtime    = $LJ::EndOfTime - $now;
+    my $rlogtime    = $LJ::EndOfTime;
+    unless ( $req->{'props'}->{'do_not_add_rss_friends'} ) {
+        $rlogtime -= $now;
+    }
+
     my $rposttime   = $LJ::EndOfTime - $utime;
     $self->{taglist} = __extract_tag_list(\$req->{props}->{taglist});
 
@@ -560,7 +564,7 @@ sub update {
 
     $self->journal->do( "UPDATE delayedblob2 SET request_stor=$data_ser" . 
                         "WHERE journalid=$journalid AND delayedid=$delayedid");
-}
+}   
 
 sub update_tags {
     my ($self, $tags) = @_;
@@ -615,6 +619,7 @@ sub load_data {
 sub get_entry_by_id {
     my ($class, $journal, $delayedid, $options) = @_;
     __assert($journal);
+    
     return undef unless $delayedid;
 
     my $journalid = $journal->userid;
@@ -646,9 +651,9 @@ sub get_entry_by_id {
                                          "WHERE journalid=$journalid AND ".
                                          "delayedid = $delayedid");
 
-    warn "oops!" unless $opts;
+
     return undef unless $opts;
-    warn "all ok!";
+
     my $data_ser = $dbcr->selectrow_array("SELECT request_stor " .
                                           "FROM delayedblob2 ".
                                           "WHERE journalid=$journalid AND ".
@@ -897,9 +902,8 @@ sub getevents {
         $date_limit .= "AND day = " . $req->{day} . " ";
     }
 
-    my $u = LJ::want_user($userid);
     return undef unless __delayed_entry_can_see( $uowner,
-                                                  $u );
+                                                 $u );
 
     my $secwhere = __delayed_entry_secwhere( $uowner,
                                              $ownerid,
@@ -1417,6 +1421,16 @@ sub __delayed_entry_can_see {
     
     warn "forbitten\n";
     return 0;
+}
+
+ 
+
+sub item_link {
+    my ($u, $delayedid, @args) = @_;
+    # XXX: should have an option of returning a url with escaped (&amp;)
+    #      or non-escaped (&) arguments.  a new link object would be best.
+    my $args = @args ? "?" . join("&amp;", @args) : "";
+    return LJ::journal_base($u) . "/d$delayedid.html$args";
 }
 
 sub __delayed_entry_secwhere {

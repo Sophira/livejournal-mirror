@@ -213,9 +213,9 @@ EMBED
     my $altlogin_display = 'none';
     my $remotelogin_display = 'none';
     if ($auth_as_remote) {
-        $remotelogin_display = '';
+        $remotelogin_display = 'block';
     } else {
-        $altlogin_display = '';
+        $altlogin_display = 'block';
     }
 
     # Check for errors, store in hash to render later
@@ -252,23 +252,19 @@ EMBED
             $auth .= "</li>\n\n";
         }
         # table with username/password fields
-        $auth .= "<li id='altlogin_wrapper_login' class='pkg' style='display: $altlogin_display;'>\n";
-        $auth .= "<label for='altlogin_username' class='title'>$ML{'.username'}</label>\n";
-        $auth .= "<span class='wrap'>\n";
+        $auth .= "<li id='altlogin_wrapper' class='pkg' style='display: $altlogin_display;'>\n";
+        $auth .= "<label for='altlogin_username' class='left'>$ML{'.username'}</label>\n";
         $auth .=  LJ::html_text({ 'name' => 'user', 'id' => 'altlogin_username', 'class' => 'text', 'size' => '15', 
                 'maxlength' => '15', 'tabindex' => '5', 'value' => $POST{'user'} || $GET{'user'} }) . "\n";
-        $auth .= "</span>\n";
         $auth .= "</li>\n";
-        $auth .= "<li id='altlogin_wrapper_password' class='pkg' style='display: $altlogin_display;'>\n";
-        $auth .= "<label for='altlogin_password' class='title'>$ML{'.password'}</label>\n";
-        $auth .= "<span class='wrap'>\n";
+        $auth .= "<li id='altlogin_wrapper' class='pkg' style='display: $altlogin_display;'>\n";
+        $auth .= "<label for='altlogin_password' class='left'>$ML{'.password'}</label>\n";
         $auth .= LJ::html_text({ 'type' => 'password', 'id' => 'altlogin_password', 'class' => 'text',  
                 'name' => 'password', 'tabindex' => '6', 'size' => '15', 'maxlength' => '30' }) . "\n";
         # posted with a user, but no password
         if ($did_post && $auth_missing) {
             $auth .= "<br /><?inerr $ML{'.error.nopass'} inerr?>";
         }
-        $auth .= "</span>\n";
         $auth .= "</li>\n\n";
 
         # if they submit the form and are spellchecking, remember
@@ -464,6 +460,9 @@ EMBED
                     'tz'          => 'guess',
                     'timezone'    => $POST{'delayed_timezone'} || $GET{'delayed_timezone'},
                     'type'        => $POST{'type'} || $GET{'type'},
+                    'ver'         => 3,
+                    'do_not_add_rss_friends' => $POST{'do_not_add_rss_friends'} ||
+                                                    $GET{'do_not_add_rss_friends'}
                     );
 
         LJ::entry_form_decode(\%req, \%POST);

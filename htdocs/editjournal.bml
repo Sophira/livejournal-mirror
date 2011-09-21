@@ -267,7 +267,8 @@ body<=
                             'ver'        => $LJ::PROTOCOL_VER,
                             'username'   => $u->{'user'},
                             'usejournal' => $usejournal,
-                            'timezone'   => $POST{'timezone'} || $POST{'timezone'},
+                            'timezone'   => $POST{'delayed_timezone'} ||
+                                                $POST{'delayed_timezone'},
                             'itemid'     => $itemid,
                             'delayedid'  => $delayedid,
                             'type'       => $POST{'type'} || $POST{'type'},
@@ -466,6 +467,7 @@ body<=
                 'jitemid' => $itemid,
                 'delayedid' => $delayedid,
                 'sticky' => $entry_obj->is_sticky,
+                'opt_backdated' => $entry_obj->prop('opt_backdated'),
             };
 
             for (my $i = 1; $i <= $res{'prop_count'}; $i++) {
@@ -487,7 +489,7 @@ body<=
             if ($ad) {
                 $ret .= "<td valign='top' style='width: 300px;'>$ad</td>";
             }
-                
+
             $ret .= "</tr></table>";
 
             my $qotd = LJ::QotD->get_single_question($entry->{prop_qotdid});
