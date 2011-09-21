@@ -916,6 +916,7 @@ sub getevents {
         my $entry_obj = LJ::DelayedEntry->get_entry_by_id(  $u,
                                                             $delayedid,
                                                             { userid => $userid } );
+        next unless $entry_obj;
         ++$i;
         $res->{"events_${i}_itemid"} = 0;
         $res->{"events_${i}_delayedid"} = $delayedid;
@@ -1407,16 +1408,13 @@ sub __delayed_entry_can_see {
     my ( $uowner, $poster ) = @_;
 
     if ( $uowner->equals( $poster) ){
-        warn "allowed\n";
         return 1;
     }
 
     if ($poster->can_manage($uowner)) {
-        warn "allowed by can_manage\n";
         return 1;
     }
-    
-    warn "forbitten\n";
+
     return 0;
 }
 
