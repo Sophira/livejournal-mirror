@@ -378,7 +378,8 @@
 					if (ljNoteData.hasOwnProperty(cmd)) {
 						cmd = editor.getCommand(cmd);
 						if (cmd.state == CKEDITOR.TRISTATE_ON) {
-							editor.getSelection().selectElement(node);
+							var selection = new CKEDITOR.dom.selection(editor.document);
+							selection.selectElement(node);
 							evt.data.dialog = '';
 							cmd.exec();
 							break;
@@ -406,7 +407,7 @@
 			editor.addCommand('LJUserLink', {
 				exec: function(editor) {
 					var userName = '',
-						selection = editor.getSelection(),
+						selection = new CKEDITOR.dom.selection(editor.document),
 						LJUser = ljNoteData.LJUserLink.node;
 
 					if (LJUser) {
@@ -468,7 +469,8 @@
 					var state = editor.getCommand('LJImage').state;
 
 					if (ljNoteData.LJImage.node) {
-						editor.getSelection().selectElement(ljNoteData.LJImage.node);
+						var selection = new CKEDITOR.dom.selection(editor.document);
+						selection && selection.selectElement(ljNoteData.LJImage.node);
 						editor.openDialog('image');
 					} else if (state === CKEDITOR.TRISTATE_OFF) {
 						if (window.ljphotoEnabled) {
@@ -499,7 +501,8 @@
 					var state = editor.getCommand('LJLink').state;
 
 					if (currentNoteNode && ljNoteData.LJLink.node) {
-						editor.getSelection().selectElement(ljNoteData.LJLink.node);
+						var selection = new CKEDITOR.dom.selection(editor.document);
+						selection && selection.selectElement(ljNoteData.LJLink.node);
 						editor.openDialog('link');
 					} else if (state === CKEDITOR.TRISTATE_OFF) {
 						editor.openDialog('link');
@@ -636,13 +639,13 @@
 				JustifyCommand.prototype = {
 					exec : function(editor) {
 						var LJNode = ljNoteData.LJLike.node || ljNoteData.LJUserLink.node;
+						var selection = new CKEDITOR.dom.selection(editor.document);
 						if (LJNode) {
 							LJNode.removeAttribute('contenteditable');
-							editor.getSelection().selectElement(LJNode);
+							selection.selectElement(LJNode);
 						}
 
-						var selection = editor.getSelection(),
-							enterMode = editor.config.enterMode;
+						var enterMode = editor.config.enterMode;
 
 						if (!selection) {
 							return;
@@ -766,9 +769,9 @@
 					} else {
 						text = prompt(top.CKLang.CutPrompt, top.CKLang.ReadMore);
 						if (text) {
-							var selection = editor.document.getSelection();
+							var selection = new CKEDITOR.dom.selection(editor.document);
 
-							ljNoteData.LJCut.node = new CKEDITOR.dom.element('lj:cut', editor.document);
+							ljNoteData.LJCut.node = new CKEDITOR.dom.element.get(document.createElement('lj:cut'));
 							ljNoteData.LJCut.node.setAttribute('lj-cmd', 'LJCut');
 							if (text != top.CKLang.ReadMore) {
 								ljNoteData.LJCut.node.setAttribute('text', text);
@@ -779,7 +782,6 @@
 							for (var i = 0, l = ranges.length; i < l; i++) {
 								var range = ranges[i];
 								range.cloneContents().appendTo(ljNoteData.LJCut.node);
-								range.deleteContents();
 							}
 							selection.unlock();
 							editor.insertElement(ljNoteData.LJCut.node);
@@ -1163,8 +1165,8 @@
 					},
 					'lj-map': function(element) {
 						return new CKEDITOR.htmlParser.fragment.fromHtml('' + '<div style="' + 'width: ' + (isNaN(element.attributes
-							.width) ? 100 : element.attributes.width) + 'px;' + 'height: ' + (isNaN(element.attributes
-							.height) ? 100 : element.attributes
+							.width) ? 500 : element.attributes.width) + 'px;' + 'height: ' + (isNaN(element.attributes
+							.height) ? 350 : element.attributes
 							.height) + 'px;"' + 'contentEditable="false"' + 'lj-url="' + (encodeURIComponent(element.attributes
 							.url) || '') + '"' + 'class="lj-map"><p>map</p>' + '</div>').children[0];
 					},
