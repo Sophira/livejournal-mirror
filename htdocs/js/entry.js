@@ -66,7 +66,7 @@ function changeSubmit(prefix, defaultjournal, defPrefix){
 
 function new_post_load(dotime){
 	if(dotime){
-		settime.interval = setInterval(settime, 1000);
+		settime.interval = setInterval(function() { settime(); }, 1000);
 		settime();
 	}
 
@@ -590,7 +590,7 @@ function settime(time){
 		}
 	}
 
-	newTime = time || new Date();
+	var newTime = time || new Date();
 	if (!newTime) {
 		return false;
 	}
@@ -599,7 +599,7 @@ function settime(time){
 		return false;
 	}
 
-	f.date_ymd_yyyy.value = newTime.getYear() < 1900 ? newTime.getYear() + 1900 : newTime.getYear();
+	f.date_ymd_yyyy.value = newTime.getFullYear() < 1900 ? newTime.getFullYear() + 1900 : newTime.getFullYear();
 	f.date_ymd_mm.selectedIndex = twodigit(newTime.getMonth() + 1);
 	f.date_ymd_dd.value = twodigit(newTime.getDate());
 	if (!newTime) {
@@ -613,7 +613,7 @@ function settime(time){
 	var currentdate = document.getElementById('currentdate-date');
 	var cMonth = newTime.getMonth();
 	var cDay = newTime.getDate();
-	var cYear = newTime.getYear() < 1900 ? newTime.getYear() + 1900 : newTime.getYear();
+	var cYear = newTime.getFullYear() < 1900 ? newTime.getFullYear() + 1900 : newTime.getFullYear();
 	currentdate.innerHTML = mNames[cMonth] + " " + cDay + ", " + cYear;
 
 	return false;
