@@ -213,9 +213,9 @@ EMBED
     my $altlogin_display = 'none';
     my $remotelogin_display = 'none';
     if ($auth_as_remote) {
-        $remotelogin_display = 'block';
+        $remotelogin_display = '';
     } else {
-        $altlogin_display = 'block';
+        $altlogin_display = '';
     }
 
     # Check for errors, store in hash to render later
@@ -252,15 +252,19 @@ EMBED
             $auth .= "</li>\n\n";
         }
         # table with username/password fields
-        $auth .= "<li id='altlogin_wrapper' class='pkg' style='display: $altlogin_display;'>\n";
-        $auth .= "<label for='altlogin_username' class='left'>$ML{'.username'}</label>\n";
+        $auth .= "<li id='altlogin_wrapper_login' class='pkg' style='display: $altlogin_display;'>\n";
+        $auth .= "<label for='altlogin_username' class='title'>$ML{'.username'}</label>\n";
+        $auth .= "<span class='wrap'>\n";
         $auth .=  LJ::html_text({ 'name' => 'user', 'id' => 'altlogin_username', 'class' => 'text', 'size' => '15', 
                 'maxlength' => '15', 'tabindex' => '5', 'value' => $POST{'user'} || $GET{'user'} }) . "\n";
+        $auth .= "</span>\n";
         $auth .= "</li>\n";
-        $auth .= "<li id='altlogin_wrapper' class='pkg' style='display: $altlogin_display;'>\n";
-        $auth .= "<label for='altlogin_password' class='left'>$ML{'.password'}</label>\n";
+        $auth .= "<li id='altlogin_wrapper_password' class='pkg' style='display: $altlogin_display;'>\n";
+        $auth .= "<label for='altlogin_password' class='title'>$ML{'.password'}</label>\n";
+        $auth .= "<span class='wrap'>\n";
         $auth .= LJ::html_text({ 'type' => 'password', 'id' => 'altlogin_password', 'class' => 'text',  
                 'name' => 'password', 'tabindex' => '6', 'size' => '15', 'maxlength' => '30' }) . "\n";
+        $auth .= "</span>\n";
         # posted with a user, but no password
         if ($did_post && $auth_missing) {
             $auth .= "<br /><?inerr $ML{'.error.nopass'} inerr?>";
