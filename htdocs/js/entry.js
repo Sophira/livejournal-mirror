@@ -346,8 +346,8 @@ function altlogin(e){
 		return false;
 	}
 
-	var altlogin_wrapper = $('altlogin_wrapper_login'),
-	    altlogin_wrapper = $('altlogin_wrapper_password');
+	var altlogin_wrapper_login = $('altlogin_wrapper_login'),
+	    altlogin_wrapper_password = $('altlogin_wrapper_password');
 	if (!altlogin_wrapper_login || !altlogin_wrapper_password) {
 		return false;
 	}
