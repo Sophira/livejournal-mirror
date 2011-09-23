@@ -456,19 +456,22 @@ EMBED
             $$body .= "<?p <strong>$ML{'.loggingin'}</strong> $ML{'.servermsg'} p?><div style='margin-left: 40px'><b>$login_message</b></div>";
         }
 
+        my $timezone = $POST{'timezone'} || $GET{'timezone'};
+        $timezone =  sprintf("%+.4d", $timezone);
         my %req = (
                     'ver'         => $LJ::PROTOCOL_VER,
                     'username'    => $user,
                     'password'    => $POST{'password'},
                     'usejournal'  => ($usejournalu) ? $usejournalu->user : undef,
-                    'tz'          => 'guess',
-                    'timezone'    => $POST{'delayed_timezone'} || $GET{'delayed_timezone'},
+                    'tz'          => $timezone, 
                     'type'        => $POST{'type'} || $GET{'type'},
-                    'ver'         => 3,
+                    'ver'         => 2,
+                    'type'        => 'posted',
                     'do_not_add_rss_friends' => $POST{'do_not_add_rss_friends'} ||
                                                     $GET{'do_not_add_rss_friends'}
                     );
 
+        $flags->{'ignore_type'} = 1; 
         LJ::entry_form_decode(\%req, \%POST);
         if ($req{'event'} eq "") {
             $errors->{'entry'} = $ML{'.error.noentry'};
@@ -570,8 +573,8 @@ EMBED
                     my @after_entry_post_extra_options = LJ::run_hooks('after_entry_post_extra_options', user => $ju, itemlink => $itemlink);
                     my $after_entry_post_extra_options = join('', map {$_->[0]} @after_entry_post_extra_options) || '';
 
-                    $$body .= " p?><?p $ML{'.success.links'} p?><ul>" . $writersblocklink;
-                        "<li><a href=\"$itemlink\">$ML{'.success.links.view'}</a></li>" .
+                    $$body .= " p?><?p $ML{'.success.links'} p?><ul>" . $writersblocklink.
+                        "<li><a href=\"$itemlink\">$ML{'.success.links.view'}</a></li>";
                         my $item_text;
                         if ($itemid) {
                             $item_text = "journal=$juser&itemid=$itemid";

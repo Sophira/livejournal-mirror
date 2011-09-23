@@ -3,11 +3,9 @@ package LJ::DelayedEntry;
 use strict;
 use warnings;
 require 'ljprotocol.pl';
-use DateTime;
-use Storable;
-use POSIX;
 use LJ::User;
-
+use Storable;
+                
 sub create {
     my ( $class, $req, $opts ) = @_;
 
@@ -17,11 +15,10 @@ sub create {
     __assert( $req );
 
     my $self = bless {}, $class;
-    
+
     my $journal = $opts->{journal};
     my $poster = $opts->{poster};
     $req->{'event'} =~ s/\r\n/\n/g;
-    
 
     my $data_ser = __serialize($journal, $req);
 
@@ -169,6 +166,7 @@ sub is_future_date {
     my ($req) = @_;
     my $now = __get_now();
     my $request_time = __get_datatime($req);
+
     return $request_time ge $now;
 }
 
@@ -265,7 +263,6 @@ sub jitemid {
     my ($self) = @_;
     return 0;
 }
-
 
 sub group_names {
     return undef;
@@ -517,7 +514,7 @@ sub update {
     __assert( $self->{journal} );
     __assert( $self->{poster} );
 
-    $req->{timezone} = $req->{timezone} || $self->data->{timezone};
+    $req->{tz} = $req->{tz} || $self->data->{tz};
 
     my $journalid = $self->journal->userid;
     my $posterid = $self->poster->userid;
@@ -543,14 +540,9 @@ sub update {
     my $qposttime   = $dbh->quote($posttime);
     my $utime       = $dbh->selectrow_array("SELECT UNIX_TIMESTAMP($qposttime)");
 
-    my $rlogtime    = $LJ::EndOfTime;
-    unless ( $req->{'props'}->{'do_not_add_rss_friends'} ) {
-        $rlogtime -= $now;
-    }
-
+    my $rlogtime    = $LJ::EndOfTime -= $now;
     my $rposttime   = $LJ::EndOfTime - $utime;
     $self->{taglist} = __extract_tag_list(\$req->{props}->{taglist});
-
     $req->{'event'} =~ s/\r\n/\n/g; # compact new-line endings to more comfort chars count near 65535 limit
 
     $self->journal->do("UPDATE delayedlog2 SET posterid=$posterid, " .
@@ -1077,11 +1069,13 @@ sub can_delete_delayed_item {
 }
 
 sub convert {
-    my ($self, $clusterid) = @_;
+    my ($self) = @_;
     my $req = $self->{data};
 
     my $journal    = $self->journal;
     my $journalid  = $journal->userid;
+    my $clusterid  = $journal->clusterid;
+
     my $poster     = $self->poster;
     my $posterid   = $poster->userid;
 
@@ -1439,8 +1433,6 @@ sub __delayed_entry_can_see {
     return 0;
 }
 
- 
-
 sub item_link {
     my ($u, $delayedid, @args) = @_;
     # XXX: should have an option of returning a url with escaped (&amp;)
@@ -1525,14 +1517,14 @@ sub __get_now {
 sub __get_datatime {
     my ($req) = @_;
     __assert($req);
-    __assert($req->{timezone});
+    __assert($req->{'tz'});
 
     my $dt = DateTime->new(   year      => $req->{'year'}, 
                               month     => $req->{'mon'},
                               day       => $req->{'day'}, 
                               hour      => $req->{'hour'},
                               minute    => $req->{'min'},
-                              time_zone => $req->{timezone}, );
+                              time_zone => $req->{tz}, );
 
     #if ($dt->is_dst) {
     #    $dt->subtract( hours => 1 );

@@ -380,7 +380,15 @@ sub render_metainfo_block {
     my $errors = $self->errors;
     my $onload = $self->onload;
 
+    $out .= LJ::html_hidden({
+        name => 'timezone',
+        value => 'guess',
+        id => 'journal_timezone',
+    });
+    $out .= "<script>try { \$('journal_timezone').value = - (new Date).getTimezoneOffset()/0.6; } catch(e) {} </script>";
     $out .= "<div id='metainfo-wrap'><ul id='metainfo'>";
+
+
     # login info
     $out .= $opts->{'auth'};
     if ($opts->{'mode'} eq "update") {
@@ -483,7 +491,6 @@ sub render_metainfo_block {
     $date_diff_input .= "<noscript>" .  LJ::html_hidden("date_diff_nojs", "1") .
         "</noscript>";
 
-    my $timeZones = option($remote);
     my $help_icon = LJ::help_icon("24hourshelp");
 
     if ( $opts->{'mode'} eq "edit" ) {
@@ -503,6 +510,7 @@ sub render_metainfo_block {
                 </span>
             </li>};
     }
+
     $out .= qq{ <li class='pkg' id='modifydate'><label class='title'>$BML::ML{'entryform.postponed.until'}</label>
                 <span class='wrap'>
                     <input type="hidden" name="date_ymd_mm" value="$mon" />
@@ -514,7 +522,6 @@ sub render_metainfo_block {
                         <input type='text' name='hour' value='$hour' class='input-num' /> : <input type='text' value='$min' name='min' class='input-num' />
                         <?de $BML::ML{'entryform.date.24hournote'} de?>
                     </span>
-                    <span class='timezone'>$timeZones</span>
                 </span>
             </li>
         <li>
@@ -1587,54 +1594,6 @@ sub render_body {
 
     $out .= $self->wrap_js("jQuery(init_update_bml);");
     return $out;
-}
-
-# this one returns a $key => $value list, ordered by keys this way:
-# US goes first, then Canada, then all the rest
-sub timezone_options {
-    my $map = DateTime::TimeZone::links();
-    
-    my ( @options, %options );
-    
-    push @options, '' => BML::ml('setting.timezone.option.select');
-    
-    foreach my $key ( sort keys %$map ) {
-        if ( $key =~ m!^US/! && $key ne 'US/Pacific-New' ) {
-            $options{ $map->{$key} } = $key;
-            push @options, $map->{$key} => $key;
-        }
-    }
-    
-    foreach my $key ( sort keys %$map ) {
-        if ( $key =~ m!^Canada/! ) {
-            $options{ $map->{$key} } = $key;
-            push @options, $map->{$key} => $key;
-        }
-    }
-    
-    foreach my $key ( DateTime::TimeZone::all_names() ) {
-        next if $options{$key};
-        push @options, $key => $key;
-    }
-    
-    return @options;
-}
-
-sub option {
-    my ($u) = @_;
-    
-    my $timezone = $u ? $u->prop("timezone") : undef;
-    my @options = timezone_options;
-    
-    my $ret = LJ::html_select({
-        name => "delayed_timezone",
-        selected => $timezone,
-        class => "select select-timezone",
-    }, @options);
-    
-    $ret .= "<br />";
-    
-    return $ret;
 }
 
 1;

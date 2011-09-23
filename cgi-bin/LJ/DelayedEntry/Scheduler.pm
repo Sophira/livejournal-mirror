@@ -55,7 +55,7 @@ sub on_pulse {
 
     my $entries = __load_delayed_entries($dbh);
     foreach my $entry(@$entries) {
-        my $post_status = $entry->convert($clusterid);
+        my $post_status = $entry->convert();
         
         # do we need to send error
         if ( $post_status->{error_message} ) {

@@ -127,7 +127,7 @@ sub RecentPage
         if ( scalar(@$delayed_entries) > $itemshow ) {
             pop @$delayed_entries;
         } elsif ( scalar(@items) + scalar(@$delayed_entries) > $itemshow ) {
-            pop @items;
+            pop @items if scalar(@items);
         }
     }
 
