@@ -361,7 +361,11 @@
 				var body = editor.document.getBody();
 				var last = body.$.lastChild;
 				if (!last || last.nodeType != 1 || last.nodeName.toLowerCase() != 'br') {
+					// IE fix: LJSUP-9871;
+					var selection = editor.document.getSelection();
+					var bookmark = selection && selection.createBookmarks();
 					body.appendHtml('<br />');
+					selection && selection.selectBookmarks(bookmark);
 				}
 			}
 
@@ -395,7 +399,7 @@
 				checkLastLine();
 				editor.document.on('mouseout', note.hide);
 				editor.document.on('mouseover', findLJTags);
-				editor.document.on('keyup', checkLastLine);
+				editor.document.on('keydown', checkLastLine);
 				editor.document.on('click', checkLastLine);
 				editor.document.on('selectionChange', checkLastLine);
 				editor.document.on('afterCommandExec', checkLastLine);
@@ -1173,7 +1177,7 @@
 					'lj-repost': function(element) {
 						var fakeElement = new CKEDITOR.htmlParser.element('input');
 						fakeElement.attributes.type = 'button';
-						fakeElement.attributes.value = (element.attributes && element.attributes.button.length && element.attributes.button) || top.CKLang.LJRepost_Value;
+						fakeElement.attributes.value = (element.attributes && element.attributes.button) || top.CKLang.LJRepost_Value;
 						fakeElement.attributes['class'] = 'lj-repost';
 						return fakeElement;
 					},
