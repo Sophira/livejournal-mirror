@@ -89,7 +89,7 @@ sub RecentPage
 
     if ( $skip && $usual_skip < 0 && $u->has_sticky_entry ) {
         $usual_skip = 1;
-    } elsif ( $skip && $usual_skip < 0) {
+    } elsif ( $skip && $usual_skip < 0 ) {
         $usual_skip = 0;
     }
 
@@ -161,8 +161,10 @@ sub RecentPage
 
     my $userlite_journal = UserLite($u);
     my $sticky_appended = !$u->has_sticky_entry() || $skip;
-    
-    if ( scalar(@$delayed_entries) > 0 && ( $sticky_appended && $u->has_sticky_entry()) ) {
+
+    if ( scalar(@$delayed_entries) > 0 && \
+        ( $skip && $u->has_sticky_entry()) || 
+         !$u->has_sticky_entry()) {
         __append_delayed( $u, $delayed_entries,  $p->{'entries'} );
     }
     
