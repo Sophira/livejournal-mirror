@@ -764,12 +764,12 @@ sub get_entries_by_journal {
                                                      $u );
     }
 
-    my $secwhere = __delayed_entry_secwhere( $journal,
-                                             $journal->userid,
-                                             $userid );
+    #my $secwhere = __delayed_entry_secwhere( $journal,
+    #                                         $journal->userid,
+    #                                         $userid );
 
     return $dbcr->selectcol_arrayref("SELECT delayedid " .
-                                     "FROM delayedlog2 WHERE journalid=$journalid $secwhere ".
+                                     "FROM delayedlog2 WHERE journalid=$journalid  ".
                                      "ORDER BY revptime $sql_limit");
 }
 
@@ -791,6 +791,7 @@ sub get_daycount_query {
     $sth->execute($journal->userid);
     return $sth;
 }
+
 sub get_entries_for_day_row {
     my ( $class, $journal, $year, $month, $day ) = @_;
     my $entries = [];
@@ -966,7 +967,7 @@ sub get_itemid_before2 {
     return get_itemid_near2(@_, "before");
 }
 
-sub get_itemid_near2{
+sub get_itemid_near2 {
     my ($self, $after_before) = @_;
     my $u = $self->journal;
     my $delayedid = $self->delayedid;
@@ -1416,19 +1417,24 @@ sub convert {
         # TODO: error on failure?  depends on the job I suppose?  property of the job?
     }
 
-    return { delete_entry => 1 };
+    return { delete_entry => 1, res => $res };
 }
 
 sub __delayed_entry_can_see {
     my ( $uowner, $poster ) = @_;
 
-    if ( $uowner->equals( $poster) ){
-        return 1;
+    if (!$poster->can_post_to($uowner)) {
+        return 0;
     }
 
     if ($poster->can_manage($uowner)) {
         return 1;
     }
+
+    if ($poster->can_moderate($uowner)) {
+        return 1;
+    }
+    warn "cannot see";
 
     return 0;
 }
