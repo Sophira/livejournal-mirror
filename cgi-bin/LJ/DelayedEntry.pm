@@ -125,6 +125,13 @@ sub posttime {
     return $self->{posttime};
 }
 
+sub posttime_as_unixtime {
+    my ($self) = @_;
+    my $dbh = LJ::get_db_writer();
+    my $qposttime = $self->posttime;
+    return $dbh->selectrow_array("SELECT UNIX_TIMESTAMP($qposttime)");
+} 
+
 sub alldatepart {
     my ($self) = @_;
     return $self->{alldatepart};
@@ -517,18 +524,20 @@ sub update {
     $req->{tz} = $req->{tz} || $self->data->{tz};
 
     my $journalid = $self->journal->userid;
-    my $posterid = $self->poster->userid;
-    my $subject = $req->{subject};
-    my $posttime = __get_datatime($req);
-    my $data_ser = __serialize($self->journal, $req);
+    my $posterid  = $self->poster->userid;
+    my $subject   = $req->{subject};
+    my $posttime  = __get_datatime($req);
+    my $data_ser  = __serialize($self->journal, $req);
     my $delayedid = $self->{delayed_id};
-    my $dbh = LJ::get_db_writer();
+    my $dbh       = LJ::get_db_writer();
 
-    my $security = "public";
+    my $security  = "public";
     my $uselogsec = 0;
+
     if ($req->{'security'} eq "usemask" || $req->{'security'} eq "private") {
         $security = $req->{'security'};
     }
+
     if ($req->{'security'} eq "usemask") {
         $uselogsec = 1;
     }
@@ -650,15 +659,15 @@ sub get_entry_by_id {
                                           "WHERE journalid=$journalid AND ".
                                           "delayedid = $delayedid");
     my $self = bless {}, $class; 
-    $self->{data} = __deserialize($journal, $data_ser);
-    $self->{journal} = $journal;
-    $self->{poster} = LJ::want_user($opts->[2]);
-    $self->{delayed_id} = $delayedid;
-    $self->{posttime} = __get_datatime($self->{data});
-    $self->{alldatepart} = $opts->[3];
-    $self->{logtime} = $opts->[5];
+    $self->{data}               = __deserialize($journal, $data_ser);
+    $self->{journal}            = $journal;
+    $self->{poster}             = LJ::want_user($opts->[2]);
+    $self->{delayed_id}         = $delayedid;
+    $self->{posttime}           = __get_datatime($self->{data});
+    $self->{alldatepart}        = $opts->[3];
+    $self->{logtime}            = $opts->[5];
     $self->{system_alldatepart} = $opts->[4];
-    $self->{taglist} = __extract_tag_list(\$self->{data}->{props}->{taglist});
+    $self->{taglist}            = __extract_tag_list(\$self->{data}->{props}->{taglist});
 
     __assert( $self->{poster} );
     __assert( $self->{journal} );
@@ -1236,10 +1245,10 @@ sub convert {
         my $error = "";
         foreach my $poll (@polls) {
             $poll->save_to_db(
-            journalid => $journalid,
-            posterid  => $posterid,
-            ditemid   => $ditemid,
-            error     => \$error,
+                journalid => $journalid,
+                posterid  => $posterid,
+                ditemid   => $ditemid,
+                error     => \$error,
             );
             
             my $pollid = $poll->pollid;
@@ -1265,6 +1274,7 @@ sub convert {
     $journal->do("$verb INTO logtext2 (journalid, jitemid, subject, event) ".
         "VALUES ($journalid, $jitemid, ?, ?)", undef, $req->{'subject'},
     LJ::text_compress($event));
+
     if ($journal->err) {
         my $msg = $journal->errstr;
         LJ::delete_entry($journal, $jitemid, undef, $anum);   # roll-back
@@ -1291,14 +1301,15 @@ sub convert {
         my $taginput = $req->{props}->{taglist};
         
         my $logtag_opts = {
-            remote => $poster,
+            remote       => $poster,
             skipped_tags => [], # do all possible and report impossible
         };
 
         if (ref $taginput eq 'ARRAY') {
             $logtag_opts->{set} = [@$taginput];
             $req->{props}->{taglist} = join(", ", @$taginput);
-        } else {
+        }
+        else {
             $logtag_opts->{set_string} = $taginput;
         }
 
@@ -1311,10 +1322,11 @@ sub convert {
     ## copyright
     if (LJ::is_enabled('default_copyright', $poster)) {
         $req->{'props'}->{'copyright'} = $poster->prop('default_copyright')
-        unless defined $req->{'props'}->{'copyright'};
+            unless defined $req->{'props'}->{'copyright'};
         $req->{'props'}->{'copyright'} = 'P' # second try
-        unless defined $req->{'props'}->{'copyright'};
-    } else {
+            unless defined $req->{'props'}->{'copyright'};
+    }
+    else {
         delete $req->{'props'}->{'copyright'};
     }
 
@@ -1328,6 +1340,7 @@ sub convert {
     # meta-data
     if (%{$req->{'props'}}) {
         my $propset = {};
+
         foreach my $pname (keys %{$req->{'props'}}) {
             next unless $req->{'props'}->{$pname};
             next if $pname eq "revnum" || $pname eq "revtime";
@@ -1336,6 +1349,7 @@ sub convert {
             next unless $req->{'props'}->{$pname};
             $propset->{$pname} = $req->{'props'}->{$pname};
         }
+
         my %logprops;
         LJ::set_logprop($journal, $jitemid, $propset, \%logprops) if %$propset;
         
@@ -1370,9 +1384,9 @@ sub convert {
          && LJ::get_cap($poster, "weblogscom") &&
          $security eq "public" ) {
             push @jobs, TheSchwartz::Job->new_from_array("LJ::Worker::Ping::WeblogsCom", {
-                'user' => $poster->{'user'},
+                'user'  => $poster->{'user'},
                 'title' => $poster->{'journaltitle'} || $poster->{'name'},
-                'url' => LJ::journal_base($poster) . "/",
+                'url'   => LJ::journal_base($poster) . "/",
         });
     }
 
@@ -1401,8 +1415,8 @@ sub convert {
     LJ::mark_user_active($journal, 'post') unless LJ::u_equals($poster, $journal);
 
     $res->{'itemid'} = $jitemid;  # by request of mart
-    $res->{'anum'} = $anum;
-    $res->{'url'} = $entry->url;
+    $res->{'anum'}   = $anum;
+    $res->{'url'}    = $entry->url;
 
     push @jobs, LJ::Event::JournalNewEntry->new($entry)->fire_job;
     push @jobs, LJ::Event::UserNewEntry->new($entry)->fire_job if (!$LJ::DISABLED{'esn-userevents'} || $LJ::_T_FIRE_USERNEWENTRY);
@@ -1412,6 +1426,7 @@ sub convert {
     LJ::Feed::generate_hubbub_jobs($journal, \@jobs) unless $journal->is_syndicated;
 
     my $sclient = LJ::theschwartz();
+
     if ($sclient && @jobs) {
         my @handles = $sclient->insert_jobs(@jobs);
         # TODO: error on failure?  depends on the job I suppose?  property of the job?
@@ -1525,12 +1540,14 @@ sub __get_datatime {
     __assert($req);
     __assert($req->{'tz'});
 
-    my $dt = DateTime->new(   year      => $req->{'year'}, 
-                              month     => $req->{'mon'},
-                              day       => $req->{'day'}, 
-                              hour      => $req->{'hour'},
-                              minute    => $req->{'min'},
-                              time_zone => $req->{tz}, );
+    my $dt = DateTime->new(
+        year      => $req->{'year'}, 
+        month     => $req->{'mon'},
+        day       => $req->{'day'}, 
+        hour      => $req->{'hour'},
+        minute    => $req->{'min'},
+        time_zone => $req->{tz},
+    );
 
     #if ($dt->is_dst) {
     #    $dt->subtract( hours => 1 );
@@ -1548,6 +1565,7 @@ sub __get_datatime {
 
 sub __assert {
     my ($statement) = @_;
+
     unless ($statement) {
         die "assertion failed!";
     }

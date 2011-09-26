@@ -6151,7 +6151,8 @@ sub is_spamprotection_enabled {
 # return sticky entries existing
 sub has_sticky_entry {
     my ($self) = @_;
-    return !!$self->prop("sticky_entries") || 0;
+    my $has_sticky  = !!$self->prop("sticky_entries") || 0;
+    return int $has_sticky;
 }
 
 # returns sticky entry jitemid

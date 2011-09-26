@@ -33,6 +33,10 @@ body<=
                   'js/jquery-ui-autocomplete.js', 
                   'js/gears_init.js', 
                   'js/scanner.js' );
+
+    LJ::need_string(qw/
+                        entryform.sticky_replace.edit
+                        entryform.sticky.edit/);
     
     # are they asking to be authed as someone else?
     my $authas = $GET{'authas'} || $remote->{'user'};

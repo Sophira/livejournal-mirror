@@ -424,7 +424,7 @@ sub render_metainfo_block {
             }
 
             push @choices, map { $_ => $_ } @{ $login_data->{'usejournals'} };
-            
+
             $out .= "<span class='wrap'>";
             $out .= LJ::html_select(
                 {
@@ -435,6 +435,7 @@ sub render_metainfo_block {
                     'class' => 'select',
                     "onchange" => "changeSubmit('" . $submitprefix . "',this[this.selectedIndex].value, '$BML::ML{'entryform.update4'}');".
                         "getUserTags(this[this.selectedIndex].value);".
+                        "setPostingPermissions(this[this.selectedIndex].value);".
                         "changeSecurityOptions(this[this.selectedIndex].value)"
                 },
                 @choices,
@@ -494,7 +495,7 @@ sub render_metainfo_block {
     my $help_icon = LJ::help_icon("24hourshelp");
 
     if ( $opts->{'mode'} eq "edit" ) {
-        $out .= qq{ <li class='pkg' id='currentdate'><label class='title'>$BML::ML{'entryform.date'}</label> 
+        $out .= qq{ <li class='pkg' id='currentdate'><label class='title'>$BML::ML{'entryform.date'}</label>
                 <span class='wrap'>
                     $monthlong, $mday, $year, $hour:$min
                     <a href='javascript:void(0)' onclick='editdate();' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
@@ -502,7 +503,7 @@ sub render_metainfo_block {
                   </span>
                 </li> };
     } else {
-        $out .= qq{ <li class='pkg' id='currentdate'><label class='title'>$BML::ML{'entryform.post'}</label> 
+        $out .= qq{ <li class='pkg' id='currentdate'><label class='title'>$BML::ML{'entryform.post'}</label>
                 <span class='wrap'>
                     $BML::ML{'entryform.post.right.now'}
                     <a href='javascript:void(0)' onclick='editdate();' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
@@ -768,7 +769,7 @@ sub render_options_block {
                 'type' => "check",
                 'class' => 'sticky_type',
                 'value' => 'sticky',
-                'name' => 'type',
+                'name' => 'prop_sticky_type',
                 'id' => 'sticky_type',
                 'selected' => $selected,
                 $opts->{'prop_opt_preformatted'} || $opts->{'event_format'},
@@ -778,7 +779,7 @@ sub render_options_block {
             my $sticky_exists = $journalu ? $journalu->has_sticky_entry && !$selected : undef;
             my $sticky_text = $sticky_exists ? $BML::ML{'entryform.sticky_replace.edit'} :
                                                $BML::ML{'entryform.sticky.edit'};
-            return qq{$sticky_check <label for='sticky_type' class='right options'>
+            return qq{$sticky_check <label for='sticky_type' id='sticky_type_label' class='right options'>
                    $sticky_text
                 </label>};
         },
@@ -1446,6 +1447,40 @@ sub render_submitbar_block {
 
 sub render_body {
     my ($self) = @_;
+
+    LJ::register_hook('add_to_site_js', sub {
+        my $site = shift;
+
+        my $remote = LJ::get_remote();
+        my $login_data = LJ::Protocol::do_request("login", {
+                            "ver" => $LJ::PROTOCOL_VER,
+                            "username" => $self->remote->username,
+                            "getpickws" => 1,
+                            "getpickwurls" => 1,
+                        }, undef, {
+                            "noauth" => 1,
+                            "u" => $self->remote,
+                        });
+
+        my $logins = $login_data->{'usejournals'};
+        push @$logins, $remote->username ;
+
+        my $site_data;
+        foreach my $login (@$logins) {
+            my $u = LJ::load_user($login);
+
+            my $can_manage = $remote->can_manage($u) || 0;
+            my $moderated = $u->prop('moderated');
+            my $need_moderated = ( $moderated =~ /^[1A]$/ ) ? 1 : 0;
+            my $can_post = ($u->{'journaltype'} eq 'C' && !$need_moderated) ||
+                            $can_manage;
+
+            $site_data->{$login}->{'is_replace_sticky'} = $u->has_sticky_entry;
+            $site_data->{$login}->{'can_create_sticky'} = $can_manage;
+            $site_data->{$login}->{'can_post_delayed'} = int $can_post;
+        }
+        $site->{remote_permissions} = $site_data;
+    });
 
     my $opts = $self->opts;
     my $head = $self->head;
