@@ -12,11 +12,15 @@ if(! ("$" in window)){
 }
 
 function editdate(){
-	clearInterval(settime.interval);
 	var currentDate = jQuery('#currentdate'),
 		modifyDate = jQuery('#modifydate'),
 		cal = modifyDate.find('.wrap-calendar'),
 		calVal = modifyDate.find('.wrap a');
+
+	if (settime.interval) {
+		currentDate.data('dotime', '1');
+	}
+	clearInterval(settime.interval);
 
 	currentDate.hide();
 	modifyDate.css('display', '');
@@ -35,6 +39,50 @@ function editdate(){
 	}).bind("daySelected", function(ev, date) {
 		settime(date);
 	});
+}
+
+function revertdate() {
+	var currentDate = jQuery('#currentdate'),
+		modifyDate = jQuery('#modifydate'),
+		cal = modifyDate.find('.wrap-calendar');
+
+	if (cal.is(':lj-calendar')) {
+		cal.calendar('destroy');
+	}
+
+	currentDate.css('display', '');
+	modifyDate.hide();
+
+	if (currentDate.data('dotime')) {
+		settime.interval = setInterval(function() { settime(); }, 1000);
+		settime();
+	}
+}
+
+function setPostingPermissions(journal) {
+	if (!Site.remote_permissions[journal]) { return; }
+
+	var modifyDate = jQuery('#modifydate'),
+		stickyCheckbox = jQuery('#sticky_type'),
+		stickyLabel = jQuery('#sticky_type_label'),
+		currentDateEdit = jQuery('#currentdate-edit');
+
+		journal = Site.remote_permissions[journal];
+
+	if (!journal.can_post_delayed) {
+		if (modifyDate.is(':visible')) {
+			revertdate();
+		}
+		currentDateEdit.hide();
+	} else {
+		currentDateEdit.show();
+	}
+
+	stickyCheckbox.attr('disabled', !journal.can_create_sticky);
+	stickyLabel.html(journal.is_replace_sticky ? 
+			Site.ml_text['entryform.sticky_replace.edit'] :
+			Site.ml_text['entryform.sticky.edit']);
+
 }
 
 function showEntryTabs(){
@@ -602,7 +650,7 @@ function settime(time){
 	f.date_ymd_yyyy.value = newTime.getFullYear() < 1900 ? newTime.getFullYear() + 1900 : newTime.getFullYear();
 	f.date_ymd_mm.selectedIndex = twodigit(newTime.getMonth() + 1);
 	f.date_ymd_dd.value = twodigit(newTime.getDate());
-	if (!newTime) {
+	if (!time) {
 		f.hour.value = twodigit(newTime.getHours());
 		f.min.value = twodigit(newTime.getMinutes());
 	}
