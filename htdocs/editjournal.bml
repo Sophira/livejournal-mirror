@@ -676,13 +676,10 @@ JS_INIT
                 ($only_me_checked) ? ('posterid' =>  $remote->{'userid'}) : (),
             }))) {
             
-            if (@recent > $show_usual){
+            if (@recent > $items_per_page){
                 $have_next_page = 1;
                 pop @recent;
             }
-
-            ## do not process entries twice
-            @recent = grep { $entry_ids{$_->{'itemid'}} ? 0 : 1 } @recent;
 
             push @recent_entries, @recent;
 
