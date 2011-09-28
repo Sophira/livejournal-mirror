@@ -639,14 +639,30 @@ JS_INIT
         my $err = '';
         my $usejournal_u = LJ::load_user ($usejournal || $remote->{'user'});
         my @recent_entries = ();
-        my %entry_ids = ();
-        my $prev_page_id = ($start_from > 0) ? ($start_from + $items_per_page - 1) : 0;
+
         my $ymd = join "/", ($year, $month, $day);
         my %ymd_req = ($year && $month && $day && $show ne 'recent') ? ( ymd => $ymd ) : ();
-        my @post_ids = sort { $b <=> $a } ($usejournal_u ? $usejournal_u->get_post_ids : $remote->get_post_ids);
+        
+        ##
         $only_me_checked = 1 unless $remote->can_manage ($usejournal_u);
+
+        ## Load ids of more recent posts
+        ## (skip this step for the first page)
+        my @post_ids = ();
+        if ($start_from){
+            my %ids_opts = (afterid => $start_from);
+               $ids_opts{posterid} = $remote->userid if $only_me_checked;
+
+            @post_ids = sort { $b <=> $a } 
+                        ($usejournal_u 
+                            ? $usejournal_u->get_post_ids(%ids_opts)  
+                            : $remote->get_post_ids(%ids_opts) );
+        }
+
         my $next_page = 0;
-        while ($usejournal_u && ($LJ::MAX_SCROLLBACK_LASTN = 50000,
+        my $have_next_page = 0;
+
+        if ($usejournal_u && ($LJ::MAX_SCROLLBACK_LASTN = 50000,
             my @recent = LJ::get_recent_items({
                 itemshow  => $items_per_page + 1,
                 err       => \$err,
@@ -659,32 +675,37 @@ JS_INIT
                 %ymd_req,
                 ($only_me_checked) ? ('posterid' =>  $remote->{'userid'}) : (),
             }))) {
+            
+            if (@recent > $show_usual){
+                $have_next_page = 1;
+                pop @recent;
+            }
 
             ## do not process entries twice
             @recent = grep { $entry_ids{$_->{'itemid'}} ? 0 : 1 } @recent;
-            last unless @recent;
-
-            ## store fetched itemids
-            foreach my $item (@recent) {
-                $entry_ids{$item->{'itemid'}} = 1;
-            }
 
             push @recent_entries, @recent;
 
+            $next_page  = List::Util::min ( map { $_->{'itemid'} } @recent_entries );
             $start_from = List::Util::max ( map { $_->{'itemid'} } @recent_entries );
 
-            if (@recent_entries > $items_per_page) {
-                $next_page = $start_from - $items_per_page + 1;
-                splice @recent_entries, -1, 1;
-            }
-
-            last if @recent_entries >= $items_per_page;
         }
 
-        my $prev_page = $start_from + $items_per_page + 1;
+        ## calculate prev page start poin
+        ## 
+        my $prev_page_start = 0;
+        if (@post_ids){ ## not first page
+            my $pos = @post_ids - $items_per_page;
+            if ($pos < 0){
+                $prev_page_start = $post_ids[0] + 1; # from start
+            } else {
+                $prev_page_start = $post_ids[$pos];
+            }
+        }
+
         $ret .= $entry_chooser->(\@recent_entries,
-                                prev => $prev_page < $post_ids[0] || ($prev_page - $post_ids[0] < $items_per_page) ? $prev_page : 0,
-                                'next' => $next_page > 0 ? $next_page : 0
+                                prev => $prev_page_start, 
+                                next => $have_next_page ? $next_page : 0
         );
 
         my $ad = LJ::get_ads({ location => 'bml.editjournal', ljadwrapper => 1 });
