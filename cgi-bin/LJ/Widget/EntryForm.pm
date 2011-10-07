@@ -1402,7 +1402,13 @@ sub render_ljphoto_block {
             $res;
         } @photos ];
 
-    my $photo_sizes = LJ::JSON->to_json ( LJ::Fotki::Photo->get_photo_sizes() );
+    my @photo_sizes = map {
+        my $size = $_;
+        $size->{'text'} = $BML::ML{$_->{'text'}};
+        $size;
+    } @{LJ::Fotki::Photo->get_photo_sizes()};
+
+    my $photo_sizes_json = LJ::JSON->to_json ( \@photo_sizes );
     my $album_list = [];
     my $album_list_json = '';
     my $available_space = '';
@@ -1418,8 +1424,7 @@ sub render_ljphoto_block {
         } @$album_list
     ];
     $album_list_json = LJ::JSON->to_json ( $album_list );
-    my $spaces = LJ::Fotki::UserSpace->get_spaces ( $remote );
-    $available_space = $spaces->[2] || 0;
+    my $available_space = LJ::Fotki::UserSpace->get_available_space();
 
     my $auth_token = LJ::Auth->sessionless_auth_token ($LJ::DOMAIN_WEB."/pics/upload", user => $remote ? $remote->user : undef);
     my $user_groups = LJ::JSON->to_json (LJ::Widget::Fotki::Photo->get_user_groups ($remote));
@@ -1432,7 +1437,7 @@ sub render_ljphoto_block {
     window.ljphotoEnabled = $ljphoto_enabled;
     jQuery('#updateForm').photouploader({
         availableSpace: '$available_space',
-        sizesData: $photo_sizes,
+        sizesData: $photo_sizes_json,
         albumsData: $album_list_json,
         privacyData: $user_groups,
         type: 'upload',
@@ -1450,11 +1455,18 @@ JS
             insertPhotosData: $insert_photos_json,
             type: 'add'
         })
-        .bind('htmlready', function (event, htmlOutput) {
+        .bind('htmlready', function (event) {
+            var html = event.htmlStrings,
+                editor;
+
             if (window.switchedRteOn) {
-                CKEDITOR.instances.draft.insertHtml(htmlOutput);
+                editor = CKEDITOR.instances.draft;
+
+                for (var i = 0, l = html.length; i < l; i++) {
+                    editor.insertElement(new CKEDITOR.dom.element.createFromHtml(html[i], editor.document));
+                }
             } else {
-                jQuery('#draft').val(jQuery('#draft').val() + htmlOutput);
+                jQuery('#draft').val(jQuery('#draft').val() + html.join(' '));
             }
         })
         .photouploader('show');
@@ -1579,6 +1591,8 @@ sub render_body {
             'LJUser_WizardNoticeLink' => 'ljuser.wizardnoticelink',
             'LJLink_WizardNotice' => 'ljlink.wizardnotice',
             'LJLink_WizardNoticeLink' => 'ljlink.wizardnoticelink',
+            'LJImage_title' => 'ljimage',
+            'LJImage_beta_title' => 'ljimage.beta',
             'LJImage_WizardNotice' => 'ljimage.wizardnotice',
             'LJImage_WizardNoticeLink' => 'ljimage.wizardnoticelink',
             'LJCut_WizardNotice' => 'ljcut.wizardnotice',

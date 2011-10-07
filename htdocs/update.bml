@@ -691,6 +691,9 @@ head<=
 
     my $eMLautosave = LJ::ejs(BML::ml('.draft.autosave', { 'time' => '[[time]]' }));
     my $eMLconfirm = LJ::ejs($ML{'.draft.confirm'});
+    if ($POST{'photos_id'} || $GET{'photos_id'} || $POST{'albums_id'} || $GET{'albums_id'}) {
+        $eMLconfirm = LJ::ejs($ML{'.draft.confirm.add_photos'});
+    }
     my $eMLrestored = LJ::ejs($ML{'.draft.restored'});
 
     # Setup draft saving and try to restore from a draft
@@ -733,6 +736,7 @@ head<=
         function initUpdateBml() {
             window.isSupUser = $is_sup;
             $initDraft
+            $_[0]->{'onload'}
             window.initEditor({
               ask: window.isInitDraft,
               restoreData: $draft,
@@ -741,7 +745,6 @@ head<=
               draftStatus: '$eMLrestored ',
               confirmMsg: '$eMLconfirm'
             });
-            $_[0]->{'onload'}
             $pageload
         }
     </script>^;

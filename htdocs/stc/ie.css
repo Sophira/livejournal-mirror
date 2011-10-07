@@ -534,16 +534,13 @@ __________________________________________*/
 /* Fotki
 -----------------------------------------------*/
 .b-pics-bar,
-.b-pics-nav {
+.b-pics-nav,
+.b-pics-edit-field-text {
 	zoom: 1;
 	}
 .b-pics-input-submit {
 	overflow: visible;
 	padding: 0 10px;
-	}
-.b-pics-btn {
-	height: 22px;
-	padding: 0 3px;
 	}
 .b-pics-list-albums LI.b-pics-list-albums-item,
 .b-pics-edit-field-click .b-pics-input-edit,
@@ -558,15 +555,25 @@ __________________________________________*/
 .b-pics-pager-prev,
 .b-pics-pager-next,
 .b-popup-pics .b-pics-pager,
-.b-popup-pics H2 {
+.b-popup-pics H2,
+.b-popup-pics .b-popup-pics-add-many .b-bubble-alert,
+.b-pics-with-output .b-pics-size-list,
+.b-pics-with-output .b-pics-size-label,
+.b-pics-with-output .b-pics-post-button {
 	display: inline;
 	zoom: 1;
 	}
+.b-pics-bar .b-pics-edit-field {
+	height: 22px;
+	}
 .b-pics-edit-field-click {
-	margin: -3px 0 0 -1px;
+	margin: -1px 0 0 -2px;
 	}
 	.b-pics-edit-field-click .b-pics-input-text {
 		padding-left: 2px;
+		}
+	.b-pics-edit-field .b-pics-textarea-edit {
+		width: 572px;
 		}
 .b-pics-privacy .b-pics-privacy-icon {
 	margin-right: 3px;
