@@ -113,7 +113,6 @@
 			$('#switched_rte_on').val('1');
 
 			if (!CKEditor && CKEDITOR && CKEDITOR.env.isCompatible) {
-				CKEDITOR.timestamp = 'v.84.2';
 				CKEDITOR.basePath = statPrefix + '/ck/';
 				var editor = CKEDITOR.replace('draft', {
 					skin: 'v2',
