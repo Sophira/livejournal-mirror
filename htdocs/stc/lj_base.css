@@ -1264,7 +1264,37 @@ HTML BODY.logged-out {
 .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-deleted .b-postform-submitbox {
 	visibility: hidden;
 	} */
-	
+
+BODY .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-deleted .b-postform-alert-notafriend,
+BODY .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-deleted .b-postform-alert-notreg,
+BODY .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-deleted .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-deleted .b-postform-alert-notafriend,
+BODY .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-deleted .b-postform-alert-notreg,
+BODY .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-deleted .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-deleted .b-postform-alert-notafriend,
+BODY .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-deleted .b-postform-alert-notreg,
+BODY .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-deleted .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-deleted .b-postform-alert-notafriend,
+BODY .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-deleted .b-postform-alert-notreg,
+BODY .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-deleted .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-deleted .b-postform-alert-notafriend,
+BODY .b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-deleted .b-postform-alert-notreg,
+BODY .b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-deleted .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-deleted .b-postform-alert-notafriend,
+BODY .b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-deleted .b-postform-alert-notreg,
+BODY .b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-deleted .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-deleted .b-postform-alert-notafriend,
+BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-deleted .b-postform-alert-notreg,
+BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-deleted .b-postform-alert-regonly {
+	display: none;
+	}
+
 .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-deleted .b-postform-alert-screened,
 .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-deleted.b-postform-user-screened-nonf .b-postform-alert-screened,
 .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-deleted .b-postform-alert-logcommentips,
@@ -1295,7 +1325,7 @@ HTML BODY.logged-out {
 	display: none;
 	}
 
-.b-postform-realauth-cookieuser.b-postform-authtype-anonymous.b-postform-user-deleted .b-postform-alert-deleted,
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-deleted .b-postform-alert-deleted,
 .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-deleted .b-postform-alert-deleted,
 .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-deleted .b-postform-alert-deleted,
 .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-deleted .b-postform-alert-deleted,
@@ -1343,7 +1373,37 @@ HTML BODY.logged-out {
 .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-suspended .b-postform-submitbox {
 	visibility: hidden;
 	} */
-	
+
+BODY .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-suspended .b-postform-alert-notafriend,
+BODY .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-suspended .b-postform-alert-notreg,
+BODY .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-suspended .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-suspended .b-postform-alert-notafriend,
+BODY .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-suspended .b-postform-alert-notreg,
+BODY .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-suspended .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-suspended .b-postform-alert-notafriend,
+BODY .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-suspended .b-postform-alert-notreg,
+BODY .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-suspended .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-suspended .b-postform-alert-notafriend,
+BODY .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-suspended .b-postform-alert-notreg,
+BODY .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-suspended .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-suspended .b-postform-alert-notafriend,
+BODY .b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-suspended .b-postform-alert-notreg,
+BODY .b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-suspended .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-suspended .b-postform-alert-notafriend,
+BODY .b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-suspended .b-postform-alert-notreg,
+BODY .b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-suspended .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-suspended .b-postform-alert-notafriend,
+BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-suspended .b-postform-alert-notreg,
+BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-suspended .b-postform-alert-regonly {
+	display: none;
+	}
+
 .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-suspended .b-postform-alert-screened,
 .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-suspended.b-postform-user-screened-nonf .b-postform-alert-screened,
 .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-suspended .b-postform-alert-logcommentips,
@@ -1374,7 +1434,7 @@ HTML BODY.logged-out {
 	display: none;
 	}
 
-.b-postform-realauth-cookieuser.b-postform-authtype-anonymous.b-postform-user-suspended .b-postform-alert-suspended,
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-suspended .b-postform-alert-suspended,
 .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-suspended .b-postform-alert-suspended,
 .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-suspended .b-postform-alert-suspended,
 .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-suspended .b-postform-alert-suspended,
@@ -1423,6 +1483,37 @@ HTML BODY.logged-out {
 	visibility: hidden;
 	} */
 
+
+BODY .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-banned .b-postform-alert-notafriend,
+BODY .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-banned .b-postform-alert-notreg,
+BODY .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-banned .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-banned .b-postform-alert-notafriend,
+BODY .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-banned .b-postform-alert-notreg,
+BODY .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-banned .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-banned .b-postform-alert-notafriend,
+BODY .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-banned .b-postform-alert-notreg,
+BODY .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-banned .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-banned .b-postform-alert-notafriend,
+BODY .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-banned .b-postform-alert-notreg,
+BODY .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-banned .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-banned .b-postform-alert-notafriend,
+BODY .b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-banned .b-postform-alert-notreg,
+BODY .b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-banned .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-banned .b-postform-alert-notafriend,
+BODY .b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-banned .b-postform-alert-notreg,
+BODY .b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-banned .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-banned .b-postform-alert-notafriend,
+BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-banned .b-postform-alert-notreg,
+BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-banned .b-postform-alert-regonly {
+	display: none;
+	}
+
 .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-banned .b-postform-alert-screened,
 .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-banned.b-postform-user-screened-nonf .b-postform-alert-screened,
 .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-banned .b-postform-alert-logcommentips,
@@ -1453,7 +1544,7 @@ HTML BODY.logged-out {
 	display: none;
 	}
 
-.b-postform-realauth-cookieuser.b-postform-authtype-anonymous.b-postform-user-banned .b-postform-alert-banned,
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-banned .b-postform-alert-banned,
 .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-banned .b-postform-alert-banned,
 .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-banned .b-postform-alert-banned,
 .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-banned .b-postform-alert-banned,
