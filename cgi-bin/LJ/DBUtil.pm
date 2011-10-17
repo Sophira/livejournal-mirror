@@ -14,16 +14,8 @@ sub get_inactive_db {
 
     print STDERR " - cluster $cid... " if $verbose;
 
-    # find approparite db server to connect to
-    my $role = "cluster$cid";
-    if (my $ab = $LJ::CLUSTER_PAIR_ACTIVE{$cid}) {
-        $role .= "b" if $ab eq 'a';
-        $role .= "a" if $ab eq 'b';
-
-        print STDERR "{active=$ab, using=$role}\n" if $verbose;
-    } else {
-        die "invalid cluster: $cid ?\n";
-    }
+    my $role = LJ::get_inactive_role($cid);
+    return unless $role;
 
     $LJ::DBIRole->clear_req_cache();
     my $db = LJ::get_dbh($role);
@@ -53,8 +45,7 @@ sub connect_to_cluster {
     my $clid = shift;
     my $verbose = shift;
     
-    my $dbr = ($LJ::IS_DEV_SERVER) ?
-        LJ::get_cluster_reader($clid) : LJ::DBUtil->get_inactive_db($clid);
+    my $dbr = LJ::DBUtil->get_inactive_db($clid, $verbose);
     unless ($dbr) {
         warn "Using master database for cluster #$clid"
             if $verbose;
