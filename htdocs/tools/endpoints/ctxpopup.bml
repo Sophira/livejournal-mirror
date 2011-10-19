@@ -110,6 +110,9 @@
         elsif ( $u->is_comm ) {
             $ret{'url_userpic'} = "$LJ::IMGPREFIX/profile_icons/comm.gif";
         }
+        elsif ( $u->is_identity ) {
+            $ret{'url_userpic'} = "$LJ::IMGPREFIX/profile_icons/openid.gif";
+        }
         else {
             $ret{url_userpic} = "$LJ::IMGPREFIX/ctxpopup-nopic.gif";
         }
@@ -145,7 +148,7 @@
         lists_as_friend loading mutual_friend profile remove_friend
         report send_gift buy_same_userhead send_message stop_community subscribe_feed
         this_is_you unban unsubscribe_feed updating view watch_community
-        your_friend you_member you_subscribed you_watching
+        your_friend you_member you_subscribed you_watching ljtalk online offline
     /;
 
     ## optimization: load all ML strings into local cache at once

@@ -1464,7 +1464,9 @@ sub is_sticky {
     my ($self) = @_;
 
     my $u = $self->{u};
-    return $self->{jitemid} == $u->get_sticky_entry();
+    my $sticky_entry_id = $u->get_sticky_entry_id();
+    return 0 unless $sticky_entry_id;
+    return $self->jitemid == $sticky_entry_id;
 }
 
 sub can_delete_journal_item {
@@ -2256,16 +2258,21 @@ sub load_log_props2 {
 
     while ( my ($k, $v) = each %$mem ) {
         next unless $k =~ /(\w+):(\d+):(\d+)/;
+        my ( $memkey, $uid, $pid ) = ( $1, $2, $3 );
 
-        if ( $1 eq 'logprop2' ) {
+        if ( $memkey eq 'logprop2' ) {
             next unless ref $v eq "HASH";
-            delete $needprops{$3};
-            $hashref->{$3} = $v;
+
+            my @vkeys = keys %$v;
+            next if $vkeys[0] =~ /\D/;
+
+            delete $needprops{$pid};
+            $hashref->{$pid} = $v;
         }
 
-        if ( $1 eq 'rp' ) {
-            delete $needrc{$3};
-            $rc{$3} = int($v);  # change possible "0   " (true) to "0" (false)
+        if ( $memkey eq 'rp' ) {
+            delete $needrc{$pid};
+            $rc{$pid} = int($v);  # change possible "0   " (true) to "0" (false)
         }
     }
 
@@ -2371,7 +2378,6 @@ sub load_log_props2multi
 # des-jitemid: Journal itemid of item to delete.
 # des-quick: Optional boolean.  If set, only [dbtable[log2]] table
 #            is deleted from and the rest of the content is deleted
-#            later using [func[LJ::cmd_buffer_add]].
 # des-anum: The log item's anum, which'll be needed to delete lazily
 #           some data in tables which includes the anum, but the
 #           log row will already be gone so we'll need to store it for later.
@@ -2398,6 +2404,10 @@ sub delete_entry
     LJ::MemCache::decr([$jid, "log2ct:$jid"]) if $dc > 0;
     LJ::memcache_kill($jid, "dayct2");
 
+    if ( $jitemid == $u->get_sticky_entry_id() ){
+        $u->remove_sticky_entry_id();
+    }
+
     # if this is running the second time (started by the cmd buffer),
     # the log2 row will already be gone and we shouldn't check for it.
     my $sclient = $quick ? LJ::theschwartz() : undef;
@@ -2420,10 +2430,6 @@ sub delete_entry
 
     # delete all comments
     LJ::delete_all_comments($u, 'L', $jitemid);
-
-    if ( $jitemid == $u->get_sticky_entry() ){
-        $u->remove_sticky_entry();
-    }
 
     return 1;
 }

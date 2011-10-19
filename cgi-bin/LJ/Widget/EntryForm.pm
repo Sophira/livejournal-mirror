@@ -419,7 +419,6 @@ sub render_metainfo_block {
     $out .= "<script>try { \$('journal_timezone').value = - (new Date).getTimezoneOffset()/0.6; } catch(e) {} </script>";
     $out .= "<div id='metainfo-wrap'><ul id='metainfo'>";
 
-
     my $can_edit_date = 1;
     # login info
     $out .= $opts->{'auth'};
@@ -434,9 +433,9 @@ sub render_metainfo_block {
                                                      "WHERE userid=$ownerid AND targetid=$posterid ".
                                                      "AND type IN ('A','M','N')")) || 0;
             $out .= "<li id='usejournal_single' class='pkg'>\n";
-            $out .= "<label for='usejournal' class='left'>" .
+            $out .= "<label for='usejournal' class='title'>" .
                 BML::ml('entryform.postto') . "</label>\n";
-
+            $out .= "<span class='wrap'>";
             $out .= LJ::ljuser($usejournal);
             $out .= LJ::html_hidden({
                 name => 'usejournal',
@@ -445,7 +444,7 @@ sub render_metainfo_block {
             });
 
             $out .= LJ::html_hidden( usejournal_set => 'true' );
-            $out .= "</li>";
+            $out .= "<span></li>";
         } elsif ($login_data && ref $login_data->{'usejournals'} eq 'ARRAY') {
             my $submitprefix = BML::ml('entryform.update3');
             $out .= "<li id='usejournal_list' class='pkg'>\n";
@@ -533,25 +532,26 @@ sub render_metainfo_block {
     my $help_icon = LJ::help_icon("24hourshelp");
     my $hide_link = $can_edit_date ? '' : 'style="display: none;"'; 
 
-    if ( $opts->{'mode'} eq "edit" && $can_edit_date ) {
-        $out .= qq{ <li class='pkg' id='currentdate'><label class='title'>$BML::ML{'entryform.date'}</label>
-                <span class='wrap'>
-                    $monthlong, $mday, $year, $hour:$min
-                    <a $hide_link href='javascript:void(0)' onclick='editdate();' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
-                    $help_icon
-                  </span>
-                </li> };
-    } else {
-        $out .= qq{ <li class='pkg' id='currentdate'><label class='title'>$BML::ML{'entryform.post'}</label>
-                <span class='wrap'>
-                    $BML::ML{'entryform.post.right.now'}
-                    <a $hide_link href='javascript:void(0)' onclick='editdate();' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
-                    $help_icon
-                </span>
-            </li>};
-    }
+    if (LJ::is_enabled("delayed_entries")) {
+         if ( $opts->{'mode'} eq "edit" && $can_edit_date ) {
+             $out .= qq{ <li class='pkg' id='currentdate'><label class='title'>$BML::ML{'entryform.date'}</label>
+                    <span class='wrap'>
+                        $monthlong, $mday, $year, $hour:$min
+                        <a $hide_link href='javascript:void(0)' onclick='editdate();' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
+                        $help_icon
+                    </span>
+                    </li> };
+        } else {
+            $out .= qq{ <li class='pkg' id='currentdate'><label class='title'>$BML::ML{'entryform.post'}</label>
+                    <span class='wrap'>
+                        $BML::ML{'entryform.post.right.now'}
+                        <a $hide_link href='javascript:void(0)' onclick='editdate();' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
+                         $help_icon
+                     </span>
+                 </li>};
+        }
 
-    $out .= qq{ <li class='pkg' id='modifydate' style='display: none;'><label class='title'>$BML::ML{'entryform.postponed.until'}</label>
+        $out .= qq{ <li class='pkg' id='modifydate' style='display: none;'><label class='title'>$BML::ML{'entryform.postponed.until'}</label>
                 <span class='wrap'>
                     <input type="hidden" name="date_ymd_mm" value="$mon" />
                     <input type="hidden" name="date_ymd_dd" value="$mday" />
@@ -571,7 +571,50 @@ sub render_metainfo_block {
             </p>
         </noscript>
         </li>
-    };
+        };
+    } else {
+        my $backdate_check = LJ::html_check({
+            'type' => "check",
+            'id' => "prop_opt_backdated",
+            'name' => "prop_opt_backdated",
+            "value" => 1,
+            'selected' => $opts->{'prop_opt_backdated'},
+            'tabindex' => $self->tabindex
+        });
+
+        my $backdate_help_icon = LJ::help_icon_html("backdate", "", "");
+
+        $out .= qq{
+            <li class='pkg'>
+                <label for='modifydate' class='title'>$BML::ML{'entryform.date'}</label>
+                <span class="wrap">
+                    <span id='currentdate'>
+                        <span id='currentdate-date'>
+                            $monthlong $mday, $year, $hour:$min
+                        </span>
+                        <a href='javascript:void(0)' onclick='editdate();' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
+                    </span>
+                    <span id='modifydate'>
+                        $datetime
+                        $date_diff_input
+                        <?de $BML::ML{'entryform.date.24hournote'} de?>
+                        <span class="backdate">
+                            $backdate_check
+                            <label for='prop_opt_backdated'>
+                                $BML::ML{'entryform.backdated3'}
+                            </label>
+                            $backdate_help_icon
+                        </span>
+                    </span>
+                </span>
+             </li>
+         <noscript>
+             <li id='time-correct' class='small'>
+                $BML::ML{'entryform.nojstime.note'}
+            </li>
+        </noscript>
+        };
+    }
 
     $$onload .= " defaultDate();";
 
@@ -774,6 +817,7 @@ sub render_options_block {
 
     my %blocks = (
         'sticky' => sub {
+            return '' unless LJ::is_enabled("delayed_entries");
             my $journalu = LJ::load_user($opts->{'usejournal'}) || $remote;
             my $is_checked = sub {
                 if ($opts->{sticky}) {
@@ -781,8 +825,8 @@ sub render_options_block {
                 }
 
                 if ($opts->{jitemid}) {
-                    my $sticky_entry = $journalu->get_sticky_entry();
-                    if ( $sticky_entry eq $opts->{jitemid} ) {
+                    my $sticky_entry_id = $journalu->get_sticky_entry_id();
+                    if ( $sticky_entry_id eq $opts->{jitemid} ) {
                         return 'checked' 
                     }
                 }   
@@ -811,6 +855,7 @@ sub render_options_block {
                 </label>};
         },
          'do_not_add' => sub {
+            return '' unless LJ::is_enabled("delayed_entries");
             my $selected = $opts->{'opt_backdated'} || 0;
             my $dot_add_check = LJ::html_check({
                 'type' => "check",
@@ -1160,38 +1205,6 @@ sub render_options_block {
         'spellcheck' => sub {
             my $out = '';
 
-            # extra submit button so make sure it posts the form when
-            # person presses enter key
-            my %action_map = (
-                'edit' => 'save',
-                'update' => 'update',
-            );
-            if (my $action = $action_map{$opts->{'mode'}}) {
-                $out .= qq{
-                    <input type='submit' name='action:$action'
-                        class='hidden_submit' />
-                    <span id="preview_button_holder"></span>
-                };
-            }
-            my $preview_tabindex = $self->tabindex;
-            my $preview = qq{
-                <input
-                    type='button'
-                    value='$BML::ML{'entryform.preview'}'
-                    onclick='entryPreview(this.form)'
-                    tabindex='$preview_tabindex'
-                />
-            };
-            $preview =~ s/\s+/ /sg; # JS doesn't like newlines in string
-                                    # literals
-
-            unless ($opts->{'disabled_save'}) {
-                $out .= $self->wrap_js(qq{
-                    if (document.getElementById) {
-                        \$('preview_button_holder').innerHTML = "$preview ";
-                    }
-                });
-            }
             if ($LJ::SPELLER && !$opts->{'disabled_save'}) {
                 $out .= LJ::html_submit(
                     'action:spellcheck',
@@ -1620,53 +1633,6 @@ JS
 
 sub render_body {
     my ($self) = @_;
-
-    LJ::register_hook('add_to_site_js', sub {
-        my $site = shift;
-
-        my $remote = LJ::get_remote();
-        if (!$remote) {
-            return;
-        }
-        my $login_data = LJ::Protocol::do_request("login", {
-                            "ver" => $LJ::PROTOCOL_VER,
-                            "username" => $remote->username,
-                            "getpickws" => 1,
-                            "getpickwurls" => 1,
-                        }, undef, {
-                            "noauth" => 1,
-                            "u" => $remote,
-                        });
-
-        my $logins = $login_data->{'usejournals'};
-        push @$logins, $remote->username ;
-
-        my $site_data;
-        foreach my $login (@$logins) {
-            my $u = LJ::load_user($login);
-
-            my $can_manage = $remote->can_manage($u) || 0;
-            my $moderated = $u->prop('moderated');
-            my $need_moderated = ( $moderated =~ /^[1A]$/ ) ? 1 : 0;
-            my $can_post = ($u->{'journaltype'} eq 'C' && !$need_moderated) ||
-                            $can_manage;
-   
-            my $ownerid = $u->userid;
-            my $posterid = $remote->userid;
-
-            # don't moderate admins, moderators & pre-approved users
-            my $dbh = LJ::get_db_writer();
-            my $relcount = $dbh->selectrow_array("SELECT COUNT(*) FROM reluser ".
-                                                 "WHERE userid=$ownerid AND targetid=$posterid ".
-                                                 "AND type IN ('A','M','N')");
-        
-
-            $site_data->{$login}->{'is_replace_sticky'} = $u->has_sticky_entry;
-            $site_data->{$login}->{'can_create_sticky'} = $can_manage;
-            $site_data->{$login}->{'can_post_delayed'} = (int $can_post) || !!$relcount;
-        }
-        $site->{remote_permissions} = $site_data;
-    });
 
     my $opts = $self->opts;
     my $head = $self->head;

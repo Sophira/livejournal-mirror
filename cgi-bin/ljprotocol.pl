@@ -1981,7 +1981,7 @@ sub postevent {
     # load userprops all at once
     my @poster_props = qw(newesteventtime dupsig_post);
     my @owner_props = qw(newpost_minsecurity moderated);
-    push @owner_props, 'opt_weblogscom';
+    push @owner_props, 'opt_weblogscom' unless $req->{'props'}->{'opt_backdated'};
 
     LJ::load_user_props($u, @poster_props, @owner_props);
     if ($uowner->{'userid'} == $u->{'userid'}) {
@@ -1991,11 +1991,13 @@ sub postevent {
     }
 
     # are they trying to post back in time?
-    #if ($posterid == $ownerid && $u->{'journaltype'} ne 'Y' &&
-    #    !$time_was_faked && $u->{'newesteventtime'} &&
-    #    $eventtime lt $u->{'newesteventtime'} ) {
-    #    return fail($err, 153, "You have an entry which was posted at $u->{'newesteventtime'}, but you're trying to post an entry before this. Please check the date and time of both entries. If the other entry is set in the future on purpose, edit that entry to use the \"Date Out of Order\" option. Otherwise, use the \"Date Out of Order\" option for this entry instead.");
-    #}
+    if ($posterid == $ownerid && $u->{'journaltype'} ne 'Y' &&
+        !LJ::is_enabled("delayed_entries") && 
+        !$time_was_faked && $u->{'newesteventtime'} &&
+        $eventtime lt $u->{'newesteventtime'} &&
+        !$req->{'props'}->{'opt_backdated'}) {
+        return fail($err, 153, "You have an entry which was posted at $u->{'newesteventtime'}, but you're trying to post an entry before this. Please check the date and time of both entries. If the other entry is set in the future on purpose, edit that entry to use the \"Date Out of Order\" option. Otherwise, use the \"Date Out of Order\" option for this entry instead.");
+    }
    
     if ( $req->{sticky} &&
          $uowner->{'journaltype'} eq 'C' &&
@@ -2039,6 +2041,11 @@ sub postevent {
     # this is a community journal)
     return fail($err,151) if
         LJ::is_banned($posterid, $ownerid);
+
+    # don't allow backdated posts in communities
+     return fail($err,152) if
+            ($req->{'props'}->{"opt_backdated"} &&
+             $uowner->{'journaltype'} ne "P");
 
     # do processing of embedded polls (doesn't add to database, just
     # does validity checking)
@@ -2144,7 +2151,7 @@ sub postevent {
         LJ::run_hook('spam_community_detector', $uowner, $req, \$need_moderated);
     }
 
-    if ( $req->{ver} > 1  && !$LJ::DELAYED_ENTRIES_DISABLED ) {
+    if ( $req->{ver} > 1  && LJ::is_enabled("delayed_entries") ) {
         my $use_delayed = $req->{'custom_time'} ||
                     !(exists $flags->{'use_custom_time'});
         if ( $use_delayed && LJ::DelayedEntry::is_future_date($req) ) {
@@ -2338,7 +2345,7 @@ sub postevent {
 
         # record the eventtime of the last update (for own journals only)
         $set_userprop{"newesteventtime"} = $eventtime
-            if $posterid == $ownerid and not $time_was_faked;
+            if $posterid == $ownerid and not $req->{'props'}->{'opt_backdated'} and not $time_was_faked;
 
         $u->set_prop(\%set_userprop);
     }
@@ -2448,6 +2455,7 @@ sub postevent {
     # meta-data
     if (%{$req->{'props'}}) {
         my $propset = {};
+
         foreach my $pname (keys %{$req->{'props'}}) {
             next unless $req->{'props'}->{$pname};
             next if $pname eq "revnum" || $pname eq "revtime";
@@ -2456,8 +2464,20 @@ sub postevent {
             next unless $req->{'props'}->{$pname};
             $propset->{$pname} = $req->{'props'}->{$pname};
         }
+
         my %logprops;
         LJ::set_logprop($uowner, $jitemid, $propset, \%logprops) if %$propset;
+
+        for my $key ( keys %logprops ) {
+            next if $key =~ /^\d+$/;
+
+            unless ( $LJ::CACHE_PROP{'log'}->{$key}->{'propid'} ) {
+                delete $logprops{$key};
+            }
+            else {
+                $logprops{ $LJ::CACHE_PROP{'log'}->{$key}->{'propid'} } = delete $logprops{$key};
+            }
+        }
 
         # if set_logprop modified props above, we can set the memcache key
         # to be the hashref of modified props, since this is a new post
@@ -2781,8 +2801,8 @@ sub editevent {
             }
         };
 
-        if ( $itemid == $uowner->get_sticky_entry() ) {
-            $u->remove_sticky();
+        if ( $itemid == $uowner->get_sticky_entry_id() ) {
+            $uowner->remove_sticky_id();
         }
 
         return $res;
@@ -2791,6 +2811,11 @@ sub editevent {
     # now make sure the new entry text isn't $CannotBeShown
     return fail($err, 210)
         if $req->{event} eq $CannotBeShown;
+
+   # don't allow backdated posts in communities 
+    return fail($err,152) if 
+                ($req->{'props'}->{"opt_backdated"} && 
+                 $uowner->{'journaltype'} ne "P"); 
 
     # make year/mon/day/hour/min optional in an edit event,
     # and just inherit their old values
@@ -2813,14 +2838,12 @@ sub editevent {
 
     # make post sticky
     if ( $req->{sticky} ) {
-        if( $uowner->get_sticky_entry() != $itemid ) {
-            $uowner->set_sticky($itemid);
-            LJ::MemCache::delete([$ownerid, "log2lt:$ownerid"]);
+        if( $uowner->get_sticky_entry_id() != $itemid ) {
+            $uowner->set_sticky_id($itemid);
         }
     }
-    elsif ( $itemid == $uowner->get_sticky_entry() ) {
-        $uowner->remove_sticky();
-        LJ::MemCache::delete([$ownerid, "log2lt:$ownerid"]);
+    elsif ( $itemid == $uowner->get_sticky_entry_id() ) {
+        $uowner->remove_sticky_id();
     }
 
     ## give features
@@ -2873,15 +2896,22 @@ sub editevent {
 
     if ($eventtime ne $oldevent->{'eventtime'} ||
         $security ne $oldevent->{'security'} ||
+        (!$curprops{$itemid}->{opt_backdated} && $req->{props}{opt_backdated}) ||  
         $qallowmask != $oldevent->{'allowmask'})
     {
         # are they changing their most recent post?
         LJ::load_user_props($u, "newesteventtime");
         if ($u->{userid} == $uowner->{userid} &&
             $u->{newesteventtime} eq $oldevent->{eventtime}) {
-                # otherwise, if they changed time on this event,
-                # the newesteventtime is this event's new time.
-                $u->set_prop( 'newesteventtime' => $eventtime );
+                if (!$curprops{$itemid}->{opt_backdated} && $req->{props}{opt_backdated}) { 
+                    # if they set the backdated flag, then we no longer know 
+                    # the newesteventtime. 
+                    $u->clear_prop('newesteventtime'); 
+                } elsif ($eventtime ne $oldevent->{eventtime}) { 
+                    # otherwise, if they changed time on this event, 
+                    # the newesteventtime is this event's new time. 
+                    $u->set_prop( 'newesteventtime' => $eventtime ); 
+               } 
         }
 
         my $qsecurity = $uowner->quote($security);
@@ -3001,6 +3031,7 @@ sub editevent {
                          "journalid=$ownerid AND jitemid=$itemid");
         return fail($err,501,$dberr) if $dberr;
     }
+
     if ($req->{'props'}->{'opt_backdated'} eq "0" &&
         $oldevent->{'rlogtime'} == $LJ::EndOfTime) {
         my $dberr;
@@ -3066,9 +3097,7 @@ sub getevents {
         $uowner = LJ::load_userid( $req->{journalid} );
     }
 
-
-    my $sticky_id = $uowner->prop("sticky_entries") || undef;
-
+    my $sticky_id = $uowner->prop("sticky_entry_id") || undef;
     my $dbr = LJ::get_db_reader();
     my $sth;
 
@@ -3142,7 +3171,7 @@ sub getevents {
 
     $skip = 500 if $skip > 500;
 
-    if ( $req->{ver} > 1 && !$LJ::DELAYED_ENTRIES_DISABLED ) {
+    if ( $req->{ver} > 1 && LJ::is_enabled("delayed_entries") ) {
         my $res = {};
 
         if ( $req->{delayedid} ) {
@@ -3286,7 +3315,7 @@ sub getevents {
         $orderby = "ORDER BY $rtime_what";
 
         unless ($skip) {
-            $where .= "OR jitemid=$sticky_id" if defined $sticky_id;
+            $where .= "OR ( journalid=$ownerid $secwhere $where AND jitemid=$sticky_id)" if defined $sticky_id;
         }
     }
     elsif ($req->{'selecttype'} eq "one" && $req->{'itemid'} eq "-1") {
@@ -3503,11 +3532,11 @@ sub getevents {
         $evt->{'reply_count'} = $replycount;
 
         if ( $itemid == $sticky_id && $req->{'selecttype'} eq "lastn") {
-    	    unshift @$events, $evt,
+            unshift @$events, $evt,
         }
         else {
-    	    push @$events, $evt;
-	    }
+            push @$events, $evt;
+        }
     }
 
     # load properties. Even if the caller doesn't want them, we need
@@ -3546,9 +3575,9 @@ sub getevents {
                 $evt->{'props'}->{$name} = $value;
             }
 
-    	    if ( $itemid == $sticky_id ) {
-        		$evt->{'props'}->{'sticky'} = 1;
-    	    }
+            if ( $itemid == $sticky_id ) {
+                $evt->{'props'}->{'sticky'} = 1;
+            }
         }
     }
 

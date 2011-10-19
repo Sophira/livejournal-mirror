@@ -34,7 +34,7 @@ function editdate(){
 	cal.calendar({
 		currentDate: new Date(dateStr),
 		ml: {
-			caption: 'Choose date:'
+			caption: Site.ml_text['entryform.choose_date'] || 'Choose date:'
 		},
 		endMonth: new Date(2037,11,31),
 		showCellHovers: true
@@ -64,11 +64,12 @@ function revertdate() {
 }
 
 function setPostingPermissions(journal) {
-	if (!Site.remote_permissions[journal]) { return; }
+	if (!('remote_permissions' in Site) || !Site.remote_permissions[journal]) { return; }
 
 	var modifyDate = jQuery('#modifydate'),
 		stickyCheckbox = jQuery('#sticky_type'),
 		stickyLabel = jQuery('#sticky_type_label'),
+		stickyWrapper = jQuery('#entryform-sticky-wrapper'),
 		currentDateEdit = jQuery('#currentdate-edit');
 
 		journal = Site.remote_permissions[journal];
@@ -82,14 +83,14 @@ function setPostingPermissions(journal) {
 		currentDateEdit.show();
 	}
 
-	stickyCheckbox.attr('disabled', !journal.can_create_sticky);
-	if (!journal.can_post_delayed) {
-		stickyCheckbox.attr('checked', false);
+	if (!journal.can_create_sticky) {
+		stickyWrapper.hide();
+	} else {
+		stickyLabel.html(journal.is_replace_sticky ? 
+				Site.ml_text['entryform.sticky_replace.edit'] :
+				Site.ml_text['entryform.sticky.edit']);
+		stickyWrapper.css('display','');
 	}
-	stickyLabel.html(journal.is_replace_sticky ? 
-			Site.ml_text['entryform.sticky_replace.edit'] :
-			Site.ml_text['entryform.sticky.edit']);
-
 }
 
 function showEntryTabs(){
@@ -659,7 +660,7 @@ function settime(time){
 	}
 
 	f.date_ymd_yyyy.value = newTime.getFullYear() < 1900 ? newTime.getFullYear() + 1900 : newTime.getFullYear();
-	f.date_ymd_mm.selectedIndex = twodigit(newTime.getMonth() + 1);
+	f.date_ymd_mm.selectedIndex = newTime.getMonth();
 	f.date_ymd_dd.value = twodigit(newTime.getDate());
 	if (!time) {
 		f.hour.value = twodigit(newTime.getHours());
