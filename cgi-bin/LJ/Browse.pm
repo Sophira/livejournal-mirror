@@ -138,7 +138,7 @@ sub delete {
     $parent = LJ::Browse->load_by_id($self->{parentcatid})
         if ($self->{parentcatid});
 
-    foreach my $table (qw(categoryprop category)) {
+    foreach my $table (qw(categoryprop category categoryjournals category_keymap)) {
         $dbh->do("DELETE FROM $table WHERE catid=?", undef, $self->{catid});
         die $dbh->errstr if $dbh->err;
     }
@@ -646,7 +646,10 @@ sub preload_rows {
     }
 
     # weird, catids that we couldn't find in memcache or db?
-    $_->{_loaded_row} = 1 foreach values %need;
+    foreach (values %need) {
+        $_->{_loaded_row} = 1;
+        $_->{_not_found} = 1;
+    }
     #warn "unknown category: " . join(",", keys %need) if %need;
 
     # now memcache and request cache are both updated, we're done
@@ -1035,8 +1038,17 @@ sub search_posts {
                         vert_id => $vertical ? $vertical->vert_id : 0,
                     }
                 }
+                ## Remove posts posted by excluded users
                 grep {
-                    ## Filter off suspended entries, deleted communities, suspended posters
+                    my $posterid = $_->posterid;
+                    if (grep { $posterid == $_->{'userid'} } @{LJ::Browse->get_all_excluded_users()}) {
+                        0;
+                    } else {
+                        1;
+                    }
+                }
+                ## Filter off suspended entries, deleted communities, suspended posters
+                grep {
                     if ($_ && $_->valid) {
                         my $poster = $_->poster;
                         $_->is_suspended || $_->journal->is_deleted || ($poster && $poster->is_suspended) ? 0 : 1;
@@ -1044,6 +1056,7 @@ sub search_posts {
                         0;
                     }
                 }
+                ## Return a LJ::Entry objects
                 map { LJ::Entry->new ($_->{journalid}, jitemid => $_->{jitemid}) }
                 @$post_ids;
         }
@@ -1104,7 +1117,7 @@ sub add_community {
         or die "unable to contact global db master to create category";
 
     ## Add community to category
-    my $res = $dbh->do("REPLACE INTO categoryjournals VALUES (?,?)", undef,
+    my $res = $dbh->do("REPLACE INTO categoryjournals (catid, journalid) VALUES (?,?)", undef,
              $self->catid, $uid);
     die $dbh->errstr if $dbh->err;
 
@@ -1115,9 +1128,7 @@ sub add_community {
 
     $self->clear_journals_memcache;
 
-    ## Add tags for added community if vertical selected
-    my $v = $self->vertical;
-    $v->save_tags (is_seo => 0, tags => [ map { { tag => $_, journalid => $uid } } @$tags ] ) if $v;
+    $self->save_tags (is_seo => 0, tags => [ map { { tag => $_, journalid => $uid } } @$tags ] );
 
     return 1;
 }
@@ -1146,6 +1157,20 @@ sub remove_communities {
     return 1;
 }
 
+sub categories_by_comm {
+    my $class = shift;
+    my $comm  = shift;
+    
+    return unless $comm;
+    
+    my $dbh = LJ::get_db_reader();
+    my $cats = $dbh->selectcol_arrayref("SELECT catid FROM categoryjournals WHERE journalid = ?", undef, $comm->userid);
+
+    return map {
+        LJ::Browse->load_by_id($_);
+    } @$cats;
+}
+
 ## Return "path" for selected category
 ## catobj -> par_catobj -> par_par_catobj -> etc... (array)
 ## Param: arrayref to save "path"
@@ -1162,10 +1187,24 @@ sub get_parent_path {
     return $parent->get_parent_path ($cat_path);
 }
 
+sub is_valid {
+    my $self = shift;
+
+    $self->preload_rows unless $self->{'_loaded_row'};
+
+    return 0
+        if defined $self->{'_not_found'} && $self->{'_not_found'} == 1;
+
+    return 1;
+}
+
 sub build_select_tree {
-    my ($class, $parent, $cats_ref, $selected_cat, $text, $i, $n) = @_;
+    my ($class, $parent, $cats_ref, $selected_cat, $text, $i, $n, %opts) = @_;
 
     $i ||= 0;
+
+    my $use_table = defined $opts{'use_table'} ? $opts{'use_table'} : 1;
+    my $use_only_td = $opts{'use_only_td'};
 
     return $text unless $cats_ref;
 
@@ -1182,20 +1221,23 @@ sub build_select_tree {
     my @caturls = map { { text => $_->{pretty_name}, value => $_->catid } } @categories;
     @caturls = sort { $a->{text} cmp $b->{text} } @caturls;
 
-    $text .= "<tr><td>Category</td>";
-    $text .= "<td>" . LJ::html_select({
-                name => "catid$i\_$n", style => "width:100%;",
+    $text .= "<tr><td>Category</td>" if $use_table;
+    $text .= "<td>" if $use_table || $use_only_td;
+    $text .= LJ::html_select({
+                name => "catid$i\_$n", style => $use_table ? "width:100%;" : "",
                 selected => $sel_cat[0] ? $sel_cat[0]->catid : '' },
                 { text => LJ::Lang::ml('vertical.admin.add_category.btn'),
                 value => '' },
                 @caturls
-    ) . "</td>";
-    $text .= "<td>" . LJ::html_submit('select_c', 'Select Category') . "</td>";
-    $text .= "</tr>";
+    );
+    $text .= "</td><td>" if $use_table;
+    $text .= LJ::html_submit('select_c', 'Select Category');
+    $text .= "</td></tr>" if $use_table;
+    $text .= "</td>" if $use_only_td;
 
     if ($sel_cat[0]) {
         my @children = $sel_cat[0]->children;
-        $text = $class->build_select_tree($sel_cat[0], \@children, $selected_cat, $text, ++$i, $n);
+        $text = $class->build_select_tree($sel_cat[0], \@children, $selected_cat, $text, ++$i, $n, %opts);
     }
 
     return $text;
@@ -1494,5 +1536,198 @@ sub _is_community_in_pending {
 
     return 0;
 }
+
+sub add_excluded_comm {
+    my $class = shift;
+    my $userid = shift;
+
+    my $dbh = LJ::get_db_writer();
+    my $res = $dbh->do ("INSERT INTO category_exclude_comms (userid) VALUES (?)", undef, $userid);
+
+    return $res;
+}
+
+sub is_comm_excluded {
+    my $class = shift;
+    my $userid = shift;
+
+    my $dbh = LJ::get_db_reader();
+    my $flag = $dbh->selectcol_arrayref ("SELECT 1 FROM category_exclude_comms WHERE userid = ?", undef, $userid);
+
+    return ref $flag eq 'ARRAY' && @$flag ? $flag->[0] : 0;
+}
+
+sub remove_comm_from_exclude {
+    my $class  = shift;
+    my $userid = shift;
+
+    my $dbh = LJ::get_db_writer();
+    my $res = $dbh->do ("DELETE FROM category_exclude_comms WHERE userid = ?", undef, $userid);
+
+    return $res;
+}
+
+sub get_all_excluded_comms {
+    my $class = shift;
+
+    my $dbh = LJ::get_db_reader();
+    my $res = $dbh->selectall_arrayref ("SELECT userid FROM category_exclude_comms ORDER BY addition_date DESC", { Slice => {} });
+
+    return $res;
+}
+
+sub add_excluded_user {
+    my $class = shift;
+    my $userid = shift;
+
+    my $dbh = LJ::get_db_writer();
+    my $res = $dbh->do ("INSERT INTO category_exclude_users (userid) VALUES (?)", undef, $userid);
+
+    return $res;
+}
+
+sub is_user_excluded {
+    my $class = shift;
+    my $userid = shift;
+
+    my $dbh = LJ::get_db_reader();
+    my $flag = $dbh->selectcol_arrayref ("SELECT 1 FROM category_exclude_users WHERE userid = ?", undef, $userid);
+
+    return ref $flag eq 'ARRAY' && @$flag ? $flag->[0] : 0;
+}
+
+sub remove_user_from_exclude {
+    my $class  = shift;
+    my $userid = shift;
+
+    my $dbh = LJ::get_db_writer();
+    my $res = $dbh->do ("DELETE FROM category_exclude_users WHERE userid = ?", undef, $userid);
+
+    return $res;
+}
+
+sub get_all_excluded_users {
+    my $class = shift;
+
+    my $dbh = LJ::get_db_reader();
+    my $res = $dbh->selectall_arrayref ("SELECT userid FROM category_exclude_users ORDER BY addition_date DESC", { Slice => {} });
+
+    return $res;
+}
+
+sub create_tag {
+    my $self = shift;
+    my $keyword = shift;
+
+    return undef unless $keyword;
+
+    my $dbh = LJ::get_db_writer();
+    my $res = $dbh->do("INSERT INTO category_keywords (keyword) values (?)", undef, $keyword);
+    my $kw_id = $dbh->selectrow_array("SELECT LAST_INSERT_ID()");
+    return $kw_id;
+}
+
+## Remove tags links from vertical_keymap table.
+## Not delete tags from vertical_keywords.
+sub delete_tags_links {
+    my $class = shift;
+    my %args = @_;
+
+    my $comm_id = $args{'comm_id'} || $args{'journalid'};
+    return undef unless $comm_id;
+
+    my $catid   = $args{'catid'}   || 0;
+    my $jitemid = $args{'jitemid'} || 0;
+
+    my $cat_sql   = " AND catid   = $catid ";
+    my $entry_sql = " AND jitemid = $jitemid ";
+
+    my $dbh = LJ::get_db_writer ();
+    my $res = $dbh->do ("
+        DELETE FROM category_keymap 
+            WHERE 
+                journalid = ?
+                $cat_sql
+                $entry_sql
+    ", undef, $comm_id);
+
+    return 1;
+}
+
+sub get_tags_for_journal {
+    my $class = shift;
+    my %args  = @_;
+
+    my $comm_id = $args{'comm_id'} || $args{'journalid'};
+    return '' unless $comm_id;
+
+    my $catid   = $args{'catid'} || 0;
+    my $jitemid = $args{'jitemid'} || 0;
+
+    my $dbh = LJ::get_db_reader ();
+    my $res = $dbh->selectall_arrayref ("
+        SELECT keyword 
+            FROM category_keymap km, category_keywords kw
+            WHERE km.kw_id = kw.kw_id
+                AND km.journalid = ?
+                AND km.catid = ?
+                AND km.jitemid = ?
+    ", { Slice => {} }, $comm_id, $catid, $jitemid);
+
+    return join ", ", map { $_->{keyword} } @$res;
+}
+
+sub save_tags {
+    my $self = shift;
+    my %args = @_;
+
+    my $tags = $args{'tags'};
+
+    my $dbh = LJ::get_db_writer();
+
+    foreach my $tag (@$tags) {
+        my $res = $dbh->selectall_arrayref(
+            "SELECT m.kw_id 
+                FROM category_keymap m, category_keywords w 
+                WHERE m.kw_id = w.kw_id 
+                    AND w.keyword = ? 
+                    AND m.catid = ?", 
+            undef, $tag, $self->catid
+        ) || [];
+        next if @$res;
+        my $kw_id = $dbh->selectrow_array(
+            "SELECT kw_id 
+                FROM category_keywords 
+                WHERE keyword = ?",
+            undef, $tag->{tag}
+        );
+        $kw_id = $self->create_tag ($tag->{tag}) unless $kw_id;
+        my $sth = $dbh->do(
+            "INSERT IGNORE INTO category_keymap 
+            (journalid, kw_id, jitemid, catid) 
+            VALUES (?, ?, ?, ?)",
+            undef , $tag->{journalid}, $kw_id, $tag->{jitemid}, $self->catid
+        );
+    }
+
+    return 1;
+}
+
+sub load_tags {
+    my $self = shift;
+    my %args = @_;
+
+    my $dbh = LJ::get_db_writer();
+    my $tags = $dbh->selectall_arrayref(
+        "SELECT journalid, keyword, jitemid, m.kw_id 
+            FROM category_keymap m, category_keywords w 
+            WHERE m.kw_id = w.kw_id 
+                AND m.catid = ?", 
+        { Slice => {} }, $self->catid
+    );
+
+    return $tags ? $tags : [];
+}
+
 
 1;

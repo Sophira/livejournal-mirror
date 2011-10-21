@@ -726,6 +726,7 @@ sub unloaded_singletons {
 #
 
 sub create_tag {
+die "Do not run this!";
     my $self = shift;
     my $keyword = shift;
 
@@ -740,6 +741,7 @@ sub create_tag {
 ## Remove tags links from vertical_keymap table.
 ## Not delete tags from vertical_keywords.
 sub delete_tags_links {
+    die "Do not run this!";
     my $class = shift;
     my %args = @_;
 
@@ -765,6 +767,7 @@ sub delete_tags_links {
 }
 
 sub get_tags_for_journal {
+    die "Do not run this!";
     my $class = shift;
     my %args  = @_;
 
@@ -788,6 +791,7 @@ sub get_tags_for_journal {
 }
 
 sub save_tags {
+    die "Do not run this!";
     my $self = shift;
     my %args = @_;
 
@@ -824,6 +828,7 @@ sub save_tags {
 }
 
 sub load_tags {
+    die "Do not run this!";
     my $self = shift;
     my %args = @_;
 

@@ -17,6 +17,11 @@ body<=
     $title = "Verticals And Community Directory Admin";
     my $ret = "";
 
+    $ret .= "<h2>Excludes</h2><ul style='list-style:none;line-height:1.6em;padding:0 0 0 20px;'>";
+    $ret .= "<li><a href='./exclude_users.bml'>Exclude users</a></li>";
+    $ret .= "<li><a href='./exclude_comms.bml'>Exclude communities</a></li>";
+    $ret .= "</ul>";
+
     $ret .= "<h2>Manage Verticals</h2><ul style='list-style:none;line-height:1.6em;padding:0 0 0 20px;'>";
     $ret .= "<li><a href='./add_verticals.bml'>Add Verticals</a></li>";
     $ret .= "<li><a href='./edit_verticals.bml'>Edit Verticals</a></li>";

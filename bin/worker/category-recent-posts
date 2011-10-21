@@ -18,15 +18,16 @@ use LJ::Browse::Parser;
 # how long to wait if we didn't process any at all
 my $sleep_when_idle;
 
-## how much entries are to fetch from each community
-my $max_count_post_per_comm;
-
 my $verbose;
 
+my $default_count_post_per_comm;
+my $default_delta_time;
+
 sub BEGIN {
-    $sleep_when_idle = 600;
+    $sleep_when_idle = 300;
     $verbose = 0;
-    $max_count_post_per_comm = 30;
+    $default_count_post_per_comm = 1;
+    $default_delta_time = 30;
 }
 
 sub options {
@@ -47,32 +48,55 @@ sub work {
     my $class = shift;
     my @uids;
 
-    my $verbose = $class->verbose();
+    $verbose = $class->verbose();
 
     my $dbh = LJ::get_db_writer();
 
-    my $journals = $dbh->selectall_arrayref ("SELECT cj.catid, cj.journalid FROM categoryjournals cj, category c WHERE cj.catid = c.catid AND c.vert_id <> 0", { Slice => {} });
+    $class->debug ("Start a new iteration");
+
+    my $journals = $dbh->selectall_arrayref ("SELECT DISTINCT cj.journalid FROM categoryjournals cj, category c WHERE cj.catid = c.catid AND c.vert_id <> 0", { Slice => {} });
     foreach my $rec (@$journals) {
         my $journalid = $rec->{journalid};
-        my @last_jitemid = $dbh->selectrow_array ("SELECT max(jitemid) FROM category_recent_posts WHERE journalid = ?", undef, $journalid);
-
         my $u = LJ::load_userid($journalid);
+
+        $class->debug ("Comm: " . $u->username);
+
+        ## Get "number of shown posts" and "time for removing post after"
+        my $number_delta_posts = $u->prop ('number_delta_posts');
+        my $comm_last_update = $u->timeupdate;
+
+        my @last_added = $dbh->selectrow_array ("SELECT max(jitemid), max(unix_timestamp(timeadd)) FROM category_recent_posts WHERE journalid = ?", undef, $journalid);
+        my $last_jitemid = $last_added[0];
+        my $last_added = $last_added[1];
+
+        my ($count_post_per_comm, $delta_time) = split /:/, $number_delta_posts;
+        $count_post_per_comm ||= $default_count_post_per_comm;
+        $delta_time ||= $default_delta_time;
+
+        $class->debug ("Wait for:         " . ($last_added + $delta_time * 60));
+        $class->debug ("Now:              " . time);
+        $class->debug ("Check times:\nComm last update: $comm_last_update\nLast added post:  $last_added\nDelta_time:              ".60 * $delta_time);
+
+        next if $comm_last_update - $last_added < $delta_time * 60;
+
         my @recent = LJ::get_recent_items({
-            itemshow    => $max_count_post_per_comm,
+            itemshow    => $count_post_per_comm,
             err         => undef,
             userid      => $u->{userid},
             clusterid   => $u->{clusterid},
             remote      => undef,
-            afterid     => $last_jitemid[0],
+            afterid     => $last_jitemid,
             order       => 'logtime',
         });
 
-        foreach my $entry (@recent) {
-            my $sth = $dbh->prepare ("INSERT INTO category_recent_posts (jitemid, timecreate, journalid) VALUES (?, ?, ?)");
-            $sth->execute($entry->{itemid}, $entry->{logtime}, $journalid);
+        $class->debug ("\tAdded ".@recent." posts");
 
+        foreach my $entry (@recent) {
             my $e_obj = LJ::Entry->new ($u->{userid}, jitemid => $entry->{itemid});
             my $event = $e_obj->event_raw;
+
+            my $sth = $dbh->prepare ("INSERT INTO category_recent_posts (jitemid, timecreate, timeadd, journalid) VALUES (?, ?, NOW(), ?)");
+            $sth->execute($entry->{itemid}, $entry->{logtime}, $journalid);
 
             my $parsed = LJ::Browse::Parser->do_parse (
                 text        => $event,
@@ -126,6 +150,7 @@ sub on_idle {
 }
 
 sub debug {
+    my $class = shift;
     print STDERR @_, "\n" if $verbose;
 }
 

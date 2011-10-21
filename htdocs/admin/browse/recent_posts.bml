@@ -2,6 +2,7 @@
 body<=
 <?_code
 {
+#line 5
     use strict;
     use vars qw(%GET %POST $title $headextra @errors @warnings);
     use Class::Autouse qw( LJ::Browse );
@@ -73,11 +74,12 @@ body<=
 
         $ret .= "<ul style='list-style:none;line-height:1.6em;padding:0;'>";
         foreach (@posts) {
-            next unless $_->valid;
-            my $url = $_->url;
-            my $subject = $_->subject_text;
-            my $jitemid = $_->jitemid;
-            my $commid = $_->journalid;
+            my $entry = $_->{'entry'};
+            next unless $entry->valid;
+            my $url = $entry->url;
+            my $subject = $entry->subject_text;
+            my $jitemid = $entry->jitemid;
+            my $commid = $entry->journalid;
             $ret .= "<li><a href='".$url."'>".($subject ? $subject : '...')."</a>";
             $ret .= "<form method='POST' style='display:inline;padding:0 0 0 10px;'>\n";
             $ret .= LJ::form_auth();

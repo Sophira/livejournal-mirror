@@ -32,8 +32,8 @@ body<=
     my $i = 1;
     my $j = $i - 1;
     ## which category the user wants to add a community?
-    my @ids = sort { $b cmp $a } grep { $_ =~ /^catid\d+\_\Q$i\E$/ } keys %POST;
-    my $cat_id = $POST{$ids[0]} ? $POST{$ids[0]} : $POST{$ids[1]};
+    my @ids = sort { $b cmp $a } grep { $_ =~ /^catid\d+\_\Q$i\E$/ } (keys %POST, keys %GET);
+    my $cat_id = $POST{$ids[0]} || $GET{$ids[0]} ? $POST{$ids[0]} || $GET{$ids[0]} : $POST{$ids[1]} || $GET{$ids[1]};
     push @catid_, $cat_id if $cat_id;
     push @catrem, $POST{"catremove_$i"} if $POST{"catremove_$i"};
     push @cat_, $cat_id ? LJ::Browse->load_by_id ($cat_id) : undef;
@@ -53,10 +53,21 @@ body<=
         foreach my $tag (@new_tags) {
             my ($cid) = $tag =~ /^tags_(\d+)/;
             my @tags = split /,\s*/, $POST{$tag};
-            LJ::Vertical->delete_tags_links (comm_id => $cid, vert_id => $vert_[$j] ? $vert_[$j]->vert_id : 0);
+            LJ::Browse->delete_tags_links (comm_id => $cid, catid => $cat_[$j] ? $cat_[$j]->catid : 0);
             $cat_[$j]->add_community ($cid, { tags => \@tags, not_need_approve => 1 });
         }
+    }
 
+    if (LJ::did_post && $POST{'action:remove'}) {
+        # validate form auth
+        return "<?h1 $ML{'Error'} h1?><?p $ML{'error.invalidform'} p?>"
+            unless LJ::check_form_auth();
+
+        my @remove_ids = grep { $_ =~ /^remove_\d+/ } keys %POST;
+        foreach my $comm (@remove_ids) {
+            my ($cid) = $comm =~ /^remove_(\d+)/;
+            $cat_[$j]->remove_communities ($cid);
+        }
     }
 
     $ret .= "<form method='post' method='post'>";
@@ -81,7 +92,12 @@ body<=
         $ret .= LJ::html_submit('select_v', 'Select Vertical') . "</td></tr>";
     }
 
-    if ((LJ::did_post() && $vert_[$j]) || ($LJ::DISABLED{'verticals_menu'})) {
+    if (
+        (LJ::did_post() && $vert_[$j])
+        ## Need for return from edit_community_more.bml
+        || (LJ::Request->header_in('Referer') =~ m#^$LJ::SITEROOT/admin/browse/edit_community_more.bml# && $vert_[$j])
+        || ($LJ::DISABLED{'verticals_menu'})
+    ) {
         my @children = $cat_[$j] ? $cat_[$j]->children : ();
         # Get the full list of categories
         my @categories = $vert_[$j] ? LJ::Browse->load_all($vert_[$j]) : ();
@@ -90,9 +106,15 @@ body<=
         if ($cat_[$j]) {
             $ret .= "<tr><td valign='top'>Communities from category:</td><tr><td colspan='3'>";
             if ($cat_[$j]->communities) {
+                my $excl_list = LJ::Browse->get_all_excluded_comms ();
                 $ret .= "<table width='100%'>";
+                $ret .= "<tr><td colspan='4' align='right'></td><td>".LJ::html_submit('action:remove', $ML{'.remove'})."</td></tr>";
                 foreach my $comm ($cat_[$j]->communities) {
-                    $ret .= "<tr><td>".LJ::ljuser($comm->user) . "</td><td><input type='text' size='60' name='tags_".$comm->userid."' value='".LJ::Vertical->get_tags_for_journal (vert_id => $vert_[$j] ? $vert_[$j]->vert_id : 0, comm_id => $comm->userid)."'></td></tr>";
+                    $ret .= "<tr><td>\n";
+                    $ret .= "FLAG" if grep { $_->{userid} == $comm->userid } @$excl_list;
+                    $ret .= "</td><td>".LJ::ljuser($comm->user) . "</td><td><input type='text' size='60' name='tags_".$comm->userid."' value='".LJ::Browse->get_tags_for_journal (catid => $cat_[$j] ? $cat_[$j]->catid : 0, comm_id => $comm->userid)."'></td><td>\n<button type=\"button\" onclick='window.location=\"/admin/browse/edit_community_more.bml?return_to=";
+                    $ret .= $vert_[$j]->vert_id."-".$cat_[$j]->catid."&comm_user=".$comm->username;
+                    $ret .= "\"'>Edit</button>\n</td><td align='center'><input type='checkbox' name='remove_".$comm->userid."'></td></tr>";
                 }
                 $ret .= "</table>";
             }

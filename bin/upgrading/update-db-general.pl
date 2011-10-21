@@ -3270,6 +3270,27 @@ CREATE TABLE category (
 )
 EOC
 
+register_tablecreate("category_keywords", <<'EOC');
+CREATE TABLE `category_keywords` (
+    `keyword` varchar(80) NOT NULL,
+    `kw_id` int(11) NOT NULL auto_increment,
+    PRIMARY KEY  (`kw_id`),
+    UNIQUE KEY `keyword` (`keyword`)
+)
+EOC
+
+register_tablecreate("category_keymap", <<'EOC');
+CREATE TABLE `category_keymap` (
+    `journalid` int(11) NOT NULL,
+    `jitemid` int(11) NOT NULL,
+    `catid` int(11) NOT NULL,
+    `kw_id` int(11) NOT NULL,
+    PRIMARY KEY  (`journalid`,`jitemid`,`catid`,`kw_id`),
+    KEY `kw_id` (`kw_id`),
+    KEY `catid` (`catid`)
+)
+EOC
+
 # Map journals to categories
 register_tablecreate("categoryjournals", <<'EOC');
 CREATE TABLE categoryjournals (
@@ -3377,6 +3398,7 @@ register_tablecreate('category_recent_posts', <<'EOC');
 CREATE TABLE category_recent_posts (
   jitemid int(11) NOT NULL default '0',
   timecreate datetime NOT NULL,
+  timeadd datetime NOT NULL,
   journalid int(10) unsigned NOT NULL,
   is_deleted tinyint(1) NOT NULL default '0',
   pic_orig_url VARCHAR(255) NOT NULL DEFAULT '',
@@ -4348,6 +4370,13 @@ register_alter(sub {
             "ALTER TABLE category_recent_posts
                 ADD pic_orig_url VARCHAR(255) NOT NULL DEFAULT '',
                 ADD pic_fb_url VARCHAR(255) NOT NULL DEFAULT ''
+        ");
+    }
+
+    unless (column_type("category_recent_posts", "timeadd")) {
+        do_alter("category_recent_posts",
+            "ALTER TABLE category_recent_posts
+                ADD timeadd DATETIME NOT NULL AFTER timecreate
         ");
     }
 });

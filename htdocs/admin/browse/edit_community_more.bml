@@ -1,0 +1,181 @@
+<?page
+title=><?_ml .title _ml?>
+body<=
+<?_code
+{
+#line 6
+    use strict;
+    use vars qw(%GET %POST);
+    use Class::Autouse qw( LJ::Browse );
+
+    return "This page is not available." unless LJ::is_enabled("browse");
+
+    my $ret = '';
+
+    # get remote
+    my $remote = LJ::get_remote();
+    unless ($remote) {
+        $ret .= "<?needlogin?>";
+    }
+
+    return "You are not allowed to view this page"
+        unless LJ::check_priv($remote, 'siteadmin', 'community_directory') || $LJ::IS_DEV_SERVER;
+
+    ## Check form is valid
+    if (LJ::did_post()) {
+        return "<?h1 $ML{'Error'} h1?><?p $ML{'error.invalidform'} p?>"
+            unless LJ::check_form_auth();
+    }
+
+    $LJ::VERTICALS_FORCE_USE_MASTER = 1;
+
+    my @cat_ = ();
+    my @vert_ = ();
+
+    my $limit = 2; # Max number of categories a community can appear in
+    my @catid_;
+    my @catrem;
+
+    my $i = 1;
+    my $j = $i - 1;
+    ## which category the user wants to add a community?
+    my @ids = sort { $b cmp $a } grep { $_ =~ /^catid\d+\_\Q$i\E$/ } keys %POST;
+    my $cat_id = $POST{$ids[0]} ? $POST{$ids[0]} : $POST{$ids[1]};
+    push @catid_, $cat_id if $cat_id;
+    my $comm_id_remove = $POST{"commremove"} ? $POST{"commremove"} : undef;
+    push @cat_, $cat_id ? LJ::Browse->load_by_id ($cat_id) : undef;
+    my $vert_id = $POST{"vert_id_$i"} || $GET{"vert_id"};
+    push @vert_, $vert_id ? LJ::Vertical->load_by_id ($vert_id) : undef;
+
+    ## delete-catid-commid
+    my @delete_ids = grep { $_ =~ /^delete-\d+-\d+/ } keys %POST;
+
+    if (LJ::did_post() && $POST{'select_v'}) {
+        $cat_[$j] = undef;
+    }
+
+    my $comm_user = $GET{'comm_user'} || $POST{'comm_user'};
+    my $c = LJ::load_user ($comm_user);
+
+    return "Error community name"
+        unless $c;
+
+    if (LJ::did_post() && $POST{'add_category'}) {
+        $cat_[$j]->add_community($c->userid, { tags => [], not_need_approve => 1 });
+        @catid_ = ();
+        @catrem = ();
+        @cat_ = ();
+        @vert_ = ();
+    }
+
+    if (LJ::did_post() && @delete_ids) {
+        foreach my $delete (@delete_ids) {
+            my ($catid, $commid) = $delete =~ /^delete-(\d+)-(\d+)/;
+            my $cat = LJ::Browse->load_by_id ($catid);
+            $cat->remove_communities($commid);
+        }
+    }
+
+    my @end_cats = LJ::Browse->categories_by_comm ($c);
+
+    if (LJ::did_post() && $comm_id_remove) {
+        $_->remove_communities($c->userid)
+            foreach @end_cats;
+        my $return_to = $GET{'return_to'} || $POST{'return_to'};
+        my ($vert_id, $catid) = $return_to =~ m#^(\d+)-(\d+)$#; ##
+        BML::redirect($LJ::SITEROOT."/admin/browse/edit_community.bml?vert_id=$vert_id&catid0_1=$catid&select_c=1")
+    }
+
+    $ret .= "<form method='post'>\n";
+    $ret .= "<input type='hidden' name='return_to' value='".($GET{'return_to'} || $POST{'return_to'})."'>\n";
+    $ret .= LJ::form_auth();
+    $ret .= "<table width='100%' border='0'>";
+    $ret .= "<tr><td>Vertical</td><td>Category</td><td>Sub-Category</td><td></td><td></td></tr>";
+    foreach my $e_cat (@end_cats) {
+        next unless $e_cat->is_valid;
+        # $ret .= "<form method='post'>";
+        $ret .= "<tr>";
+        my @path = ();
+        $e_cat->get_parent_path(\@path);
+        if (@path < 2) {
+            push @path, "" foreach (1 .. 2-@path);
+        }
+        my $v = LJ::Vertical->load_by_id ($path[0]->{'vert_id'});
+        $ret .= "<td>".$v->display_name."</td>";
+        foreach my $cat (@path) {
+            $ret .= "<td>".(ref $cat eq "LJ::Browse" ? $cat->display_name : $cat)."</td>";
+        }
+        $ret .= "<td><button>show tags</button></td>";
+        $ret .= "<td><input type='submit' name='delete-".$e_cat->catid."-".$c->userid."' value='delete'></td>";
+        $ret .= "</tr>";
+        $ret .= "<tr><td colspan='5'>";
+        my @tags = split /,\s+?/, $e_cat->get_tags_for_journal (catid => $e_cat->catid, comm_id => $c->userid);
+        foreach my $tag (@tags) {
+            $ret .= "<input type='text' name='tag-".$e_cat->catid."' value='$tag'>&nbsp;<input type='submit' name='remove-tag-".$e_cat->catid."' value='Remove'><br/>";
+        }
+        $ret .= "<input type='submit' name='add-tag-".$e_cat->catid."' value='Add new tag'><br/>";
+        $ret .= "</td></tr>";
+        # $ret .= "</form>";
+    }
+    $ret .= "</table>";
+
+    $ret .= '<hr>';
+
+    # $ret .= "<form method='post'>";
+    $ret .= "<input type='hidden' name='comm_user' value='".$c->user."'>";
+    $ret .= "<table width='100%' border='0'>";
+    my @verticals = LJ::Vertical->load_all();
+    $ret .= "<tr><td valign='top'><!-- $i.-->";
+    @verticals = map { { text => $_->{name}, value => $_->{vert_id} } } @verticals;
+
+    $ret .= LJ::html_select({
+                name => "vert_id_$i", style => "",
+                selected => $vert_[$j] ? $vert_[$j]->vert_id : 0,
+                },
+                { text => 'Community Directory',
+                value => '',},
+                @verticals
+            );
+    # $ret .= "</td><td>\n";
+
+    $ret .= LJ::html_submit('select_v', 'Select Vertical') . "</td>";
+    
+    my $category = $cat_[$j];
+    my $vertical = $vert_[$j] ? $vert_[$j] : 0;
+    my @categories = $vertical ? LJ::Browse->load_all($vertical) : ();
+    $ret .= LJ::Browse->build_select_tree (0, \@categories, $category, undef, undef, $i, use_table => 0, use_only_td => 1);
+
+    $ret .= "<td>";
+    if ($vertical) {
+        $ret .= "<input type='submit' name='add_category' value='Add to ";
+        $ret .= $category ? $category->display_name : $vertical->display_name;
+        $ret .= "'>";
+    }
+    $ret .= "</td>";
+    
+    $ret .= "</tr>";
+    $ret .= "</table>";
+
+    # $ret .= "</form>";
+
+    $ret .= "<hr>";
+    
+    # $ret .= "<form method='post'>";
+    $ret .= "<input type='hidden' name='comm_user' value='".$c->user."'>";
+    $ret .= "<table border='0'>";
+    $ret .= "<tr>
+        <td width='300'>Number of shown posts <input type='text' size='3' name='shown_posts' value='1'></td>
+        <td width='400'>Time for removing posts <input type='text' size='4' name='remove_after' value='30'></td>
+    </tr>";
+    $ret .= "</table>";
+
+    $ret .= "<div align='right'><table border='0'><tr><td><input type='submit' name='commremove' value='Remove community'></td><td><input type='button' value='Save'></td></tr></table></div>";
+    $ret .= "</form>";
+
+    return $ret;
+
+}
+_code?>
+
+<=body
+page?>

@@ -1711,6 +1711,14 @@ userproplist.singapore_invitations_posted:
   multihomed: 0
   cldversion: 8
 
+userproplist.number_delta_posts:
+  datatype: char
+  prettyname: Number of shown and delta time for fetching posts
+  des: Number of shown and delta time for fetching posts
+  indexed: 0
+  multihomed: 0
+  cldversion: 8
+
 userproplist.lastloginid:
   datatype: num
   prettyname: Previous login id
