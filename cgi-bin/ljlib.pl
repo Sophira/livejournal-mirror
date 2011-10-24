@@ -1132,8 +1132,7 @@ sub get_recent_items
     my $usual_show  = $itemshow;
     my $skip_sticky = $skip;    
 
-    if ( $show_sticky_on_top && $sticky )
-    {
+    if ( $show_sticky_on_top && $sticky ) {
         if($skip > 0) {
             $skip -= 1;
         } else {
@@ -1306,10 +1305,33 @@ sub get_recent_items
     };
 
     if ( $sticky && $show_sticky_on_top ) {
-        # build request to receive sticky entries
         if ( !$skip_sticky ) {
-            $sticky_sql = "$sql AND jitemid = $sticky ";
-            $sticky_sql .= "ORDER BY journalid, $sort_key ";
+            my $entry = LJ::Entry->new( $u, 'jitemid' => $sticky );
+            my $alldatepart;
+            my $system_alldatepart;
+
+            if ($opts->{'dateformat'} eq "S2") {
+                 $alldatepart = LJ::TimeUtil->alldatepart_s2($entry->eventtime_mysql);
+                 $system_alldatepart = LJ::TimeUtil->alldatepart_s2($entry->logtime_mysql);
+            } else {
+                 $alldatepart = LJ::TimeUtil->alldatepart_s1($entry->eventtime_mysql);
+                 $system_alldatepart = LJ::TimeUtil->alldatepart_s1($entry->logtime_mysql);
+            }
+
+            my $item = {'itemid' => $sticky,
+                        'alldatepart'   => $alldatepart,
+                        'allowmask'     => $entry->allowmask,
+                        'posterid'      => $entry->posterid,
+                        'eventtime'     => $entry->eventtime_mysql,
+                        'system_alldatepart' => $system_alldatepart,
+                        'security'           => $entry->security,
+                        'anum'               => $entry->anum,
+                        'logtime'            => $entry->logtime_mysql,
+                      };
+                            
+            push @items, $item;
+            push @{$opts->{'entry_objects'}}, $item;
+            push @{$opts->{'itemids'}}, $entry->jitemid;
         }
 
         # sticky exculustion
@@ -1355,10 +1377,6 @@ sub get_recent_items
         }
     };
 
-    
-    if ( $sticky && !$skip_sticky && $show_sticky_on_top ) {
-        $absorb_data->($sticky_sql);
-    }
     $absorb_data->($sql);
     $flush->();
 

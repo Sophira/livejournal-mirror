@@ -161,7 +161,7 @@ function addAlias(target, ptitle, ljusername, oldalias, callback) {
 					'<ul class="b-contextualhover-options">' +
 						'{{if reportBot}}<li><a href="${reportBot.url}">${reportBot.text}</a></li>{{/if}}' +
 						'<li class="b-contextualhover-options-ban">' +
-							'<p><a href="${banUsersLink.url}">${banUsersLink.text}</a>:</p>' +
+							'<p>${banUsersLink.text}:</p>' +
 							'{{if banCheckboxes}}<div class="b-contextualhover-options-wrap">' +
 								'{{each banCheckboxes}}' +
 								'<p><label><input type="checkbox" class="input-checkbox ${$value.className}" {{if $value.checked}}checked{{/if}} /> ${$value.label}</label></p>' +
@@ -349,7 +349,7 @@ function addAlias(target, ptitle, ljusername, oldalias, callback) {
 			// member of community
 			if (data.is_logged_in && data.is_comm) {
 				linkGroup.push({
-					selector: 'a[href={url}]',
+					selector: 'a[href="{url}"]',
 					url: data.is_member ? data.url_leavecomm : data.url_joincomm,
 					text: data.is_member ? data.ml_leave : data.ml_join_community,
 					click: function(e)

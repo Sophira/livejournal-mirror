@@ -28,7 +28,7 @@ function editdate(){
 	customTimeFlag.val('1');
 
 	f = document.updateForm;
-	var month = f.date_ymd_mm.selectedIndex || f.date_ymd_mm.value;
+	var month = f.date_ymd_mm.value;
 	var dateStr = f.date_ymd_yyyy.value + "/" + month + "/" + f.date_ymd_dd.value;
 
 	cal.calendar({
@@ -85,7 +85,9 @@ function setPostingPermissions(journal) {
 
 	if (!journal.can_create_sticky) {
 		stickyWrapper.hide();
+		stickyCheckbox.prop('disabled', true);
 	} else {
+		stickyCheckbox.prop('disabled', false);
 		stickyLabel.html(journal.is_replace_sticky ? 
 				Site.ml_text['entryform.sticky_replace.edit'] :
 				Site.ml_text['entryform.sticky.edit']);
@@ -660,7 +662,7 @@ function settime(time){
 	}
 
 	f.date_ymd_yyyy.value = newTime.getFullYear() < 1900 ? newTime.getFullYear() + 1900 : newTime.getFullYear();
-	f.date_ymd_mm.selectedIndex = newTime.getMonth();
+	f.date_ymd_mm.value = newTime.getMonth() + 1;
 	f.date_ymd_dd.value = twodigit(newTime.getDate());
 	if (!time) {
 		f.hour.value = twodigit(newTime.getHours());
@@ -669,12 +671,17 @@ function settime(time){
 
 	f.date_diff.value = 1;
 
-	var mNames = new Array("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December");
+	var mNames = Site.ml_text['month.names.long'] ||
+					["January", "February", "March", "April", "May", "June", "July",
+					"August", "September", "October", "November", "December"];
 	var currentdate = document.getElementById('currentdate-date');
 	var cMonth = newTime.getMonth();
 	var cDay = newTime.getDate();
+
+	var monthLabel = mNames[cMonth];
+	monthLabel = monthLabel.charAt(0).toUpperCase() + monthLabel.substr(1);
 	var cYear = newTime.getFullYear() < 1900 ? newTime.getFullYear() + 1900 : newTime.getFullYear();
-	currentdate.innerHTML = mNames[cMonth] + " " + cDay + ", " + cYear;
+	currentdate.innerHTML = monthLabel + " " + cDay + ", " + cYear;
 
 	return false;
 }
