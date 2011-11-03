@@ -51,7 +51,7 @@
 	}
 
 	function normalizeValue(str) {
-		return str.replace(/<br\s?\/>\n?/g, '\n').replace(/\s+$/mg, '').trim();
+		return str.replace(/<br\s?\/>\n?/g, '\n').trim();
 	}
 
 	function updateDraftState() {
@@ -113,7 +113,6 @@
 			$('#switched_rte_on').val('1');
 
 			if (!CKEditor && CKEDITOR && CKEDITOR.env.isCompatible) {
-				CKEDITOR.timestamp = 'v.84.2';
 				CKEDITOR.basePath = statPrefix + '/ck/';
 				var editor = CKEDITOR.replace('draft', {
 					skin: 'v2',
@@ -129,8 +128,8 @@
 					$('#updateForm')[0].onsubmit = function() {
 						if (window.switchedRteOn) {
 							var data = CKEditor.getData();
-							if($('#event_format')[0].checked){
-								data = data.replace(/(\r|\n)/g, '');
+							if(!$('#event_format')[0].checked){
+								data = data.replace(/\r|\n/g, '<br />');
 							}
 							draftData.textArea.val(data);
 						}
@@ -149,6 +148,8 @@
 						editor.on('insertText', updateDraftState);
 						editor.document.on('keypress', updateDraftState);
 						editor.document.on('click', updateDraftState);
+
+						!CKEDITOR.env.ie && editor.focus();
 					});
 				});
 			} else {
@@ -180,6 +181,7 @@
 			$('#entry-form-wrapper').attr('class', 'hide-richtext');
 			if (CKEditor) {
 
+				CKEDITOR.note.hide(true);
 				var data = CKEditor.getData().trim(); //also remove trailing spaces and newlines
 				CKEditor.container.hide();
 				CKEditor.element.show();
@@ -223,12 +225,12 @@
 
 		minute = date.getMinutes();
 		if (minute < 10) {
-			minute = Number('0' + minute);
+			minute = '0' + minute;
 		}
 
 		sec = date.getSeconds();
 		if (sec < 10) {
-			sec = Number('0' + sec);
+			sec = '0' + sec;
 		}
 
 		draftData.statusNode.val(draftData.saveMsg.replace(/\[\[time\]\]/, hour + ':' + minute + ':' + sec + time + ' '));

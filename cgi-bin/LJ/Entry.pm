@@ -157,6 +157,17 @@ sub new_from_item_hash {
     return $entry;
 }
 
+sub is_delayed {
+    my ($class) = @_;
+    return 0;
+}
+
+sub delayedid { 
+    my ($class) = @_;
+    return 0;
+}
+
+
 sub new_from_url {
     my ($class, $url) = @_;
 
@@ -277,7 +288,7 @@ sub journal {
 sub eventtime_mysql {
     my $self = shift;
     __PACKAGE__->preload_rows([ $self ]) unless $self->{_loaded_row};
-    return $self->{eventtime};
+    return $self->{eventtime}; 
 }
 
 sub logtime_mysql {
@@ -433,6 +444,7 @@ sub _load_text {
 sub prop {
     my ($self, $prop) = @_;
     $self->_load_props unless $self->{_loaded_props};
+
     return $self->{props} unless $prop;
     return $self->{props}{$prop};
 }
@@ -440,6 +452,7 @@ sub prop {
 sub props {
     my ($self, $prop) = @_;
     $self->_load_props unless $self->{_loaded_props};
+
     return $self->{props} || {};
 }
 
@@ -452,12 +465,13 @@ sub handle_prefetched_props {
 
 sub _load_props {
     my $self = shift;
+
     return 1 if $self->{_loaded_props};
 
     my $props = {};
     LJ::load_log_props2($self->{u}, [ $self->jitemid ], $props);
-
     $self->handle_prefetched_props($props->{$self->jitemid});
+
     return 1;
 }
 
@@ -1446,6 +1460,20 @@ sub extract_metadata {
     return \%meta;
 }
 
+sub is_sticky {
+    my ($self) = @_;
+
+    my $u = $self->{u};
+    my $sticky_entry_id = $u->get_sticky_entry_id();
+    return 0 unless $sticky_entry_id;
+    return $self->jitemid == $sticky_entry_id;
+}
+
+sub can_delete_journal_item {
+    my $class = shift;
+    return LJ::can_delete_journal_item(@_);
+}
+
 package LJ;
 
 use Class::Autouse qw (
@@ -1478,7 +1506,6 @@ sub _get_posts_raw_wrapper {
     #   optional hashref to put return value in.  (see get_logtext2multi docs)
     # returns: that hashref.
     my ($idsbyc, $type, $ret) = @_;
-
     my $opts = {};
     if ($type eq 'text') {
         $opts->{text_only} = 1;
@@ -1526,8 +1553,7 @@ sub _get_posts_raw_wrapper {
 #            - prop_only:  Retrieve only props, no text (used to support old API).
 # des-id: An arrayref of [ clusterid, ownerid, itemid ].
 # </LJFUNC>
-sub get_posts_raw
-{
+sub get_posts_raw {
     my $opts = ref $_[0] eq "HASH" ? shift : {};
     my $ret = {};
     my $sth;
@@ -1559,24 +1585,30 @@ sub get_posts_raw
     # but that means we need to grep out each cluster's jids when
     # we do per-cluster queries on the databases.
     my %cidsbyjid;
+
     foreach my $post (@_) {
         my ($cid, $jid, $jitemid) = @{$post};
         my $id = "$jid:$jitemid";
-        if (not defined $single_user) {
+
+        if ( not defined $single_user ) {
             $single_user = $jid;
-        } elsif ($single_user and $jid != $single_user) {
+        }
+        elsif ( $single_user and $jid != $single_user ) {
             # multiple users
             $single_user = 0;
         }
+
         $cids{$cid} = 1;
         $cidsbyjid{$jid} = $cid;
+
         unless ($opts->{prop_only}) {
             $needtext->{$cid}{$id} = 1;
             push @mem_keys, [$jid,"logtext:$cid:$id"];
         }
+
         unless ($opts->{text_only}) {
             $needprop->{$cid}{$id} = 1;
-            push @mem_keys, [$jid,"logprop:$id"];
+            push @mem_keys, [$jid,"logprop2:$id"];
             $needrc->{$cid}{$id} = 1;
             push @mem_keys, [$jid,"rp:$id"];
         }
@@ -1584,28 +1616,37 @@ sub get_posts_raw
 
     # first, check memcache.
     my $mem = LJ::MemCache::get_multi(@mem_keys) || {};
+
     while (my ($k, $v) = each %$mem) {
         next unless defined $v;
         next unless $k =~ /(\w+):(?:\d+:)?(\d+):(\d+)/;
+
         my ($type, $jid, $jitemid) = ($1, $2, $3);
         my $cid = $cidsbyjid{$jid};
         my $id = "$jid:$jitemid";
+
         if ($type eq "logtext") {
-            delete $needtext->{$cid}{$id};
-            $ret->{text}{$id} = $v;
-        } elsif ($type eq "logprop" && ref $v eq "HASH") {
-            delete $needprop->{$cid}{$id};
-            $ret->{prop}{$id} = $v;
-        } elsif ($type eq "rp") {
-            delete $needrc->{$cid}{$id};
-            $ret->{replycount}{$id} = int($v); # remove possible spaces
+            delete $needtext->{$cid}->{$id};
+            $ret->{'text'}->{$id} = $v;
+        }
+        elsif ($type eq "logprop2" && ref $v eq "HASH") {
+            delete $needprop->{$cid}->{$id};
+            $ret->{'prop'}->{$id} = $v;
+        }
+        elsif ($type eq "rp") {
+            delete $needrc->{$cid}->{$id};
+            $ret->{'replycount'}->{$id} = int($v); # remove possible spaces
         }
     }
 
     # we may be done already.
     return $ret if $opts->{memcache_only};
-    return $ret unless values %$needtext or values %$needprop
-        or values %$needrc;
+
+    unless ( values %$needtext or values %$needprop
+        or values %$needrc ) {
+        convert_href_props( $ret->{'prop'} );
+        return $ret;
+    }
 
     # otherwise, hit the database.
     foreach my $cid (keys %cids) {
@@ -1647,19 +1688,21 @@ sub get_posts_raw
             my $db = shift;
             return unless %$cneedprop;
             my $in = $make_in->(keys %$cneedprop);
+
             $sth = $db->prepare("SELECT journalid, jitemid, propid, value ".
                                 "FROM logprop2 WHERE $in");
             $sth->execute;
             my %gotid;
+
             while (my ($jid, $jitemid, $propid, $value) = $sth->fetchrow_array) {
                 my $id = "$jid:$jitemid";
-                my $propname = $LJ::CACHE_PROPID{'log'}->{$propid}{name};
-                $ret->{prop}{$id}{$propname} = $value;
+                $ret->{'prop'}->{$id}->{$propid} = $value;
                 $gotid{$id} = 1;
             }
+
             foreach my $id (keys %gotid) {
                 my ($jid, $jitemid) = map { $_ + 0 } split(/:/, $id);
-                LJ::MemCache::add([$jid, "logprop:$id"], $ret->{prop}{$id});
+                LJ::MemCache::add([$jid, "logprop2:$id"], $ret->{prop}->{$id});
                 delete $cneedprop->{$id};
             }
         };
@@ -1667,9 +1710,11 @@ sub get_posts_raw
         my $fetchrc = sub {
             my $db = shift;
             return unless %$cneedrc;
+
             my $in = $make_in->(keys %$cneedrc);
             $sth = $db->prepare("SELECT journalid, jitemid, replycount FROM log2 WHERE $in");
             $sth->execute;
+
             while (my ($jid, $jitemid, $rc) = $sth->fetchrow_array) {
                 my $id = "$jid:$jitemid";
                 $ret->{replycount}{$id} = $rc;
@@ -1685,18 +1730,22 @@ sub get_posts_raw
 
         # run the fetch functions on the proper databases, with fallbacks if necessary.
         my ($dbcm, $dbcr);
+
         if (@LJ::MEMCACHE_SERVERS or $opts->{use_master}) {
             $dbcm ||= LJ::get_cluster_master($cid) or $dberr->();
             $fetchtext->($dbcm) if %$cneedtext;
             $fetchprop->($dbcm) if %$cneedprop;
             $fetchrc->($dbcm) if %$cneedrc;
-        } else {
+        }
+        else {
             $dbcr ||= LJ::get_cluster_reader($cid);
+
             if ($dbcr) {
                 $fetchtext->($dbcr) if %$cneedtext;
                 $fetchprop->($dbcr) if %$cneedprop;
                 $fetchrc->($dbcr) if %$cneedrc;
             }
+
             # if we still need some data, switch to the master.
             if (%$cneedtext or %$cneedprop) {
                 $dbcm ||= LJ::get_cluster_master($cid) or $dberr->();
@@ -1711,9 +1760,14 @@ sub get_posts_raw
         # for all posts that didn't have any props.
         foreach my $id (keys %$cneedprop) {
             my ($jid, $jitemid) = map { $_ + 0 } split(/:/, $id);
-            LJ::MemCache::set([$jid, "logprop:$id"], {});
+            LJ::MemCache::set([$jid, "logprop2:$id"], {});
         }
     }
+
+    for my $key ( keys %{$ret->{'prop'}} ) {
+        convert_href_props( $ret->{'prop'}->{$key} );
+    }
+
     return $ret;
 }
 
@@ -1935,8 +1989,7 @@ sub get_log2_recent_log
                AND rlogtime >= ($LJ::EndOfTime - " . ($events_date + 24*3600) . ")"
             :
             "AND rlogtime <= ($LJ::EndOfTime - UNIX_TIMESTAMP()) + $max_age"
-         )
-         ;
+         );
 
     my $sth = $db->prepare($sql);
     $sth->execute($jid);
@@ -1985,7 +2038,7 @@ sub get_log2_recent_user
     my $ret = [];
 
     my $log = LJ::get_log2_recent_log($opts->{'userid'}, $opts->{'clusterid'},
-              $opts->{'update'}, $opts->{'notafter'}, $opts->{events_date});
+              $opts->{'update'}, $opts->{'notafter'}, $opts->{events_date},);
 
     ## UNUSED: my $left     = $opts->{'itemshow'};
     my $notafter = $opts->{'notafter'};
@@ -2139,8 +2192,7 @@ sub get_itemid_near2
 sub get_itemid_after2  { return get_itemid_near2(@_, "after");  }
 sub get_itemid_before2 { return get_itemid_near2(@_, "before"); }
 
-sub set_logprop
-{
+sub set_logprop {
     my ($u, $jitemid, $hashref, $logprops) = @_;  # hashref to set, hashref of what was done
 
     $jitemid += 0;
@@ -2148,15 +2200,19 @@ sub set_logprop
     my $kill_mem = 0;
     my $del_ids;
     my $ins_values;
+
     while (my ($k, $v) = each %{$hashref||{}}) {
         my $prop = LJ::get_prop("log", $k);
         next unless $prop;
+
         $kill_mem = 1 unless $prop eq "commentalter";
+
         if ($v) {
             $ins_values .= "," if $ins_values;
             $ins_values .= "($uid, $jitemid, $prop->{'id'}, " . $u->quote($v) . ")";
             $logprops->{$k} = $v;
-        } else {
+        }
+        else {
             $del_ids .= "," if $del_ids;
             $del_ids .= $prop->{'id'};
         }
@@ -2167,7 +2223,7 @@ sub set_logprop
     $u->do("DELETE FROM logprop2 WHERE journalid=? AND jitemid=? ".
            "AND propid IN ($del_ids)", undef, $u->{'userid'}, $jitemid) if $del_ids;
 
-    LJ::MemCache::delete([$uid,"logprop:$uid:$jitemid"]) if $kill_mem;
+    LJ::MemCache::delete([$uid,"logprop2:$uid:$jitemid"]) if $kill_mem;
 }
 
 # <LJFUNC>
@@ -2195,7 +2251,7 @@ sub load_log_props2 {
         my $id          = $_ + 0;
         $needprops{$id} = 1;
         $needrc{$id}    = 1;
-        push @memkeys, [$userid, "logprop:$userid:$id"];
+        push @memkeys, [$userid, "logprop2:$userid:$id"];
         push @memkeys, LJ::Entry::reply_count_memkey($userid, $id);
     }
 
@@ -2205,16 +2261,21 @@ sub load_log_props2 {
 
     while ( my ($k, $v) = each %$mem ) {
         next unless $k =~ /(\w+):(\d+):(\d+)/;
+        my ( $memkey, $uid, $pid ) = ( $1, $2, $3 );
 
-        if ( $1 eq 'logprop' ) {
+        if ( $memkey eq 'logprop2' ) {
             next unless ref $v eq "HASH";
-            delete $needprops{$3};
-            $hashref->{$3} = $v;
+
+            my @vkeys = keys %$v;
+            next if $vkeys[0] =~ /\D/;
+
+            delete $needprops{$pid};
+            $hashref->{$pid} = $v;
         }
 
-        if ( $1 eq 'rp' ) {
-            delete $needrc{$3};
-            $rc{$3} = int($v);  # change possible "0   " (true) to "0" (false)
+        if ( $memkey eq 'rp' ) {
+            delete $needrc{$pid};
+            $rc{$pid} = int($v);  # change possible "0   " (true) to "0" (false)
         }
     }
 
@@ -2222,11 +2283,18 @@ sub load_log_props2 {
         $hashref->{$_}{'replycount'} = $rc{$_};
     }
 
-    return unless %needprops || %needrc;
+    unless ( %needprops || %needrc ) {
+        for my $jitemid ( keys %$hashref ) {
+            convert_href_props( $hashref->{$jitemid} );
+        }
+
+        return;
+    }
 
     unless ( $db ) {
         my $u = LJ::load_userid($userid);
         $db = @LJ::MEMCACHE_SERVERS ? LJ::get_cluster_def_reader($u) :  LJ::get_cluster_reader($u);
+
         return unless $db;
     }
 
@@ -2238,11 +2306,11 @@ sub load_log_props2 {
         $sth->execute($userid);
 
         while (my ($jitemid, $propid, $value) = $sth->fetchrow_array) {
-            $hashref->{$jitemid}->{$LJ::CACHE_PROPID{'log'}->{$propid}->{'name'}} = $value;
+            $hashref->{$jitemid}->{ $propid } = $value;
         }
 
         foreach my $id (keys %needprops) {
-            LJ::MemCache::set([$userid,"logprop:$userid:$id"], $hashref->{$id} || {});
+            LJ::MemCache::set([$userid,"logprop2:$userid:$id"], $hashref->{$id} || {});
           }
     }
 
@@ -2256,7 +2324,37 @@ sub load_log_props2 {
         }
     }
 
+    for my $jitemid ( keys %$hashref ) {
+        convert_href_props( $hashref->{$jitemid} );
+    }
+}
 
+# <LJFUNC>
+# name: LJ::convert_href_props
+# class:
+# des:
+# info:
+# args:
+# des-:
+# returns:
+# </LJFUNC>
+sub convert_href_props {
+    my $href = shift;
+    my %new_href;
+    LJ::load_props('log');
+
+    for my $key ( keys %$href ) {
+        my $prop = $href->{$key};
+
+        if ( $key eq 'replycount' ) {
+            $new_href{ 'replycount' } = $prop;
+        }
+        elsif ( exists $LJ::CACHE_PROPID{'log'}->{$key} ) {
+            $new_href{ $LJ::CACHE_PROPID{'log'}->{$key}->{'name'} } = $prop;
+        }
+    }
+
+    %$href = %new_href;
 }
 
 # <LJFUNC>
@@ -2283,7 +2381,6 @@ sub load_log_props2multi
 # des-jitemid: Journal itemid of item to delete.
 # des-quick: Optional boolean.  If set, only [dbtable[log2]] table
 #            is deleted from and the rest of the content is deleted
-#            later using [func[LJ::cmd_buffer_add]].
 # des-anum: The log item's anum, which'll be needed to delete lazily
 #           some data in tables which includes the anum, but the
 #           log row will already be gone so we'll need to store it for later.
@@ -2309,6 +2406,10 @@ sub delete_entry
     LJ::MemCache::delete([$jid, "log2:$jid:$jitemid"]);
     LJ::MemCache::decr([$jid, "log2ct:$jid"]) if $dc > 0;
     LJ::memcache_kill($jid, "dayct2");
+
+    if ( $jitemid == $u->get_sticky_entry_id() ){
+        $u->remove_sticky_entry_id();
+    }
 
     # if this is running the second time (started by the cmd buffer),
     # the log2 row will already be gone and we shouldn't check for it.

@@ -534,16 +534,13 @@ __________________________________________*/
 /* Fotki
 -----------------------------------------------*/
 .b-pics-bar,
-.b-pics-nav {
+.b-pics-nav,
+.b-pics-edit-field-text {
 	zoom: 1;
 	}
 .b-pics-input-submit {
 	overflow: visible;
 	padding: 0 10px;
-	}
-.b-pics-btn {
-	height: 22px;
-	padding: 0 3px;
 	}
 .b-pics-list-albums LI.b-pics-list-albums-item,
 .b-pics-edit-field-click .b-pics-input-edit,
@@ -558,15 +555,25 @@ __________________________________________*/
 .b-pics-pager-prev,
 .b-pics-pager-next,
 .b-popup-pics .b-pics-pager,
-.b-popup-pics H2 {
+.b-popup-pics H2,
+.b-popup-pics .b-popup-pics-add-many .b-bubble-alert,
+.b-pics-with-output .b-pics-size-list,
+.b-pics-with-output .b-pics-size-label,
+.b-pics-with-output .b-pics-post-button {
 	display: inline;
 	zoom: 1;
 	}
+.b-pics-bar .b-pics-edit-field {
+	height: 22px;
+	}
 .b-pics-edit-field-click {
-	margin: -3px 0 0 -1px;
+	margin: -1px 0 0 -2px;
 	}
 	.b-pics-edit-field-click .b-pics-input-text {
 		padding-left: 2px;
+		}
+	.b-pics-edit-field .b-pics-textarea-edit {
+		width: 572px;
 		}
 .b-pics-privacy .b-pics-privacy-icon {
 	margin-right: 3px;
@@ -576,16 +583,17 @@ __________________________________________*/
 .rate-posts .selfpromo .voting .vote-value A {
 	top: 0;
 	}
-
-/* Should be at bottom of the page! */
-* HTML .i-ljtimes-btn,
-* HTML .i-ljtimes-drag,
-* HTML .i-ljtimes-click,
-* HTML .b-ljtimes-bubble-bg,
-* HTML .b-ljtimes-bubble-top {
-	behavior: expression((this.runtimeStyle.behavior="none")&&(this.pngSet?this.pngSet=true:(this.nodeName == "IMG" && this.src.toLowerCase().indexOf('.png')>-1?(this.runtimeStyle.backgroundImage = "none", this.runtimeStyle.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + this.src + "', sizingMethod='image')", this.src = "transparent.gif"):(this.origBg = this.origBg? this.origBg : this.currentStyle.backgroundImage.toString().replace('url("','').replace('")',''), this.runtimeStyle.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + this.origBg + "', sizingMethod='crop')", this.runtimeStyle.backgroundImage = "none")),this.pngSet=true));
+#updateForm #metainfo LI .title {
+	float: left;
+	min-width: 8.5em;
 	}
-
+#updateForm #metainfo LI .wrap {
+	overflow: hidden;
+	zoom: 1;
+	}
+#updateForm #metainfo LI.pkg {
+	display: block;
+	}
 
 /* LJ like buttons 
 -----------------------------------------------*/
@@ -598,5 +606,28 @@ __________________________________________*/
 -----------------------------------------------*/
 .b-editentry {
 	zoom: 1;
+	}
+
+/* Betatest
+-----------------------------------------------*/
+.alt-servers-list LI.production-server {
+	margin-bottom: -4px;
+	}
+
+/* Contextual hover
+-----------------------------------------------*/
+.b-contextualhover,
+.b-contextualhover .b-contextualhover-section,
+.b-contextualhover .b-contextualhover-options LI {
+	zoom: 1;
+	}
+
+/* Should be at bottom of the page! */
+* HTML .i-ljtimes-btn,
+* HTML .i-ljtimes-drag,
+* HTML .i-ljtimes-click,
+* HTML .b-ljtimes-bubble-bg,
+* HTML .b-ljtimes-bubble-top {
+	behavior: expression((this.runtimeStyle.behavior="none")&&(this.pngSet?this.pngSet=true:(this.nodeName == "IMG" && this.src.toLowerCase().indexOf('.png')>-1?(this.runtimeStyle.backgroundImage = "none", this.runtimeStyle.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + this.src + "', sizingMethod='image')", this.src = "transparent.gif"):(this.origBg = this.origBg? this.origBg : this.currentStyle.backgroundImage.toString().replace('url("','').replace('")',''), this.runtimeStyle.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + this.origBg + "', sizingMethod='crop')", this.runtimeStyle.backgroundImage = "none")),this.pngSet=true));
 	}
 

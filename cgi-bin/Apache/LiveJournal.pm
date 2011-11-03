@@ -194,6 +194,7 @@ sub handler
             return $status;
         }
     }
+
     LJ::Request->set_handlers(PerlTransHandler => [ \&trans ]);
 
     return LJ::Request::OK;
@@ -300,8 +301,11 @@ sub trans {
 
     ## This is a hack for alpha/beta/omega servers to make them 
     ## send static files (e.g. http://stat.livejournal.com/lanzelot/img/menu/div.gif?v=1)
+    ## and LJTimes (e.g. http://stat.livejournal.com/tools/endpoints/lj_times_full_js.bml?lang=ru)
     ## Production static files are served by CDN (http://l-stat.livejournal.com)
-    if ($LJ::IS_LJCOM_BETA && $host eq 'stat.livejournal.com' && $uri !~ m!^/(stc|img|js)!) {
+    if ($LJ::IS_LJCOM_BETA && $host eq 'stat.livejournal.com' 
+        && $uri !~ m!^/(stc|img|js)! && $uri !~ m!\.bml$!) 
+    {
          $uri = "/stc$uri";
          LJ::Request->uri($uri);
     }
@@ -321,6 +325,9 @@ sub trans {
         LJ::Request->pnotes( 'gtop_mem' => $gtop->proc_mem($$) );
     }
 
+    # $LJ::IS_SSL is used in LJ::start_request, so we must init it here
+    my $is_ssl = $LJ::IS_SSL = LJ::run_hook('ssl_check');
+
     LJ::start_request();
     LJ::procnotify_check();
     S2::set_domain('LJ');
@@ -332,8 +339,9 @@ sub trans {
     my $lang = $LJ::DEFAULT_LANG || $LJ::LANGS[0];
     BML::set_language($lang, \&LJ::Lang::get_text);
 
-    my $is_ssl = $LJ::IS_SSL = LJ::run_hook('ssl_check');
     $LJ::IS_BOT_USERAGENT = BotCheck->is_bot( LJ::Request->header_in('User-Agent') );
+
+    LJ::Request->pnotes( 'original_uri' => LJ::Request->uri );
 
     # process controller
     # if defined
@@ -343,10 +351,10 @@ sub trans {
             my @args = split ( m{/}, LJ::Request->uri );
             shift @args if @args;
 
+            LJ::Lang::current_language(undef);
+
             my $response =
                 $controller->process(\@args) || $controller->default_response;
-
-            LJ::Lang::current_language(undef);
 
             # processing result of controller
             my $result = eval { $response->output };
@@ -401,6 +409,16 @@ sub trans {
         LJ::Request->pnotes ('remote' => LJ::get_remote());
 
         if (LJ::Request->status == 404) {
+            if (    LJ::Request->prev
+                 && LJ::Request->prev->notes('http_errors_no_bml') )
+            {
+                LJ::Request->handler('perl-script');
+                LJ::Request->set_handlers(
+                    'PerlHandler' => sub { return LJ::Request::OK; }
+                );
+                return LJ::Request::OK;
+            }
+
             my $fn = $LJ::PAGE_404 || '404-error.html';
             return $bml_handler->("$LJ::HOME/htdocs/" . $fn);
         }
@@ -507,11 +525,6 @@ sub trans {
     }
 
     my %GET = LJ::Request->args;
-
-    if ($LJ::IS_DEV_SERVER && $GET{'as'} =~ /^\w{1,15}$/) {
-        my $ru = LJ::load_user($GET{'as'});
-        LJ::set_remote($ru); # might be undef, to allow for "view as logged out"
-    }
 
     # anti-squatter checking
     if ($LJ::DEBUG{'anti_squatter'} && LJ::Request->method eq "GET") {
@@ -828,7 +841,24 @@ sub trans {
         } elsif ($uuri =~ m#^/pics#) {
             $mode = "ljphotoalbums";
 
-        } elsif ($uuri =~ m#^/(\d\d\d\d)(?:/(\d\d)(?:/(\d\d))?)?(/?)$#) {
+        } elsif ($uuri =~ m|^/d(\d+)\.html$|)  {
+            my $delayedid = $1;
+            my $u = LJ::load_user($user);
+            
+            unless ($u) {
+                LJ::Request->pnotes ('error' => 'baduser');
+                LJ::Request->pnotes ('remote' => LJ::get_remote());
+                return LJ::Request::NOT_FOUND;
+            }
+            
+            $ljentry = LJ::DelayedEntry->get_entry_by_id($u, $delayedid);
+            
+            if ( $GET{'mode'} eq "reply" || $GET{'replyto'} || $GET{'edit'} ) {
+                $mode = "reply";
+            } else {
+                $mode = "entry";
+            }
+        } elsif ( $uuri =~ m|^/(\d\d\d\d)(?:/(\d\d)(?:/(\d\d))?)?(/?)$| ) {
             my ($year, $mon, $day, $slash) = ($1, $2, $3, $4);
 
             unless ( $slash ) {
@@ -1048,15 +1078,8 @@ sub trans {
             my $view = $determine_view->($user, "safevhost", $uri);
             return $view if defined $view;
         }
-        elsif ( $func eq 'api' ) {
-            Apache::LiveJournal::Interface::Api->load;
-            LJ::Request->handler("perl-script");
-            LJ::Request->push_handlers(PerlHandler => \&Apache::LiveJournal::Interface::Api::handler);
-            return LJ::Request::OK;
-
-            LJ::Request->pnotes ('error' => 'e404');
-            LJ::Request->pnotes ('remote' => LJ::get_remote());
-            return LJ::Request::NOT_FOUND;
+        elsif ( $func eq 'api' || LJ::Request->uri =~ /^\/__api_endpoint.*$/) {
+            return LJ::URI->api_handler();
         }
         elsif ( $func eq "games" ) {
             LJ::get_remote();
@@ -1686,13 +1709,19 @@ sub journal_content
         LJ::Request->pnotes (error => 'baduser') unless $u;
         return LJ::Request::NOT_FOUND unless $u;
 
+        my $is_unsuspicious_user = 0;
+        LJ::run_hook("is_unsuspicious_user", $u->userid, \$is_unsuspicious_user);
         $u->preload_props("opt_blockrobots", "adult_content", "admin_content_flag");
         LJ::Request->content_type("text/plain");
         LJ::Request->send_http_header();
-        my @extra = LJ::run_hook("robots_txt_extra", $u), ();
-        LJ::Request->print($_) foreach @extra;
+
+        if ( $is_unsuspicious_user ) {
+            my @extra = LJ::run_hook("robots_txt_extra", $u);
+            LJ::Request->print($_) foreach @extra;
+        }
+
         LJ::Request->print("User-Agent: *\n");
-        if ($u->should_block_robots) {
+        if ($u->should_block_robots or !$is_unsuspicious_user) {
             LJ::Request->print("Disallow: /\n");
         } else {
             LJ::Request->print("Disallow: /data/foaf/\n");
@@ -1771,9 +1800,15 @@ sub journal_content
     };
 
     LJ::Request->notes("view" => $RQ{'mode'});
+    LJ::Request->notes("journalname" => $RQ{'user'});
     my $user = $RQ{'user'};
 
+    my $return;
+    my $ret = LJ::run_hooks("before_journal_content_created", $opts, %RQ, \$return);
+    return $ret if $return;
+
     my $html = LJ::make_journal($user, $RQ{'mode'}, $remote, $opts);
+
     # Allow to add extra http-header or even modify html
     LJ::run_hooks("after_journal_content_created", $opts, \$html);
 
@@ -1782,7 +1817,8 @@ sub journal_content
     if (defined $opts->{'handler_return'}) {
         if ($opts->{'handler_return'} =~ /^(\d+)/) {
             return $1;
-        } else {
+        }
+        else {
             return LJ::Request::DECLINED;
         }
     }
@@ -1806,12 +1842,24 @@ sub journal_content
         }
 
         if ($RQ{'mode'} eq "entry" || $RQ{'mode'} eq "reply") {
-            my $filename = $RQ{'mode'} eq "entry"
-                ? ( $GET{talkread2}
-                    ? "$LJ::HOME/htdocs/talkread2.bml"
-                    : "$LJ::HOME/htdocs/talkread.bml"
-                )
-                : "$LJ::HOME/htdocs/talkpost.bml";
+            my $filename;
+            if ( $RQ{'mode'} eq 'entry' ) {
+                if ( $GET{'talkread2'} ) {
+                    $filename = $LJ::HOME. '/htdocs/talkread2.bml';
+                } else {
+                    if ( $LJ::DISABLED{'new_comments'} ) {
+                        $filename = $LJ::HOME. '/htdocs/talkread.bml';
+                    } else {
+                        $filename = $LJ::HOME. '/htdocs/talkread_new.bml';
+                    }
+                } 
+            } else {
+                if ( $LJ::DISABLED{'new_comments'} ) {
+                    $filename = $LJ::HOME. '/htdocs/talkpost.bml';
+                } else {
+                    $filename = $LJ::HOME. '/htdocs/talkpost_new.bml';
+                }
+            }
             LJ::Request->notes("_journal" => $RQ{'user'});
             LJ::Request->notes("bml_filename" => $filename);
             return Apache::BML::handler();
@@ -1827,8 +1875,10 @@ sub journal_content
 
     my $status = $opts->{'status'} || "200 OK";
     $opts->{'contenttype'} ||= $opts->{'contenttype'} = "text/html";
+
     if ($opts->{'contenttype'} =~ m!^text/! &&
-        $LJ::UNICODE && $opts->{'contenttype'} !~ /charset=/) {
+        $LJ::UNICODE && $opts->{'contenttype'} !~ /charset=/)
+    {
         $opts->{'contenttype'} .= "; charset=utf-8";
     }
 
@@ -1836,15 +1886,13 @@ sub journal_content
     # display a more meaningful error message.
     my $generate_iejunk = 0;
 
-    if ($opts->{'badargs'})
-    {
+    if ($opts->{'badargs'}) {
         # No special information to give to the user, so just let
         # Apache handle the 404
         LJ::Request->pnotes (error => 'e404');
         return LJ::Request::NOT_FOUND;
     }
-    elsif ($opts->{'baduser'})
-    {
+    elsif ($opts->{'baduser'}) {
         $status = "404 Unknown User";
         $html = "<h1>Unknown User</h1><p>There is no user <b>$user</b> at <a href='$LJ::SITEROOT'>$LJ::SITENAME.</a></p>";
         $generate_iejunk = 1;

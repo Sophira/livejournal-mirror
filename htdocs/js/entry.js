@@ -11,10 +11,48 @@ if(! ("$" in window)){
 	};
 }
 
-function editdate(){
-	clearInterval(settime.interval);
-	$('currentdate').style.display = 'none';
-	$('modifydate').style.display = 'inline';
+function initEntryDate() {
+	jQuery('#entrydate').entryDatePicker({
+		//flag is set to true for new posts
+		updateDate: !!window.updatePostTime,
+		customTimeFlag: jQuery('#journal_time_edited')
+	});
+}
+
+function revertdate() {
+	jQuery('#entrydate').entryDatePicker('reset');
+}
+
+function setPostingPermissions(journal) {
+	if (!('remote_permissions' in Site) || !Site.remote_permissions[journal]) { return; }
+
+	var modifyDate = jQuery('#modifydate'),
+		stickyCheckbox = jQuery('#sticky_type'),
+		stickyLabel = jQuery('#sticky_type_label'),
+		stickyWrapper = jQuery('#entryform-sticky-wrapper'),
+		currentDateEdit = jQuery('#currentdate-edit');
+
+		journal = Site.remote_permissions[journal];
+
+	if (!journal.can_post_delayed) {
+		if (modifyDate.is(':visible')) {
+			revertdate();
+		}
+		currentDateEdit.hide();
+	} else {
+		currentDateEdit.show();
+	}
+
+	if (!journal.can_create_sticky) {
+		stickyWrapper.hide();
+		stickyCheckbox.prop('disabled', true);
+	} else {
+		stickyCheckbox.prop('disabled', false);
+		stickyLabel.html(journal.is_replace_sticky ? 
+				Site.ml_text['entryform.sticky_replace.edit'] :
+				Site.ml_text['entryform.sticky.edit']);
+		stickyWrapper.css('display','');
+	}
 }
 
 function showEntryTabs(){
@@ -50,8 +88,7 @@ function changeSubmit(prefix, defaultjournal, defPrefix){
 
 function new_post_load(dotime){
 	if(dotime){
-		settime.interval = setInterval(settime, 1000);
-		settime();
+		window.updatePostTime = true;
 	}
 
 	var remotelogin = $('remotelogin');
@@ -330,11 +367,13 @@ function altlogin(e){
 		return false;
 	}
 
-	var altlogin_wrapper = $('altlogin_wrapper');
-	if(! altlogin_wrapper){
+	var altlogin_wrapper_login = $('altlogin_wrapper_login'),
+	    altlogin_wrapper_password = $('altlogin_wrapper_password');
+	if (!altlogin_wrapper_login || !altlogin_wrapper_password) {
 		return false;
 	}
-	altlogin_wrapper.style.display = 'block';
+	altlogin_wrapper_login.style.display = '';
+	altlogin_wrapper_password.style.display = '';
 
 	var remotelogin = $('remotelogin');
 	if(! remotelogin){
@@ -406,11 +445,6 @@ function altlogin(e){
 function insertFormHints(){
 	return;
 	// remove this function after changes to weblib.pl go live
-}
-
-function defaultDate(){
-	$('currentdate').style.display = 'block';
-	$('modifydate').style.display = 'none';
 }
 
 function insertViewThumbs(){
@@ -561,44 +595,6 @@ function setColumns(number){
 		}
 	}
 	listWrapper.removeChild(listObj);
-}
-
-function settime(){
-	function twodigit(n){
-		if(n < 10){
-			return "0" + n;
-		} else {
-			return n;
-		}
-	}
-
-	now = new Date();
-	if(! now){
-		return false;
-	}
-	f = document.updateForm;
-	if(! f){
-		return false;
-	}
-
-	f.date_ymd_yyyy.value = now.getYear() < 1900 ? now.getYear() + 1900 : now.getYear();
-	f.date_ymd_mm.selectedIndex = twodigit(now.getMonth());
-	f.date_ymd_dd.value = twodigit(now.getDate());
-	f.hour.value = twodigit(now.getHours());
-	f.min.value = twodigit(now.getMinutes());
-
-	f.date_diff.value = 1;
-
-	var mNames = new Array("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December");
-	var currentdate = document.getElementById('currentdate-date');
-	var cMonth = now.getMonth();
-	var cDay = now.getDate();
-	var cYear = now.getYear() < 1900 ? now.getYear() + 1900 : now.getYear();
-	var cHour = now.getHours();
-	var cMinute = twodigit(now.getMinutes());
-	currentdate.innerHTML = mNames[cMonth] + " " + cDay + ", " + cYear + ", " + cHour + ":" + cMinute;
-
-	return false;
 }
 
 function tagAutocomplete(node, tags){
@@ -993,18 +989,24 @@ InOb.handleInsertEmbed = function (){
 	});
 };
 
-InOb.handleInsertImage = function (){
-	// if PhotoHosting enabled - show new popup
-	if(window.ljphotoEnabled){
-		jQuery('#updateForm').photouploader('option', 'type', 'upload')
-			.bind('htmlready', function (event, htmlOutput){
-				jQuery('#draft').val(jQuery('#draft').val() + htmlOutput);
+InOb.handleInsertImageBeta = function (){
+	jQuery('#updateForm').photouploader('option', 'type', 'upload').bind('htmlready',
+		function (event, htmlOutput){
+			var selection = DOM.getSelectedRange($('draft'));
+			var node = $('draft').event;
+			var value = node.value;
+			var start = value.substring(0, selection.start);
+			var end = value.substring(selection.end);
+			node.value = start + htmlOutput + end;
 		}).photouploader('show');
-	} else {
-		onInsertObject('/imgupload.bml');
-	}
 	return true;
 };
+
+InOb.handleInsertImage = function (){
+	onInsertObject('/imgupload.bml');
+	return true;
+};
+
 InOb.handleInsertVideo = function(){
 	var videoUrl = prompt('Please enter a video URL:');
 	var draft = $('draft');

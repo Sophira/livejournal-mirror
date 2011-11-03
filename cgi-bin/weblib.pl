@@ -274,16 +274,16 @@ sub help_icon_html {
 # args: error*
 # des-error: A list of errors
 # </LJFUNC>
-sub bad_input {
+sub bad_input
+{
     my @errors = @_;
-    my $ret = LJ::Lang::ml('bml.badcontent.body') . "\n<ul>\n";
-
-    foreach my $ei ( @errors ) {
-        my $err = LJ::errobj($ei) or next;
+    my $ret = "";
+    $ret .= "<?badcontent?>\n<ul>\n";
+    foreach my $ei (@errors) {
+        my $err  = LJ::errobj($ei) or next;
         $err->log;
         $ret .= $err->as_bullets;
     }
-
     $ret .= "</ul>\n";
     return $ret;
 }
@@ -824,10 +824,8 @@ sub create_qr_div {
     LJ::load_user_props($u, 'opt_logcommentips');
     if ($u->{'opt_logcommentips'} eq 'A') {
         $qrhtml .= '<br />';
-        $qrhtml .= '<p class="b-bubble b-bubble-alert b-bubble-noarrow b-bubble-intext">';
-        $qrhtml .= BML::ml('/talkpost.bml.logyourip');
+        $qrhtml .= LJ::deemp(BML::ml('/talkpost.bml.logyourip'));
         $qrhtml .= LJ::help_icon_html("iplogging", " ");
-        $qrhtml .= '</p>';
     }
 
     $qrhtml .= "</td></tr></table>";
@@ -1139,7 +1137,6 @@ sub entry_form_decode
     # time is sync'd with their computer clock. otherwise, the JS didn't run,
     # so let's guess at their timezone.
     if ($POST->{'date_diff'} || $POST->{'date_diff_nojs'} || $different) {
-        delete $req->{'tz'};
         $req->{'year'} = $year;
         $req->{'mon'} = $mon;
         $req->{'day'} = $day;
@@ -1285,7 +1282,7 @@ sub stat_src_to_url {
 ## <!--[if IE]><link rel="stylesheet" type="text/css" href="$statprefix/..." /><![endif]-->
 ## Support 'args' option. Example: LJ::need_res( { args => 'media="screen"' }, 'stc/ljtimes/iframe.css' );
 ## Results in: <link rel="stylesheet" type="text/css" href="http://stat.lj-3-32.bulyon.local/ljtimes/iframe.css?v=1285833891" media="screen"/>
-## LJ::need_res( {clean_list} ) will suppress ALL previous resources and do NOTHING more!
+## LJ::need_res( {clean_list => 1} ) will suppress ALL previous resources and do NOTHING more!
 sub need_res {
     my $opts = (ref $_[0]) ? shift : {};
     my @keys = @_;

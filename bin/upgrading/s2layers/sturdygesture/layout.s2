@@ -590,11 +590,9 @@ function print_entry(Page p, Entry e, Color bgcolor, Color fgcolor) {
 
     """<div class="box"><h2 style="color: $fgcolor; background: $bgcolor;">$datetime """;
 
-    if ($e.security != "") {
-        print """<img src="$e.security_icon.url" align="right" """+
-              """width="$e.security_icon.width" height="$e.security_icon.height" """+
-              """alt="[$e.security]" />""";
-    }
+    if ($e.delayed) { " $e.delayed_icon "; }
+    if ($e.sticky) { " $e.sticky_icon "; }
+    if ($e.security) { " $e.security_icon "; }
 
     if ($p.view == "friends" or
         $e.subject != "" or
@@ -795,15 +793,14 @@ function EntryPage::print_body() {
     }
 }
 
-function EntryPage::print_comments(Comment[] cs) {
-    var Page p = get_page();
+function EntryPage::print_comments (Comment[] cs) {
     if (size $cs == 0) { return; }
-    print "<div style=\"margin-left: 25px;\">";
+    """<div style="margin-left: 25px;">""";
     foreach var Comment c ($cs) {
         $this->print_comment($c);
         $this->print_comments($c.replies);
     }
-    print "</div>";
+    """</div>""";
 }
 
 function EntryPage::print_comment(Comment c) {
@@ -908,17 +905,16 @@ function EntryPage::print_comment_full(Comment c) {
     }
 }
 
-function EntryPage::print_comment_partial(Comment c) {
-    var string poster = defined $c.poster ? $c.poster->as_string() : "<i>(Anonymous)</i>";
-    var string subj = $c.subject != "" ? $c.subject : $*text_nosubject;
-    print """<div class="minicomment" id="$c.dom_id"><a href="$c.permalink_url">$subj</a> - $poster""";
-    var Link expand_link = $c->get_link("expand_comments");
-    if ($c.thread_url != "" and (not $c.spam)) {
-        $c->print_expand_collapse_links({ "expand"=>" - %_", "collapse"=>" - %_"});
-    }
-    print """</div>""";
+function EntryPage::print_comment_partial (Comment c) {
+    var string poster = defined $c.poster ? $c.poster->as_string() : """<em class="noposter">$*text_poster_anonymous</em>""";
+    var string subj = $c.subject != "" ? $c.subject : """<em class="nosubject">$*text_nosubject</em>""";
+    var string sep = "-";
+    print safe """<div class="minicomment" id="$c.dom_id">
+        <a href="$c.permalink_url">$subj</a>
+        $sep $poster""";
+    $c->print_expand_collapse_links({ "expand"=>" $sep %_", "collapse"=>" $sep %_"});
+    """</div>""";
 }
-
 
 function ReplyPage::print_body() {
 

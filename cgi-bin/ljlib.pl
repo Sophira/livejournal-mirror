@@ -104,7 +104,7 @@ sub END { LJ::end_request(); }
                     "logprop_history",
                     "comet_history", "pingrel",
                     "eventrates", "eventratescounters",
-                    "friending_actions_q",
+                    "friending_actions_q", "delayedlog2", "delayedblob2",
                     );
 
 # keep track of what db locks we have out
@@ -1097,20 +1097,13 @@ sub get_recent_items
         $remote = LJ::load_userid($remoteid);
     }
 
+    my $show_sticky_on_top = $opts->{show_sticky_on_top} || 0;
+    $show_sticky_on_top &= LJ::is_enabled("delayed_entries");
+    
     my $max_hints = $LJ::MAX_SCROLLBACK_LASTN;  # temporary
     my $sort_key = "revttime";
 
-    my $clusterid = $u->{'clusterid'} + 0;
-    my @sources = ("cluster$clusterid");
-
-    if (my $ab = $LJ::CLUSTER_PAIR_ACTIVE{$clusterid}) {
-        @sources = ("cluster${clusterid}${ab}");
-    }
-
-    unshift @sources, ("cluster${clusterid}lite", "cluster${clusterid}slave")
-        if $opts->{'clustersource'} eq "slave";
-
-    my $logdb = LJ::get_dbh(@sources);
+    my $logdb = LJ::get_cluster_def_reader($u);
 
     # community/friend views need to post by log time, not event time
     $sort_key = "rlogtime" if ($opts->{'order'} eq "logtime" ||
@@ -1127,6 +1120,9 @@ sub get_recent_items
     #   with 32 bit time_t structs dies)
     my $notafter = $opts->{'notafter'} + 0 || $LJ::EndOfTime - 1;
 
+    # sticky entries array
+    my $sticky = $u->get_sticky_entry_id();
+
     my $skip = $opts->{'skip'}+0;
     my $itemshow = $opts->{'itemshow'}+0 || 10;
     if ($itemshow > $max_hints) { $itemshow = $max_hints; }
@@ -1134,9 +1130,20 @@ sub get_recent_items
     if ($skip < 0) { $skip = 0; }
     if ($skip > $maxskip) { $skip = $maxskip; }
     my $itemload = $itemshow + $skip;
+    my $usual_show  = $itemshow;
+    my $skip_sticky = $skip;    
 
+    if ( $show_sticky_on_top && $sticky ) {
+        if($skip > 0) {
+            $skip -= 1;
+        } else {
+            $usual_show -= 1;
+        }
+    }
+    
     my $mask = 0;
-    if ($remote && ($remote->{'journaltype'} eq "P" || $remote->{'journaltype'} eq "I") && $remoteid != $userid) {
+    if ($remote && ($remote->{'journaltype'} eq "P" || 
+        $remote->{'journaltype'} eq "I") && $remoteid != $userid) {
         $mask = LJ::get_groupmask($userid, $remoteid);
     }
 
@@ -1230,6 +1237,7 @@ sub get_recent_items
     }
 
     my $sql;
+    my $sticky_sql;
 
     my $dateformat = "%a %W %b %M %y %Y %c %m %e %d %D %p %i %l %h %k %H";
     if ($opts->{'dateformat'} eq "S2") {
@@ -1257,7 +1265,7 @@ sub get_recent_items
         $sql_select = "AND year=$year AND month=$month AND day=$day";
         $extra_sql .= "allowmask, ";
     } else {
-        $sql_limit  = "LIMIT $skip,$itemshow";
+        $sql_limit  = "LIMIT $skip, $usual_show";
         $sql_select = "AND $sort_key <= $notafter";
     }
 
@@ -1295,20 +1303,52 @@ sub get_recent_items
                allowmask, eventtime, logtime
         FROM log2 USE INDEX ($sort_key)
         WHERE journalid=$userid $sql_select $secwhere $jitemidwhere $securitywhere $posterwhere $after_sql $before_sql $suspend_where
-        ORDER BY journalid, $sort_key
-        $sql_limit
     };
+
+    if ( $sticky && $show_sticky_on_top ) {
+        if ( !$skip_sticky ) {
+            my $entry = LJ::Entry->new( $u, 'jitemid' => $sticky );
+            if ($entry && $entry->valid) {
+                my $alldatepart;
+                my $system_alldatepart;
+
+                if ($opts->{'dateformat'} eq "S2") {
+                    $alldatepart = LJ::TimeUtil->alldatepart_s2($entry->eventtime_mysql);
+                    $system_alldatepart = LJ::TimeUtil->alldatepart_s2($entry->logtime_mysql);
+                } else {
+                    $alldatepart = LJ::TimeUtil->alldatepart_s1($entry->eventtime_mysql);
+                    $system_alldatepart = LJ::TimeUtil->alldatepart_s1($entry->logtime_mysql);
+                }
+
+                my $item = { 'itemid' => $sticky,
+                             'alldatepart'   => $alldatepart,
+                             'allowmask'     => $entry->allowmask,
+                             'posterid'      => $entry->posterid,
+                             'eventtime'     => $entry->eventtime_mysql,
+                             'system_alldatepart' => $system_alldatepart,
+                             'security'           => $entry->security,
+                             'anum'               => $entry->anum,
+                             'logtime'            => $entry->logtime_mysql, };
+                            
+                push @items, $item;
+                push @{$opts->{'entry_objects'}}, $item;
+                push @{$opts->{'itemids'}}, $entry->jitemid;
+            }
+        }
+
+        # sticky exculustion
+        $sql .= "AND jitemid <> $sticky";
+    }
+    
+    $sql .= qq{
+        ORDER BY journalid, $sort_key
+        $sql_limit };
 
     unless ($logdb) {
         $$err = "nodb" if ref $err eq "SCALAR";
         return ();
     }
-
-    $sth = $logdb->prepare($sql);
-    $sth->execute;
-    if ($logdb->err) { die $logdb->errstr; }
-
-    # keep track of the last alldatepart, and a per-minute buffer
+    
     my $last_time;
     my @buf;
 
@@ -1318,19 +1358,28 @@ sub get_recent_items
         @buf = ();
     };
 
-    while (my $li = $sth->fetchrow_hashref) {
-        push @{$opts->{'itemids'}}, $li->{'itemid'};
+    my $absorb_data = sub {
+        my ($sql_request) = @_;
+        $sth = $logdb->prepare($sql_request);
+        $sth->execute;
+        if ($logdb->err) { die $logdb->errstr; }
+    
+        # keep track of the last alldatepart, and a per-minute buffer
+        while (my $li = $sth->fetchrow_hashref) {
+            push @{$opts->{'itemids'}}, $li->{'itemid'};
+    
+            $flush->() if $li->{alldatepart} ne $last_time;
+            push @buf, $li;
+            $last_time = $li->{alldatepart};
+    
+            # construct an LJ::Entry singleton
+            my $entry = LJ::Entry->new($userid, jitemid => $li->{itemid}, rlogtime => $li->{rlogtime});
+            $entry->absorb_row($li);
+            push @{$opts->{'entry_objects'}}, $entry;
+        }
+    };
 
-        $flush->() if $li->{alldatepart} ne $last_time;
-        push @buf, $li;
-        $last_time = $li->{alldatepart};
-
-        # construct an LJ::Entry singleton
-        my $entry = LJ::Entry->new($userid, jitemid => $li->{itemid}, rlogtime => $li->{rlogtime});
-        $entry->absorb_row($li);
-        push @{$opts->{'entry_objects'}}, $entry;
-    }
-
+    $absorb_data->($sql);
     $flush->();
 
     if ( exists $opts->{load_props} && $opts->{load_props} ) {
@@ -2324,6 +2373,7 @@ sub start_request
                             js/livejournal.js
                             js/jquery/jquery.ui.core.min.js
                             js/jquery/jquery.ui.widget.min.js
+                            js/jquery/jquery.tmpl.min.js
                             js/jquery/jquery.lj.bubble.js
                             stc/lj_base.css
                             ));
@@ -2443,73 +2493,6 @@ sub do_to_cluster {
     # return last rval
     return $rval;
 }
-
-# <LJFUNC>
-# name: LJ::cmd_buffer_add
-# des: Schedules some command to be run sometime in the future which would
-#      be too slow to do synchronously with the web request.  An example
-#      is deleting a journal entry, which requires recursing through a lot
-#      of tables and deleting all the appropriate stuff.
-# args: db, journalid, cmd, hargs
-# des-db: Global db handle to run command on, or user clusterid if cluster
-# des-journalid: Journal id command affects.  This is indexed in the
-#                [dbtable[cmdbuffer]] table, so that all of a user's queued
-#                actions can be run before that user is potentially moved
-#                between clusters.
-# des-cmd: Text of the command name.  30 chars max.
-# des-hargs: Hashref of command arguments.
-# </LJFUNC>
-sub cmd_buffer_add
-{
-    my ($db, $journalid, $cmd, $args) = @_;
-
-    return 0 unless $cmd;
-
-    my $cid = ref $db ? 0 : $db+0;
-    $db = $cid ? LJ::get_cluster_master($cid) : $db;
-    my $ab = $LJ::CLUSTER_PAIR_ACTIVE{$cid};
-
-    return 0 unless $db;
-
-    my $arg_str;
-    if (ref $args eq 'HASH') {
-        foreach (sort keys %$args) {
-            $arg_str .= LJ::eurl($_) . "=" . LJ::eurl($args->{$_}) . "&";
-        }
-        chop $arg_str;
-    } else {
-        $arg_str = $args || "";
-    }
-
-    my $rv;
-    if ($ab eq 'a' || $ab eq 'b') {
-        # get a lock
-        my $locked = $db->selectrow_array("SELECT GET_LOCK('cmd-buffer-$cid',10)");
-        return 0 unless $locked; # 10 second timeout elapsed
-
-        # a or b -- a goes odd, b goes even!
-        my $max = $db->selectrow_array('SELECT MAX(cbid) FROM cmdbuffer');
-        $max += $ab eq 'a' ? ($max & 1 ? 2 : 1) : ($max & 1 ? 1 : 2);
-
-        # insert command
-        $db->do('INSERT INTO cmdbuffer (cbid, journalid, instime, cmd, args) ' .
-                'VALUES (?, ?, NOW(), ?, ?)', undef,
-                $max, $journalid, $cmd, $arg_str);
-        $rv = $db->err ? 0 : 1;
-
-        # release lock
-        $db->selectrow_array("SELECT RELEASE_LOCK('cmd-buffer-$cid')");
-    } else {
-        # old method
-        $db->do("INSERT INTO cmdbuffer (journalid, cmd, instime, args) ".
-                "VALUES (?, ?, NOW(), ?)", undef,
-                $journalid, $cmd, $arg_str);
-        $rv = $db->err ? 0 : 1;
-    }
-
-    return $rv;
-}
-
 
 # <LJFUNC>
 # name: LJ::get_keyword_id
@@ -3107,12 +3090,6 @@ sub procnotify_callback
 
     if ($cmd eq "unban_contentflag") {
         delete $LJ::CONTENTFLAG_BANNED{$arg->{'username'}};
-        return;
-    }
-
-    # cluster switchovers
-    if ($cmd eq 'cluster_switch') {
-        $LJ::CLUSTER_PAIR_ACTIVE{ $arg->{'cluster'} } = $arg->{ 'role' };
         return;
     }
 

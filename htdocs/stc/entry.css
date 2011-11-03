@@ -3,13 +3,19 @@
 .small {
     font-size: 85%;
     margin-left: 6px;
-}
-
-#draft-container TEXTAREA {
-	margin: 0;
-	border: 0;
 	}
-
+#draft-container TEXTAREA {
+	padding: 6px 8px;
+	#padding: 4px 0;
+	margin: 0;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	box-sizing: border-box;
+	border: 0;
+	outline: none;
+	font: 13px/18px Arial, 'sans-serif';
+	color: #222;
+	}
 #updateForm {
     font-family: arial, verdana, 'sans-serif';
     min-width: 620px;
@@ -34,12 +40,9 @@
 }
 #updateForm label.left {
     width: auto;
-    min-width: 6.5em;
-    line-height: 1.8em;
+	padding-right: 10px;
+    line-height: 1.6em;
     font-size: 14px;
-}
-* html #updateForm label.left {
-    width: 6.5em;
 }
 #updateForm label.options {
     font-size: 11px;
@@ -57,19 +60,22 @@
 }
 #updateForm span.inputgroup-left {
     display: block; float: left; width: 50%; position: relative;
-}
+	}
 #updateForm span.inputgroup-right {
     display: block; float: right; width: 49%;  position: relative;
-}
-#updateForm span.inputgroup-right label.left {
+	}
+	#entryform-spellcheck-wrapper INPUT {
+		overflow: visible;
+		padding-left: 5px;
+		padding-right: 5px;
+		}
+#updateForm span.inputgroup-right label.title {
     width: 11em;
-}
+	}
 #updateForm a.helplink {
     margin-left: 5px;
     margin-top: 4px;
-    float: left;
-}
-
+	}
 #updateForm h4 {
     margin: 0 0 4px 0;
     padding: 0;
@@ -88,7 +94,6 @@
     width: 100px;
 }
 #lj_userpicselect {
-    float: left;
     font-size: 85%;
     color: #00C;
     margin: 4px 0px 0px 5px;
@@ -140,15 +145,147 @@
     font-size: 90%;
     line-height: 110%;
 }
-#metainfo {
-    float: left;
-    margin-right: 10px;
-    width: 55%;
-    margin-bottom: 20px;
-}
-#currentdate {
-    display: none;
-}
+
+/* Metainfo
+----------------------------------------------- */
+#updateForm #metainfo-wrap {
+	overflow: hidden;
+	#zoom: 1;
+	}
+	#updateForm #metainfo {
+		display: table;
+		margin: -3px 0 20px 0;
+		}
+		#updateForm #metainfo LI {
+			display: none;
+			}
+		#updateForm #metainfo LI.pkg {
+			display: table-row;
+			padding: 0;
+			margin: 0 0 10px 0;
+			list-style: none;
+			line-height: 22px;
+			}
+			#updateForm #metainfo LI .title {
+				display: table-cell;
+				padding: 3px 7px 0 0;
+				vertical-align: top;
+				text-align: right;
+				line-height: 20px;
+			    font-size: 14px;
+				}
+			#updateForm #metainfo LI .wrap {
+				display: table-cell;
+				padding: 3px;
+				vertical-align: top;
+				}
+			#updateForm #metainfo LI .current-username {
+				line-height: 20px;
+				font-size: 14px;
+				}
+			#updateForm #metainfo LI .select {
+				float: none;
+				display: inline-block;
+				vertical-align: top;
+				}
+			#updateForm #metainfo LI .select-timezone {
+				width: 133px;
+				font-size: 12px;
+				}
+			#updateForm #metainfo LI .helplink {
+				float: none;
+				display: inline-block;
+				margin: 4px 0 0 4px;
+				border: none;
+				vertical-align: top;
+				}
+			#updateForm #metainfo #modifydate .wrap {
+				padding-top: 1px;
+				}
+			#updateForm #metainfo LI .i-calendar {
+				display: inline-block;
+				width: 10px;
+				height: 10px;
+				margin-left: 5px;
+				background: url(/img/widget/wishlist/date-icon.gif?ver=1) no-repeat;
+				vertical-align: moddle;
+				cursor: pointer;
+				}
+			#updateForm #metainfo LI .datetime {
+				margin-left: 10px;
+				vertical-align: middle;
+				}
+				#updateForm #metainfo LI .datetime .input-num {
+					width: 22px;
+					padding: 2px 1px;
+					text-align: center;
+					}
+				#updateForm #metainfo LI .datetime .de {
+					white-space: nowrap;
+					font-size: 11px;
+					}
+			#updateForm #metainfo LI .timezone {
+				display: block;
+				padding-top: 5px;
+				}
+			#updateForm #metainfo .entrydate .title,
+			#updateForm #metainfo .entrydate .wrap,
+			#updateForm #metainfo .wrap-select {
+				display: none;
+				}
+			#updateForm #metainfo .entrydate-date .entrydate-title-date,
+			#updateForm #metainfo .entrydate-date .entrydate-title-post,
+			#updateForm #metainfo .entrydate-changeit .entrydate-title-post,
+			#updateForm #metainfo .entrydate-changeit .entrydate-title-date,
+			#updateForm #metainfo .entrydate-until .entrydate-title-until {
+				display: table-cell;
+				*display: inline;
+				*zoom: 1;
+				}
+			#updateForm #metainfo .entrydate-date .entrydate-wrap-date,
+			#updateForm #metainfo .entrydate-date .entrydate-wrap-post,
+			#updateForm #metainfo .entrydate-changeit .entrydate-wrap-until,
+			#updateForm #metainfo .entrydate-changeit .entrydate-wrap-changeit,
+			#updateForm #metainfo .entrydate-until .entrydate-wrap-until {
+				display: table-cell;
+				*display: inline;
+				*zoom: 1;
+				}
+/* Remove when new version is coming */
+#updateForm #metainfo LI .backdate {
+	display: block;
+	clear: both;
+	padding-top: 3px;
+	} 
+#updateForm #metainfo LI .select,
+#updateForm #metainfo LI .text {
+	float: left;
+	margin-bottom: 2px;
+	}
+#updateForm #metainfo LI .de {
+	white-space: nowrap;
+	font-size: 11px;
+	}
+
+/* Options
+----------------------------------------------- */
+#updateForm #options {
+	padding: 10px;
+	margin: 0;
+	}
+	#updateForm #options LI {
+		padding: 0;
+		margin: 0 0 5px 0;
+		list-style: none;
+		}
+		#updateForm #options LI .title {
+			float: left;
+			min-width: 6em;
+			padding: 3px 7px 0 0;
+			}
+		#updateForm #options LI .i-prop-selecttags {
+			margin-top: 3px;
+			}
 #currentdate-edit {
     font-size: 85%;
     margin-left: 5px;
@@ -200,12 +337,6 @@
     border-bottom: none;
 	text-decoration:none;
 }
-#metainfo, #metainfo label, #metainfo input.text, #metainfo strong {
-    font-size: 14px;
-}
-#metainfo p, #metainfo label, #metainfo label.left {
-    line-height: 1.5em ;
-}
 #subject {
     width: 52%;
     /* width: 98%; */
@@ -226,11 +357,9 @@
 }
 #draft {
     display: inline-block;
-    line-height: 100%;
     width: 100%;
     height: 280px;
     border: 0;
-    font-size: 13px;
 }
 #draftstatus {
     font-style: italic;
@@ -299,9 +428,16 @@
     background: url(/js/ck/skins/v2/icons-new.png?v=1) no-repeat 0 -125px;
     padding-left: 15px;
 }
-#htmltools ul li.image a:hover {
-/*    background: url(/img/html-buttons-image.gif?v=1) no-repeat 0 -40px; */
-}
+#htmltools ul li.image-beta {
+	width: 18px;
+	}
+	#htmltools ul li.image-beta a {
+	    background: url(/js/ck/skins/v2/icons-new.png?v=1) no-repeat 0 -309px;
+	    padding-left: 18px;
+		}
+	#htmltools ul li.image a:hover {
+		/* background: url(/img/html-buttons-image.gif?v=1) no-repeat 0 -40px; */
+		}
 #htmltools ul li.media a {
     background: url(/js/ck/skins/v2/icons-new.png?v=1) no-repeat 0 -110px;
     padding-left: 15px;
@@ -413,15 +549,6 @@
 #prop_current_mood {
     width: 14%;
 }
-#prop_opt_backdated {
-    clear: left;
-    display: block;
-    float: left;
-    margin-left: 6.5em;
-}
-* html #prop_opt_backdated {
-    margin-left: 3em;
-}
 
 #prop_adult_content {
     width: 48%
@@ -474,13 +601,17 @@
     border: 1px solid #aaa;    
     padding: 7px 10px;
     margin-top: 10px;
-    text-align: center;
     position: relative;
 }
 #security_container {
-    width: 600px;
-    margin: 0 auto;
-}
+	overflow: hidden;
+	}
+	#security_container .security-options {
+	    float: left;
+		}
+	#security_container .submit-options {
+	    float: right;
+		}
 #security {
     float: none !important;
 }

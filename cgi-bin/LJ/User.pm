@@ -28,6 +28,7 @@ use HTTP::Date qw(str2time);
 use LJ::TimeUtil;
 use LJ::User::PropStorage;
 use LJ::FileStore;
+use LJ::RelationService;
 
 use Class::Autouse qw(
                       URI
@@ -260,35 +261,6 @@ sub get_syndicated {
     }
 
     return $synd;
-}
-
-# save current user id, so we can restore it later
-sub save_current {
-    my ( $u ) = @_;
-    return 0 unless $u;
-
-    my $remote = LJ::get_remote();
-    return 0 unless $remote;
-
-    $u->set_prop('lastloginid', $remote->id);
-    return 1;
-}
-
-# restore user from prop lastloginid
-sub restore {
-    my ($u) = @_;
-    return 0 unless $u;
-
-    my $userid = $u->prop('lastloginid');
-    return 0 unless $userid;
-
-    $u->set_prop('lastloginid', 0);
-
-    my $old = LJ::load_userid( $userid );
-    return 0 unless $u;
-
-    $old->make_login_session('long', 0);
-    return 1;
 }
 
 sub is_protected_username {
@@ -3501,15 +3473,6 @@ sub who_invited {
     return LJ::load_userid($inviterid);
 }
 
-# front-end to LJ::cmd_buffer_add, which has terrible interface
-#   cmd: scalar
-#   args: hashref
-sub cmd_buffer_add {
-    my ($u, $cmd, $args) = @_;
-    $args ||= {};
-    return LJ::cmd_buffer_add($u->{clusterid}, $u->{userid}, $cmd, $args);
-}
-
 sub subscriptions {
     my $u = shift;
     return LJ::Subscription->subscriptions_of_user($u);
@@ -3540,9 +3503,24 @@ sub can_add_inbox_subscription {
 sub subscribe {
     my ($u, %opts) = @_;
     croak "No subscription options" unless %opts;
-
     return LJ::Subscription->create($u, %opts);
 }
+
+# unsubscribe from an event(s)
+sub unsubscribe {
+    my ($u, %opts) = @_;
+    croak "No subscription options" unless %opts;
+
+    # find all matching subscriptions
+    my @subs = LJ::Subscription->find($u, %opts);
+
+    foreach (@subs) {
+        # run delete method on each subscription
+        $_->delete();
+    }
+}
+
+
 
 sub subscribe_entry_comments_via_sms {
     my ($u, $entry) = @_;
@@ -3847,11 +3825,13 @@ sub can_use_ljphoto {
     return 0 if $LJ::DISABLED{'new_ljphoto'};
 
     ## For beta-testers only.
-    my $comm = LJ::load_user($LJ::LJPHOTO_ALLOW_FROM_COMMUNITY);
-    return 1 if $u->can_manage ($comm);
-    return 0 unless $comm && $comm->is_friend($u);
+    foreach my $community (@LJ::LJPHOTO_ALLOW_FROM_COMMUNITIES){
+        my $comm = LJ::load_user($community);
+        next unless $comm;
+        return 1 if $u->can_manage ($comm) or $comm->is_friend($u);
+    }
 
-    return 1;
+    return 0;
 }
 
 sub can_upload_photo {
@@ -3962,7 +3942,7 @@ sub userhead {
     my $head_size = $opts->{head_size};
 
     my $userhead   = 'userinfo.gif';
-    my $userhead_w = 17;
+    my $userhead_w = 16;
     my $userhead_h = undef;
 
     ## special icon?
@@ -3979,7 +3959,7 @@ sub userhead {
     ## default way
     if (!$LJ::IS_SSL && ($icon = $u->custom_usericon)) {
         $userhead = $icon;
-        $userhead_w = 17;
+        $userhead_w = 16;
     } elsif ($u->is_community) {
         if ($head_size) {
             $userhead = "comm_${head_size}.gif";
@@ -4015,7 +3995,7 @@ sub userhead {
             $userhead_w = $head_size;
         } else {
             $userhead = "userinfo.gif";
-            $userhead_w = 17;
+            $userhead_w = 16;
         }
     }
     $userhead_h ||= $userhead_w;
@@ -4494,6 +4474,15 @@ sub get_post_ids {
         }
     }
 
+    if ($opts{posterid}){
+        $query .= " AND posterid = ? ";
+        push @vals => $opts{posterid};
+    }
+    if ($opts{afterid}){
+        $query .= " AND jitemid > ? ";
+        push @vals => $opts{afterid};
+    }
+
     # filter by date, use revttime as it is indexed
     if ($opts{'start_date'} && $opts{'end_date'}) {
         # revttime is reverse event time
@@ -4576,7 +4565,7 @@ sub friendof_uids {
     my $limit = int(delete $args{limit}) || 50000;
     Carp::croak("unknown option") if %args;
 
-    return $u->_friend_friendof_uids(limit => $limit, mode => "friendofs");
+    return LJ::RelationService->find_relation_sources($u, limit => $limit);
 }
 
 # returns array of friend uids.  by default, limited at 50,000 items.
@@ -4585,9 +4574,8 @@ sub friend_uids {
     my $limit = int(delete $args{limit}) || 50000;
     Carp::croak("unknown option") if %args;
 
-    return $u->_friend_friendof_uids(limit => $limit, mode => "friends");
+    return LJ::RelationService->find_relation_destinations($u, limit => $limit);
 }
-
 
 # helper method since the logic for both friends and friendofs is so similar
 sub _friend_friendof_uids {
@@ -4627,6 +4615,7 @@ sub _friend_friendof_uids {
 # actually get friend/friendof uids, should not be called directly
 sub _friend_friendof_uids_do {
     my ($u, %args) = @_;
+## method is also called from load-friends-gm worker.
 
     my $limit = int(delete $args{limit}) || 50000;
     my $mode  = delete $args{mode};
@@ -5755,12 +5744,11 @@ sub num_comments_received {
     my $u = shift;
     my %opts = @_;
 
-    my $dbcr = $opts{dbh} || LJ::get_cluster_reader($u);
     my $userid = $u->id;
-
     my $memkey = [$userid, "talk2ct:$userid"];
     my $count = LJ::MemCache::get($memkey);
     unless ($count) {
+        my $dbcr = $opts{dbh} || LJ::get_cluster_reader($u);
         my $expire = time() + 3600*24*2; # 2 days;
         $count = $dbcr->selectrow_array("SELECT COUNT(*) FROM talk2 ".
                                         "WHERE journalid=?", undef, $userid);
@@ -6116,60 +6104,60 @@ sub reset_cache {
     return 0 unless $dbcm;
 
     my @keys = qw(
-        bio:#
-        cctry_uid:#
-        commsettings:#
-        dayct:#
-        fgrp:#
-        friendofs:#
-        friendofs2:#
-        friends:#
-        friends2:#
-        ident:#
-        inbox:newct:#
-        intids:#
-        invites:#
-        jablastseen:#
-        jabuser:#
-        kws:#
-        lastcomm:#
-        linkobj:#
-        log2ct:#
-        log2lt:#
-        logtag:#
-        mcrate:#
-        memct:#
-        memkwcnt:#
-        memkwid:#
-        msn:mutual_friends_wlids:uid=#
-        prtcfg:#
-        pw:#
-        rate:tracked:#
-        rcntalk:#
-        s1overr:#
-        s1uc:#
-        saui:#
-        subscriptions_count:#
-        supportpointsum:#
-        synd:#
-        tags2:#
-        talk2ct:#
-        talkleftct:#
-        tc:#
-        timeactive:#
-        timezone_guess:#
-        tu:#
-        txtmsgsecurity:#
-        uid2uniqs:#
-        upiccom:#
-        upicinf:#
-        upicquota:#
-        upicurl:#
-        userid:#
+        bio:*
+        cctry_uid:*
+        commsettings:*
+        dayct:*
+        fgrp:*
+        friendofs:*
+        friendofs2:*
+        friends:*
+        friends2:*
+        ident:*
+        inbox:newct:*
+        intids:*
+        invites:*
+        jablastseen:*
+        jabuser:*
+        kws:*
+        lastcomm:*
+        linkobj:*
+        log2ct:*
+        log2lt:*
+        logtag:*
+        mcrate:*
+        memct:*
+        memkwcnt:*
+        memkwid:*
+        msn:mutual_friends_wlids:uid=*
+        prtcfg:*
+        pw:*
+        rate:tracked:*
+        rcntalk:*
+        s1overr:*
+        s1uc:*
+        saui:*
+        subscriptions_count:*
+        supportpointsum:*
+        synd:*
+        tags2:*
+        talk2ct:*
+        talkleftct:*
+        tc:*
+        timeactive:*
+        timezone_guess:*
+        tu:*
+        txtmsgsecurity:*
+        uid2uniqs:*
+        upiccom:*
+        upicinf:*
+        upicquota:*
+        upicurl:*
+        userid:*
     );
 
     foreach my $key (@keys) {
-        $key =~ s/#/$u->{userid}/g;
+        $key =~ s/\*/$u->{userid}/g;
         LJ::MemCache::delete([ $u->{userid}, $key ]);
     }
 
@@ -6247,6 +6235,40 @@ sub is_spamprotection_enabled {
     my $spamprotection = $u->prop('spamprotection');
     return 1 if (!defined($spamprotection) || $spamprotection eq 'Y');
     return 0;
+}
+
+# return sticky entries existing
+sub has_sticky_entry {
+    my ($self) = @_;
+    my $sticky_id  = $self->prop("sticky_entry_id");
+    if ($sticky_id) {
+        return 1;
+    }
+    return 0;
+}
+
+# returns sticky entry jitemid
+sub get_sticky_entry_id {
+    my ($self) = @_;
+    return $self->prop("sticky_entry_id") || '';
+}
+
+# returns sticky entry jitemid
+sub remove_sticky_entry_id {
+    my ($self) = @_;
+    my $ownerid = $self->userid;
+    LJ::MemCache::delete([$ownerid, "log2lt:$ownerid"]);
+    $self->clear_prop("sticky_entry_id");
+}
+
+# set sticky entry? 
+sub set_sticky_id {
+    my ($self, $itemid) = @_;
+    die "itemid is not set" unless ($itemid);
+
+    my $ownerid = $self->userid;
+    LJ::MemCache::delete([$ownerid, "log2lt:$ownerid"]);
+    $self->set_prop( sticky_entry_id => $itemid );
 }
 
 package LJ;
@@ -7071,6 +7093,34 @@ sub check_priv
 #
 #
 # <LJFUNC>
+# name: LJ::users_by_priv
+# class:
+# des: Return users with a certain privilege.
+# args: priv, arg?
+# des-args: user privilege to searching. arg can be "*" for all args.
+# return: Userids or empty list.
+# TODO Add store to MemCache
+sub users_by_priv {
+    my ($priv, $arg) = @_;
+    
+    my $dbr = LJ::get_db_reader();
+    return unless $dbr;
+
+    return unless $priv;
+    $arg ||= '*';
+    my $users = $dbr->selectcol_arrayref ("SELECT userid FROM priv_list pl, priv_map pm
+                                           WHERE pl.prlid = pm.prlid 
+                                                AND privcode = ?
+                                                AND arg = ?
+                                        ", undef, $priv, $arg);
+
+    return unless ref $users eq 'ARRAY';
+    return $users;
+}
+
+#
+#
+# <LJFUNC>
 # name: LJ::remote_has_priv
 # class:
 # des: Check to see if the given remote user has a certain privilege.
@@ -7111,7 +7161,7 @@ sub remote_has_priv
 #       'O' == pOrtal box id, 'V' == 'vgift', 'E' == ESN subscription id
 #       'Q' == Notification Inbox, 'G' == 'SMS messaGe'
 #       'D' == 'moDule embed contents', 'W' == 'Wish-list element'
-#       'F' == Photo ID, 'A' == Album ID
+#       'F' == Photo ID, 'A' == Album ID, 'Y' == delaYed entries
 #
 # FIXME: both phonepost and vgift are ljcom.  need hooks. but then also
 #        need a separate namespace.  perhaps a separate function/table?
@@ -7122,7 +7172,7 @@ sub alloc_user_counter
 
     ##################################################################
     # IF YOU UPDATE THIS MAKE SURE YOU ADD INITIALIZATION CODE BELOW #
-    return undef unless $dom =~ /^[LTMPSRKCOVEQGDWFA]$/;             #
+    return undef unless $dom =~ /^[LTMPSRKCOVEQGDWFAY]$/;             #
     ##################################################################
 
     my $dbh = LJ::get_db_writer();
@@ -7245,6 +7295,9 @@ sub alloc_user_counter
                                       undef, $uid);
     } elsif ($dom eq "A") {
         $newmax = $u->selectrow_array("SELECT MAX(album_id) FROM fotki_albums WHERE userid=?",
+                                      undef, $uid);
+    } elsif ($dom eq "Y") {
+        $newmax = $u->selectrow_array("SELECT MAX(delayedid) FROM delayedlog2 WHERE journalid=?",
                                       undef, $uid);
     } else {
         die "No user counter initializer defined for area '$dom'.\n";
@@ -7480,7 +7533,7 @@ sub ljuser {
         $journal_url = "$LJ::SITEROOT/userinfo.bml?user=$username";
         $profile_url ||= $journal_url;
         $userhead = 'userinfo.gif';
-        $userhead_w = 17;
+        $userhead_w = 16;
     } else {
         # Traverse the renames to the final journal
         if (!$opts->{'no_follow'}) {
@@ -7827,6 +7880,9 @@ sub get_daycounts
     my $list = LJ::MemCache::get($memkey);
     if ($list) {
         my $list_create_time = shift @$list;
+        if (LJ::is_enabled("delayed_entries")) {
+            LJ::DelayedEntry->get_daycount_query($u, $list, $secwhere);
+        }
         return $list if $list_create_time >= $u->timeupdate;
     }
 
@@ -7857,7 +7913,13 @@ sub get_daycounts
         # so they store smaller in memcache
         push @days, [ int($y), int($m), int($d), int($c) ];
     }
+
     LJ::MemCache::set($memkey, [time, @days]);
+
+    # not cached part
+    if (LJ::is_enabled("delayed_entries")) {
+        LJ::DelayedEntry->get_daycount_query($u, \@days, $secwhere);
+    }
     $release_lock->();
     return \@days;
 }
@@ -8628,161 +8690,14 @@ sub get_friends {
     return undef unless $userid;
     return undef if $LJ::FORCE_EMPTY_FRIENDS{$userid};
 
-    unless ($force) {
-        my $memc = _get_friends_memc($userid, $mask);
-        return $memc if $memc;
-    }
-    return {} if $memcache_only; # no friends
+    my $u = LJ::load_userid($userid);
 
-    # nothing from memcache, select all rows from the
-    # database and insert those into memcache
-    # then return rows that matched the given groupmask
-
-    # no gearman/gearman not wanted
-    my $gc = LJ::gearman_client();
-    return _get_friends_db($userid, $mask)
-        unless $gc && LJ::conf_test($LJ::LOADFRIENDS_USING_GEARMAN, $userid);
-
-    # invoke the gearman
-    my $friends;
-    my $arg = Storable::nfreeze({ userid => $userid, mask => $mask });
-    my $task = Gearman::Task->new("load_friends", \$arg,
-                                  {
-                                      uniq => "$userid",
-                                      on_complete => sub {
-                                          my $res = shift;
-                                          return unless $res;
-                                          $friends = Storable::thaw($$res);
-                                      }
-                                  });
-
-    my $ts = $gc->new_task_set();
-    $ts->add_task($task);
-    $ts->wait(timeout => 30); # 30 sec timeout
-
-    return $friends;
-}
-
-sub _get_friends_memc {
-    my $userid = shift
-        or Carp::croak("no userid to _get_friends_db");
-    my $mask = shift;
-
-    # memcache data version
-    my $ver = 1;
-
-    my $packfmt = "NH6H6NC";
-    my $packlen = 15;  # bytes
-
-    my @cols = qw(friendid fgcolor bgcolor groupmask showbydefault);
-
-    # first, check memcache
-    my $memkey = [$userid, "friends:$userid"];
-
-    my $memfriends = LJ::MemCache::get($memkey);
-    return undef unless $memfriends;
-
-    my %friends; # rows to be returned
-
-    # first byte of object is data version
-    # only version 1 is meaningful right now
-    my $memver = substr($memfriends, 0, 1, '');
-    return undef unless $memver == $ver;
-
-    # get each $packlen-byte row
-    while (length($memfriends) >= $packlen) {
-        my @row = unpack($packfmt, substr($memfriends, 0, $packlen, ''));
-
-        # don't add into %friends hash if groupmask doesn't match
-        next if $mask && ! ($row[3]+0 & $mask+0);
-
-        # add "#" to beginning of colors
-        $row[$_] = "\#$row[$_]" foreach 1..2;
-
-        # turn unpacked row into hashref
-        my $fid = $row[0];
-        my $idx = 1;
-        foreach my $col (@cols[1..$#cols]) {
-            $friends{$fid}->{$col} = $row[$idx];
-            $idx++;
-        }
-    }
-
-    # got from memcache, return
-    return \%friends;
-}
-
-sub _get_friends_db {
-    my $userid = shift
-        or Carp::croak("no userid to _get_friends_db");
-    my $mask = shift;
-
-    my $dbh = LJ::get_db_writer();
-
-    my $lockname = "get_friends:$userid";
-    my $release_lock = sub {
-        LJ::release_lock($dbh, "global", $lockname);
-    };
-
-    # get a lock
-    my $lock = LJ::get_lock($dbh, "global", $lockname);
-    return {} unless $lock;
-
-    # in lock, try memcache
-    my $memc = _get_friends_memc($userid, $mask);
-    if ($memc) {
-        $release_lock->();
-        return $memc;
-    }
-
-    # inside lock, but still not populated, query db
-
-    # memcache data info
-    my $ver = 1;
-    my $memkey = [$userid, "friends:$userid"];
-    my $packfmt = "NH6H6NC";
-    my $packlen = 15;  # bytes
-
-    # columns we're selecting
-    my @cols = qw(friendid fgcolor bgcolor groupmask showbydefault);
-
-    my $mempack = $ver; # full packed string to insert into memcache, byte 1 is dversion
-    my %friends;        # friends object to be returned, all groupmasks match
-
-    my $sth = $dbh->prepare("SELECT friendid, fgcolor, bgcolor, groupmask, showbydefault " .
-                            "FROM friends WHERE userid=?");
-    $sth->execute($userid);
-    die $dbh->errstr if $dbh->err;
-    while (my @row = $sth->fetchrow_array) {
-
-        # convert color columns to hex
-        $row[$_] = sprintf("%06x", $row[$_]) foreach 1..2;
-
-        my $newpack = pack($packfmt, @row);
-        last if length($mempack) + length($newpack) > 950*1024;
-
-        $mempack .= $newpack;
-
-        # unless groupmask matches, skip adding to %friends
-        next if $mask && ! ($row[3]+0 & $mask+0);
-
-        # add "#" to beginning of colors
-        $row[$_] = "\#$row[$_]" foreach 1..2;
-
-        my $fid = $row[0];
-        my $idx = 1;
-        foreach my $col (@cols[1..$#cols]) {
-            $friends{$fid}->{$col} = $row[$idx];
-            $idx++;
-        }
-    }
-
-    LJ::MemCache::add($memkey, $mempack);
-
-    # finished with lock, release it
-    $release_lock->();
-
-    return \%friends;
+    return LJ::RelationService->load_relation_destinations(
+            $u, uuid          => $uuid,
+                mask          => $mask,
+                memcache_only => $memcache_only,
+                force_db      => $force,
+                );
 }
 
 # <LJFUNC>
@@ -8798,27 +8713,11 @@ sub get_friendofs {
     my $userid = LJ::want_userid($uuid);
     return undef unless $userid;
 
-    # first, check memcache
-    my $memkey = [$userid, "friendofs:$userid"];
-
-    unless ($opts->{force}) {
-        my $memfriendofs = LJ::MemCache::get($memkey);
-        return @$memfriendofs if $memfriendofs;
-    }
-
-    # nothing from memcache, select all rows from the
-    # database and insert those into memcache
-
-    my $dbh = LJ::get_db_writer();
-    my $limit = $opts->{force} ? '' : " LIMIT " . ($LJ::MAX_FRIENDOF_LOAD+1);
-    my $friendofs = $dbh->selectcol_arrayref
-        ("SELECT userid FROM friends WHERE friendid=?$limit",
-         undef, $userid) || [];
-    die $dbh->errstr if $dbh->err;
-
-    LJ::MemCache::add($memkey, $friendofs);
-
-    return @$friendofs;
+    my $u = LJ::load_userid($userid);
+    return LJ::RelationService->find_relation_sources($u, 
+            nolimit        => $opts->{force} || 0,
+            skip_memcached => $opts->{force},
+            );
 }
 
 # <LJFUNC>
@@ -8990,7 +8889,7 @@ sub mark_dirty {
                                                 );
                 $sclient->insert($job);
             } else {
-                LJ::cmd_buffer_add($u->{clusterid}, $u->{userid}, 'dirty', { what => 'friends' });
+                die "No schwartz client found";
             }
         };
     }
@@ -10102,6 +10001,15 @@ sub get_remote {
 
     # can't have a remote user outside of web context
     return $no_remote->() unless LJ::Request->is_inited;
+
+    my $get_as = LJ::Request->get_param('as');
+    if ( $LJ::IS_DEV_SERVER && $get_as =~ /^\w{1,15}$/ ) {
+        my $ru = LJ::load_user($get_as);
+
+        # might be undef, to allow for "view as logged out":
+        LJ::set_remote($ru);
+        return $ru;
+    }
 
     my $criterr = $opts->{criterr} || do { my $d; \$d; };
     $$criterr = 0;

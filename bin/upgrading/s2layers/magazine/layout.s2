@@ -592,7 +592,13 @@ function print_entry (Page p, Entry e, Color bgcolor, Color fgcolor, bool hide_t
      if ($p.view != "entry" and not $subject->contains("<a ")) {
        """<a href="$e.permalink_url" class="subj-link">$subject</a>""";}
      else { "$subject"; }
-    "</span> $e.security_icon</h3>";
+    "</span>";
+
+    if ($e.delayed) { " $e.delayed_icon"; }
+    if ($e.sticky) { " $e.sticky_icon"; }
+    if ($e.security) { " $e.security_icon"; }
+
+    "</h3>";
 
     if ($p.view == "entry" and $*show_entrynav_icons)
     {
@@ -955,12 +961,11 @@ function EntryPage::print_comment (Comment c) {
 }
 
 function EntryPage::print_comment_partial (Comment c) {
-    var string poster = defined $c.poster ? $c.poster->as_string() : "<i>$*text_poster_anonymous</i>";
-    var string subj = $c.subject != "" ? $c.subject : $*text_nosubject;
-    print safe "<a href='$c.permalink_url'>$subj</a> - $poster";
-    if ($c.thread_url != "") {
-        $c->print_expand_collapse_links({ "expand"=>" (%_) ", "collapse"=>" (%_) "});
-    }
+    var string poster = defined $c.poster ? $c.poster->as_string() : """<em class="noposter">$*text_poster_anonymous</em>""";
+    var string subj = $c.subject != "" ? $c.subject : """<em class="nosubject">$*text_nosubject</em>""";
+    var string sep = "-";
+    print safe """<a href="$c.permalink_url">$subj</a> $sep $poster""";
+    $c->print_expand_collapse_links({ "expand"=>" (%_) ", "collapse"=>" (%_) "});
 }
 
 function EntryPage::print_comment_full (Comment c) {

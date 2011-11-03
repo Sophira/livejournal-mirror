@@ -452,14 +452,14 @@ td.title {
   font-weight:    700;
   letter-spacing: .1em;
   padding:        20px;
-$fontspec
+  $fontspec
 }
 
 td.links {
   font-size:   10px;
   line-height: 16px;
   padding:     8px;
-$fontspec
+  $fontspec
 }
 
 .descrip {
@@ -469,14 +469,14 @@ $fontspec
   letter-spacing: .2em;
   padding:        5px;
   text-transform: uppercase;
-$fontspec
+  $fontspec
 }
 
 .date, .dateheader, .datecontent {
   color:       $*date_fgcolor;
   font-size:   12px;
   line-height: 16px;
-$sec_fontspec
+  $sec_fontspec
 }
 
 A.subjlink, A.subjlink:hover, A.subjlink:visited {
@@ -494,22 +494,25 @@ A.subjlink, A.subjlink:hover, A.subjlink:visited {
   font-weight:    700;
   letter-spacing: .1em;
   padding:        8px;
-$fontspec
+  $fontspec
 }
 
-br, hr, li, ol, p, table, td, tr, ul {
+.entry-text {
+  margin: 10px 0;
+  }
+.entry-text, br, hr, li, ol, p, table, td, tr, ul {
   color:       $*page_fgcolor;
   font-size:   12px;
   line-height: 18px;
   text-align:  justify;
-$sec_fontspec
+  $sec_fontspec
 }
 
 p.links {
   color:       #666666;
   font-size:   10px;
   line-height: 12px;
-$fontspec
+  $fontspec
 }
 
 .author, .time {
@@ -517,7 +520,7 @@ $fontspec
   font-size:      10px;
   line-height:    16px;
   text-transform: uppercase;
-$fontspec
+  $fontspec
 }
 
 #commenttext {
@@ -588,12 +591,6 @@ function EntryLite::lay_make_icon() : string {
     var Comment c = $this as Comment;
     if(defined $c.subject_icon) {
       $icon = $c.subject_icon + " ";
-    }
-  }
-  if($this isa Entry) {
-    var Entry en = $this as Entry;
-    if(defined $en.security_icon) {
-      $icon = $en.security_icon + " ";
     }
   }
   return $icon;
@@ -827,10 +824,12 @@ function EntryLite::print_linkbar() {
   }
   foreach var string link_key ($.link_keyseq) {
     var Link link = $this->get_link($link_key);
-    $url          = $link.url;
-    $text         = $texts{$link_key} != "" ? $texts{$link_key} : $link.caption;
-    if($url != "") {
-      $linkbar = $linkbar + """<a href="$url">$text</a>$btwn_comments""";
+    if (defined $link) {
+      $url          = $link.url;
+      $text         = $texts{$link_key} != "" ? $texts{$link_key} : $link.caption;
+      if($url != "") {
+        $linkbar = $linkbar + """<a href="$url">$text</a>$btwn_comments""";
+      }
     }
   }
   $url     = $.permalink_url;
@@ -1200,7 +1199,15 @@ function print_entry(EntryLite e, Color bgcolor, Color fgcolor) {
 
   if ($e isa Entry) {
     var Entry en = $e as Entry;
-    $security = $en.security != "" ? $en.security->upperfirst() : "Public";
+
+    if ($en.security != "" or $en.sticky or $en.delayed) {
+        if ($en.delayed) { $security = $security + "$en.delayed_icon "; }
+        if ($en.sticky) { $security = $security + "$en.sticky_icon "; }
+        if ($en.security) { $security = $security + "$en.security_icon "; }
+    } else {
+        $security = "Public";
+    }
+
   }
   if ($e isa Comment) {
     var Comment c = $e as Comment;
@@ -1263,7 +1270,7 @@ function print_entry(EntryLite e, Color bgcolor, Color fgcolor) {
 
   """
   </table>
-  <p>"""; $e->print_text(); """</p>
+  <div class="entry-text">"""; $e->print_text(); """</div>
   <span class="author">""";
   $e->print_linkbar();
   """</span>""";
@@ -1380,23 +1387,23 @@ function EntryPage::print_comment(Comment c) {
 }
 
 function EntryPage::print_comments (Comment[] cs) {
-  var Page p = get_page();
-  if (size $cs == 0) { return; }
-  foreach var Comment c ($cs) {
-    var int indent = ($c.depth - 1) * 25;
-    "<div id=\"$c.dom_id\" style='margin-left: ${indent}px; margin-top: 5px'>\n";
-    if (($c.spam) and (not $p.showspam) and (not $c.can_marked_as_spam) and (size($c.replies) > 0)) {
-      """$*text_spam_comment""";
-    } elseif (($c.spam) and (not $p.showspam)) {
-      """&nsbp;""";
-    } elseif ($c.full) {
-      $this->print_comment($c);
-    } else {
-      $this->print_comment_partial($c);
+    var Page p = get_page();
+    if (size $cs == 0) { return; }
+    foreach var Comment c ($cs) {
+        var int indent = ($c.depth - 1) * 25;
+        """<div id="$c.dom_id" style='margin-left: ${indent}px; margin-top: 5px'>""";
+        if (($c.spam) and (not $p.showspam) and (not $c.can_marked_as_spam) and (size($c.replies) > 0)) {
+            """$*text_spam_comment""";
+        } elseif (($c.spam) and (not $p.showspam)) {
+            """&nsbp;""";
+        } elseif ($c.full) {
+            $this->print_comment($c);
+        } else {
+            $this->print_comment_partial($c);
+        }
+        """</div>""";
+        $this->print_comments($c.replies);
     }
-    "</div>";
-    $this->print_comments($c.replies);
-  }
 }
 
 function ReplyPage::print_body() {

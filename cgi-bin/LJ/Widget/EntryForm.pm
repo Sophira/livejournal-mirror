@@ -2,6 +2,7 @@ package LJ::Widget::EntryForm;
 
 use strict;
 use base 'LJ::Widget';
+use LJ::Widget::Calendar;
 
 use LJ::Fotki::Photo;
 use LJ::Fotki::Album;
@@ -162,6 +163,8 @@ sub need_res {
         js/lj_ippu.js
         js/ck/ckeditor.js
         js/rte.js
+        js/jquery/jquery.lj.basicWidget.js
+        js/jquery/jquery.lj.entryDatePicker.js
         stc/display_none.css
     );
 
@@ -380,6 +383,20 @@ sub render_userpics_block {
     return $out;
 }
 
+sub render_infobox_block {
+    my ($self) = @_;
+
+    my $out = '';
+
+    my $opts = $self->opts;
+
+    $out .= "<div id='infobox'>\n";
+    $out .= LJ::run_hook('entryforminfo', $opts->{'usejournal'}, $opts->{'remote'});
+    $out .= "</div><!-- end #infobox -->\n\n";
+
+    return $out;
+}
+
 sub render_metainfo_block {
     my ($self) = @_;
 
@@ -391,17 +408,36 @@ sub render_metainfo_block {
     my $errors = $self->errors;
     my $onload = $self->onload;
 
-    $out .= "<div id='metainfo'>";
+    $out .= LJ::html_hidden({
+        name => 'timezone',
+        value => 'guess',
+        id => 'journal_timezone',
+    });
+    $out .= LJ::html_hidden({
+        name => 'custom_time',
+        value => '0',
+        id => 'journal_time_edited',
+    });
+    $out .= "<script>try { \$('journal_timezone').value = - (new Date).getTimezoneOffset()/0.6; } catch(e) {} </script>";
+    $out .= "<div id='metainfo-wrap'><ul id='metainfo'>";
+
+    my $can_edit_date = 1;
     # login info
     $out .= $opts->{'auth'};
     if ($opts->{'mode'} eq "update") {
         # communities the user can post in
         my $usejournal = $opts->{'usejournal'};
         if ($usejournal) {
-            $out .= "<p id='usejournal_single' class='pkg'>\n";
-            $out .= "<label for='usejournal' class='left'>" .
+            my $posterid = $remote->userid;
+            my $ownerid = LJ::load_user($usejournal)->userid;
+            my $dbh = LJ::get_db_writer();
+            $can_edit_date = !!($dbh->selectrow_array("SELECT COUNT(*) FROM reluser ".
+                                                     "WHERE userid=$ownerid AND targetid=$posterid ".
+                                                     "AND type IN ('A','M','N')")) || 0;
+            $out .= "<li id='usejournal_single' class='pkg'>\n";
+            $out .= "<label for='usejournal' class='title'>" .
                 BML::ml('entryform.postto') . "</label>\n";
-
+            $out .= "<span class='wrap'>";
             $out .= LJ::ljuser($usejournal);
             $out .= LJ::html_hidden({
                 name => 'usejournal',
@@ -410,17 +446,17 @@ sub render_metainfo_block {
             });
 
             $out .= LJ::html_hidden( usejournal_set => 'true' );
-            $out .= "</p>";
+            $out .= "<span></li>";
         } elsif ($login_data && ref $login_data->{'usejournals'} eq 'ARRAY') {
             my $submitprefix = BML::ml('entryform.update3');
-            $out .= "<p id='usejournal_list' class='pkg'>\n";
-            $out .= "<label for='usejournal' class='left'>" .
+            $out .= "<li id='usejournal_list' class='pkg'>\n";
+            $out .= "<label for='usejournal' class='title'>" .
                 BML::ml('entryform.postto') . "</label>\n";
 
             my @choices;
 
             if ( $remote->is_personal ) {
-                push @choices, '' => $remote->username;
+                push @choices, $remote->username => $remote->username;
             } else {
                 push @choices,
                     '[none]' => LJ::Lang::ml('entryform.postto.select');
@@ -428,6 +464,7 @@ sub render_metainfo_block {
 
             push @choices, map { $_ => $_ } @{ $login_data->{'usejournals'} };
 
+            $out .= "<span class='wrap'>";
             $out .= LJ::html_select(
                 {
                     'name' => 'usejournal',
@@ -437,23 +474,31 @@ sub render_metainfo_block {
                     'class' => 'select',
                     "onchange" => "changeSubmit('" . $submitprefix . "',this[this.selectedIndex].value, '$BML::ML{'entryform.update4'}');".
                         "getUserTags(this[this.selectedIndex].value);".
+                        "setPostingPermissions(this[this.selectedIndex].value);".
                         "changeSecurityOptions(this[this.selectedIndex].value)"
                 },
                 @choices,
             );
-            $out .= "</p>\n";
+            $out .= "</span></li>\n";
         }
     }
 
     # Authentication box
-    $out .= "<p class='update-errors'><?inerr $errors->{'auth'} inerr?></p>\n"
+    $out .= "<li class='update-errors'><?inerr $errors->{'auth'} inerr?></li>\n"
         if $errors->{'auth'};
 
     # Date / Time
     my ($year, $mon, $mday, $hour, $min) = split(/\D/, $opts->{'datetime'});
     my $monthlong = LJ::Lang::month_long($mon);
+    
     # date entry boxes / formatting note
     my $datetime = LJ::html_datetime({
+        'name' => "date_ymd",
+        'notime' => 1,
+        'default' => "$year-$mon-$mday",
+        'disabled' => $opts->{'disabled_save'}
+    });
+    my $datetimeonly = LJ::html_datetime({
         'name' => "date_ymd",
         'notime' => 1,
         'default' => "$year-$mon-$mday",
@@ -486,53 +531,117 @@ sub render_metainfo_block {
     my $date_diff = ($opts->{'mode'} eq "edit" || $opts->{'spellcheck_html'}) ?
         1 : 0;
 
-    $datetime .= LJ::html_hidden("date_diff", $date_diff);
+    my $date_diff_input = LJ::html_hidden("date_diff", $date_diff);
 
     # but if we don't have JS, give a signal to trust the given time
-    $datetime .= "<noscript>" .  LJ::html_hidden("date_diff_nojs", "1") .
+    $date_diff_input .= "<noscript>" .  LJ::html_hidden("date_diff_nojs", "1") .
         "</noscript>";
 
-    my $backdate_check = LJ::html_check({
-        'type' => "check",
-        'id' => "prop_opt_backdated",
-        'name' => "prop_opt_backdated",
-        "value" => 1,
-        'selected' => $opts->{'prop_opt_backdated'},
-        'tabindex' => $self->tabindex
-    });
+    my $help_icon = LJ::help_icon("24hourshelp");
+    my $hide_link = $can_edit_date ? '' : 'style="display: none;"'; 
 
-    my $backdate_help_icon = LJ::help_icon_html("backdate", "", "");
+    if (LJ::is_enabled("delayed_entries")) {
+        $out .= qq{
+            <li id="entrydate" class="pkg entrydate entrydate-date entrydate-delayed">
+        };
 
-    $out .= qq{
-        <p class='pkg'>
-            <label for='modifydate' class='left'>
-                $BML::ML{'entryform.date'}
-            </label>
-            <span id='currentdate' class='float-left'>
-                <span id='currentdate-date'>
-                    $monthlong $mday, $year, $hour:$min
+        if ( $opts->{'mode'} eq "edit" && $can_edit_date ) {
+            if ( $opts->{'delayed'} ) {
+                $out .= qq{
+                    <label class="title entrydate-title-date">$BML::ML{'entryform.postponed.until'}</label>
+                };
+            } else {
+                $out .= qq{
+                    <label class="title entrydate-title-date">$BML::ML{'entryform.date'}</label>
+                };
+            }
+        } else {
+            $out .= qq{
+                <label class="title entrydate-title-post">$BML::ML{'entryform.post'}</label>
+            };
+        }
+
+        $out .= qq{
+            <label class="title entrydate-title-until">$BML::ML{'entryform.postponed.until'}</label>
+        };
+        
+        if ( $opts->{'mode'} eq "edit" && $can_edit_date ) {
+            $out .= qq{
+                <span class="wrap entrydate-wrap-date">
+                    $monthlong, $mday, $year, $hour:$min
+                    <a $hide_link href='javascript:void(0)' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
+                    $help_icon
                 </span>
-                <a href='javascript:void(0)' onclick='editdate();'
-                    id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
+            };
+        } else {
+            $out .= qq{
+                <span class="wrap entrydate-wrap-post">
+                    $BML::ML{'entryform.post.right.now'}
+                    <a $hide_link href='javascript:void(0)' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
+                    $help_icon
+                </span>
+            };
+        }
+        $out .= qq{
+            <span class="wrap entrydate-wrap-until">
+                <span class="wrap-select">$datetimeonly</span>
+                $date_diff_input
+                <span class="wrap-calendar"><a id="currentdate-date" href="#">$monthlong $mday, $year</a><i class='i-calendar'></i></span>
+                <span class='datetime'>
+                    <input type='text' name='hour' value='$hour' class='input-num' /> : <input type='text' value='$min' name='min' class='input-num' />
+                    <?de $BML::ML{'entryform.date.24hournote'} de?>
+                </span>
+                $help_icon
             </span>
-            <span id='modifydate'>$datetime
-                <?de $BML::ML{'entryform.date.24hournote'} de?>
-            <br />
-            $backdate_check
-            <label for='prop_opt_backdated' class='right'>
-                $BML::ML{'entryform.backdated3'}
-            </label>
-            $backdate_help_icon
-            </span><!-- end #modifydate -->
-        </p>
-        <noscript>
-            <p id='time-correct' class='small'>
+            </li>
+            
+            <li>
+            <noscript>
+                <p id='time-correct' class='small'>
                 $BML::ML{'entryform.nojstime.note'}
-            </p>
-        </noscript>
-    };
+                </p>
+            </noscript>
+            </li>
+        };
+    } else {
+        my $backdate_check = LJ::html_check({
+            'type' => "check",
+            'id' => "prop_opt_backdated",
+            'name' => "prop_opt_backdated",
+            "value" => 1,
+            'selected' => $opts->{'prop_opt_backdated'},
+            'tabindex' => $self->tabindex
+        });
 
-    $$onload .= " defaultDate();";
+        my $backdate_help_icon = LJ::help_icon_html("backdate", "", "");
+
+        $out .= qq{
+            <li id="entrydate" class="pkg entrydate entrydate-date">
+                <label for="modifydate" class="title entrydate-title-date">$BML::ML{'entryform.date'}</label>
+                <span id='currentdate' class="wrap entrydate-wrap-date">
+                    <span id='currentdate-date'>
+                    $monthlong $mday, $year, $hour:$min
+                    </span>
+                    <a href='javascript:void(0)' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
+                </span>
+                <span id='modifydate' class="wrap entrydate-wrap-changeit">
+                    $datetime
+                    $date_diff_input
+                    <?de $BML::ML{'entryform.date.24hournote'} de?>
+                    <span class="backdate">
+                        $backdate_check
+                        <label for='prop_opt_backdated'>$BML::ML{'entryform.backdated3'}</label>
+                        $backdate_help_icon
+                    </span>
+                </span>
+            </li>
+            <li>
+            <noscript>
+            $BML::ML{'entryform.nojstime.note'}
+            </noscript>
+            </li>
+        };
+    }
 
     # User Picture
     if ($self->should_show_userpics) {
@@ -552,38 +661,26 @@ sub render_metainfo_block {
         );
 
         my $userpics_help = LJ::help_icon_html("userpics", "", " ");
-        my $userpic_display = $self->altlogin ? 'none' : 'block';
+        my $userpic_display = $self->altlogin ? 'none' : '';
         my $style = "display: $userpic_display;";
 
         $out .= qq{
-            <p id='userpic_select_wrapper' class='pkg' style='$style'>
-                <label for='prop_picture_keyword' class='left'>
+            <li id='userpic_select_wrapper' class='pkg' style='$style'>
+                <label for='prop_picture_keyword' class='title'>
                     $BML::ML{'entryform.userpic'}
                 </label>
-                $pickw_select
-                <a href='javascript:void(0);' id='lj_userpicselect'> </a>
-                $userpics_help
-            </p>
+                <span class='wrap'>
+                    $pickw_select
+                    <a href='javascript:void(0);' id='lj_userpicselect'> </a>
+                    $userpics_help
+                </span>
+            </li>
         };
 
         $$onload .= " insertViewThumbs();" if $self->should_show_userpicselect;
     }
 
-    $out .= "</div>";
-}
-
-sub render_infobox_block {
-    my ($self) = @_;
-
-    my $out = '';
-
-    my $opts = $self->opts;
-
-    $out .= "<div id='infobox'>\n";
-    $out .= LJ::run_hook('entryforminfo', $opts->{'usejournal'}, $opts->{'remote'});
-    $out .= "</div><!-- end #infobox -->\n\n";
-
-    return $out;
+    $out .= "</ul></div>";
 }
 
 sub render_top_block {
@@ -591,9 +688,10 @@ sub render_top_block {
 
     my $out = '';
 
+    $out .= LJ::Widget::Calendar->render();
     $out .= $self->render_userpics_block;
-    $out .= $self->render_metainfo_block;
     $out .= $self->render_infobox_block;
+    $out .= $self->render_metainfo_block;
 
     return $out;
 }
@@ -689,6 +787,21 @@ sub render_htmltools_block {
         </li>
     };
 
+    my $remote = LJ::get_remote();
+    if ($remote and $remote->can_use_ljphoto){
+        $insert_image .= qq{
+        <li class='image-beta'>
+            <a
+                href='javascript:void(0);'
+                onclick='InOb.handleInsertImageBeta();'
+                title='$BML::ML{'ljimage.beta'}'
+            >
+                $BML::ML{'entryform.insert.image2'}
+            </a>
+        </li>
+        };
+    }
+
     my $insert_media = '';
     unless ($LJ::DISABLED{embed_module}) {
         $insert_media = qq{
@@ -740,9 +853,69 @@ sub render_options_block {
 
     my $out = '';
 
-    $out .= "<div id='options' class='pkg'>";
+    $out .= "<ul id='options' class='pkg'>";
 
     my %blocks = (
+        'sticky' => sub {
+            return '' unless LJ::is_enabled("delayed_entries");
+            my $journalu = LJ::load_user($opts->{'usejournal'}) || $remote;
+            my $is_checked = sub {
+                if ($opts->{sticky}) {
+                    return 'checked'
+                }
+
+                if ($opts->{jitemid}) {
+                    my $sticky_entry_id = $journalu->get_sticky_entry_id();
+                    if ( $sticky_entry_id eq $opts->{jitemid} ) {
+                        return 'checked' 
+                    }
+                }   
+            };
+
+            if (!$remote || !$remote->can_manage($journalu)) {
+                return '';
+            }
+
+            my $selected = $is_checked->();
+            my $sticky_check = LJ::html_check({
+                'type' => "check",
+                'class' => 'sticky_type',
+                'value' => 'sticky',
+                'name' => 'sticky_type',
+                'id' => 'sticky_type',
+                'selected' => $selected,
+                $opts->{'prop_opt_preformatted'} || $opts->{'event_format'},
+                'label' => "",
+            });
+
+            my $help = LJ::help_icon_html('sticky_entry');
+            my $sticky_exists = $journalu ? $journalu->has_sticky_entry && !$selected : undef;
+            my $sticky_text = $sticky_exists ? $BML::ML{'entryform.sticky_replace.edit'} :
+                                               $BML::ML{'entryform.sticky.edit'};
+            return qq{$sticky_check <label for='sticky_type' id='sticky_type_label' class='right options'>
+                   $sticky_text
+                </label>$help};
+        },
+         'do_not_add' => sub {
+            return '' unless LJ::is_enabled("delayed_entries");
+
+            my $selected = $opts->{'opt_backdated'} || 0;
+            my $dot_add_check = LJ::html_check({
+                'type' => "check",
+                'class' => 'do_not_add_type',
+                'value' => '1',
+                'name' => 'prop_opt_backdated',
+                'id' => 'do_not_add_type',
+                'selected' => $selected,
+                $opts->{'prop_opt_preformatted'} || $opts->{'event_format'},
+                'label' => "",
+            });
+            my $help = LJ::help_icon_html('backdate');
+            my $added_to_rss_text = $BML::ML{'entryform.do_not_add_rss_friends'};
+            return qq{$dot_add_check <label for='do_not_add_type' class='right options'>
+                   $added_to_rss_text
+                </label>$help};
+        },
         'tags' => sub {
             return if $LJ::DISABLED{'tags'};
 
@@ -766,7 +939,7 @@ sub render_options_block {
             }
 
             return qq{
-                <label for='prop_taglist' class='left options'>
+                <label for='prop_taglist' class='title options'>
                     $BML::ML{'entryform.tags'}
                 </label>
                 $field
@@ -838,7 +1011,7 @@ sub render_options_block {
             });
 
             return qq{
-                <label for='prop_current_moodid' class='left options'>
+                <label for='prop_current_moodid' class='title options'>
                     $BML::ML{'entryform.mood'}
                 </label>
                 $dropdown
@@ -849,7 +1022,7 @@ sub render_options_block {
         'comment_settings' => sub {
             my $out = '';
 
-            $out .= "<label for='comment_settings' class='left options'>" .
+            $out .= "<label for='comment_settings' class='title options'>" .
                 BML::ml('entryform.comment.settings2') . "</label>\n";
 
             my $comment_settings_selected = sub {
@@ -905,7 +1078,7 @@ sub render_options_block {
             });
 
             $out .= qq{
-                <label for='prop_current_location' class='left options'>
+                <label for='prop_current_location' class='title options'>
                     $BML::ML{'entryform.location'}
                 </label>
                 $textbox
@@ -931,7 +1104,7 @@ sub render_options_block {
         'comment_screening' => sub {
             my $out = '';
 
-            $out .= "<label for='prop_opt_screening' class='left options'>" .
+            $out .= "<label for='prop_opt_screening' class='title options'>" .
                 BML::ml('entryform.comment.screening2') . "</label>\n";
 
             my @levels = (
@@ -959,7 +1132,7 @@ sub render_options_block {
         'music' => sub {
             my $out = '';
 
-            $out .= "<label for='prop_current_music' class='left options'>" .
+            $out .= "<label for='prop_current_music' class='title options'>" .
                 BML::ml('entryform.music') . "</label>\n";
 
             $out .= LJ::html_text({
@@ -1010,7 +1183,7 @@ sub render_options_block {
                 explicit => BML::ml('entryform.adultcontent.explicit'),
             );
 
-            $out .= "<label for='prop_adult_content' class='left options'>" .
+            $out .= "<label for='prop_adult_content' class='title options'>" .
                 BML::ml('entryform.adultcontent') . "</label>\n";
 
             $out .= LJ::html_select({
@@ -1034,7 +1207,7 @@ sub render_options_block {
                 "disable" => BML::ml('entryform.give.disable'),
             );
 
-            $out .= "<label for='prop_give_features' class='left options'>" .
+            $out .= "<label for='prop_give_features' class='title options'>" .
                 BML::ml('entryform.give') . "</label>\n";
 
             my $is_enabled;
@@ -1075,38 +1248,6 @@ sub render_options_block {
         'spellcheck' => sub {
             my $out = '';
 
-            # extra submit button so make sure it posts the form when
-            # person presses enter key
-            my %action_map = (
-                'edit' => 'save',
-                'update' => 'update',
-            );
-            if (my $action = $action_map{$opts->{'mode'}}) {
-                $out .= qq{
-                    <input type='submit' name='action:$action'
-                        class='hidden_submit' />
-                    <span id="preview_button_holder"></span>
-                };
-            }
-            my $preview_tabindex = $self->tabindex;
-            my $preview = qq{
-                <input
-                    type='button'
-                    value='$BML::ML{'entryform.preview'}'
-                    onclick='entryPreview(this.form)'
-                    tabindex='$preview_tabindex'
-                />
-            };
-            $preview =~ s/\s+/ /sg; # JS doesn't like newlines in string
-                                    # literals
-
-            unless ($opts->{'disabled_save'}) {
-                $out .= $self->wrap_js(qq{
-                    if (document.getElementById) {
-                        \$('preview_button_holder').innerHTML = "$preview ";
-                    }
-                });
-            }
             if ($LJ::SPELLER && !$opts->{'disabled_save'}) {
                 $out .= LJ::html_submit(
                     'action:spellcheck',
@@ -1114,9 +1255,12 @@ sub render_options_block {
                     { 'tabindex' => $self->tabindex }
                 ) . "&nbsp;";
             }
-
-            return $out;
+            
+            return qq{<label for='sticky_type' class='title options'>
+                $BML::ML{'entryform.spellcheck'}
+                </label> $out};
         },
+        'none' => sub {return qq{};},
     );
 
     my @schema = (
@@ -1124,14 +1268,16 @@ sub render_options_block {
         [ 'mood', 'comment_settings' ],
         [ 'location', 'comment_screening' ],
         [ 'music', 'content_flag' ],
+        [ 'spellcheck', 'do_not_add' ],
+        [ 'none','sticky'],
         'extra',
-        [ 'lastfm_logo', 'spellcheck' ],
+        [ 'lastfm_logo'  ],
     );
 
     unless ($opts->{'disabled_save'}) {
         foreach my $row (@schema) {
             if (ref $row eq 'ARRAY') {
-                $out .= "<p class='pkg'>";
+                $out .= "<li class='pkg'>";
                 
                 my ($l, $r) = @$row;
                 
@@ -1156,7 +1302,7 @@ sub render_options_block {
                             class='inputgroup-right'>$block_right</span>
                     };
                 }
-                $out .= '</p>';
+                $out .= '</li>';
             } elsif ($row eq 'extra') {
                 $out .= LJ::run_hook('add_extra_entryform_fields', {
                     opts => $opts,
@@ -1166,7 +1312,7 @@ sub render_options_block {
         }
     }
 
-    $out .= "</div><!-- end #options -->\n\n";
+    $out .= "</ul>";
 
     return $out;
 }
@@ -1233,34 +1379,6 @@ sub render_security_container_block {
         @secopts
     }, @secs) . "\n";
 
-    # if custom security groups available, show them in a hideable div
-    if ($self->should_show_friendgroups) {
-        my $display = $opts->{'security'} eq "custom" ? "block" : "none";
-
-        my $help_icon = LJ::help_icon("security",
-            "<span id='security-help'>\n", "\n</span>\n");
-        $out .= $help_icon;
-
-        $out .= "<div id='custom_boxes' class='pkg' style='display: $display;'>";
-        $out .= "<ul id='custom_boxes_list'>";
-        foreach my $fg (@{$login_data->{'friendgroups'}}) {
-            $out .= "<li>";
-            $out .= LJ::html_check({
-                'name' => "custom_bit_$fg->{'id'}",
-                'id' => "custom_bit_$fg->{'id'}",
-                'selected' => $opts->{"custom_bit_$fg->{'id'}"} ||
-                    ($opts->{'security_mask'}+0) & (1 << $fg->{'id'}),
-            }) . " ";
-
-            $out .= "<label for='custom_bit_$fg->{'id'}'>" .
-                LJ::ehtml($fg->{'name'}) . "</label>\n";
-
-            $out .= "</li>";
-        }
-        $out .= "</ul>";
-        $out .= "</div><!-- end #custom_boxes -->\n";
-    }
-
     return $out;
 }
 
@@ -1274,27 +1392,74 @@ sub render_submitbar_block {
     my $out = '';
 
     $out .= "<div id='submitbar' class='pkg'>\n\n";
-
     $out .= "<div id='security_container'>\n";
+    $out .= "<div class='security-options'>\n";
     $out .= "<label for='security'>" . BML::ml('entryform.security2') . " </label>\n";
+    
+    # preview button 
+    
+    # extra submit button so make sure it posts the form when
+    # person presses enter key
+    my %action_map = (  'edit' => 'save',
+                        'update' => 'update', );
+    
+    if (my $action = $action_map{$opts->{'mode'}}) {
+        $out .= qq{
+            <input type='submit' name='action:$action'
+            class='hidden_submit' />
+        };
+    }
+    
+    my $preview_tabindex = $self->tabindex;
+    my $preview = qq{
+        <input
+        type="button"
+        value="$BML::ML{'entryform.preview'}"
+        onclick="entryPreview(this.form)"
+        tabindex="$preview_tabindex"
+        />
+    };
 
+    
+    $preview =~ s/\s+/ /sg; # JS doesn't like newlines in string
+    # literals
+        
+    unless ($opts->{'disabled_save'}) {
+        $out .= $self->wrap_js(qq{
+            if (document.getElementById) {
+                setTimeout( function() {
+                    jQuery( '$preview' ).prependTo('#entryform-update-and-edit' );
+                }, 0 );
+            }
+        });
+    }
+
+   
     $out .= $self->render_security_container_block;
     if ($opts->{'mode'} eq "update") {
         my $onclick = "";
         $onclick .= "return sendForm('updateForm');" if ! $LJ::IS_SSL;
-
+        
+        my $help_icon = LJ::help_icon("security",
+            "<span id='security-help'>\n", "\n</span>\n");
+        $out .= $help_icon;
+        
         my $defaultjournal;
         if ($opts->{'usejournal'}) {
             $defaultjournal = $opts->{'usejournal'};
         } elsif ($remote && $opts->{auth_as_remote}) {
             $defaultjournal = $remote->user;
         }
-
+        
+        $out .= qq{ </div> };
+        $out .= qq{ <div class="submit-options"> };
+        $out .= qq{ <span id="entryform-update-and-edit"> };
         if ($defaultjournal) {
             $$onload .= " changeSubmit('$BML::ML{'entryform.update3'}', '$defaultjournal', '$BML::ML{'entryform.update4'}');";
             $$onload .= " changeSecurityOptions('$defaultjournal');";
         }
-
+        $out .= qq{</span>};
+        
         my $disabled = $remote && $remote->is_identity && !$self->usejournal;
 
         $out .= LJ::html_submit(
@@ -1308,11 +1473,16 @@ sub render_submitbar_block {
                 'disabled' => $disabled,
             }
         ) . "&nbsp;\n";
+        
+        $out .= qq{</div>};
+        
     }
-
+    
+    $out .= qq{</div>};
+    
     if ($opts->{'mode'} eq "edit") {
         my $onclick = $LJ::IS_SSL ? '' : 'return true;';
-
+        $out .= qq{ <div id="entryform-update-and-edit" class="submit-options"> };
         $out .= LJ::html_submit(
             'action:save',
             BML::ml('entryform.save'),
@@ -1357,9 +1527,36 @@ sub render_submitbar_block {
                 }
             ) . "\n";
         }
+        $out .= qq{</div>};
     }
 
     $out .= "</div><!-- end #security_container -->\n\n";
+    
+    my $login_data = $self->login_data;
+    # if custom security groups available, show them in a hideable div
+    if ($self->should_show_friendgroups) {
+        my $display = $opts->{'security'} eq "custom" ? "block" : "none";
+
+        $out .= "<div id='custom_boxes' class='pkg' style='display: $display;'>";
+        $out .= "<ul id='custom_boxes_list'>";
+        foreach my $fg (@{$login_data->{'friendgroups'}}) {
+            $out .= "<li>";
+            $out .= LJ::html_check({
+                'name' => "custom_bit_$fg->{'id'}",
+                'id' => "custom_bit_$fg->{'id'}",
+                'selected' => $opts->{"custom_bit_$fg->{'id'}"} ||
+                    ($opts->{'security_mask'}+0) & (1 << $fg->{'id'}),
+            }) . " ";
+
+            $out .= "<label for='custom_bit_$fg->{'id'}'>" .
+                LJ::ehtml($fg->{'name'}) . "</label>\n";
+
+            $out .= "</li>";
+        }
+        $out .= "</ul>";
+        $out .= "</div><!-- end #custom_boxes -->\n";
+    }
+    
     $out .= "</div><!-- end #submitbar -->\n\n";
 
     return $out;
@@ -1402,7 +1599,13 @@ sub render_ljphoto_block {
             $res;
         } @photos ];
 
-    my $photo_sizes = LJ::JSON->to_json ( LJ::Fotki::Photo->get_photo_sizes() );
+    my @photo_sizes = map {
+        my $size = $_;
+        $size->{'text'} = $BML::ML{$_->{'text'}};
+        $size;
+    } @{LJ::Fotki::Photo->get_photo_sizes()};
+
+    my $photo_sizes_json = LJ::JSON->to_json ( \@photo_sizes );
     my $album_list = [];
     my $album_list_json = '';
     my $available_space = '';
@@ -1418,8 +1621,7 @@ sub render_ljphoto_block {
         } @$album_list
     ];
     $album_list_json = LJ::JSON->to_json ( $album_list );
-    my $spaces = LJ::Fotki::UserSpace->get_spaces ( $remote );
-    $available_space = $spaces->[2] || 0;
+    my $available_space = LJ::Fotki::UserSpace->get_available_space();
 
     my $auth_token = LJ::Auth->sessionless_auth_token ($LJ::DOMAIN_WEB."/pics/upload", user => $remote ? $remote->user : undef);
     my $user_groups = LJ::JSON->to_json (LJ::Widget::Fotki::Photo->get_user_groups ($remote));
@@ -1432,7 +1634,7 @@ sub render_ljphoto_block {
     window.ljphotoEnabled = $ljphoto_enabled;
     jQuery('#updateForm').photouploader({
         availableSpace: '$available_space',
-        sizesData: $photo_sizes,
+        sizesData: $photo_sizes_json,
         albumsData: $album_list_json,
         privacyData: $user_groups,
         type: 'upload',
@@ -1450,11 +1652,18 @@ JS
             insertPhotosData: $insert_photos_json,
             type: 'add'
         })
-        .bind('htmlready', function (event, htmlOutput) {
+        .bind('htmlready', function (event) {
+            var html = event.htmlStrings,
+                editor;
+
             if (window.switchedRteOn) {
-                CKEDITOR.instances.draft.insertHtml(htmlOutput);
+                editor = CKEDITOR.instances.draft;
+
+                for (var i = 0, l = html.length; i < l; i++) {
+                    editor.insertElement(new CKEDITOR.dom.element.createFromHtml(html[i], editor.document));
+                }
             } else {
-                jQuery('#draft').val(jQuery('#draft').val() + htmlOutput);
+                jQuery('#draft').val(jQuery('#draft').val() + html.join(' '));
             }
         })
         .photouploader('show');
@@ -1579,6 +1788,8 @@ sub render_body {
             'LJUser_WizardNoticeLink' => 'ljuser.wizardnoticelink',
             'LJLink_WizardNotice' => 'ljlink.wizardnotice',
             'LJLink_WizardNoticeLink' => 'ljlink.wizardnoticelink',
+            'LJImage_title' => 'ljimage',
+            'LJImage_beta_title' => 'ljimage.beta',
             'LJImage_WizardNotice' => 'ljimage.wizardnotice',
             'LJImage_WizardNoticeLink' => 'ljimage.wizardnoticelink',
             'LJCut_WizardNotice' => 'ljcut.wizardnotice',
@@ -1610,6 +1821,7 @@ sub render_body {
         } else {
             $$js .= 'usePlainText();';
         }
+        $$js .= 'initEntryDate();';
         my $ljphoto_enabled = $remote ? $remote->can_upload_photo() : 0;
         $$js .= "window.ljphotoEnabled = $ljphoto_enabled;";
         $$js = $self->wrap_js($$js);

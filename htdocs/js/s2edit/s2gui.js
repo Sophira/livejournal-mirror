@@ -4,6 +4,52 @@
 //   s2gui.js - S2 GUI routines
 // ---------------------------------------------------------------------------
 
+var s2output = function() {
+	var el;
+
+	function parseLineNumbers(text) {
+		var match,
+			regex = /line\s+(\d+),\s+column\s+(\d+)/g,
+			subs = [];
+		while (match = regex.exec(text)) {
+			subs.push({ key: match[0], link: '<a href="javascript:s2jumpTo(' +
+						match[1] + ',' + match[2] + ')">' + match[0] + '</a>'});
+		}
+		subs.forEach(function(el) {
+			text = text.replace(el.key, el.link);
+		});
+
+		return text;
+	}
+
+	return {
+		init: function() {
+			el = jQuery('#out');
+
+			if (!s2settings.turboEnabled()) {
+				return;
+			}
+
+			var text = el.html();
+			if (text.length > 0) {
+				text = parseLineNumbers(text);
+				el.html(text);
+			}
+		},
+
+		add: function(text, overwrite) {
+			overwrite = overwrite || false;
+			text = parseLineNumbers(text);
+
+			if (overwrite) {
+				el.html(text);
+			} else {
+				el.append(text);
+			}
+		}
+	}
+}();
+
 var s2status;
 
 function s2printStatus(str)
@@ -36,7 +82,11 @@ function s2getCodeArea()
 
 function s2getCode()
 {
-	return xGetElementById('main').value;
+	return s2isAceActive() ? aceEditor.getSession().getValue() : xGetElementById('main').value;
+}
+
+function s2isAceActive() {
+	return !jQuery('#main').is(':visible');
 }
 
 function s2setCode(to)
@@ -111,8 +161,29 @@ function s2IETabKeyPressedHandler(e)
 	}
 }
 
+function s2jumpTo(line, column) {
+	if (s2isAceActive()) {
+		aceEditor.gotoLine(line, column - 1);
+		return;
+	}
+
+	var main = s2getCodeArea(),
+		text = main.value,
+		pos = text.split('\n').slice(0, line - 1).join('\n').length + column;
+
+	if (jQuery.browser.msie) { //ie doesn't count linebreaks when positioning cursor
+		pos -= line - 1; 
+	}
+
+	s2jumpToPos(pos, line);
+}
+
 function s2jumpToPos(pos, line)
 {
+	if (s2isAceActive()) {
+		aceEditor.gotoLine(line, 0);
+		return;
+	}
 	var main = s2getCodeArea();
 
 	nxpositionCursor(main, pos);
@@ -331,6 +402,10 @@ function s2resizeOutput(force)
 		main.style.width = "50px";
 		main.style.width = oldwidth;
 	}
+
+	if (window.aceEditor) {
+		aceEditor.resize();
+	}
 }
 
 function s2resizeReference(force)
@@ -358,6 +433,10 @@ function s2resizeReference(force)
 	divider.style.left = (rWidth + 204 - 174) + 'px';
 	output.style.left = (rWidth + 204 - 174) + 'px';
 	xGetElementById('outputtabs').style.left = (rWidth + 204 - 174) + 'px';
+
+	if (window.aceEditor) {
+		aceEditor.resize();
+	}
 }
 
 function s2processDrag(e)
@@ -464,5 +543,12 @@ function s2submit()
 {
 	// save position textarea, where reload page
 	var textarea = s2getCodeArea();
-	window.name = textarea.scrollTop + ':' + nxgetPositionCursor(textarea);
+	if (s2isAceActive()) {
+		textarea.value = aceEditor.getSession().getValue();
+	}
+
+	if (s2settings.turboEnabled()) {
+		s2edit.save(textarea.value);
+		return false;
+	}
 }

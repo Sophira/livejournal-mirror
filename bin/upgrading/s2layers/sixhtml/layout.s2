@@ -886,11 +886,13 @@ function ReplyPage::print_body
         return;
     }
 
-    var Image security;
+    var string security = "";
     if ($.replyto isa Entry) {
         var Entry en = $.replyto as Entry;
 
-        $security = $en.security_icon;
+        if ($en.delayed) { $security = $security + "$en.delayed_icon "; }
+        if ($en.sticky) { $security = $security + "$en.sticky_icon "; }
+        if ($en.security) { $security = $security + "$en.security_icon "; }
     }
 
     "<table><tr valign='middle'>";
@@ -1018,9 +1020,7 @@ function CommentInfo::print_postlink() {
 }
 
 function EntryPage::print_comments (Comment[] cs) {
-    var Page p = get_page();
     if (size $cs == 0) { return; }
-
     foreach var Comment c ($cs) {
         $this->print_comment($c);
         $this->print_comments($c.replies);
@@ -1051,19 +1051,18 @@ function EntryPage::print_comment(Comment c) {
     $c->print_reply_container();
 }
 
-function EntryPage::print_comment_partial(Comment e) {
-     var Page p = get_page();
-     var string sep = "<span class='separator'>|</span>";
-     "<div class='comment collapsed-comment'>\n";
-     "<div class='comment-footer'>";
-     var string subject = $e.subject;
-     if ($subject == "") { $subject = $*text_nosubject; }
-     "<a href='$e.permalink_url' class='collapsed-comment-link'>$subject</a> <span class='separator'>-</span> ";
-     print safe lang_posted_by($e.poster, $e.poster); " <span class='separator'>-</span> ";
-     print lang_posted_date_and_time($e, $e.time, true, true);
-     $e->print_expand_collapse_links({ "expand"=>" $sep %_", "collapse"=>" $sep %_"});
-     "</div>";
-     "</div>";
+function EntryPage::print_comment_partial (Comment c) {
+    var string sep1 = "<span class='separator'>|</span>";
+    """<div class="comment collapsed-comment">
+        <div class="comment-footer">""";
+    var string subj = $c.subject != "" ? $c.subject : """<em class="nosubject">$*text_nosubject</em>""";
+    var string sep = """<span class="separator">-</span>""";
+    """<a href="$c.permalink_url" class="collapsed-comment-link">$subj</a> $sep """;
+    print safe lang_posted_by($c.poster, $c.poster);
+    """ $sep """;
+    print lang_posted_date_and_time($c, $c.time, true, true);
+    $c->print_expand_collapse_links({ "expand"=>" $sep1 %_", "collapse"=>" $sep1 %_"});
+    """</div></div>""";
 }
 
 function EntryPage::print_comment_full(Comment e) {
@@ -1181,8 +1180,12 @@ function Page::print_entry(Entry e) {
       }
 
       "<h3 class='entry-header'>";
-      if (defined $e.security_icon) {
-          print "<span class='lj-entry-securityicon'>$e.security_icon</span> ";
+      if (defined $e.security_icon or $e.sticky or $e.delayed) {
+          "<span class='lj-entry-securityicon'>";
+          if ($e.delayed) { "$e.delayed_icon "; }
+          if ($e.sticky) { " $e.sticky_icon "; }
+          if ($e.security) { " $e.security_icon"; }
+          "</span> ";
       }
       if ($.view != "entry") {
         print $e->formatted_subject({"class"=>"subj-link"});

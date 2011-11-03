@@ -185,6 +185,33 @@ sub as_alert {
         });
 }
 
+sub as_push {
+    my $self = shift;
+    my $u = shift;
+    my %args = @_;
+
+    my $message ;
+    if($args{from}) {
+        $message = LJ::Lang::get_text($u->prop('browselang'), 'esn.push.notification.usermessagerecvd.from', 1, { user => $u->{user}});
+    } else {
+        $message = LJ::Lang::get_text($u->prop('browselang'), 'esn.push.notification.usermessagerecvd');
+    }
+
+    return $message;
+}
+
+sub as_push_title {
+    my $self = shift;
+    my $u = shift;
+    my %args = @_;
+
+    my $message = LJ::Lang::get_text($u->prop('browselang'), 'esn.push.notification.usermessagerecvd.title');
+
+    return $message;
+}
+
+
+
 sub subscription_as_html {
     my ($class, $subscr) = @_;
     my $journal = $subscr->journal or croak "No user";

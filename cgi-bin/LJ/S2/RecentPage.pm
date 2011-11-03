@@ -1,6 +1,7 @@
 use strict;
 package LJ::S2;
 
+use LJ::DelayedEntry;
 use LJ::UserApps;
 
 sub RecentPage
@@ -50,7 +51,7 @@ sub RecentPage
         $opts->{'badargs'} = 1;
         return 1;
     }
-
+    
     my $itemshow = S2::get_property_value($opts->{'ctx'}, "page_recent_items")+0;
     if ($itemshow < 1) { $itemshow = 20; }
     elsif ($itemshow > 50 && !$LJ::S2_TRUSTED{ $u->{'userid'} } ) { $itemshow = 50; }
@@ -70,6 +71,37 @@ sub RecentPage
         $viewsome = $viewall || LJ::check_priv($remote, 'canview', 'suspended');
     }
 
+    my $delayed_entries;
+    
+    # calculate recent entries count
+    my $has_sticky = $u->has_sticky_entry;
+    my $delayed_entries_count = 0;
+    my $usual_skip = $skip;     
+
+    if (LJ::is_enabled("delayed_entries")) {
+        $delayed_entries_count = LJ::DelayedEntry->get_entries_count($u);
+        $usual_skip -= $delayed_entries_count;
+
+        if ($usual_skip < 0 ) {
+            $usual_skip = $skip ? $has_sticky : 0;
+        }
+
+        if (!$skip) {
+            $delayed_entries = LJ::DelayedEntry->get_entries_by_journal($u, $skip, $itemshow - $has_sticky);
+        } elsif ( $skip) {
+            $delayed_entries = LJ::DelayedEntry->get_entries_by_journal($u, $skip - $has_sticky, $itemshow);
+        }
+    }
+
+
+    if (!$delayed_entries) {
+        $delayed_entries = [];
+    }
+
+    my $itemshow_usual = $itemshow - scalar(@$delayed_entries);
+    if ( $itemshow_usual < 0 ) {
+        $itemshow_usual = 0;
+    }
 
     ## load the itemids
     my @itemids;
@@ -81,8 +113,8 @@ sub RecentPage
         'viewsome' => $viewsome,
         'userid' => $u->{'userid'},
         'remote' => $remote,
-        'itemshow' => $itemshow + 1,
-        'skip' => $skip,
+        'itemshow' => $itemshow_usual + 1,
+        'skip' => $usual_skip,
         'tagids' => $opts->{tagids},
         'tagmode' => $opts->{tagmode},
         'security' => $opts->{'securityfilter'},
@@ -92,10 +124,18 @@ sub RecentPage
             ? "logtime" : "",
         'err' => \$err,
         'poster'  => $get->{'poster'} || '',
-    });
-
-    my $is_prev_exist = scalar @items - $itemshow > 0 ? 1 : 0;
-    pop @items if $is_prev_exist;
+        'show_sticky_on_top' => 1,
+    }) if ($itemshow_usual >= 0) ;
+    
+    my $is_prev_exist = scalar @items + scalar(@$delayed_entries) - $itemshow > 0 ? 1 : 0;
+    if ($is_prev_exist) {
+        if ( scalar(@$delayed_entries) > $itemshow ) {
+            pop @$delayed_entries;
+        }
+        if ( scalar(@items) + scalar(@$delayed_entries) > $itemshow ) {        
+            pop @items;
+        } 
+    }
 
     die $err if $err;
 
@@ -126,7 +166,14 @@ sub RecentPage
     my $tags = LJ::Tags::get_logtagsmulti($idsbyc);
 
     my $userlite_journal = UserLite($u);
+    my $sticky_appended = !$u->has_sticky_entry() || $skip;
 
+    if ( scalar(@$delayed_entries) > 0 && 
+        ( ( $skip && $u->has_sticky_entry() ) || 
+         !$u->has_sticky_entry()) ) {
+        __append_delayed( $u, $delayed_entries,  $p->{'entries'} );
+    }
+  
   ENTRY:
     foreach my $item (@items)
     {
@@ -135,7 +182,13 @@ sub RecentPage
 
         my $ditemid = $itemid * 256 + $item->{'anum'};
         my $entry_obj = LJ::Entry->new($u, ditemid => $ditemid);
-
+        
+        # append delayed entries
+        if ( $entry_obj->is_sticky() && $sticky_appended ) {
+            __append_delayed( $u, $delayed_entries,  $p->{'entries'});
+            $sticky_appended = 1;
+        }
+        
         next ENTRY unless $entry_obj->visible_to($remote, {'viewall' => $viewall, 'viewsome' => $viewsome});
 
         $entry_obj->handle_prefetched_props($logprops{$itemid});
@@ -247,9 +300,16 @@ sub RecentPage
             'userpic' => $userpic,
             'permalink_url' => $permalink,
         });
-
+        
         push @{$p->{'entries'}}, $entry;
         LJ::run_hook('notify_event_displayed', $entry_obj);
+
+        # append delayed entries
+        if ( !$sticky_appended) {
+            __append_delayed( $u, $delayed_entries,  $p->{'entries'});
+            $sticky_appended = 1;
+        }
+        
     } # end huge while loop
 
     # mark last entry as closing.
@@ -262,17 +322,17 @@ sub RecentPage
         'skip' => $skip,
         'count' => $itemnum,
     };
-
+ 
     # if we've skipped down, then we can skip back up
     if ($skip) {
         my $newskip = $skip - $itemshow;
         $newskip = 0 if $newskip <= 0;
         $nav->{'forward_skip'} = $newskip;
-        $nav->{'forward_url'} = LJ::make_link("$p->{base_url}/", {
+        $nav->{'forward_url'} = LJ::make_link("$p->{base_url}/", { 
             skip     => ($newskip                   || ""),
             tag      => (LJ::eurl($get->{tag})      || ""),
             security => (LJ::eurl($get->{security}) || ""),
-            mode     => (LJ::eurl($get->{mode})     || ""),
+            mode     => (LJ::eurl($get->{mode})     || ""), 
             poster   => (LJ::eurl($get->{'poster'}) || ""),
         });
         $nav->{'forward_count'} = $itemshow;
@@ -281,7 +341,7 @@ sub RecentPage
     # unless we didn't even load as many as we were expecting on this
     # page, then there are more (unless there are exactly the number shown
     # on the page, but who cares about that)
-    unless (scalar(@items) != $itemshow) {
+    unless (scalar(@items) + scalar(@$delayed_entries) != $itemshow) {
         $nav->{'backward_count'} = $itemshow;
         if ($skip == $maxskip) {
             my $date_slashes = $lastdate;  # "yyyy mm dd";
@@ -289,11 +349,11 @@ sub RecentPage
             $nav->{'backward_url'} = "$p->{'base_url'}/$date_slashes";
         } elsif ($is_prev_exist) {
             my $newskip = $skip + $itemshow;
-            $nav->{'backward_url'} = LJ::make_link("$p->{'base_url'}/", {
+            $nav->{'backward_url'} = LJ::make_link("$p->{'base_url'}/", { 
                 skip     => ($newskip                   || ""),
                 tag      => (LJ::eurl($get->{tag})      || ""),
                 security => (LJ::eurl($get->{security}) || ""),
-                mode     => (LJ::eurl($get->{mode})     || ""),
+                mode     => (LJ::eurl($get->{mode})     || ""), 
                 poster   => (LJ::eurl($get->{'poster'}) || ""),
             });
             $nav->{'backward_skip'} = $newskip;
@@ -304,4 +364,67 @@ sub RecentPage
     return $p;
 }
 
+sub __append_delayed {
+    my ( $u, $delayed, $entries) = @_;
+    
+    foreach my $delayedid  (@$delayed) {
+        my $delayed_entry = LJ::DelayedEntry->get_entry_by_id(  $u, 
+                                                                $delayedid, 
+                                                                { dateformat => 'S2' } );
+        my $permalink = $delayed_entry->url;
+        my $readurl = $permalink;
+        my $posturl = $permalink;
+        
+        my $comments = CommentInfo({
+            'read_url' => $readurl,
+            'post_url' => $posturl,
+            'count' => 0,
+            'maxcomments' => 0,
+            'maxcomments' => 0,
+            'enabled' => $delayed_entry->comments_shown,
+            'locked' => !$delayed_entry->posting_comments_allowed,
+            'maxcomments' => 0,
+            'enabled' => $delayed_entry->comments_shown,
+            'locked' => !$delayed_entry->posting_comments_allowed,
+            'screened' => 0,
+            'show_readlink' => 0,
+            'show_postlink' => 0,
+        });
+        
+        my $entry_tags =  $delayed_entry->get_tags;
+        $entry_tags = $entry_tags->{$delayed_entry->delayedid} if $entry_tags;
+        
+        my @tags = (); 
+        if ($entry_tags) {
+            my @keys = keys %$entry_tags;
+            foreach my $key (@keys) {
+                push @tags, Tag($delayed_entry->journal, $key => $entry_tags->{$key});
+            }
+        }
+        
+        my $entry = Entry($delayed_entry->journal, {
+            'subject' => $delayed_entry->subject,
+            'text' =>  $delayed_entry->event,
+            'dateparts' => $delayed_entry->alldatepart,
+            'system_dateparts' => $delayed_entry->system_alldatepart,
+            'security' => $delayed_entry->security || 0,
+            'allowmask' => $delayed_entry->allowmask || 0,
+            'journal' => UserLite($delayed_entry->journal),
+            'poster' => UserLite($delayed_entry->poster),
+            'comments' => $comments,
+            'new_day' => 1,
+            'end_day' => 0,   # if true, set later
+            'tags' => \@tags,
+            'userpic' => $delayed_entry->userpic,
+            'permalink_url' => "d$delayedid.html",
+            'sticky' => $delayed_entry->is_sticky,
+            'delayedid' => $delayed_entry->delayedid,
+        });
+        
+        push @$entries, $entry;
+    }
+}
+
+
 1;
+

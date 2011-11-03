@@ -116,6 +116,9 @@ sub set_error {
 
 sub get_lang {
     my $code = shift;
+
+    return unless defined $code;
+
     load_lang_struct() unless $LS_CACHED;
     return $LN_CODE{$code};
 }
@@ -388,7 +391,7 @@ sub set_text {
         undef, $lnid, $dmid, $itid, );
 
     if ( defined $text ) {
-        my $userid = $opts->{'userid'} + 0;
+        my $userid = int( $opts->{'userid'} || 0 );
 
         # Strip bad characters
         $text =~ s/\r//;
@@ -418,7 +421,7 @@ sub set_text {
     }
 
     my $revid     = LJ::alloc_global_counter("ml_latest_updates_counter");
-    my $staleness = int $opts->{'staleness'};
+    my $staleness = int( $opts->{'staleness'} || 0 );
     $dbh->do(
         qq{
             REPLACE INTO ml_latest
@@ -680,12 +683,12 @@ sub get_text {
 sub get_text_multi {
     my ( $lang, $dmid, $codes ) = @_;
 
+    $lang ||= $LJ::DEFAULT_LANG;
     return {} unless $codes;
     return { map { $_ => $_ } @$codes }
         if $lang eq 'debug';
 
     $dmid = int( $dmid || 1 );
-    $lang ||= $LJ::DEFAULT_LANG;
     load_lang_struct() unless $LS_CACHED;
 
     ## %strings: code --> text
@@ -838,7 +841,7 @@ sub resolve_plural {
     my $count       = $vars->{$varname};
     my @wlist       = split( /\|/, $wordlist );
     my $plural_form = plural_form( $lang, $count );
-    return $wlist[$plural_form];
+    return ( exists $wlist[$plural_form] ? $wlist[$plural_form] : '' );
 }
 
 my %PLURAL_FORMS_HANDLERS = (
@@ -886,7 +889,8 @@ sub plural_form_fr {
 # Croatian, Czech, Russian, Slovak, Ukrainian, Belarusian
 sub plural_form_ru {
     my ($count) = @_;
-
+    $count = 0 unless defined $count;
+ 
     return 0 if ( $count % 10 == 1 && $count % 100 != 11 );
     return 1
         if ( $count % 10 >= 2 && $count % 10 <= 4 )

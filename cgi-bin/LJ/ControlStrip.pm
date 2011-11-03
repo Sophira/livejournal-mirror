@@ -348,7 +348,18 @@ sub render
         my $is_ssl = $LJ::IS_SSL = LJ::run_hook("ssl_check");
         my $proto = $is_ssl ? "https://" : "http://";
         my $url = LJ::eurl ($proto.$hostname.$uri.$args_wq);
-        $mobile_link = LJ::Lang::ml('link.mobile', { href => "href='http://m.livejournal.com/redirect?from=$url'" });
+        $mobile_link = LJ::Lang::ml('link.mobile', { href => "href='http://m.$LJ::DOMAIN/redirect?from=$url'" });
+    }
+    
+    my $daycounts = LJ::get_daycounts($journal, $remote);
+    if (@$daycounts) {
+        my @early_date = @{$daycounts->[0]};
+        my @last_date = @{$daycounts->[-1]};
+        pop @early_date;
+        pop @last_date;
+    
+        $tmpl->param( 'EARLY_DATE' => join(',', @early_date),
+                      'LAST_DATE'  => join(',', @last_date));
     }
 
     $tmpl->param(flatten($data), link_mobile => $mobile_link );

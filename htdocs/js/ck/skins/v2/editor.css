@@ -79,6 +79,9 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
 .cke_skin_v2 span.cke_browser_gecko18 {
 	display:block;
 	}
+.cke_skin_v2 span.cke_browser_webkit {
+	outline: none;
+	}
 .cke_skin_v2 .cke_browser_opera .cke_editor {
 	display:table;
 	}
@@ -106,8 +109,8 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
 	margin-right:4px;
 	display:block;
 	float:right;
-	background-image:url(images/sprites.png);
-	_background-image:url(images/sprites_ie6.png);
+	background-image: url(images/sprites.png?v=19384);
+	_background-image: url(images/sprites_ie6.png?v=19384);
 	background-position:0 -801px;
 	background-repeat:no-repeat;
 	cursor:se-resize;
@@ -316,8 +319,8 @@ li.cke_panel_listItem {
 	}
 .cke_skin_v2 a.cke_toolbox_collapser,
 .cke_skin_v2 a:hover.cke_toolbox_collapser {
-	background-image:url(images/sprites.png);
-	_background-image:url(images/sprites_ie6.png);
+	background-image: url(images/sprites.png?v=19384);
+	_background-image: url(images/sprites_ie6.png?v=19384);
 	background-position:3px -739px;
 	background-repeat:no-repeat;
 	width:11px;
@@ -342,8 +345,8 @@ li.cke_panel_listItem {
 	}
 .cke_skin_v2 a.cke_toolbox_collapser_min,
 .cke_skin_v2 a:hover.cke_toolbox_collapser_min {
-	background-image:url(images/sprites.png);
-	_background-image:url(images/sprites_ie6.png);
+	background-image: url(images/sprites.png?v=19384);
+	_background-image: url(images/sprites_ie6.png?v=19384);
 	background-position:4px -760px;
 	background-repeat:no-repeat;
 	margin:2px;
@@ -500,7 +503,7 @@ li.cke_panel_listItem {
 	border-width:3px;
 	}
 .cke_skin_v2 .cke_button .cke_icon {
-	background-image:url(icons-new.png);
+	background-image: url(icons-new.png?v=14527);
 	background-repeat:no-repeat;
 	margin-top:1px;
 	width:16px;
@@ -509,7 +512,7 @@ li.cke_panel_listItem {
 	cursor:default;
 	}
 .cke_skin_v2 .cke_rtl .cke_button .cke_icon {
-	background-image:url(icons_rtl.png);
+	background-image: url(icons_rtl.png?v=19384);
 	}
 .cke_skin_v2 .cke_browser_ie .cke_button .cke_icon {
 	filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(sizingMethod='scale');
@@ -548,15 +551,15 @@ li.cke_panel_listItem {
 	height:17px;
 	width:8px;
 	background-position:2px -717px;
-	background-image:url(images/sprites.png);
-	_background-image:url(images/sprites_ie6.png);
+	background-image: url(images/sprites.png?v=19384);
+	_background-image: url(images/sprites_ie6.png?v=19384);
 	background-repeat:no-repeat;
 	cursor:default;
 	}
 .cke_skin_v2 .cke_rtl .cke_button .cke_buttonarrow {
 	background-position:0 -717px;
-	background-image:url(images/sprites.png);
-	_background-image:url(images/sprites_ie6.png);
+	background-image: url(images/sprites.png?v=19384);
+	_background-image: url(images/sprites_ie6.png?v=19384);
 	}
 .cke_skin_v2 .cke_browser_gecko18 .cke_toolbar,
 .cke_skin_v2 .cke_browser_gecko18 .cke_button a,
@@ -637,7 +640,7 @@ li.cke_panel_listItem {
 	border:2px solid;
 	}
 .cke_skin_v2 .cke_menuitem .cke_icon {
-	background-image:url(icons.png);
+	background-image: url(icons.png?v=19424);
 	background-position:100px;
 	background-repeat:no-repeat;
 	background-color:transparent;
@@ -646,7 +649,7 @@ li.cke_panel_listItem {
 	float:left;
 	}
 .cke_rtl .cke_skin_v2 .cke_menuitem .cke_icon {
-	background-image:url(icons_rtl.png);
+	background-image: url(icons_rtl.png?v=19384);
 	}
 .cke_browser_ie .cke_skin_v2 .cke_menuitem .cke_icon {
 	filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(sizingMethod='scale');
@@ -743,8 +746,8 @@ li.cke_panel_listItem {
 	_font-size:0;
 	}
 .cke_skin_v2 .cke_menuarrow {
-	background-image:url(images/sprites.png);
-	_background-image:url(images/sprites_ie6.png);
+	background-image: url(images/sprites.png?v=19384);
+	_background-image: url(images/sprites_ie6.png?v=19384);
 	background-position:0 -784px;
 	background-repeat:no-repeat;
 	height:5px;
@@ -875,8 +878,8 @@ li.cke_panel_listItem {
 .cke_skin_v2 .cke_rcombo .cke_openbutton .cke_icon {
 	display:inline-block;
 	background-position: 4px -718px;
-	background-image:url(images/sprites.png);
-	_background-image:url(images/sprites_ie6.png);
+	background-image: url(images/sprites.png?v=19384);
+	_background-image: url(images/sprites_ie6.png?v=19384);
 	background-repeat:no-repeat;
 	width: 14px;
 	height: 15px;
@@ -1275,6 +1278,16 @@ li.cke_panel_listItem {
 	display:inline;
 	display:inline-block;
 	}
+.cke_skin_v2 .cke_button_LJJustifyLeft .cke_icon {
+	background-position:0 -216px;
+	}
+.cke_skin_v2 .cke_button_LJJustifyCenter .cke_icon {
+	background-position:0 -232px;
+	}
+.cke_skin_v2 .cke_button_LJJustifyRight .cke_icon {
+	background-position:0 -248px;
+	}
+
 .cke_skin_v2 .cke_styles_panel {
 	width:150px;
 	height:170px;
@@ -1308,13 +1321,17 @@ li.cke_panel_listItem {
 .cke_skin_v2 .cke_button_LJPollLink .cke_icon,
 .cke_skin_v2 .cke_button_LJCut .cke_icon,
 .cke_skin_v2 .cke_button_LJLike .cke_icon {
-	background: url(icons-new.png?v=1) no-repeat 0 0;
+	background: url(icons-new.png?v=2) no-repeat 0 0;
 	}
 .cke_skin_v2 .cke_button_LJUserLink .cke_icon {
 	background-position: 0 -95px;
 	}
-.cke_skin_v2 .cke_button_LJImage .cke_icon {
+.cke_skin_v2 .cke_button_image .cke_icon {
 	background-position: 0 -125px;
+	}
+.cke_skin_v2 .cke_button_LJImage_beta .cke_icon {
+	width: 18px;
+	background-position: 0 -309px;
 	}
 .cke_skin_v2 .cke_button_LJLink .cke_icon {
 	background-position: 0 -79px;

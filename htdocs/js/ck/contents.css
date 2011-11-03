@@ -5,12 +5,10 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
 @namespace lj "livejournal";
 
 BODY {
-	position: relative; /* Font */
-	font-family: Arial, Verdana, sans-serif;
-	font-size: 12px; /* Text color */
-	color: #222; /* Remove the background color to make it transparent */
-	background-color: #fff;
-}
+	position: relative;
+	font: 13px/18px 'Arial', sans-serif;
+	color: #222;
+	}
 
 ol, ul, dl {
 /* IE7: reset rtl list margin. (#7334) */
@@ -51,14 +49,6 @@ lj|wishlist {
 	background: url(/img/widget/wishlist/bag_212x212.png?v=1) no-repeat 0 0;
 }
 
-lj|wishlist {
-	display: block;
-	width: 212px;
-	height: 212px;
-	border: 1px solid #d2d2d2;
-	background: url(/img/widget/wishlist/bag_212x212.png?v=1) no-repeat 0 0;
-}
-
 lj\:raw {
 	border: #000000 1px dotted;
 	display:block;
@@ -68,13 +58,6 @@ lj|raw {
 	display: block;
 }
 
-lj\:cut {
-	display: block;
-	border: #000 1px dotted;
-	background-color: #d2d2d2;
-	min-height: 14px;
-}
-
 lj|cut {
 	display: block;
 	border: #000 1px dotted;
@@ -82,29 +65,20 @@ lj|cut {
 	min-height: 14px;
 }
 
-.lj-map P {
-	position: relative;
-	top: 40%;
-	display: inline-block;
-	padding: 5px 15px;
-	margin: 0;
-	background: #FFF;
-	border: 1px solid #FF0000;
-	text-align: center;
-	text-transform: uppercase;
-	line-height: 12px;
-	font-size: 12px;
-	color: #FF0000;
+lj\:cut {
+	display: block;
+	border: #000 1px dotted;
+	background-color: #d2d2d2;
+	min-height: 14px;
 }
 
 /* fix inline behavior, for no IE */
-lj\:cut ul,
-lj\:cut ol {
+.lj|cut ul, .lj|cut ol {
 	background-color: #d2d2d2;
 	border: #000 1px dotted;
 }
-lj|cut ul,
-lj|cut ol {
+
+.lj\:cut ul, .lj\:cut ol {
 	background-color: #d2d2d2;
 	border: #000 1px dotted;
 }
@@ -121,18 +95,6 @@ lj|cut ol {
 	height: 8px;
 }
 
-.ljembed {
-	background-color: #CCCCCC;
-	border: 1px solid #CCCCCC;
-}
-
-form.ljpoll {
-	display: block;
-	border: #000 1px dotted;
-	background-color: #d2d2d2;
-	font-style: italic;
-}
-
 /* Note popup */
 .note {
 	position: fixed;
@@ -143,67 +105,62 @@ form.ljpoll {
 	border: 1px solid #FFCC33;
 	color: #000;
 	display: block;
-}
-
-.note A {
-	color: #555;
-	cursor: pointer;
-}
+	}
+	.note A {
+		color: #555;
+		cursor: pointer;
+		}
 
 /* LJ Like buttons */
-.lj-like {
-	overflow: hidden;
-	padding: 13px 20px;
-	margin-top: 20px;
-	background: #D2D2D2;
-	border: 1px dotted #000;
-}
-
-.lj-like .lj-like-item {
+.lj-like-wrapper {
 	display: inline-block;
-	margin-right: 15px;
-	background: url(/js/ck/images/lj-like-buttons.png) no-repeat;
-	vertical-align: middle;
-	font-size: 0;
-	cursor: pointer;
-}
-
-.lj-like .fb {
-	width: 93px;
-	height: 20px;
-	background-position: 0 0;
-}
-
-.lj-like .tw {
-	width: 55px;
-	height: 20px;
-	background-position: 0 -46px;
-}
-
-.lj-like .go {
-	width: 32px;
-	height: 20px;
-	background-position: 0 -90px;
-}
-
-.lj-like .vk {
-	width: 40px;
-	height: 22px;
-	background-position: 0 -67px;
-}
-
-.lj-like .lj {
-	width: 67px;
-	height: 24px;
-	background-position: 0 -21px;
-}
-
+	padding: 10px;
+	}
+	.lj-like-item {
+		display: inline-block;
+		margin-right: 15px;
+		background: url(/js/ck/images/lj-like-buttons.png) no-repeat;
+		vertical-align: middle;
+		font-size: 0;
+		cursor: pointer;
+		}
+	.fb {
+		width: 93px;
+		height: 20px;
+		background-position: 0 0;
+		}
+	.tw {
+		width: 55px;
+		height: 20px;
+		background-position: 0 -46px;
+		}
+	.go {
+		width: 32px;
+		height: 20px;
+		background-position: 0 -90px;
+		}
+	.vk {
+		width: 40px;
+		height: 22px;
+		background-position: 0 -67px;
+		}
+	.lj {
+		width: 67px;
+		height: 24px;
+		background-position: 0 -21px;
+		}
 /* LJ map */
-.lj-map {
-	overflow: hidden;
-	min-height: 13px;
-	padding: 13px 20px;
-	margin-top: 20px;
-	background: #D2D2D2;
-	border: 1px dotted #000;
-}
+.lj-map, .lj-iframe {
+	position: relative;
+	top: 45%;
+	display: inline-block;
+	padding: 5px 15px;
+	margin: 0;
+	background: #FFF;
+	border: 1px solid #FF0000;
+	text-align: center;
+	text-transform: uppercase;
+	line-height: 12px;
+	font-size: 12px;
+	color: #FF0000;
+	}
