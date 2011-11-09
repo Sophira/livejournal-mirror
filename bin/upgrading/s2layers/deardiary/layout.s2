@@ -1278,12 +1278,13 @@ function ReplyPage::print_body() {
 
 function EntryPage::print_comments (Comment[] cs) {
     if (size $cs == 0) { return; }
-    """<ul class="comments">""";
+    """<ul class="comments">\n""";
     foreach var Comment c ($cs) {
-        """<li>""";
+        var int indent = ($c.depth - 1) * 25;
+        print "<li>";
         $this->print_comment($c);
         $this->print_comments($c.replies);
-        """</li>""";
+        println "</li>";
     }
     """</ul>""";
 }
