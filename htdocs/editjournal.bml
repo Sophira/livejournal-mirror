@@ -147,7 +147,7 @@ body<=
         my $delayed_prev = $opts{'delayed_prev'};
         my $delayed_next = $opts{'delayed_next'};
 
-        if ($opts{'prev'} || $opts{'next'}) {
+        if ($opts{'prev'} || $opts{'next'} || !$opts{'first_page'}) {
         $ret .= "<p class='i-qotd-nav'>";
         if ($opts{'prev'} || !$opts{'first_page'}) {
             $ret .=  "<a class='i-qotd-nav-prev' href='$LJ::SITEROOT/editjournal.bml$getextra" .
@@ -263,7 +263,7 @@ body<=
         }
         $ret .= "</ul>" if @res;
 
-        if ($opts{'prev'} || $opts{'next'}) {
+        if ($opts{'prev'} || $opts{'next'} || !$opts{'first_page'}) {
         $ret .= "<p class='i-qotd-nav'>";
         if ($opts{'prev'} || !$opts{'first_page'}) {
             $ret .=  "<a class='i-qotd-nav-prev' href='$LJ::SITEROOT/editjournal.bml$getextra" .
@@ -842,16 +842,20 @@ JS_INIT
         
         ##
         $only_me_checked = 1 unless $remote->can_manage ($usejournal_u);
-        my $order = $usejournal_u->{'journaltype'} eq "C" || $usejournal_u->{'journaltype'} eq "Y";  # community or syndicated
+        my $order = 0;
+        if ($usejournal_u) {
+             $order = $usejournal_u->is_syndicated || $usejournal_u->is_community;  # community or syndicated
+        }
 
         my $delayed_entries;
 
         # calculate recent entries count
-        my $has_sticky = $usejournal_u->has_sticky_entry;
         my $delayed_entries_count = 0;
         my $usual_skip = $skip;
 
-        if (LJ::is_enabled("delayed_entries")) {
+        if (LJ::is_enabled("delayed_entries") && $usejournal_u) {
+            my $has_sticky = $usejournal_u->has_sticky_entry;
+
             $delayed_entries_count = LJ::DelayedEntry->get_entries_count($usejournal_u);
             $usual_skip -= $delayed_entries_count;
 
@@ -863,7 +867,7 @@ JS_INIT
                 $delayed_entries = LJ::DelayedEntry->get_entries_by_journal($usejournal_u, 
                                                                             $skip, 
                                                                             $items_per_page - $has_sticky);
-            } elsif ( $skip) {
+            } elsif ($skip) {
                 $delayed_entries = LJ::DelayedEntry->get_entries_by_journal($usejournal_u, 
                                                                             $skip - $has_sticky, 
                                                                             $items_per_page);
@@ -908,11 +912,10 @@ JS_INIT
                 }
             }
 
-            warn "delayed entries count: $delayed_entries_count";
-
             if ($delayed_entries_count > 0) {
-                warn "recent update\n";
                 @recent_entries = $append_delayed->($usejournal_u, \@recent, $delayed_entries);
+            } else {
+                @recent_entries = @recent;
             }
 
         }
@@ -920,7 +923,7 @@ JS_INIT
         $ret .= $entry_chooser->(\@recent_entries,
                                 first_page => $skip > 0 ? 0 : 1,
                                 prev => $skip > $items_per_page ? $skip - $items_per_page : 0, 
-                                next => $have_next_page ? $skip + $items_per_page : 0
+                                next => $have_next_page         ? $skip + $items_per_page : 0
         );
 
         my $ad = LJ::get_ads({ location => 'bml.editjournal', ljadwrapper => 1 });

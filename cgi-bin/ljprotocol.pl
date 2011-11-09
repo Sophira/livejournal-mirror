@@ -2151,8 +2151,8 @@ sub postevent {
     }
 
     if ( $req->{ver} > 1  && LJ::is_enabled("delayed_entries") ) {
-        my $use_delayed = $req->{'custom_time'} ||
-                    !(exists $flags->{'use_custom_time'});
+        my $use_delayed = ($req->{'custom_time'} && $flags->{'use_custom_time'}) ||
+                            !(exists $flags->{'use_custom_time'});
         if ( $use_delayed && LJ::DelayedEntry::is_future_date($req) ) {
             return fail($err, 215) unless $req->{tz};
 
@@ -2166,7 +2166,7 @@ sub postevent {
             $req->{usejournal} = $req->{usejournal} || '';
   
             my $entry = LJ::DelayedEntry->create( $req, { journal => $uowner,
-                                                      poster  => $u,} );
+                                                          poster  => $u,} );
             return fail($err, 507) unless $entry;
             $res->{delayedid} = $entry->delayedid;
             $res->{type}      = 'delayed';
@@ -2676,6 +2676,11 @@ sub editevent {
                         unless $flags->{noauth};
                 return $res;
             }
+
+
+            # updating an entry:
+            return undef
+                unless common_event_validation($req, $err, $flags);
 
             if ( LJ::DelayedEntry::is_future_date($req) ) {
                 $entry->update($req);
@@ -3202,7 +3207,7 @@ sub getevents {
                 );
 
                 for my $did ( @$ids ) {
-                    my $entry, LJ::DelayedEntry::get_entry_by_id(
+                    my $entry = LJ::DelayedEntry::get_entry_by_id(
                         $uowner,
                         $did,
                         { userid => $flags->{user}->id },
@@ -3224,7 +3229,7 @@ sub getevents {
                 }
             }
             elsif ( $req->{selecttype} eq 'one' ) {
-                my $entry, LJ::DelayedEntry::get_entry_by_id(
+                my $entry = LJ::DelayedEntry::get_entry_by_id(
                     $uowner,
                     $req->{delayedid},
                     { userid => $flags->{user}->id },
@@ -3251,7 +3256,7 @@ sub getevents {
         elsif ( $req->{delayedids} ) {
             if ( $req->{selecttype} eq 'multiple' ) {
                 for my $did ( @$req->{delayedids} ) {
-                    my $entry, LJ::DelayedEntry::get_entry_by_id(
+                    my $entry = LJ::DelayedEntry::get_entry_by_id(
                         $uowner,
                         $did,
                         { userid => $flags->{user}->id },
