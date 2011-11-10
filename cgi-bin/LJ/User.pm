@@ -4542,11 +4542,14 @@ sub people_friends {
 # -- eg, not initial friends auto-added for them
 sub friends_added_count {
     my $u = shift;
+    my %init_friends_ids;
 
-    my %initial = ( map { $_ => 1 } @LJ::INITIAL_FRIENDS, @LJ::INITIAL_OPTIONAL_FRIENDS, $u->user );
+    for ( @LJ::INITIAL_FRIENDS, @LJ::INITIAL_OPTIONAL_FRIENDS, $u->user ) {
+        my $u = LJ::load_user($_);
+        $init_friends_ids{ $u->id }++ if $u;
+    }
 
-    # return count of friends who were not initial
-    return scalar grep { ! $initial{$_->user} } $u->friends;
+    return scalar grep { ! $init_friends_ids{$_} } $u->friend_uids;
 }
 
 sub set_password {
