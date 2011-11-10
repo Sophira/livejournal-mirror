@@ -429,11 +429,11 @@ sub render_metainfo_block {
         my $usejournal = $opts->{'usejournal'};
         if ($usejournal) {
             my $posterid = $remote->userid;
-            my $ownerid = LJ::load_user($usejournal)->userid;
+            my $journalu = LJ::load_user($usejournal);
+            my $ownerid = $journalu->userid;
             my $dbh = LJ::get_db_writer();
-            $can_edit_date = !!($dbh->selectrow_array("SELECT COUNT(*) FROM reluser ".
-                                                     "WHERE userid=$ownerid AND targetid=$posterid ".
-                                                     "AND type IN ('A','M','N')")) || 0;
+            $can_edit_date = LJ::DelayedEntry::can_post_to($journalu, $remote);
+
             $out .= "<li id='usejournal_single' class='pkg'>\n";
             $out .= "<label for='usejournal' class='title'>" .
                 BML::ml('entryform.postto') . "</label>\n";
@@ -898,6 +898,9 @@ sub render_options_block {
         },
          'do_not_add' => sub {
             return '' unless LJ::is_enabled("delayed_entries");
+            my $journalu = LJ::load_user($opts->{'usejournal'}) || $remote;  
+            return '' unless $journalu;
+            return '' if $journalu->is_community;
 
             my $selected = $opts->{'opt_backdated'} || 0;
             my $dot_add_check = LJ::html_check({
@@ -1633,6 +1636,7 @@ sub render_ljphoto_block {
 <script type="text/javascript">
     window.ljphotoEnabled = $ljphoto_enabled;
     jQuery('#updateForm').photouploader({
+        action: 'add_new_post',
         availableSpace: '$available_space',
         sizesData: $photo_sizes_json,
         albumsData: $album_list_json,
@@ -1647,26 +1651,40 @@ JS
         my $insert_photos_json = LJ::JSON->to_json ( $insert_photos );
         $out .= <<JS;
 <script type="text/javascript">
-    jQuery('#updateForm')
-        .photouploader({
-            insertPhotosData: $insert_photos_json,
-            type: 'add'
-        })
-        .bind('htmlready', function (event) {
-            var html = event.htmlStrings,
-                editor;
+		var jSortable,
+			jPhotoUploader = jQuery('#updateForm');
 
-            if (window.switchedRteOn) {
-                editor = CKEDITOR.instances.draft;
+		jPhotoUploader.photouploader({
+					insertPhotosData: $insert_photos_json,
+					type: 'add'
+			})
+			.bind('htmlready', function (event) {
+					var html = event.htmlStrings,
+							editor;
 
-                for (var i = 0, l = html.length; i < l; i++) {
-                    editor.insertElement(new CKEDITOR.dom.element.createFromHtml(html[i], editor.document));
-                }
-            } else {
-                jQuery('#draft').val(jQuery('#draft').val() + html.join(' '));
-            }
-        })
-        .photouploader('show');
+					if (window.switchedRteOn) {
+							editor = CKEDITOR.instances.draft;
+
+							for (var i = 0, l = html.length; i < l; i++) {
+									editor.insertElement(new CKEDITOR.dom.element.createFromHtml(html[i], editor.document));
+							}
+					} else {
+							jQuery('#draft').val(jQuery('#draft').val() + html.join(' '));
+					}
+			})
+			.bind('removeitem', function () {
+				jSortable.sortable('refresh');
+			})
+			.photouploader('show');
+
+		jSortable = jQuery('.b-popup-pics-gallery-list');
+		jSortable.sortable({
+			stop: function() {
+				jPhotoUploader.photouploader('update');
+			}
+		});
+
+		jSortable.disableSelection();
 </script>
 JS
     }

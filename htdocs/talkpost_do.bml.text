@@ -76,7 +76,8 @@
 
 .preview.title=Preview
 
-.quote.info.message|staleness=1
+.btn.quote=Quote
+
 .quote.info.message=If you'd like to quote a portion of the original message, highlight it then press 'Quote'
 
 .success.loggedin=You are now logged in.

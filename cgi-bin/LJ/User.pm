@@ -263,6 +263,35 @@ sub get_syndicated {
     return $synd;
 }
 
+# save current user id, so we can restore it later
+sub save_current {
+    my ( $u ) = @_;
+    return 0 unless $u;
+
+    my $remote = LJ::get_remote();
+    return 0 unless $remote;
+
+    $u->set_prop('lastloginid', $remote->id);
+    return 1;
+}
+
+# restore user from prop lastloginid
+sub restore {
+    my ($u) = @_;
+    return 0 unless $u;
+
+    my $userid = $u->prop('lastloginid');
+    return 0 unless $userid;
+
+    $u->set_prop('lastloginid', 0);
+
+    my $old = LJ::load_userid( $userid );
+    return 0 unless $u;
+
+    $old->make_login_session('long', 0);
+    return 1;
+}
+
 sub is_protected_username {
     my ($class, $username) = @_;
     foreach my $re (@LJ::PROTECTED_USERNAMES) {
@@ -1452,7 +1481,7 @@ sub prop {
 
 sub raw_prop {
     my ($u, $prop) = @_;
-    $u->preload_props($prop) unless exists $u->{$prop};
+    $u->preload_props($prop);
     return $u->{$prop};
 }
 
@@ -4543,10 +4572,9 @@ sub people_friends {
 sub friends_added_count {
     my $u = shift;
 
-    my %initial = ( map { $_ => 1 } @LJ::INITIAL_FRIENDS, @LJ::INITIAL_OPTIONAL_FRIENDS, $u->user );
-
-    # return count of friends who were not initial
-    return scalar grep { ! $initial{$_->user} } $u->friends;
+    my @friend_ids = $u->friend_uids;
+    my %init_friends_ids = map { $_ => 1 } LJ::get_uids( @LJ::INITIAL_FRIENDS, @LJ::INITIAL_OPTIONAL_FRIENDS, $u->user );
+    return scalar grep { ! $init_friends_ids{$_} } @friend_ids;
 }
 
 sub set_password {
@@ -6464,6 +6492,9 @@ sub load_user_props {
         }
     };
 
+    @props = grep { ! exists $u->{$_} } @props;
+    return unless @props;
+
     my $groups = LJ::User::PropStorage->get_handler_multi(\@props);
     my $memcache_available = @LJ::MEMCACHE_SERVERS;
     my $use_master = $memcache_available || $opts->{'use_master'};
@@ -7596,7 +7627,7 @@ sub ljuser {
     ### populate userhead data
     if ($userhead !~ /^https?:\/\//) {
         my $imgroot = $opts->{'imgroot'} || $LJ::IMGPREFIX;
-        $userhead = $imgroot . '/' . $userhead . "?v=3";
+        $userhead = $imgroot . '/' . $userhead . "?v=$LJ::CURRENT_VERSION";
     }
 
     $userhead_h ||= $userhead_w;  # make square if only one dimension given
@@ -7666,6 +7697,13 @@ sub set_email {
     LJ::MemCache::delete([$userid, "email:$userid"]);
     my $cache = $LJ::REQ_CACHE_USER_ID{$userid} or return;
     $cache->{'_email'} = $email;
+}
+
+sub get_uids {
+    my @friends_names = @_;
+    my @ret;
+    push @ret, grep { $_ } map { LJ::load_user($_) } @friends_names;
+    return @ret;
 }
 
 sub set_password {

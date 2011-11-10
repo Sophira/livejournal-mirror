@@ -138,6 +138,29 @@ community.members.maintainer.remove.delayed.email_plain=All delayed entries will
 community.members.maintainer.remove.email_subject|staleness=1
 community.members.maintainer.remove.email_subject=Maintainership removal: [[mailusercname]]
 
+
+community.members.delayed.remove.email_html|staleness=1
+community.members.delayed.remove.email_html<<
+<p>Dear [[sitenameshort]] user [[user]],</p>
+<p>[[remote]] has removed you from the community <a [[mailclink]]>[[usercname]].</a></p>
+<p>Regards,<br/>
+[[sitename]] Team<br/>[[siteroot]]</p>
+.
+
+community.members.delayed.remove.email_plain|staleness=1
+community.members.delayed.remove.email_plain<<
+Dear [[sitenameshort]] user [[user]],
+[[remote]] has removed you from the the community [[usercname]].
+Regards,
+[[sitename]] Team
+[[siteroot]]
+.
+
+
+community.members.delayed.remove.email_subject|staleness=1
+community.members.delayed.remove.email_subject=Removing from the community: [[mailusercname]]
+
+
 contentflag.viewingconcepts|staleness=1
 contentflag.viewingconcepts=You are about to view content that may not be appropriate for minors.
 
@@ -1748,6 +1771,19 @@ esn.edit_friends=[[openlink]]Edit Friends[[closelink]]
 esn.edit_groups|staleness=1
 esn.edit_groups=[[openlink]]Edit Friends groups[[closelink]]
 
+esn.email.pm|staleness=1
+esn.email.pm<<
+Hi [[user]],
+
+[[sender]] sent you a message on [[sitenameshort]]: [[subject]].
+The message was:
+[[body]]
+
+Go to [[inbox]] to view your new messages.
+
+Or you can:
+.
+
 esn.email.pm.subject|staleness=1
 esn.email.pm.subject=[[sender]] sent you a message
 
@@ -2279,6 +2315,9 @@ esn.remove_friend=[[openlink]]Remove [[postername]] from your Friends list[[clos
 
 esn.reply_at_webpage|staleness=1
 esn.reply_at_webpage=[[openlink]]Reply[[closelink]] at the webpage
+
+esn.reply_message|staleness=1
+esn.reply_message=[[openlink]]Reply to message[[closelink]]
 
 esn.screened|staleness=1
 esn.screened=This comment was screened.
@@ -4311,6 +4350,8 @@ poll.error.not_enougth_rights|staleness=1
 poll.error.not_enougth_rights=You are not have enougth rights for view this poll.
 
 poll.error.pitoolong=Text inside an lj-pi tag must be between 1 and 255 characters.  Yours is [[len]].
+
+poll.error.usernotfound=Poll owner has been deleted
 
 poll.error.pollnotfound=Error: poll #[[num]] not found
 

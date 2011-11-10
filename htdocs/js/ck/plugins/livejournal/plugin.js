@@ -623,26 +623,28 @@
 						}
 					} else {
 						if(text = prompt(top.CKLang.CutPrompt, top.CKLang.ReadMore)){
-							var selection = new CKEDITOR.dom.selection(editor.document),
-								ranges = selection.getRanges();
+							var selection = new CKEDITOR.dom.selection(editor.document);
 
-							var ljCutNode = new CKEDITOR.dom.element.get(editor.document.$.createElement('lj:cut'));
-							ljCutNode.setAttribute('lj-cmd', 'LJCut');
+							ljTagsData.LJCut.node = new CKEDITOR.dom.element.get(document.createElement('lj:cut'));
+							ljTagsData.LJCut.node.setAttribute('lj-cmd', 'LJCut');
 
 							if(text != top.CKLang.ReadMore){
-								ljCutNode.setAttribute('text', text);
+								ljTagsData.LJCut.node.setAttribute('text', text);
 							}
 
+							var ranges = selection.getRanges();
+							selection.lock();
 							for(var i = 0, l = ranges.length; i < l; i++){
 								var range = ranges[i];
-								ljCutNode.append(range.extractContents());
+								range.cloneContents().appendTo(ljTagsData.LJCut.node);
 							}
-
-							editor.insertElement(ljCutNode);
+							selection.unlock();
+							editor.insertElement(ljTagsData.LJCut.node);
+							selection.selectElement(ljTagsData.LJCut.node);
 						}
-
-						CKEDITOR.note && CKEDITOR.note.hide(true);
 					}
+
+					CKEDITOR.note && CKEDITOR.note.hide(true);
 				},
 				editorFocus: false
 			});
@@ -1356,8 +1358,6 @@
 									newElement.attributes[name.toLowerCase()] = parseInt(value);
 								});
 								newElement.attributes.frameBorder = 0;
-
-								newElement.isOptionalClose = newElement.isEmpty = true;
 								break;
 							case 'lj-poll':
 								newElement = new CKEDITOR.htmlParser.fragment.fromHtml(decodeURIComponent(element.attributes['lj-data'])).children[0];
