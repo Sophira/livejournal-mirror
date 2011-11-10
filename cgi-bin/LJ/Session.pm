@@ -628,13 +628,15 @@ sub session_from_external_cookie {
             my $curl = _current_url();
             $curl =~ m|^https?://(.+?)/|i;
             my $domain = $1;
-
-            set_cookie(
-                'ljdomsess.__external' => '',
-                path       => '/',
-                http_only  => 1,
-                domain     => $domain,
-            );
+            $domain =~ s/^www//;
+            if ($LJ::DOMAIN_JOURNALS_REVERSE{$domain}) {
+                set_cookie(
+                    'ljdomsess.__external' => '',
+                    path       => '/',
+                    http_only  => 1,
+                    domain     => $domain,
+                );
+            }
         }
         return undef;
     };
