@@ -1626,6 +1626,12 @@ sub resources_for_talkform {
         js/jquery/jquery.lj.commentator.js
         js/jquery/jquery.lj.quotescreator.js
     ));
+    LJ::need_res(qw(
+        js/jquery/jquery.lj.authtype.js
+        js/jquery/jquery.lj.userpicker.js
+        js/jquery/jquery.lj.commentform.js
+        js/jquery/jquery.easing.js
+    ));
     LJ::need_res( {condition => 'IE'}, 'js/jquery/jquery.ie6multipleclass.min.js');
     LJ::need_string(qw(/talkpost_do.bml.quote.info.message));
 }
