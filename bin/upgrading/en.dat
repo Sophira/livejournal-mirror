@@ -5421,6 +5421,12 @@ talk.anonwrote_comm=Someone wrote in [[commlink]],
 
 talk.asanonymous=Anonymously
 
+talk.asuser=Another User
+ 
+talk.asmailru=MailRu
+ 
+talk.asopenid=OpenId
+ 
 talk.btn.preview=Preview
 
 talk.check=Check
@@ -5567,17 +5573,29 @@ talk.frozen=Replies frozen
 
 talk.help=Help
 
+talk.insert=Insert
+
 talk.insertphoto=Insert Photo
 
 talk.insertvideo=Insert Video
 
 talk.ipalert=Your IP address will be recorded
 
+talk.link=Link
+ 
+talk.loading=Loading...
+ 
+talk.loginafterpost=We will log you in after post
+ 
 talk.next=Next
 
 talk.nextshortcut=Ctrl →
 
 talk.parentlink=Parent
+
+talk.placeholder.username=Username
+ 
+talk.placeholder.userpass=Password
 
 talk.prev=Previous
 
