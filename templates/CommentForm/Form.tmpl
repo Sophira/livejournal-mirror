@@ -206,7 +206,13 @@
 
 <script type="text/javascript">
     jQuery('#postform')
-        .authtype()
+        .authtype({
+			classNames: {
+				startAuthTypePrefix: 'b-postform-authtype-'
+			}, selectors: {
+				authTypeRadios: '.b-postform-login-{authType} .b-postform-login-radio'
+			}
+		})
 		.quotescreator()
         .commentator({
 			publicKey: '<TMPL_VAR captcha_public>',
