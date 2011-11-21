@@ -1465,8 +1465,6 @@ entryform.security2=Show this entry to:
 
 entryform.spellcheck=Spell check
 
-entryform.spellcheck.label=Spell check
-
 entryform.spellcheck.noerrors=No spelling errors found
 
 entryform.spellchecked=Spell checked entry:
