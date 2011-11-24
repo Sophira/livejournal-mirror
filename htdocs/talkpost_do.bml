@@ -5,6 +5,7 @@
 
     our ( %ML, %GET, %POST, $title, $body );
     my ( $status, $result, $answer, $redirected, $user_url );
+    my $add = '';
     my $need_captcha = 0;
 
     my $restore_old = sub {
@@ -323,6 +324,21 @@
 
         # Yeah, we're done.
         my $dtalkid = $comment->{talkid}*256 + $item->{anum};
+        $add .= "&dtalkid=$dtalkid";
+
+        # Return page number of created comment only if $POST{json} is true.
+        if ($ajax) {
+            my %opts = (
+                view        => $dtalkid,
+                init_comobj => 0,
+            );
+            # Skip results of sub, need only 'out_page'.
+            LJ::Talk::load_comments_tree($journalu, $remote, "L", $item->{itemid}, \%opts);
+
+            unless ($opts{'out_error'}) {
+                $add .= "&page=$opts{out_page}";
+            }
+        }
 
         # Allow style=mine for QR redirects
         my $stylemine = $POST{'stylemine'} ? 'style=mine' : '';
@@ -436,15 +452,14 @@
 
     if ( $ajax ) {
         $result = LJ::eurl($result);
-        my $add = $need_captcha
-            ? '&need_captcha=1'
-            : '';
+        $add .= '&need_captcha=1' if $need_captcha;
+
         return qq~
 <!DOCTYPE html>
 <html>
 <head></head>
 <body>
-<iframe src="$user_url/xdreceiver.html?status=$status&result=$result$add" />
+<iframe src="$user_url/xdreceiver.html?type=commentator%2Fsubmit&status=$status&result=$result$add" />
 </body>
 </html>
 ~;
