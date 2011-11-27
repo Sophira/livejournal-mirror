@@ -19,7 +19,7 @@
 	color: #222;
 	}
 .s-horizon #draft-container TEXTAREA {
-    font-family: Courier, monospace;
+    font-family: monospace;
     }
 .s-lanzelot #draft-container TEXTAREA {
     font-family: Arial, 'sans-serif';
@@ -223,11 +223,6 @@
 				margin-left: 10px;
 				vertical-align: middle;
 				}
-				#updateForm #metainfo LI .datetime .input-num {
-					width: 22px;
-					padding: 2px 1px;
-					text-align: center;
-					}
 				#updateForm #metainfo LI .datetime .de {
 					white-space: nowrap;
 					font-size: 11px;
@@ -236,25 +231,44 @@
 				display: block;
 				padding-top: 5px;
 				}
-			#updateForm #metainfo .entrydate .title,
-			#updateForm #metainfo .entrydate .wrap,
-			#updateForm #metainfo .wrap-select {
+			#updateForm #metainfo .entrydate .entrydate-title-until,
+			#updateForm #metainfo .entrydate .entrydate-wrap-date,
+			#updateForm #metainfo .entrydate .entrydate-wrap-post,
+			#updateForm #metainfo LI .i-calendar {
 				display: none;
 				}
-			#updateForm #metainfo .entrydate-date .entrydate-title-date,
-			#updateForm #metainfo .entrydate-date .entrydate-title-post,
-			#updateForm #metainfo .entrydate-changeit .entrydate-title-post,
-			#updateForm #metainfo .entrydate-changeit .entrydate-title-date,
-			#updateForm #metainfo .entrydate-until .entrydate-title-until {
+			#js #updateForm #metainfo .entrydate .entrydate-title-date,
+			#js #updateForm #metainfo .entrydate .entrydate-title-post,
+			#js #updateForm #metainfo .entrydate .entrydate-wrap-date,
+			#js #updateForm #metainfo .entrydate .entrydate-wrap-post {
 				display: table-cell;
 				*display: inline;
 				*zoom: 1;
 				}
-			#updateForm #metainfo .entrydate-date .entrydate-wrap-date,
-			#updateForm #metainfo .entrydate-date .entrydate-wrap-post,
-			#updateForm #metainfo .entrydate-changeit .entrydate-wrap-until,
-			#updateForm #metainfo .entrydate-changeit .entrydate-wrap-changeit,
-			#updateForm #metainfo .entrydate-until .entrydate-wrap-until {
+			#js #updateForm #metainfo LI .i-calendar {
+				display: inline-block;
+				*display: inline;
+				*zoom: 1;
+				}
+			#js #updateForm #metainfo .entrydate .entrydate-wrap-until {
+				display: none;
+				}
+			#js #updateForm #metainfo .entrydate-until .entrydate-title-date,
+			#js #updateForm #metainfo .entrydate-until .entrydate-wrap-date,
+			#js #updateForm #metainfo .entrydate-until .entrydate-title-post,
+			#js #updateForm #metainfo .entrydate-until .entrydate-wrap-post,
+			#js #updateForm #metainfo .entrydate-changeit .entrydate-title-date,
+			#js #updateForm #metainfo .entrydate-changeit .entrydate-wrap-date,
+			#js #updateForm #metainfo .entrydate-changeit .entrydate-title-post,
+			#js #updateForm #metainfo .entrydate-changeit .entrydate-wrap-post {
+				display: none;
+				}
+			#js #updateForm #metainfo .entrydate-until .entrydate-title-date,
+			#js #updateForm #metainfo .entrydate-until .entrydate-title-post,
+			#js #updateForm #metainfo .entrydate-until .entrydate-wrap-until,
+			#js #updateForm #metainfo .entrydate-changeit .entrydate-title-date,
+			#js #updateForm #metainfo .entrydate-changeit .entrydate-title-post,
+			#js #updateForm #metainfo .entrydate-changeit .entrydate-wrap-until {
 				display: table-cell;
 				*display: inline;
 				*zoom: 1;
@@ -269,6 +283,11 @@
 #updateForm #metainfo LI .text {
 	float: left;
 	margin-bottom: 2px;
+	}
+#updateForm #metainfo LI .datetime .input-time {
+	float: none;
+	width: 38px;
+	text-align: center;
 	}
 #updateForm #metainfo LI .de {
 	white-space: nowrap;
@@ -613,12 +632,19 @@
 }
 #security_container {
 	overflow: hidden;
+	text-align: right;
 	}
-	#security_container .security-options {
-	    float: left;
+	#security_container .post-preview {
+		display: inline-block;
+		margin: 0 1em;
 		}
+	#security_container .post-delete {
+		float: left;
+		margin: 0 1em 0 0;
+		}
+	#security_container .security-options,
 	#security_container .submit-options {
-	    float: right;
+	    display: inline;
 		}
 #security {
     float: none !important;

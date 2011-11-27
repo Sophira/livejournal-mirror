@@ -165,6 +165,8 @@ sub need_res {
         js/rte.js
         js/jquery/jquery.lj.basicWidget.js
         js/jquery/jquery.lj.entryDatePicker.js
+        js/jquery/jquery.timeentry.min.js
+        js/jquery/jquery.dateentry.min.js
         stc/display_none.css
     );
 
@@ -427,7 +429,7 @@ sub render_metainfo_block {
     if ($opts->{'mode'} eq "update") {
         # communities the user can post in
         my $usejournal = $opts->{'usejournal'};
-        if ($usejournal) {
+        if ($usejournal && $remote) {
             my $posterid = $remote->userid;
             my $journalu = LJ::load_user($usejournal);
             my $ownerid = $journalu->userid;
@@ -498,13 +500,6 @@ sub render_metainfo_block {
         'default' => "$year-$mon-$mday",
         'disabled' => $opts->{'disabled_save'}
     });
-    my $datetimeonly = LJ::html_datetime({
-        'name' => "date_ymd",
-        'notime' => 1,
-        'default' => "$year-$mon-$mday",
-        'disabled' => $opts->{'disabled_save'}
-    });
-
     $datetime .= "<span class='float-left'>&nbsp;&nbsp;</span>";
     $datetime .= LJ::html_text({
         size => 2,
@@ -515,13 +510,27 @@ sub render_metainfo_block {
         tabindex => $self->tabindex,
         disabled => $opts->{'disabled_save'}
     }) . "<span class='float-left'>:</span>";
-
     $datetime .= LJ::html_text({
         size => 2,
         class => 'text',
         maxlength => 2,
         value => $min,
         name => "min",
+        tabindex => $self->tabindex,
+        disabled => $opts->{'disabled_save'}
+    });
+    my $datetimeonly = LJ::html_datetime({
+        'name' => "date_ymd",
+        'notime' => 1,
+        'default' => "$year-$mon-$mday",
+        'disabled' => $opts->{'disabled_save'}
+    });
+    my $time = LJ::html_text({
+        size => 4,
+        class => 'text input-time',
+        maxlength => 5,
+        value => "$hour:$min",
+        name => "time",
         tabindex => $self->tabindex,
         disabled => $opts->{'disabled_save'}
     });
@@ -540,70 +549,49 @@ sub render_metainfo_block {
     my $help_icon = LJ::help_icon("24hourshelp");
     my $hide_link = $can_edit_date ? '' : 'style="display: none;"'; 
 
-    if (LJ::is_enabled("delayed_entries")) {
-        $out .= qq{
-            <li id="entrydate" class="pkg entrydate entrydate-date entrydate-delayed">
-        };
+    $out .= qq{
+        <li id="entrydate" class="pkg entrydate entrydate-date entrydate-delayed">
+    };
 
-        if ( $opts->{'mode'} eq "edit" && $can_edit_date ) {
-            if ( $opts->{'delayed'} ) {
-                $out .= qq{
-                    <label class="title entrydate-title-date">$BML::ML{'entryform.postponed.until'}</label>
-                };
-            } else {
-                $out .= qq{
-                    <label class="title entrydate-title-date">$BML::ML{'entryform.date'}</label>
-                };
-            }
-        } else {
+    if ( $opts->{'mode'} eq "edit" && $can_edit_date ) {
+        if ( $opts->{'delayed'} ) {
             $out .= qq{
-                <label class="title entrydate-title-post">$BML::ML{'entryform.post'}</label>
-            };
-        }
-
-        $out .= qq{
-            <label class="title entrydate-title-until">$BML::ML{'entryform.postponed.until'}</label>
-        };
-        
-        if ( $opts->{'mode'} eq "edit" && $can_edit_date ) {
-            $out .= qq{
-                <span class="wrap entrydate-wrap-date">
-                    $monthlong, $mday, $year, $hour:$min
-                    <a $hide_link href='javascript:void(0)' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
-                    $help_icon
-                </span>
+                <label class="title entrydate-title-date">$BML::ML{'entryform.postponed.until'}</label>
             };
         } else {
             $out .= qq{
-                <span class="wrap entrydate-wrap-post">
-                    $BML::ML{'entryform.post.right.now'}
-                    <a $hide_link href='javascript:void(0)' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
-                    $help_icon
-                </span>
+                <label class="title entrydate-title-date">$BML::ML{'entryform.date'}</label>
             };
         }
+    } else {
         $out .= qq{
-            <span class="wrap entrydate-wrap-until">
-                <span class="wrap-select">$datetimeonly</span>
-                $date_diff_input
-                <span class="wrap-calendar"><a id="currentdate-date" href="#">$monthlong $mday, $year</a><i class='i-calendar'></i></span>
-                <span class='datetime'>
-                    <input type='text' name='hour' value='$hour' class='input-num' /> : <input type='text' value='$min' name='min' class='input-num' />
-                    <?de $BML::ML{'entryform.date.24hournote'} de?>
-                </span>
+            <label class="title entrydate-title-post">$BML::ML{'entryform.post'}</label>
+        };
+    }
+
+    $out .= qq{
+        <label class="title entrydate-title-until">$BML::ML{'entryform.postponed.until'}</label>
+    };
+    
+    if ( $opts->{'mode'} eq "edit" && $can_edit_date ) {
+        $out .= qq{
+            <span class="wrap entrydate-wrap-date">
+                <span class="entrydate-string">$monthlong, $mday, $year, $hour:$min</span>
+                <a $hide_link href='javascript:void(0)' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
                 $help_icon
             </span>
-            </li>
-            
-            <li>
-            <noscript>
-                <p id='time-correct' class='small'>
-                $BML::ML{'entryform.nojstime.note'}
-                </p>
-            </noscript>
-            </li>
         };
     } else {
+        $out .= qq{
+            <span class="wrap entrydate-wrap-post">
+                <span class="entrydate-string">$monthlong $mday, $year, $hour:$min</span>
+                <a $hide_link href='javascript:void(0)' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
+                $help_icon
+            </span>
+        };
+    }
+    my $backdateout = "";
+    if (!LJ::is_enabled("delayed_entries")) {
         my $backdate_check = LJ::html_check({
             'type' => "check",
             'id' => "prop_opt_backdated",
@@ -612,36 +600,29 @@ sub render_metainfo_block {
             'selected' => $opts->{'prop_opt_backdated'},
             'tabindex' => $self->tabindex
         });
-
         my $backdate_help_icon = LJ::help_icon_html("backdate", "", "");
-
-        $out .= qq{
-            <li id="entrydate" class="pkg entrydate entrydate-date">
-                <label for="modifydate" class="title entrydate-title-date">$BML::ML{'entryform.date'}</label>
-                <span id='currentdate' class="wrap entrydate-wrap-date">
-                    <span id='currentdate-date'>
-                    $monthlong $mday, $year, $hour:$min
-                    </span>
-                    <a href='javascript:void(0)' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
-                </span>
-                <span id='modifydate' class="wrap entrydate-wrap-changeit">
-                    $datetime
-                    $date_diff_input
-                    <?de $BML::ML{'entryform.date.24hournote'} de?>
-                    <span class="backdate">
-                        $backdate_check
-                        <label for='prop_opt_backdated'>$BML::ML{'entryform.backdated3'}</label>
-                        $backdate_help_icon
-                    </span>
-                </span>
-            </li>
-            <li>
-            <noscript>
-            $BML::ML{'entryform.nojstime.note'}
-            </noscript>
-            </li>
-        };
+        $backdateout = '<span class="backdate">' . $backdate_check . "<label for='prop_opt_backdated'>$BML::ML{'entryform.backdated3'}</label>" . $backdate_help_icon . "</span>";
     }
+    $out .= qq{
+        <span class="wrap entrydate-wrap-until">
+            $date_diff_input
+            <span class="wrap-calendar">$datetimeonly<i class='i-calendar'></i></span>
+            <span class='datetime'>
+                $time <?de $BML::ML{'entryform.date.24hournote'} de?>
+            </span>
+            $help_icon
+            $backdateout
+        </span>
+        </li>
+        
+        <li>
+        <noscript>
+            <p id='time-correct' class='small'>
+            $BML::ML{'entryform.nojstime.note'}
+            </p>
+        </noscript>
+        </li>
+    };
 
     # User Picture
     if ($self->should_show_userpics) {
@@ -1260,7 +1241,7 @@ sub render_options_block {
             }
             
             return qq{<label for='sticky_type' class='title options'>
-                $BML::ML{'entryform.spellcheck'}
+                $BML::ML{'entryform.spellcheck.label'}
                 </label> $out};
         },
         'none' => sub {return qq{};},
@@ -1396,10 +1377,23 @@ sub render_submitbar_block {
 
     $out .= "<div id='submitbar' class='pkg'>\n\n";
     $out .= "<div id='security_container'>\n";
+
+    if ($opts->{'mode'} ne "update") {
+        $out .= LJ::html_submit(
+            'action:delete',
+            BML::ml('entryform.delete'),
+            {
+                'disabled' => $opts->{'disabled_delete'},
+                'tabindex' => $self->tabindex,
+                'class' => "post-delete",
+                'onclick' => "return confirm('" .
+                    LJ::ejs(BML::ml('entryform.delete.confirm')) . "')",
+            }
+        );
+    }
+
     $out .= "<div class='security-options'>\n";
     $out .= "<label for='security'>" . BML::ml('entryform.security2') . " </label>\n";
-    
-    # preview button 
     
     # extra submit button so make sure it posts the form when
     # person presses enter key
@@ -1413,14 +1407,15 @@ sub render_submitbar_block {
         };
     }
     
+    # preview button 
     my $preview_tabindex = $self->tabindex;
     my $preview = qq{
-        <input
-        type="button"
-        value="$BML::ML{'entryform.preview'}"
-        onclick="entryPreview(this.form)"
+        <a class="post-preview"
         tabindex="$preview_tabindex"
-        />
+        onclick="return entryPreview(\$(\\'updateForm\\'));"
+        href="#">
+        $BML::ML{'entryform.preview'}
+        </a>
     };
 
     
@@ -1429,11 +1424,9 @@ sub render_submitbar_block {
         
     unless ($opts->{'disabled_save'}) {
         $out .= $self->wrap_js(qq{
-            if (document.getElementById) {
-                setTimeout( function() {
-                    jQuery( '$preview' ).prependTo('#entryform-update-and-edit' );
-                }, 0 );
-            }
+            setTimeout( function() {
+                jQuery( '$preview' ).prependTo('#entryform-update-and-edit' );
+            }, 0 );
         });
     }
 
@@ -1507,17 +1500,6 @@ sub render_submitbar_block {
                 }
             ) . "&nbsp;\n";
         }
-
-        $out .= LJ::html_submit(
-            'action:delete',
-            BML::ml('entryform.delete'),
-            {
-                'disabled' => $opts->{'disabled_delete'},
-                'tabindex' => $self->tabindex,
-                'onclick' => "return confirm('" .
-                    LJ::ejs(BML::ml('entryform.delete.confirm')) . "')",
-            }
-        ) . "&nbsp;\n";
 
         if (!$opts->{'disabled_spamdelete'}) {
             $out .= LJ::html_submit(

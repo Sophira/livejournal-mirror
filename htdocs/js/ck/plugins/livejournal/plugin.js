@@ -287,14 +287,16 @@
 					this.setStyle('height', doc.body.scrollHeight + 'px');
 				}
 
-				var body = new CKEDITOR.dom.element.get(doc.body);
-				body.on('dblclick', onDoubleClick);
-				body.on('click', onClickFrame);
-				body.on('keyup', onKeyUp);
+				var iframeBody = new CKEDITOR.dom.element.get(doc.body);
+				if(iframeBody.on) {
+					iframeBody.on('dblclick', onDoubleClick);
+					iframeBody.on('click', onClickFrame);
+					iframeBody.on('keyup', onKeyUp);
+				}
 
 				doc = new CKEDITOR.dom.element.get(doc);
 
-				doc.frame = body.frame = this;
+				doc.frame = iframeBody.frame = this;
 			}
 
 			function updateFrames() {
@@ -317,7 +319,7 @@
 					frame.removeListener('load', onLoadFrame);
 					frame.on('load', onLoadFrame);
 					doc.open();
-					doc.write('<!DOCTYPE html><html style="' + iFrameCss + '"><head><style type="text/css">' + styleSheet + '</style></head><body style="' + iFrameCss + '" ' + (cmd ? ('lj-cmd="' + cmd + '"') : '') + '>' + decodeURIComponent(frame.getAttribute('lj-content') || '&nbsp;') + '</body></html>');
+					doc.write('<!DOCTYPE html><html style="' + iFrameCss + '"><head><style type="text/css">' + styleSheet + '</style></head><body style="' + iFrameCss + '" ' + (cmd ? ('lj-cmd="' + cmd + '"') : '') + '>' + decodeURIComponent(frame.getAttribute('lj-content') || '') + '</body></html>');
 					doc.close();
 				}
 			}
@@ -399,14 +401,17 @@
 						var poll = new Poll(ljtags);
 						return '<iframe class="lj-poll" frameborder="0" allowTransparency="true" ' + 'lj-cmd="LJPollLink" lj-data="' + poll.outputLJtags() + '" lj-content="' + poll.outputHTML() + '"></iframe>';
 					}).replace(/<lj-embed(.*?)>([\s\S]*?)<\/lj-embed>/gi, function(result, attrs, data) {
-						return '<iframe' + attrs + ' class="lj-embed" lj-data="' + encodeURIComponent(data) + '" frameborder="0" allowTransparency="true"></iframe>';
+						return '<iframe' + attrs + ' class="lj-embed" lj-data="' + encodeURIComponent(data) + '" lj-style="height: 100%;" frameborder="0" allowTransparency="true"></iframe>';
 					});
 
 				if (!$('event_format').checked) {
-					html = html.replace(/(<lj-raw.*?>)([\s\S]*?)(<\/lj-raw>)/gi,
-						function(result, open, content, close) {
-							return open + content.replace(/\n/g, '') + close;
-						}).replace(/\n/g, '<br />');
+					html = html.replace(/(<lj-raw.*?>)([\s\S]*?)(<\/lj-raw>)/gi, function(result, open, content, close) {
+						return open + content.replace(/\n/g, '') + close;
+					});
+
+					if (!window.switchedRteOn) {
+						html = html.replace(/\n/g, '<br />');
+					}
 				}
 
 				html = CKEDITOR.htmlDataProcessor.prototype.toHtml.call(this, html, fixForBody);
@@ -478,6 +483,59 @@
 				editor.document.getBody().on('keyup', onKeyUp);
 				updateFrames();
 			});
+
+			//////////  CSS for inner editor's elements  //////////////
+			editor.addCss('.lj-cut {\
+				margin: 5px 0;\
+				width: 100%;\
+				cursor: pointer;\
+				height: 9px!important;\
+				background-color: #FFF;\
+				border: 0 dashed #BCBCBC;\
+				background: url(/js/ck/images/ljcut.png) no-repeat 0 0;\
+			}');
+			editor.addCss('.lj-cut-open {\
+				background-position: 0 2px;\
+				border-width: 0 0 1px;\
+			}');
+			editor.addCss('.lj-cut-close {\
+				border-width: 1px 0 0;\
+				background-position: 0 -8px;\
+			}');
+			editor.addCss('.lj-embed {\
+				background: #CCCCCC url(' + CKEDITOR.getUrl(this.path + 'images/placeholder_flash.png') + ') no-repeat center center;\
+				border: 1px dotted #000000;\
+				height: 80px;\
+				width: 100%;\
+			}');
+			editor.addCss('.lj-poll {\
+				width:100%;\
+				border: #000 1px dotted;\
+				background-color: #d2d2d2;\
+				font-style: italic;\
+			}');
+			editor.addCss('.lj-like {\
+				width: 100%;\
+				height: 44px !important;\
+				overflow: hidden;\
+				padding: 0;\
+				margin: 0;\
+				background: #D2D2D2;\
+				border: 1px dotted #000;\
+			}');
+			editor.addCss('.lj-map, .lj-iframe {\
+				width: 100%;\
+				overflow: hidden;\
+				min-height: 13px;\
+				margin-top: 20px;\
+				background: #D2D2D2;\
+				border: 1px dotted #000;\
+				text-align: center;\
+			}');
+			editor.addCss('.lj-selected {\
+				background-color: #C4E0F7;\
+				border: 1px solid #6EA9DF;\
+			}');
 
 			//////////  LJ User Button //////////////
 			var url = top.Site.siteroot + '/tools/endpoints/ljuser.bml';
@@ -596,13 +654,12 @@
 				command: 'LJEmbedLink'
 			});
 
-			editor.addCss('.lj-embed {' + 'background: #CCCCCC url(' + CKEDITOR.getUrl(this.path + 'images/placeholder_flash.png') + ') no-repeat center center;' + 'border: 1px dotted #000000;' + 'height: 80px;' + 'width: 100%;' + '}');
-
 			function doEmbed(content) {
 				if (content && content.length) {
 					if (window.switchedRteOn) {
 						var iframe = new CKEDITOR.dom.element('iframe', editor.document);
 						iframe.setAttribute('lj-data', encodeURIComponent(content));
+						iframe.setAttribute('lj-style', 'height: 100%;');
 						iframe.setAttribute('class', 'lj-embed');
 						iframe.setAttribute('frameBorder', 0);
 						iframe.setAttribute('allowTransparency', 'true');
@@ -613,29 +670,6 @@
 			}
 
 			//////////  LJ Cut Button //////////////
-			editor.addCss('.lj-cut {\
-				margin: 5px 0;\
-				width: 100%;\
-				cursor: pointer;\
-				height: 9px!important;\
-				background-color: #FFF;\
-				border: 0 dashed #BCBCBC;\
-				background: url(/js/ck/images/ljcut.png) no-repeat 0 0;\
-			}');
-			editor.addCss('.lj-cut-open {\
-				background-position: 0 2px;\
-				border-width: 0 0 1px;\
-			}');
-			editor.addCss('.lj-cut-close {\
-				border-width: 1px 0 0;\
-				background-position: 0 -8px;\
-			}');
-			editor.addCss('.lj-selected {\
-				background-color: #C4E0F7;\
-				border: 1px solid #6EA9DF;\
-			}');
-
-
 			editor.addCommand('LJCut', {
 				exec: function() {
 					var text,
@@ -658,6 +692,7 @@
 								iframeClose = new CKEDITOR.dom.element('iframe', editor.document);
 
 							iframeOpen.setAttribute('lj-cmd', 'LJCut');
+							iframeOpen.setAttribute('lj-style', 'height: 100%;');
 							iframeOpen.addClass('lj-cut lj-cut-open');
 							iframeOpen.setAttribute('frameBorder', 0);
 							iframeOpen.setAttribute('allowTransparency', 'true');
@@ -666,13 +701,15 @@
 							}
 
 							iframeClose.addClass('lj-cut lj-cut-close');
+							iframeClose.setAttribute('lj-style', 'height: 100%;');
 							iframeClose.setAttribute('frameBorder', 0);
 							iframeClose.setAttribute('allowTransparency', 'true');
 
-							if(ranges[0].collapsed === true){
+							if (ranges[0].collapsed === true) {
 								editor.insertElement(iframeClose);
 								iframeClose.insertBeforeMe(iframeOpen);
 							} else {
+								selection.lock();
 								startContainer = ranges[0].getTouchedStartNode();
 
 								var fragment = new CKEDITOR.dom.documentFragment(editor.document);
@@ -682,6 +719,7 @@
 								}
 								editor.insertElement(iframeClose);
 								iframeClose.insertBeforeMe(fragment);
+								selection.unlock();
 							}
 						}
 
@@ -907,8 +945,6 @@
 			if (top.canmakepoll) {
 				var currentPoll;
 
-				editor.addCss('.lj-poll {' + 'width:100%;' + 'border: #000 1px dotted;' + 'background-color: #d2d2d2;' + 'font-style: italic;' + '}');
-
 				CKEDITOR.dialog.add('LJPollDialog', function() {
 					var isAllFrameLoad = 0, okButtonNode, questionsWindow, setupWindow;
 
@@ -1044,8 +1080,6 @@
 			var dialogContent = '<div class="cke-dialog-likes"><ul class="cke-dialog-likes-list">';
 			likeButtons.defaultButtons = [];
 
-			editor.addCss('.lj-like {' + 'width: 100%;' + 'height: 44px !important;' + 'overflow: hidden;' + 'padding: 0;' + 'margin: 0;' + 'background: #D2D2D2;' + 'border: 1px dotted #000;' + '}');
-
 			for (var i = 0; i < buttonsLength; i++) {
 				var button = likeButtons[i];
 				likeButtons[button.id] = likeButtons[button.abbr] = button;
@@ -1173,9 +1207,6 @@
 				label: top.CKLang.LJLike_name,
 				command: 'LJLike'
 			});
-
-			//////////  LJ Map Button & LJ Iframe //////////////
-			editor.addCss('.lj-map, .lj-iframe {' + 'width: 100%;' + 'overflow: hidden;' + 'min-height: 13px;' + 'margin-top: 20px;' + 'background: #D2D2D2;' + 'border: 1px dotted #000;' + 'text-align: center;' + '}');
 		},
 		afterInit: function(editor) {
 			var dataProcessor = editor.dataProcessor;
@@ -1184,6 +1215,7 @@
 				var openFrame = new CKEDITOR.htmlParser.element('iframe');
 				openFrame.attributes['class'] = 'lj-cut lj-cut-open';
 				openFrame.attributes['lj-cmd'] = 'LJCut';
+				openFrame.attributes['lj-style'] = 'height: 100%;';
 				openFrame.attributes['frameBorder'] = 0;
 				openFrame.attributes['allowTransparency'] = 'true';
 
@@ -1195,6 +1227,7 @@
 
 				var closeFrame = new CKEDITOR.htmlParser.element('iframe');
 				closeFrame.attributes['class'] = 'lj-cut lj-cut-close';
+				closeFrame.attributes['lj-style'] = 'height: 100%;';
 				closeFrame.attributes['frameBorder'] = 0;
 				closeFrame.attributes['allowTransparency'] = 'true';
 				element.children.push(closeFrame);

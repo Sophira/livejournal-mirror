@@ -140,149 +140,49 @@ body<=
         my $ref = shift;
         my %opts = @_;
 
-        my $ret;
-
         my @res = @$ref;
         my $show_ad = $opts{show_ad} ? 1 : 0;
-        my $delayed_prev = $opts{'delayed_prev'};
-        my $delayed_next = $opts{'delayed_next'};
 
-        if ($opts{'prev'} || $opts{'next'} || !$opts{'first_page'}) {
-        $ret .= "<p class='i-qotd-nav'>";
-        if ($opts{'prev'} || !$opts{'first_page'}) {
-            $ret .=  "<a class='i-qotd-nav-prev' href='$LJ::SITEROOT/editjournal.bml$getextra" .
-                    ($getextra ? "&" : "?") .
-                    "skip=$opts{prev}'>prev</a>";
-        } else {
-            $ret .=  "<span class='i-qotd-nav-prev i-qotd-nav-prev-dis'>prev</span>";
-        }
-        if ($opts{'next'}) {
-            $ret .= "<a class='i-qotd-nav-next' href='$LJ::SITEROOT/editjournal.bml$getextra" .
-                    ($getextra ? "&" : "?") .
-                    "skip=$opts{next}'>next</a>";
-        } else {
-            $ret .= "<span class='i-qotd-nav-next i-qotd-nav-next-dis'>next</span>";
-        }
-        $ret .= "</p>"
-            if @res;
-        }
-        unless (@res) {
-            $ret .= "<p class='i-bubble b-bubble-warning b-bubble-noarrow'>" .  BML::ml('.no_entries_to_edit') . "</p>";
-        }
-        $ret .= "</div>";
+        my ( $link_prev, $link_next );
+        my $is_first_page = $opts{'first_page'};
 
-        $ret .= "<ul class='b-editentries'>" if @res;
+        if ($opts{'prev'} || $opts{'next'} || !$is_first_page) {
+            if ($opts{'prev'} || !$is_first_page) {
+                $link_prev = "$LJ::SITEROOT/editjournal.bml$getextra" .
+                             ($getextra ? "&" : "?") .
+                             "skip=$opts{prev}";
+            }
+
+            if ($opts{'next'}) {
+                $link_next = "$LJ::SITEROOT/editjournal.bml$getextra" .
+                             ($getextra ? "&" : "?") .
+                             "skip=$opts{next}";
+            }
+        }
+
+        my @entries;
+
+        my $journal = LJ::load_user($usejournal) || $remote;
         foreach my $e_raw (@res) {
-            my $entry;
             if ( $e_raw->{'itemid'} ) {
-                $entry = LJ::Entry->new_from_item_hash (LJ::load_user($usejournal) || $remote, $e_raw);
-            } elsif ($e_raw->{'delayedid'}) {
-                $entry = LJ::DelayedEntry->get_entry_by_id(LJ::load_user($usejournal,) || $remote, 
-                                                            $e_raw->{'delayedid'}, {'dateformat' => 'S2'});
-            } else {
-                die "unknown entry type";
+                push @entries,
+                    LJ::Entry->new_from_item_hash( $journal, $e_raw );
             }
-
-            my $edit_disable = 0;
-            if (
-                ($e_raw->{'posterid'} != $remote->userid)
-                || ($remote->is_readonly || ($usejournal_u && $usejournal_u->is_readonly))
-            ) {
-                $edit_disable++;
-            }
-
-            my $poster = $usejournal ? LJ::ljuser(LJ::load_userid($entry->posterid)) : "";
-
-            $ret .= "<li class='b-editentry'>";
-
-            if ( $entry->is_delayed() ) {
-                  $ret .= BML::fill_template("typedelayed");
-            }
- 
-            if ( $entry->is_sticky())  {
-                $ret .= BML::fill_template("typesticky");
-            }
-
-            ### security indicator
-            my $sec = ' ';
-            if ($entry->security eq "private") {
-                $sec .= BML::fill_template("securityprivate");
-            } elsif ($entry->security eq "usemask") {
-                if ($entry->allowmask == 0) { # custom security with no group -- essentially private
-                    $sec .= BML::fill_template("securityprivate");
-                } elsif ($entry->allowmask > 1) { # custom group
-                    $sec .= BML::fill_template("securitygroups");
-                } else { # friends only
-                    $sec .= BML::fill_template("securityprotected");
-                }
-            }
-            $ret .= $sec;
-
-            $ret .= "<p class='b-editentry-ctrls'>";
-            my $ditemid_get;
-            if ($entry->is_delayed) {
-                $ditemid_get = $getextra ? ("$getextra&amp;delayedid=" . $entry->delayedid) : ("?delayedid=" . $entry->delayedid);
-            } else {
-                $ditemid_get = $getextra ? ("$getextra&amp;itemid=" . $entry->ditemid) : ("?itemid=" . $entry->ditemid);
-            }
-            if (!$edit_disable) {
-                $ret .= "<a href='editjournal.bml" . $ditemid_get . "&amp;mode=edit' class='b-editentry-edit-btn b-editentry-ctrl-btn'></a>";
-            } else {
-                $ret .= "<a href='editjournal.bml" . $ditemid_get . "&amp;mode=delete' class='b-editentry-del-btn b-editentry-ctrl-btn'></a>";
-            }
-            $ret .= "</p>";
-
-            $ret .= "<h2><a href='".$entry->url."'>";
-            if (my $subj = $entry->subject_text) {
-                $ret .= LJ::ehtml($subj);
-            } else {
-                $ret .= BML::ml('.event.no_subject.title');
-            }
-            $ret .= "</a></h2>";
-            my $alldateparts;
-            if ($entry->is_delayed) {
-                $alldateparts = $entry->alldatepart;
-            } else {
-                $alldateparts = LJ::TimeUtil->alldatepart_s2($entry->{'eventtime'});
-            }
-            my ($year, $mon, $mday, $hour, $min) = split(/\D/, $alldateparts);
-            my $monthlong = BML::ml(LJ::Lang::month_long_langcode($mon));
-            $ret .= "<p class='date'>" . $poster . " $monthlong $mday, $year, $hour:$min" . "</p>";
-
-            my $event = LJ::ehtml(LJ::durl($entry->event_raw));
-            $event =~ s!\n!<br />!g;
-            $ret .= $event;
-            if (my @taglist = $entry->tags) {
-                $ret .= "<p><b>Tags:</b> " . LJ::ehtml(join ", ", @taglist) . "</p>";
-            }
-            $ret .= "</li>";
         }
+
+        my $adhtml = '';
         if ($show_ad) {
-            my $ad = LJ::get_ads({ location => 'bml.editjournal', ljadwrapper => 1 });
-            $ret .= "<td valign='top'>$ad</td>" if $ad;
-        }
-        $ret .= "</ul>" if @res;
-
-        if ($opts{'prev'} || $opts{'next'} || !$opts{'first_page'}) {
-        $ret .= "<p class='i-qotd-nav'>";
-        if ($opts{'prev'} || !$opts{'first_page'}) {
-            $ret .=  "<a class='i-qotd-nav-prev' href='$LJ::SITEROOT/editjournal.bml$getextra" .
-                     ($getextra ? "&" : "?") .
-                     "skip=$opts{prev}'>prev</a>";
-        } else {
-            $ret .=  "<span class='i-qotd-nav-prev i-qotd-nav-prev-dis'>prev</span>";
-        }
-        if ($opts{'next'}) {
-            $ret .= "<a class='i-qotd-nav-next' href='$LJ::SITEROOT/editjournal.bml$getextra" .
-                     ($getextra ? "&" : "?") .
-                      "skip=$opts{next}'>next</a>";
-        } else {
-            $ret .= "<span class='i-qotd-nav-next i-qotd-nav-next-dis'>next</span>";
-        }
-        $ret .= "</p>";
+            $adhtml = LJ::get_ads(
+                { 'location' => 'bml.editjournal', 'ljadwrapper' => 1 } );
         }
 
-        return $ret;
+        return LJ::Widget::EntryChooser->render(
+            'link_prev'    => $link_prev,
+            'link_next'    => $link_next,
+            'show_posters' => $usejournal ? 1 : 0,
+            'entries'      => \@entries,
+            'adhtml'       => $adhtml,
+        );
     };
 
     if ($mode eq "edit") {
@@ -451,21 +351,6 @@ body<=
                       LJ::mark_entry_as_spam($usejournal_u, $itemid);
                 }
 
-                # if the action is to delete it, then let's note that
-                if ( $POST{'action:delete'} || $POST{'action:deletespam'} ) {
-                    # now log the event created abovei
-                    if ($entry_obj->is_delayed) {
-                        ($usejournal ? $usejournal_u : $remote)->log_event('delete_delayed_entry', {
-                                                                                remote => $remote,
-                                                                                actiontarget => $delayedid,
-                                                                                method => 'web',});
-                    } else {
-                       ($usejournal ? $usejournal_u : $remote)->log_event('delete_entry', {
-                                                                                remote => $remote,
-                                                                                actiontarget => $ditemid,
-                                                                                method => 'web',});
-                    }
-                }
 
                 # do editevent request
                 foreach my $k (keys %req) {
@@ -506,6 +391,19 @@ body<=
 
                     my $deleted_extras = LJ::run_hook('entry_deleted_page_extras');
                     $result .= $deleted_extras if defined $deleted_extras;
+
+                    # now log the event created abovei
+                    if ($entry_obj->is_delayed) {
+                       ($usejournal ? $usejournal_u : $remote)->log_event('delete_delayed_entry', {
+                                                                           remote => $remote,
+                                                                           actiontarget => $delayedid,
+                                                                           method => 'web',});
+                    } else {
+                       ($usejournal ? $usejournal_u : $remote)->log_event('delete_entry', {
+                                                                           remote => $remote,
+                                                                           actiontarget => $ditemid,
+                                                                           method => 'web',});
+                    }
                 } else {
                     $result .= "<?p $ML{'.success.edited'} p?>";
                     
@@ -817,7 +715,7 @@ LIKE_FAQ
                                 value => '1', selected =>  $only_me_checked });
         $ret .= "<label for='only_me'>".$ML{'.only_my_entries'}."</label></p>"; 
         if ($year || $month || $day || $usejournal) {
-            $ret .= BML::ml('.back_to_recent_entries', { aopts => "href='editjournal.bml'" } )."</p>";
+            $ret .= "<p>" . BML::ml('.back_to_recent_entries', { aopts => "href='editjournal.bml'" } )."</p>";
         }
         $ret .= "</form>\n";
 
@@ -833,6 +731,8 @@ LIKE_FAQ
             </script>
 JS_INIT
 
+        $ret .= '</div>'; # b-editentries-header
+
         my $err = '';
         my $usejournal_u = LJ::load_user ($usejournal || $remote->{'user'});
         my @recent_entries = ();
@@ -847,47 +747,11 @@ JS_INIT
              $order = $usejournal_u->is_syndicated || $usejournal_u->is_community;  # community or syndicated
         }
 
-        my $delayed_entries;
-
-        # calculate recent entries count
-        my $delayed_entries_count = 0;
-        my $usual_skip = $skip;
-
-        if (LJ::is_enabled("delayed_entries") && $usejournal_u) {
-            my $has_sticky = $usejournal_u->has_sticky_entry;
-
-            $delayed_entries_count = LJ::DelayedEntry->get_entries_count($usejournal_u);
-            $usual_skip -= $delayed_entries_count;
-
-            if ($usual_skip < 0 ) {
-                $usual_skip = $skip ? $has_sticky : 0;
-            }
- 
-            if (!$skip) {
-                $delayed_entries = LJ::DelayedEntry->get_entries_by_journal($usejournal_u, 
-                                                                            $skip, 
-                                                                            $items_per_page - $has_sticky);
-            } elsif ($skip) {
-                $delayed_entries = LJ::DelayedEntry->get_entries_by_journal($usejournal_u, 
-                                                                            $skip - $has_sticky, 
-                                                                            $items_per_page);
-            }
-        }
- 
-        if (!$delayed_entries) {
-            $delayed_entries = [];
-        }
-
-        my $itemshow_usual = $items_per_page - scalar(@$delayed_entries);
-        if ( $itemshow_usual < 0 ) {
-            $itemshow_usual = 0;
-        }
-           
         my $have_next_page = 0;
 
         if (($usejournal_u && ($LJ::MAX_SCROLLBACK_LASTN = 50000,
             my @recent = LJ::get_recent_items({
-                itemshow  => $itemshow_usual + 1,
+                itemshow  => $items_per_page + 1,
                 err       => \$err,
                 userid    => $usejournal_u->{userid},
                 clusterid => $usejournal_u->{clusterid},
@@ -899,24 +763,17 @@ JS_INIT
                 show_sticky_on_top => 1,
                 %ymd_req,
                 ($only_me_checked) ? ('posterid' =>  $remote->{'userid'}) : (),
-            }))) || $delayed_entries) {
+            })))) {
             
 
-            $have_next_page = scalar @recent + scalar(@$delayed_entries) - $items_per_page > 0 ? 1 : 0;
+            $have_next_page = scalar @recent - $items_per_page > 0 ? 1 : 0;
             if ($have_next_page) {
-                if ( scalar(@$delayed_entries) > $items_per_page ) {
-                    pop @$delayed_entries;
-                }
-                if ( scalar(@recent) + scalar(@$delayed_entries) > $items_per_page ) {
+                if ( scalar(@recent) > $items_per_page ) {
                     pop @recent;
                 }
             }
 
-            if ($delayed_entries_count > 0) {
-                @recent_entries = $append_delayed->($usejournal_u, \@recent, $delayed_entries);
-            } else {
-                @recent_entries = @recent;
-            }
+           @recent_entries = @recent;
 
         }
 
