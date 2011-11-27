@@ -5495,6 +5495,8 @@ talk.emptypostalert=You need to write something first
 
 talk.error=Error
 
+talk.error.banned=You are banned form posting in this journal
+
 talk.error.bogusargs=Bogus arguments
 
 talk.error.cantedit|staleness=1
@@ -5535,6 +5537,8 @@ talk.error.deleted.title=Deleted
 
 talk.error.mustlogin=You must be logged in to view this protected entry.
 
+talk.error.noanonpost=Anonymous comments are disabled in this journal
+
 talk.error.nocomment=The comment does not exist.
 
 talk.error.noentry=No such entry.
@@ -5543,7 +5547,11 @@ talk.error.nojournal=Error: couldn't determine journal from arguments.
 
 talk.error.nosuchjournal=No such journal
 
+talk.error.notreg=Your email is not confirmed
+
 talk.error.notauthorised=You are not authorized to view this protected entry.
+
+talk.error.notafriend=Comments allowed for friends only
 
 talk.error.purged|staleness=1
 talk.error.purged=This journal has been deleted and purged.
