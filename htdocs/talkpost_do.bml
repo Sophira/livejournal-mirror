@@ -315,7 +315,7 @@
             if ( $use_s1 and not $external_site_case and LJ::is_enabled('new_comments') ) {
                 return LJ::Widget::Form->render_body(
                     entry        => $entry,
-                    standalone   => 1,
+                    standalone   => 2,
                     stylemine    => $GET{'style'} eq 'mine'? 1 : 0,
                     replyto      => $talkform_opts->{'replyto'},
                     editid       => $editid,
