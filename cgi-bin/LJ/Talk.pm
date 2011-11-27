@@ -1255,6 +1255,7 @@ sub fixup_logitem_replycount {
 #                          datepost_unix => integer unix timestamp  1295268144,
 #                          datepost      => string 'YYYY-MM-DD hh:mm:ss',
 #                          state         => char ("A"=approved, "S"=screened, "D"=deleted stub, "B"=spam)
+#                          has_children  => boolean - true, if comment has children (need for 'flat' mode)
 #                          children      => arrayref of hashrefs like this,
 #                          _show         => boolean (if item is to be ideally shown, 0 - if deleted or screened),
 #                     }
@@ -1287,6 +1288,7 @@ sub load_comments_tree
     }
 
     my %children; # talkid -> [ childenids+ ]
+    my %has_children; # talkid -> 1 or undef
 
     my $uposterid = $opts->{'up'} ? $opts->{'up'}->{'userid'} : 0;
 
@@ -1295,6 +1297,9 @@ sub load_comments_tree
         my %showable_children;  # $id -> $count
 
         foreach my $post (sort { $b->{'talkid'} <=> $a->{'talkid'} } values %$posts) {
+
+            $has_children{$post->{'parenttalkid'}} = 1;
+            $post->{'has_children'} = $has_children{$post->{'talkid'}};
 
             # kill the threading in flat mode
             if ($opts->{'flat'}) {
