@@ -71,7 +71,49 @@
         return error( LJ::server_down_html() )
             if $LJ::SERVER_DOWN;
 
-        LJ::Talk::resources_for_talkform();
+        my $journal = LJ::load_user($POST{journal});
+        my $get_styleinfo = sub {
+            my $journal = shift;
+
+            ### Load necessary props
+            my @needed_props = ("stylesys", "s2_style");
+            LJ::load_user_props($journal, @needed_props);
+
+            my $forceflag = 0;
+            LJ::run_hooks("force_s1", $journal, \$forceflag);
+            if ( !$forceflag && $journal->{'stylesys'} == 2 ) {
+                return (2, $journal->{'s2_style'});
+            }
+            # no special case and not s2, fall through to s1
+            return (1, 0);
+        };
+
+        my $style_u = $journal;
+        my $stylemine = $GET{'style'} eq "mine" ? "style=mine" : "";
+
+        my $remote = LJ::get_remote();
+
+        if ($remote && ($stylemine || $remote->opt_stylealwaysmine)) {
+            $style_u = $remote;
+        }
+
+        my ($stylesys, $styleid) = $get_styleinfo->($style_u);
+
+        my $use_s1 = 1;
+        my $ctx = undef;
+        if ($stylesys == 2) {
+            $ctx = LJ::S2::s2_context('UNUSED', $styleid);
+            $LJ::S2::CURR_CTX = $ctx;
+
+            $use_s1 = 0 if !$ctx->[S2::PROPS]->{'view_entry_disabled'} &&
+                           LJ::get_cap($style_u, "s2viewentry");
+        }
+
+        if ( LJ::is_enabled('new_comments') and $use_s1 ) {
+            LJ::need_res( LJ::Widget::Form->need_res() );
+        } else {
+            LJ::Talk::resources_for_talkform();
+        }
 
         my $editid = $POST{editid};
 
@@ -269,7 +311,22 @@
             return LJ::Talk::talkform_mobile($talkform_opts)
                 if $POST{'mobile_domain'} =~ qr/^\w\.$LJ::DOMAIN$/;
 
-            return LJ::Talk::talkform($talkform_opts);
+
+            if ( $use_s1 and not $external_site_case and LJ::is_enabled('new_comments') ) {
+                return LJ::Widget::Form->render_body(
+                    entry        => $entry,
+                    standalone   => 1,
+                    stylemine    => $GET{'style'} eq 'mine'? 1 : 0,
+                    replyto      => $talkform_opts->{'replyto'},
+                    editid       => $editid,
+                    form         => \%POST,
+                    parpost      => $parpost,
+                    errors       => [ map { error => $_ }, @errors ],
+                    parenttalkid => $talkform_opts->{'replyto'}, #ref $parpost eq 'HASH'? $init->{'ditemid'} : 0,
+                );
+            } else {
+                return LJ::Talk::talkform($talkform_opts);
+            }
         }
 
         # checked $POST{agree_tos} was checked above if it was necessary,
@@ -453,8 +510,9 @@
     if ( $ajax ) {
         $result = LJ::eurl($result);
         $add .= '&need_captcha=1' if $need_captcha;
-
-        return qq~
+        my $user = LJ::load_user($POST{'journal'});
+        $user_url = $user? $user->journal_base : '';
+        return qq(
 <!DOCTYPE html>
 <html>
 <head></head>
@@ -462,7 +520,7 @@
 <iframe src="$user_url/xdreceiver.html?type=commentator%2Fsubmit&status=$status&result=$result$add" />
 </body>
 </html>
-~;
+);
     }
     elsif ($site_scheme_wrap) {
         return BML::render_page({

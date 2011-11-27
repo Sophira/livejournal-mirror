@@ -1854,11 +1854,7 @@ sub journal_content
                     }
                 } 
             } else {
-                if ( $LJ::DISABLED{'new_comments'} ) {
-                    $filename = $LJ::HOME. '/htdocs/talkpost.bml';
-                } else {
-                    $filename = $LJ::HOME. '/htdocs/talkpost_new.bml';
-                }
+                $filename = $LJ::HOME. '/htdocs/talkpost.bml';
             }
             LJ::Request->notes("_journal" => $RQ{'user'});
             LJ::Request->notes("bml_filename" => $filename);
