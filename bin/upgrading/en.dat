@@ -1465,8 +1465,6 @@ entryform.security2=Show this entry to:
 
 entryform.spellcheck=Spell check
 
-entryform.spellcheck.label=Spell check
-
 entryform.spellcheck.noerrors=No spelling errors found
 
 entryform.spellchecked=Spell checked entry:
@@ -5594,6 +5592,8 @@ talk.fromip.extended=([[country]], [[city]] / [[ip]])
 talk.frozen=Replies frozen
 
 talk.help=Help
+
+talk.insertlink=Insert Link
 
 talk.insertphoto=Insert Photo
 
