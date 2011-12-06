@@ -1198,6 +1198,418 @@ HTML BODY.logged-out {
 
 /* Comment Form
 --------------------------- */
+.b-postform {
+	min-height: 220px;
+	}
+
+
+.b-postform-alert-logcommentips,
+.b-postform-alert-nosubjecthtml,
+.b-postform-alert-screened,
+.b-postform-alert-suspended,
+.b-postform-alert-deleted,
+.b-postform-alert-banned,
+.b-postform-alert-notafriend,
+.b-postform-alert-notreg,
+.b-postform-alert-regonly,
+.b-postform-alert-ajax {
+	display: none;
+	width: 70%;
+	}
+.b-postform-alert-errors {
+	width: 70%;
+	}
+
+
+/* deleted */
+BODY .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-deleted .b-postform-alert-notafriend,
+BODY .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-deleted .b-postform-alert-notreg,
+BODY .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-deleted .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-deleted .b-postform-alert-notafriend,
+BODY .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-deleted .b-postform-alert-notreg,
+BODY .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-deleted .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-deleted .b-postform-alert-notafriend,
+BODY .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-deleted .b-postform-alert-notreg,
+BODY .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-deleted .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-deleted .b-postform-alert-notafriend,
+BODY .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-deleted .b-postform-alert-notreg,
+BODY .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-deleted .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-deleted .b-postform-alert-notafriend,
+BODY .b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-deleted .b-postform-alert-notreg,
+BODY .b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-deleted .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-deleted .b-postform-alert-notafriend,
+BODY .b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-deleted .b-postform-alert-notreg,
+BODY .b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-deleted .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-deleted .b-postform-alert-notafriend,
+BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-deleted .b-postform-alert-notreg,
+BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-deleted .b-postform-alert-regonly {
+	display: none;
+	}
+
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-deleted .b-postform-alert-screened,
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-deleted.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-deleted .b-postform-alert-logcommentips,
+
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-deleted .b-postform-alert-screened,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-deleted.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-deleted .b-postform-alert-logcommentips,
+
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-deleted .b-postform-alert-screened,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-deleted.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-deleted .b-postform-alert-logcommentips,
+
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-deleted .b-postform-alert-screened,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-deleted.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-deleted .b-postform-alert-logcommentips,
+
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-deleted .b-postform-alert-screened,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-deleted.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-deleted .b-postform-alert-logcommentips,
+
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-deleted .b-postform-alert-screened,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-deleted.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-deleted .b-postform-alert-logcommentips,
+
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-deleted .b-postform-alert-screened,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-deleted.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-deleted .b-postform-alert-logcommentips {
+	display: none;
+	}
+
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-deleted .b-postform-alert-deleted,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-deleted .b-postform-alert-deleted,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-deleted .b-postform-alert-deleted,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-deleted .b-postform-alert-deleted,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-deleted .b-postform-alert-deleted,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-deleted .b-postform-alert-deleted,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-deleted .b-postform-alert-deleted {
+	display: block;
+	}
+
+
+/* suspended */
+BODY .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-suspended .b-postform-alert-notafriend,
+BODY .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-suspended .b-postform-alert-notreg,
+BODY .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-suspended .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-suspended .b-postform-alert-notafriend,
+BODY .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-suspended .b-postform-alert-notreg,
+BODY .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-suspended .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-suspended .b-postform-alert-notafriend,
+BODY .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-suspended .b-postform-alert-notreg,
+BODY .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-suspended .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-suspended .b-postform-alert-notafriend,
+BODY .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-suspended .b-postform-alert-notreg,
+BODY .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-suspended .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-suspended .b-postform-alert-notafriend,
+BODY .b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-suspended .b-postform-alert-notreg,
+BODY .b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-suspended .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-suspended .b-postform-alert-notafriend,
+BODY .b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-suspended .b-postform-alert-notreg,
+BODY .b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-suspended .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-suspended .b-postform-alert-notafriend,
+BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-suspended .b-postform-alert-notreg,
+BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-suspended .b-postform-alert-regonly {
+	display: none;
+	}
+
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-suspended .b-postform-alert-screened,
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-suspended.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-suspended .b-postform-alert-logcommentips,
+
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-suspended .b-postform-alert-screened,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-suspended.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-suspended .b-postform-alert-logcommentips,
+
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-suspended .b-postform-alert-screened,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-suspended.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-suspended .b-postform-alert-logcommentips,
+
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-suspended .b-postform-alert-screened,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-suspended.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-suspended .b-postform-alert-logcommentips,
+
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-suspended .b-postform-alert-screened,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-suspended.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-suspended .b-postform-alert-logcommentips,
+
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-suspended .b-postform-alert-screened,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-suspended.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-suspended .b-postform-alert-logcommentips,
+
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-suspended .b-postform-alert-screened,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-suspended.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-suspended .b-postform-alert-logcommentips {
+	display: none;
+	}
+
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-suspended .b-postform-alert-suspended,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-suspended .b-postform-alert-suspended,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-suspended .b-postform-alert-suspended,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-suspended .b-postform-alert-suspended,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-suspended .b-postform-alert-suspended,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-suspended .b-postform-alert-suspended,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-suspended .b-postform-alert-suspended {
+	display: block;
+	}
+
+
+/* banned */
+BODY .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-banned .b-postform-alert-notafriend,
+BODY .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-banned .b-postform-alert-notreg,
+BODY .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-banned .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-banned .b-postform-alert-notafriend,
+BODY .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-banned .b-postform-alert-notreg,
+BODY .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-banned .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-banned .b-postform-alert-notafriend,
+BODY .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-banned .b-postform-alert-notreg,
+BODY .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-banned .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-banned .b-postform-alert-notafriend,
+BODY .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-banned .b-postform-alert-notreg,
+BODY .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-banned .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-banned .b-postform-alert-notafriend,
+BODY .b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-banned .b-postform-alert-notreg,
+BODY .b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-banned .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-banned .b-postform-alert-notafriend,
+BODY .b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-banned .b-postform-alert-notreg,
+BODY .b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-banned .b-postform-alert-regonly,
+
+BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-banned .b-postform-alert-notafriend,
+BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-banned .b-postform-alert-notreg,
+BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-banned .b-postform-alert-regonly {
+	display: none;
+	}
+
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-banned .b-postform-alert-screened,
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-banned.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-banned .b-postform-alert-logcommentips,
+
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-banned .b-postform-alert-screened,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-banned.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-banned .b-postform-alert-logcommentips,
+
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-banned .b-postform-alert-screened,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-banned.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-banned .b-postform-alert-logcommentips,
+
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-banned .b-postform-alert-screened,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-banned.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-banned .b-postform-alert-logcommentips,
+
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-banned .b-postform-alert-screened,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-banned.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-banned .b-postform-alert-logcommentips,
+
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-banned .b-postform-alert-screened,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-banned.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-banned .b-postform-alert-logcommentips,
+
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-banned .b-postform-alert-screened,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-banned.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-banned .b-postform-alert-logcommentips {
+	display: none;
+	}
+
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-banned .b-postform-alert-banned,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-banned .b-postform-alert-banned,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-banned .b-postform-alert-banned,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-banned .b-postform-alert-banned,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-banned .b-postform-alert-banned,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-banned .b-postform-alert-banned,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-banned .b-postform-alert-banned {
+	display: block;
+	}
+
+
+/* not a friend/member */
+.b-postform-authtype-anonymous.b-postform-user-friendonly .b-postform-alert-screened,
+.b-postform-authtype-anonymous.b-postform-user-friendonly.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-authtype-anonymous.b-postform-user-friendonly .b-postform-alert-logcommentips,
+
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-notafriend .b-postform-alert-screened,
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-notafriend.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-notafriend .b-postform-alert-logcommentips,
+
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-notafriend .b-postform-alert-screened,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-notafriend.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-notafriend .b-postform-alert-logcommentips,
+
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-notafriend .b-postform-alert-screened,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-notafriend.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-notafriend .b-postform-alert-logcommentips,
+
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-notafriend .b-postform-alert-screened,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-notafriend.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-notafriend .b-postform-alert-logcommentips,
+
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-notafriend .b-postform-alert-screened,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-notafriend.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-notafriend .b-postform-alert-logcommentips,
+
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-notafriend .b-postform-alert-screened,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-notafriend.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-notafriend .b-postform-alert-logcommentips,
+
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-notafriend .b-postform-alert-screened,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-notafriend.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-notafriend .b-postform-alert-logcommentips {
+	display: none;
+	}
+
+.b-postform-authtype-anonymous.b-postform-user-friendonly .b-postform-alert-notafriend,
+.b-postform-authtype-anonymous.b-postform-user-notafriend .b-postform-alert-notafriend,
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-notafriend .b-postform-alert-notafriend,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-notafriend .b-postform-alert-notafriend,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-notafriend .b-postform-alert-notafriend,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-notafriend .b-postform-alert-notafriend,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-notafriend .b-postform-alert-notafriend,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-notafriend .b-postform-alert-notafriend,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-notafriend .b-postform-alert-notafriend {
+	display: block;
+	}
+
+
+/* reg users only */
+.b-postform-authtype-anonymous.b-postform-user-regonly .b-postform-alert-screened,
+.b-postform-authtype-anonymous.b-postform-user-regonly.b-postform-user-screened-anon .b-postform-alert-screened,
+.b-postform-realauth-anonymous.b-postform-authtype-anonymous.b-postform-user-regonly.b-postform-user-screened-anon .b-postform-alert-screened,
+.b-postform-authtype-anonymous.b-postform-user-regonly.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-anonymous.b-postform-authtype-anonymous.b-postform-user-regonly.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-authtype-anonymous.b-postform-user-regonly .b-postform-alert-logcommentips,
+
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-notreg .b-postform-alert-screened,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-notreg.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-notreg .b-postform-alert-logcommentips,
+
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-notreg .b-postform-alert-screened,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-notreg.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-notreg .b-postform-alert-logcommentips,
+
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-notreg .b-postform-alert-screened,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-notreg.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-notreg .b-postform-alert-logcommentips,
+
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-notreg .b-postform-alert-screened,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-notreg.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-notreg .b-postform-alert-logcommentips,
+
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-notreg .b-postform-alert-screened,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-notreg.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-notreg .b-postform-alert-logcommentips,
+
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-notreg .b-postform-alert-screened,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-notreg.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-notreg .b-postform-alert-logcommentips {
+	display: none;
+	}
+
+.b-postform-authtype-anonymous.b-postform-user-regonly .b-postform-alert-regonly,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-notreg .b-postform-alert-notreg,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-notreg .b-postform-alert-notreg,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-notreg .b-postform-alert-notreg,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-notreg .b-postform-alert-notreg,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-notreg .b-postform-alert-notreg,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-notreg .b-postform-alert-notreg {
+	display: block;
+	}
+
+
+/* screening */
+.b-postform-realauth-anonymous.b-postform-authtype-anonymous.b-postform-user-screened-anon .b-postform-alert-screened,
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-user-screened-all .b-postform-alert-screened {
+	display: block;
+	}
+
+
+/* logging ips */
+.b-postform-realauth-anonymous.b-postform-authtype-anonymous.b-postform-user-logips-anon .b-postform-alert-logcommentips,
+.b-postform-user-logips-all .b-postform-alert-logcommentips {
+	display: block;
+	}
+
+
+/* alert ajax */
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-suspended .b-postform-alert-ajax,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-suspended .b-postform-alert-ajax,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-suspended .b-postform-alert-ajax,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-suspended .b-postform-alert-ajax,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-suspended .b-postform-alert-ajax,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-suspended .b-postform-alert-ajax,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-suspended .b-postform-alert-ajax,
+
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-deleted .b-postform-alert-ajax,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-deleted .b-postform-alert-ajax,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-deleted .b-postform-alert-ajax,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-deleted .b-postform-alert-ajax,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-deleted .b-postform-alert-ajax,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-deleted .b-postform-alert-ajax,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-deleted .b-postform-alert-ajax,
+
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-banned .b-postform-alert-ajax,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-banned .b-postform-alert-ajax,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-banned .b-postform-alert-ajax,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-banned .b-postform-alert-ajax,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-banned .b-postform-alert-ajax,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-banned .b-postform-alert-ajax,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-banned .b-postform-alert-ajax,
+
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-notafriend .b-postform-alert-ajax,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-notafriend .b-postform-alert-ajax,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-notafriend .b-postform-alert-ajax,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-notafriend .b-postform-alert-ajax,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-notafriend .b-postform-alert-ajax,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-notafriend .b-postform-alert-ajax,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-notafriend .b-postform-alert-ajax,
+
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-notreg .b-postform-alert-ajax,
+.b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-notreg .b-postform-alert-ajax,
+.b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-notreg .b-postform-alert-ajax,
+.b-postform-realauth-google.b-postform-authtype-google.b-postform-user-notreg .b-postform-alert-ajax,
+.b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-notreg .b-postform-alert-ajax,
+.b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-notreg .b-postform-alert-ajax,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-notreg .b-postform-alert-ajax,
+
+.b-postform-authtype-anonymous.b-postform-user-friendonly .b-postform-alert-ajax,
+
+.b-postform-authtype-anonymous.b-postform-user-regonly .b-postform-alert-ajax {
+	display: none;
+	}
+
+.b-postform-captchabox {
+	display: none;
+	}
+.b-postform-captchabox-active {
+	display: table-row;
+	*display: block;
+	}
+	.b-postform-captchabox-active #captcha-container {
+		background: url(/img/preloader-s.gif?v=1) no-repeat 0 50%;
+		}
+
+
 .b-postform-login-label {
 	margin: 0;
 	padding: 2px 0;
@@ -1313,19 +1725,11 @@ HTML BODY.logged-out {
 			.b-postform-authtype-anonymous .b-postform-login-services-current-pic {
 				background-image: url(/img/anonymous.gif?v=5110);
 				}
-			.b-postform-authtype-livejournal .b-postform-login-services-current-pic,
-			.b-postform-authtype-anonymous.b-postform-ability-disabled-anonymous .b-postform-login-services-current-pic,
-			.b-postform-authtype-facebook.b-postform-ability-disabled-facebook .b-postform-login-services-current-pic,
-			.b-postform-authtype-twitter.b-postform-ability-disabled-twitter .b-postform-login-services-current-pic,
-			.b-postform-authtype-google.b-postform-ability-disabled-google .b-postform-login-services-current-pic,
-			.b-postform-authtype-openid.b-postform-ability-disabled-openid .b-postform-login-services-current-pic,
-			.b-postform-authtype-mailru.b-postform-ability-disabled-mailru .b-postform-login-services-current-pic,
-			.b-postform-authtype-vkontakte.b-postform-ability-disabled-vkontakte .b-postform-login-services-current-pic,
-			.b-postform-authtype-user.b-postform-ability-disabled-anonymous.b-postform-ability-disabled-user .b-postform-login-services-current-pic {
-				background-image: url(/img/pencil.gif?v=2135);
+			.b-postform-authtype-cookieuser .b-postform-login-services-current-pic {
+				background-image: url(/img/userinfo.gif?v=15718);
 				}
-			.b-postform-authtype-user .b-postform-login-services-current-pic {
-				background-image: url(/img/userinfo.gif?v=15038);
+			.b-postform-authtype-cookieuser .b-postform-login-services-current-pic {
+				background-image: url(/img/userinfo.gif?v=15718);
 				}
 			.b-postform-authtype-facebook .b-postform-login-services-current-pic {
 				background-image: url(/img/icons/facebook-16.gif?v=17127);
@@ -1392,15 +1796,17 @@ HTML BODY.logged-out {
 			.b-postform-login-services-show .b-postform-login-services-item {
 				display: block;
 				}
-			.b-postform-user-cookie .b-postform-login-services-show .b-postform-login-services-livejournal,
-			.b-postform-useranonymous-cookie .b-postform-login-services-show .b-postform-login-services-livejournal,
-			.b-postform-anonymous-cookie .b-postform-login-services-show .b-postform-login-services-user {
+			/*
+			.b-postform-user-cookie .b-postform-login-services-show .b-postform-login-services-user,
+			.b-postform-useranonymous-cookie .b-postform-login-services-show .b-postform-login-services-user,
+			.b-postform-anonymous-cookie .b-postform-login-services-show .b-postform-login-services-cookieuser {
 				display: none;
 				}
-			.b-postform-useranonymous-cookie .b-postform-login-services-show .b-postform-login-services-user,
-			.b-postform-user-cookie.b-postform-ability-disabled-anonymous.b-postform-ability-disabled-user .b-postform-login-services-show .b-postform-login-services-livejournal {
+			.b-postform-useranonymous-cookie .b-postform-login-services-show .b-postform-login-services-cookieuser,
+			.b-postform-user-cookie.b-postform-ability-disabled-anonymous.b-postform-ability-disabled-user .b-postform-login-services-show .b-postform-login-services-user {
 				display: block;
 				}
+			*/
 				BODY .b-postform-login-services-item A:link,
 				BODY .b-postform-login-services-item A:visited {
 					display: block;
@@ -1441,47 +1847,6 @@ HTML BODY.logged-out {
 						vertical-align: -4px;
 						border: 0 !important;
 						}
-				BODY .b-postform-ability-disabled-anonymous .b-postform-login-services-anonymous A:link,
-				BODY .b-postform-ability-disabled-anonymous .b-postform-login-services-anonymous A:visited,
-				BODY .b-postform-ability-disabled-anonymous .b-postform-login-services-anonymous A:hover,
-				BODY .b-postform-ability-disabled-anonymous .b-postform-login-services-anonymous A:active,
-				BODY .b-postform-ability-disabled-user .b-postform-login-services-user A:link,
-				BODY .b-postform-ability-disabled-user .b-postform-login-services-user A:visited,
-				BODY .b-postform-ability-disabled-user .b-postform-login-services-user A:hover,
-				BODY .b-postform-ability-disabled-user .b-postform-login-services-user A:active,
-				BODY .b-postform-ability-disabled-facebook .b-postform-login-services-facebook A:link,
-				BODY .b-postform-ability-disabled-facebook .b-postform-login-services-facebook A:visited,
-				BODY .b-postform-ability-disabled-facebook .b-postform-login-services-facebook A:hover,
-				BODY .b-postform-ability-disabled-facebook .b-postform-login-services-facebook A:active,
-				BODY .b-postform-ability-disabled-twitter .b-postform-login-services-twitter A:link,
-				BODY .b-postform-ability-disabled-twitter .b-postform-login-services-twitter A:visited,
-				BODY .b-postform-ability-disabled-twitter .b-postform-login-services-twitter A:hover,
-				BODY .b-postform-ability-disabled-twitter .b-postform-login-services-twitter A:active,
-				BODY .b-postform-ability-disabled-google .b-postform-login-services-google A:link,
-				BODY .b-postform-ability-disabled-google .b-postform-login-services-google A:visited,
-				BODY .b-postform-ability-disabled-google .b-postform-login-services-google A:hover,
-				BODY .b-postform-ability-disabled-google .b-postform-login-services-google A:active,
-				BODY .b-postform-ability-disabled-openid .b-postform-login-services-openid A:link,
-				BODY .b-postform-ability-disabled-openid .b-postform-login-services-openid A:visited,
-				BODY .b-postform-ability-disabled-openid .b-postform-login-services-openid A:hover,
-				BODY .b-postform-ability-disabled-openid .b-postform-login-services-openid A:active,
-				BODY .b-postform-ability-disabled-mailru .b-postform-login-services-mailru A:link,
-				BODY .b-postform-ability-disabled-mailru .b-postform-login-services-mailru A:visited,
-				BODY .b-postform-ability-disabled-mailru .b-postform-login-services-mailru A:hover,
-				BODY .b-postform-ability-disabled-mailru .b-postform-login-services-mailru A:active,
-				BODY .b-postform-ability-disabled-vkontakte .b-postform-login-services-vkontakte A:link,
-				BODY .b-postform-ability-disabled-vkontakte .b-postform-login-services-vkontakte A:visited,
-				BODY .b-postform-ability-disabled-vkontakte .b-postform-login-services-vkontakte A:hover,
-				BODY .b-postform-ability-disabled-vkontakte .b-postform-login-services-vkontakte A:active {
-					background: #FFF;
-					-ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
-					filter: alpha(opacity=50);
-					-moz-opacity: 0.5;
-					-khtml-opacity: 0.5;
-					opacity: 0.5;
-					cursor: default;
-					zoom:1;
-					}
 	.b-postform-login-details {
 		position: static;
 		float: none;
@@ -1505,8 +1870,8 @@ HTML BODY.logged-out {
 			padding: 0;
 			}
 		#js .b-postform-authtype-anonymous .b-postform-login-anonymous,
-		#js .b-postform-authtype-livejournal .b-postform-login-livejournal,
 		#js .b-postform-authtype-user .b-postform-login-user,
+		#js .b-postform-authtype-cookieuser .b-postform-login-cookieuser,
 		#js .b-postform-authtype-facebook .b-postform-login-facebook,
 		#js .b-postform-authtype-twitter .b-postform-login-twitter,
 		#js .b-postform-authtype-google .b-postform-login-google,
@@ -1516,29 +1881,13 @@ HTML BODY.logged-out {
 		#js .b-postform-authtype-ljedit .b-postform-login-ljedit {
 			display: block;
 			}
-		#js .b-postform-ability-disabled-anonymous .b-postform-login-anonymous,
-		#js .b-postform-ability-disabled-user .b-postform-login-user,
-		#js .b-postform-ability-disabled-facebook .b-postform-login-facebook,
-		#js .b-postform-ability-disabled-twitter .b-postform-login-twitter,
-		#js .b-postform-ability-disabled-google .b-postform-login-google,
-		#js .b-postform-ability-disabled-openid .b-postform-login-openid,
-		#js .b-postform-ability-disabled-mailru .b-postform-login-mailru,
-		#js .b-postform-ability-disabled-vkontakte .b-postform-login-vkontakte {
-			display: none;
-			}
-		#js .b-postform-authtype-anonymous.b-postform-ability-disabled-anonymous .b-postform-login-livejournal,
-		#js .b-postform-authtype-facebook.b-postform-ability-disabled-facebook .b-postform-login-livejournal,
-		#js .b-postform-authtype-twitter.b-postform-ability-disabled-twitter .b-postform-login-livejournal,
-		#js .b-postform-authtype-google.b-postform-ability-disabled-google .b-postform-login-livejournal,
-		#js .b-postform-authtype-openid.b-postform-ability-disabled-openid .b-postform-login-livejournal,
-		#js .b-postform-authtype-mailru.b-postform-ability-disabled-mailru .b-postform-login-livejournal,
-		#js .b-postform-authtype-vkontakte.b-postform-ability-disabled-vkontakte .b-postform-login-livejournal,
-		#js .b-postform-authtype-user.b-postform-user-cookie.b-postform-ability-disabled-anonymous.b-postform-ability-disabled-user .b-postform-login-livejournal {
-			display: block;
-			}
 			#js .b-postform-login-item .b-postform-login-radio,
 			#js .b-postform-login-item .b-postform-login-service {
 				display: none;
+				}
+			#js .b-postform-login-anonymous,
+			#js .b-postform-login-cookieuser {
+				padding: 6px 0 0;
 				}
 			.b-postform-login-item .i-bubble {
 				padding: 6px 8px;
@@ -1549,54 +1898,6 @@ HTML BODY.logged-out {
 				.b-postform-login-item .i-bubble-arrow-border {
 					margin: -6px 0 0;
 					}
-			.b-postform-login-anonymous .b-postform-login-opts-anonymous,
-			.b-postform-facebook-cookie .b-postform-login-facebook .b-postform-login-opts,
-			.b-postform-twitter-cookie .b-postform-login-twitter .b-postform-login-opts,
-			.b-postform-google-cookie .b-postform-login-google .b-postform-login-opts,
-			.b-postform-openid-cookie .b-postform-login-openid .b-postform-login-opts,
-			.b-postform-mailru-cookie .b-postform-login-mailru .b-postform-login-opts,
-			.b-postform-vkontakte-cookie .b-postform-login-vkontakte .b-postform-login-opts {
-				position: static;
-				display: block;
-				width: auto;
-				height: auto;
-				margin: 0;
-				padding: 7px 0;
-				}
-			.b-postform-user-cookie .b-postform-login-user .b-postform-login-opts,
-			.b-postform-useranonymous-cookie .b-postform-login-user .b-postform-login-opts,
-			.b-postform-login-anonymous .b-postform-login-opts-anonymous {
-				padding: 6px 0;
-				}
-			.b-postform-login-livejournal .b-postform-login-opts {
-				position: static;
-				display: block;
-				width: auto;
-				height: auto;
-				margin: 0;
-				padding: 1px 2px 0;
-				}
-			.b-postform-login-ljedit .b-postform-login-opts {
-				position: static;
-				display: block;
-				width: auto;
-				height: auto;
-				margin: 0;
-				padding: 5px 0;
-				}
-				.b-postform-login-ljedit .b-postform-login-opts .b-postform-login-img {
-					vertical-align: -4px;
-					}
-			.b-postform-login-item .b-postform-login-opts {
-				display:inline-block;
-				}
-				#js .b-postform-login-opts {
-					display:block;
-					}
-			.b-postform-authtype-user.b-postform-ability-disabled-anonymous.b-postform-ability-disabled-user .b-postform-login-livejournal .b-postform-login-opts-lj,
-			.b-postform-authtype-livejournal.b-postform-ability-disabled-anonymous.b-postform-ability-disabled-user .b-postform-login-livejournal .b-postform-login-opts-lj {
-				display: none;
-				}
 
 
 
@@ -3164,10 +3465,30 @@ DIV.lj_ippu_app {
 			*display: inline;
 			text-align: center;
 			}
-			.b-subjecticons-item IMG {
+			.b-subjecticon {
+				background-image: url(/img/subjecticons.gif?v=1);
+				background-repeat: no-repeat;
 				cursor: pointer;
 				}
-	
+			.b-subjecticons-default {background-position: 0 0;}
+			.b-subjecticons-sm01 {background-position: -15px 0;}
+			.b-subjecticons-sm02 {background-position: -30px 0;}
+			.b-subjecticons-sm03 {background-position: -45px 0;}
+			.b-subjecticons-sm04 {background-position: -60px 0;}
+			.b-subjecticons-sm05 {background-position: -75px 0;}
+			.b-subjecticons-sm06 {background-position: -90px 0;}
+			.b-subjecticons-sm07 {background-position: -105px 0;}
+			.b-subjecticons-sm08 {background-position: -120px 0;}
+			.b-subjecticons-sm09 {background-position: -140px 0;}
+			.b-subjecticons-sm10 {background-position: -154px 0;}
+			.b-subjecticons-md01 {background-position: -178px 0;}
+			.b-subjecticons-md02 {background-position: -210px 0;}
+			.b-subjecticons-md05 {background-position: -242px 0;}
+			.b-subjecticons-md06 {background-position: -267px 0;}
+			.b-subjecticons-md07 {background-position: -287px 0;}
+			.b-subjecticons-md08 {background-position: -307px 0;}
+			.b-subjecticons-md09 {background-position: -324px 0;}
+			.b-subjecticons-md10 {background-position: -349px 0;}
 
 
 /* Fader
@@ -3402,150 +3723,7 @@ A.lj-button-link:active {
 		color: #404040;
 		}
 
-/* Betatest
-------------------------------------------------------------------------*/
-.beta-testing {
-	margin-bottom: 50px;
-	}
-	.beta-testing-content {
-		overflow: hidden;
-		margin-bottom: 25px;
-		background: #EDEDED;
-		border: 1px solid #D9D9D9;
-		-webkit-border-radius: 7px;
-		-moz-border-radius: 7px;
-		border-radius: 7px;
-		}
-	.beta-testing-section {
-		overflow: hidden;
-		background: #FFF;
-		border-right: 1px solid #D9D9D9;
-		-webkit-border-top-left-radius: 6px;
-		-webkit-border-bottom-left-radius: 6px;
-		-moz-border-radius-topleft: 6px;
-		-moz-border-radius-bottomleft: 6px;
-		border-top-left-radius: 6px;
-		border-bottom-left-radius: 6px;
-		}
-	.beta-testing-side {
-		float: right;
-		width: 220px;
-		padding-top: 45px;
-		text-align: center;
-		}
-	.beta-testing .server-name {
-		padding: 0;
-		margin: 0 0 20px 0;
-		line-height: 18px;
-		font-size: 15px;
-		color: #000;
-		}
-	.beta-testing .b-btn-slide-off,
-	.beta-testing .b-btn-slide-on {
-		position: relative;
-		display: inline-block;
-		height: 21px;
-		padding: 5px 15px 0px 15px;
-		margin: 0;
-		-webkit-border-radius: 4px;
-		-moz-border-radius: 4px;
-		border-radius: 4px;
-		border: 1px solid #B2B2B2;
-		text-transform: uppercase;
-		text-shadow: 1px 1px 1px #0B6294;
-		font-size: 14px;
-		font-weight: bold;
-		color: #FFF;
-		}
-	.beta-testing .b-btn-slide-off {
-		padding-left: 50px;
-		background: #BDBDBD;
-		background: -moz-linear-gradient(top, #BDBDBD 0%, #E3E3E3 20%, #EEEEEE 51%, #FFFFFF 51%, #FFFFFF 100%, #FFFFFF 100%);
-		background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#BDBDBD), color-stop(20%,#E3E3E3), color-stop(51%,#EEEEEE), color-stop(51%,#FFFFFF), color-stop(100%,#FFFFFF), color-stop(100%,#FFFFFF));
-		background: -webkit-linear-gradient(top, #BDBDBD 0%,#E3E3E3 20%,#EEEEEE 51%,#FFFFFF 51%,#FFFFFF 100%,#FFFFFF 100%);
-		background: -o-linear-gradient(top, #BDBDBD 0%,#E3E3E3 20%,#EEEEEE 51%,#FFFFFF 51%,#FFFFFF 100%,#FFFFFF 100%);
-		background: -ms-linear-gradient(top, #BDBDBD 0%,#E3E3E3 20%,#EEEEEE 51%,#FFFFFF 51%,#FFFFFF 100%,#FFFFFF 100%);
-		filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#BDBDBD', endColorstr='#FFFFFF',GradientType=0 );
-		background: linear-gradient(top, #BDBDBD 0%,#E3E3E3 20%,#EEEEEE 51%,#FFFFFF 51%,#FFFFFF 100%,#FFFFFF 100%);
-		border-color: #C0C0C0;
-		text-shadow: 1px 1px 1px #FFF;
-		color: #7F7F7F;
-		}
-	.beta-testing .b-btn-slide-on {
-		padding-right: 55px;
-		background: #6ED1FF;
-		background: -moz-linear-gradient(top, #6ED1FF 0%, #1BB5FD 3%, #158FC8 100%);
-		background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#6ED1FF), color-stop(3%,#1BB5FD), color-stop(100%,#158FC8));
-		background: -webkit-linear-gradient(top, #6ED1FF 0%,#1BB5FD 3%,#158FC8 100%);
-		background: -o-linear-gradient(top, #6ED1FF 0%,#1BB5FD 3%,#158FC8 100%);
-		background: -ms-linear-gradient(top, #6ED1FF 0%,#1BB5FD 3%,#158FC8 100%);
-		filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#6ED1FF', endColorstr='#158FC8',GradientType=0 );
-		background: linear-gradient(top, #6ED1FF 0%,#1BB5FD 3%,#158FC8 100%);
-		border: 1px solid #518593;
-		text-shadow: 1px 1px 1px #0B6294;
-		color: #FFF;
-		}
-		.beta-testing .b-btn-slide-off .b-btn,
-		.beta-testing .b-btn-slide-on .b-btn {
-			position: absolute;
-			top: -1px;
-			width: 40px;
-			height: 28px;
-			padding: 0;
-			margin: 0;
-			background: #D8D8D8;
-			background: -moz-linear-gradient(top, #D8D8D8 0%, #FFFFFF 100%);
-			background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#D8D8D8), color-stop(100%,#FFFFFF));
-			background: -webkit-linear-gradient(top, #D8D8D8 0%,#FFFFFF 100%);
-			background: -o-linear-gradient(top, #D8D8D8 0%,#FFFFFF 100%);
-			background: -ms-linear-gradient(top, #D8D8D8 0%,#FFFFFF 100%);
-			filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#D8D8D8', endColorstr='#FFFFFF',GradientType=0 );
-			background: linear-gradient(top, #D8D8D8 0%,#FFFFFF 100%);
-			border: 1px solid #B2B2B2;
-			}
-		.beta-testing .b-btn-slide-off .b-btn {
-			left: -1px;
-			}
-		.beta-testing .b-btn-slide-on .b-btn {
-			right: -1px;
-			}
-	.beta-testing .note {
-		padding: 0;
-		margin: 30px 0 0 0;
-		text-shadow: 0 1px 1px #FFF;
-		line-height: 20px;
-		font-weight: bold;
-		font-size: 18px;
-		}
-	/* User agent */
-	.beta-testing .user-agent H3 {
-		padding: 0;
-		margin: 0 0 5px 0;
-		line-height: 20px;
-		font-style: normal;
-		font-size: 18px;
-		color: #000;
-		}
-	.beta-testing .user-agent P {
-		padding: 0;
-		margin: 0;
-		line-height: 18px;
-		font-size: 15px;
-		}
-/* Alternate servers list */
-.alt-servers-list {
-	overflow: hidden;
-	padding: 45px 0 0 0;
-	margin: 0 0 10px 0;
-	text-align: center;
-	list-style: none;
-	}
-	.alt-servers-list LI {
-		float: left;
-		width: 240px;
-		padding: 0;
-		margin: 0 0 45px 0;
-		}
+
 
 .i-posticon-flip {
 	margin: 0 0 0 .5em;

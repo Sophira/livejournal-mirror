@@ -3114,6 +3114,18 @@ fotki.photo.edit.title=Photo edit
 fotki.photo.edit.update.button|staleness=1
 fotki.photo.edit.update.button=Update
 
+fotki.migration.conditions=Before the end of the transfer process you have access to all FotoBilder's features
+
+fotki.migration.button=Start
+
+fotki.migration.decline=You are not have access to FotoBilder
+
+fotki.migration.label=Select this checkbox if you want migrate to new LJ PhotoHosting
+
+fotki.migration.started.text=Migration was started
+
+fotki.migration.title=Promo page
+
 fotki.photo.recover|staleness=1
 fotki.photo.recover=You can recover it, before you clicking "Save all" button
 
@@ -5427,6 +5439,8 @@ talk.asfacebook=Facebook
 
 talk.asgoogle=Google
 
+talk.aslivejournal=LiveJournal
+
 talk.asmailru=MailRu
  
 talk.asopenid=OpenId
@@ -5491,6 +5505,8 @@ talk.deleteduser=<i>Deleted user: [[username]]</i>
 
 talk.edit=Edit
 
+talk.editcomment=Save comment
+
 talk.edited=Edited:
 
 talk.emptypostalert=You need to write something first
@@ -5533,11 +5549,17 @@ talk.error.cantedit.notyours=You cannot edit this comment because you did not po
 
 talk.error.comm_deleted=This comment has been deleted.
 
+talk.error.commentscreened=Your comment was screened according to journal settings
+
+talk.error.commentspammed=Your comment was marked as spam according to system-wide policies
+
 talk.error.deleted=This journal is deleted.
 
 talk.error.deleted.title=Deleted
 
 talk.error.mustlogin=You must be logged in to view this protected entry.
+
+talk.error.noaccess=Access denied
 
 talk.error.noanonpost=Anonymous comments are disabled in this journal
 
@@ -5581,6 +5603,8 @@ talk.error.suspendedentryreply|staleness=1
 talk.error.suspendedentryreply=This entry is suspended. You cannot reply to it. You can visit the journal <a [[aopts]]>here</a>.
 
 talk.expandall=Expand All
+
+talk.expandchilds=Expand Childs
 
 talk.expandlink|staleness=1
 talk.expandlink=Expand
@@ -5632,6 +5656,8 @@ talk.photo.insert=Insert
 talk.placeholder.username=Username
  
 talk.placeholder.userpass=Password
+
+talk.postcomment=Add a comment
 
 talk.prev=Previous
 

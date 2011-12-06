@@ -3,6 +3,7 @@ use strict;
 use warnings;
 
 use LJ::Lang qw( ml );
+use LJ::Widget::SGMessages;
 
 my %CODE_TO_CLASS_MAP;
 
