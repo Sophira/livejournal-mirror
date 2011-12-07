@@ -15,6 +15,7 @@ sub _format_one_message {
 
     my $lang;
     my $remote = LJ::get_remote();
+    return unless $remote;
     $lang = $remote->prop("browselang") if $remote; # exlude s2 context language from opportunities,
         # because S2 journal code executes BML::set_language($lang, \&LJ::Lang::get_text) with its own language
 
