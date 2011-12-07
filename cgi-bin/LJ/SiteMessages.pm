@@ -1,7 +1,6 @@
 package LJ::SiteMessages;
 use strict;
 use Carp qw(croak);
-use LJ::Fotki::Migration;
 
 use constant AccountMask => {
     Permanent   => {    
@@ -129,14 +128,6 @@ use constant AccountMask => {
                                             my ($u) = @_;
                                             
                                             return $u->prop('email_faulty');
-                                       }
-                    },
-   NewPhotohosting => {
-                        value       => 4096,
-                        group       => 5,
-                        validate    => sub {
-                                            my ($u) = @_;
-                                            return !(LJ::Fotki::Migration->user_enabled_new_photohosting($u));
                                        }
                     },
 };

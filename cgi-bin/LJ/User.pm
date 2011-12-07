@@ -3824,7 +3824,12 @@ sub can_use_ljphoto {
 
     return 0 if $LJ::DISABLED{'new_ljphoto'};
 
-    return 1 if $u->prop ('fotki_migration_status');
+    ## For beta-testers only.
+    foreach my $community (@LJ::LJPHOTO_ALLOW_FROM_COMMUNITIES){
+        my $comm = LJ::load_user($community);
+        next unless $comm;
+        return 1 if $u->can_manage ($comm) or $comm->is_friend($u);
+    }
 
     return 0;
 }
@@ -6462,10 +6467,7 @@ sub load_user_props {
         }
     };
 
-    unless ( $opts->{'reload'} ) {
-        @props = grep { ! exists $u->{$_} } @props;
-    }
-
+    @props = grep { ! exists $u->{$_} } @props;
     return unless @props;
 
     my $groups = LJ::User::PropStorage->get_handler_multi(\@props);
@@ -7166,7 +7168,6 @@ sub remote_has_priv
 #       'Q' == Notification Inbox, 'G' == 'SMS messaGe'
 #       'D' == 'moDule embed contents', 'W' == 'Wish-list element'
 #       'F' == Photo ID, 'A' == Album ID, 'Y' == delaYed entries
-#       'I' == Fotki migration log ID
 #
 # FIXME: both phonepost and vgift are ljcom.  need hooks. but then also
 #        need a separate namespace.  perhaps a separate function/table?
@@ -7177,7 +7178,7 @@ sub alloc_user_counter
 
     ##################################################################
     # IF YOU UPDATE THIS MAKE SURE YOU ADD INITIALIZATION CODE BELOW #
-    return undef unless $dom =~ /^[LTMPSRKCOVEQGDWFAYI]$/;             #
+    return undef unless $dom =~ /^[LTMPSRKCOVEQGDWFAY]$/;             #
     ##################################################################
 
     my $dbh = LJ::get_db_writer();
@@ -7303,9 +7304,6 @@ sub alloc_user_counter
                                       undef, $uid);
     } elsif ($dom eq "Y") {
         $newmax = $u->selectrow_array("SELECT MAX(delayedid) FROM delayedlog2 WHERE journalid=?",
-                                      undef, $uid);
-    } elsif ( $dom eq 'I' ) {
-        $newmax = $u->selectrow_array("SELECT MAX(logid) FROM fotki_migrate_log WHERE userid=?",
                                       undef, $uid);
     } else {
         die "No user counter initializer defined for area '$dom'.\n";

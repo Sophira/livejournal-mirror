@@ -758,13 +758,11 @@ sub trans {
 
             LJ::set_remote ($u) unless $remote;
             $remote = LJ::get_remote();
-=head
-            unless ($remote && ($remote->can_use_ljphoto() || LJ::Request->uri =~ m#^/pics/new_photo_service#)) {
+            unless ($remote && $remote->can_use_ljphoto()) {
                 LJ::Request->pnotes ('error' => 'ljphoto_members');
                 LJ::Request->pnotes ('remote' => LJ::get_remote());
                 return LJ::Request::FORBIDDEN;
             }
-=cut
 
             unless ($u->is_person) {
                 LJ::Request->pnotes ('error' => 'e404');
