@@ -449,7 +449,7 @@ sub render_metainfo_block {
             });
 
             $out .= LJ::html_hidden( usejournal_set => 'true' );
-            $out .= "<span></li>";
+            $out .= "</span></li>";
         } elsif ($login_data && ref $login_data->{'usejournals'} eq 'ARRAY') {
             my $submitprefix = BML::ml('entryform.update3');
             $out .= "<li id='usejournal_list' class='pkg'>\n";
@@ -473,7 +473,7 @@ sub render_metainfo_block {
                     'name' => 'usejournal',
                     'id' => 'usejournal',
                     'selected' => $usejournal,
-                    'tabindex' => $self->tabindex,
+                    'tabindex' => '50',
                     'class' => 'select',
                     "onchange" => "changeSubmit('" . $submitprefix . "',this[this.selectedIndex].value, '$BML::ML{'entryform.update4'}');".
                         "getUserTags(this[this.selectedIndex].value);".
@@ -523,6 +523,7 @@ sub render_metainfo_block {
     my $datetimeonly = LJ::html_datetime({
         'name' => "date_ymd",
         'notime' => 1,
+        'tabindex' => '53',
         'default' => "$year-$mon-$mday",
         'disabled' => $opts->{'disabled_save'}
     });
@@ -532,7 +533,7 @@ sub render_metainfo_block {
         maxlength => 5,
         value => "$hour:$min",
         name => "time",
-        tabindex => $self->tabindex,
+        tabindex => '55',
         disabled => $opts->{'disabled_save'}
     });
 
@@ -547,7 +548,7 @@ sub render_metainfo_block {
     $date_diff_input .= "<noscript>" .  LJ::html_hidden("date_diff_nojs", "1") .
         "</noscript>";
 
-    my $help_icon = LJ::help_icon("24hourshelp");
+    my $help_icon = LJ::help_icon_html("24hourshelp");
     my $hide_link = $can_edit_date ? '' : 'style="display: none;"'; 
 
     $out .= qq{
@@ -582,7 +583,7 @@ sub render_metainfo_block {
             'name' => "prop_opt_backdated",
             "value" => 1,
             'selected' => $opts->{'prop_opt_backdated'},
-            'tabindex' => $self->tabindex
+            'tabindex' => '57'
         });
         my $backdate_help_icon = LJ::help_icon_html("backdate", "", "");
         $backdateout = '<span class="backdate">' . $backdate_check . "<label for='prop_opt_backdated'>$BML::ML{'entryform.backdated3'}</label>" . $backdate_help_icon . "</span>";
@@ -591,10 +592,12 @@ sub render_metainfo_block {
         <span class="wrap entrydate-wrap-until">
             $date_diff_input
             <span class="wrap-calendar">$datetimeonly<i class='i-calendar'></i></span>
-            <span class='datetime'>
-                $time <?de $BML::ML{'entryform.date.24hournote'} de?>
+            <span class="wrap-time">
+                <span class='datetime'>
+                    $time <?de $BML::ML{'entryform.date.24hournote'} de?>
+                </span>
+                $help_icon
             </span>
-            $help_icon
             $backdateout
         </span>
     };
@@ -602,7 +605,7 @@ sub render_metainfo_block {
         $out .= qq{
             <span class="wrap entrydate-wrap-date">
                 <span class="entrydate-string">$monthlong, $mday, $year, $hour:$min</span>
-                <a $hide_link href='javascript:void(0)' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
+                <a $hide_link href='javascript:void(0)' tabindex='60' id='currentdate-edit'>$BML::ML{'entryform.date.edit'}</a>
                 $help_icon
             </span>
         };
@@ -636,7 +639,7 @@ sub render_metainfo_block {
                 'class' => 'select',
                 'selected' => $opts->{'prop_picture_keyword'},
                 'onchange' => "userpic_preview()",
-                'tabindex' => $self->tabindex
+                'tabindex' => '70'
             },
             (
                 "" => BML::ml('entryform.opt.defpic'),
@@ -710,7 +713,7 @@ sub render_subject_block {
         'id' => 'subject',
         'size' => '43',
         'maxlength' => '100',
-        'tabindex' => $self->tabindex,
+        'tabindex' => '90',
         'disabled' => $opts->{'disabled_save'}
     });
 
@@ -807,6 +810,7 @@ sub render_htmltools_block {
         'value' => 'preformatted',
         'name' => 'event_format',
         'id' => 'event_format',
+        'tabindex' => '95',
         'selected' => 
             $opts->{'prop_opt_preformatted'} || $opts->{'event_format'},
         'label' => BML::ml('entryform.format3'),
@@ -912,7 +916,7 @@ sub render_options_block {
                 'class'     => 'text',
                 'size'      => '35',
                 'value'     => $opts->{'prop_taglist'},
-                'tabindex'  => $self->tabindex,
+                'tabindex'  => '110',
                 'raw'       => "autocomplete='off'",
             });
 
@@ -983,7 +987,7 @@ sub render_options_block {
                 'selected' => $sel,
                 'onchange' => $remote ? 'mood_preview()' : '',
                 'class' => 'select',
-                'tabindex' => $self->tabindex,
+                'tabindex' => '120',
             }, @moodlist);
             
             my $textfield = LJ::html_text({
@@ -994,7 +998,7 @@ sub render_options_block {
                 'onchange' => $remote ? 'mood_preview()' : '',
                 'size' => '15',
                 'maxlength' => '30',
-                'tabindex' => $self->tabindex
+                'tabindex' => '130'
             });
 
             return qq{
@@ -1039,7 +1043,7 @@ sub render_options_block {
                     'id' => 'comment_settings',
                     'class' => 'select',
                     'selected' => $comment_settings_selected->(),
-                    'tabindex' => $self->tabindex
+                    'tabindex' => '140'
                 },
                 @options
             );
@@ -1060,7 +1064,7 @@ sub render_options_block {
                 'class' => 'text',
                 'size' => '35',
                 'maxlength' => '60',
-                'tabindex' => $self->tabindex,
+                'tabindex' => '150',
                 $self->lastfm_geolocation_width,
             });
 
@@ -1078,6 +1082,7 @@ sub render_options_block {
                     <span class="detect_btn">
                         <input
                             type="button"
+                            tabindex="160"
                             value="$BML::ML{'entryform.location.detect'}"
                             onclick="detectLocation()"
                         >
@@ -1107,7 +1112,7 @@ sub render_options_block {
                 'id' => 'prop_opt_screening',
                 'class' => 'select',
                 'selected' => $opts->{'prop_opt_screening'},
-                'tabindex' => $self->tabindex,
+                'tabindex' => '170',
             }, @levels);
 
             $out .= LJ::help_icon_html("screening", "", " ");
@@ -1129,7 +1134,7 @@ sub render_options_block {
                 'class' => 'text',
                 'size' => '35',
                 'maxlength' => LJ::std_max_length(),
-                'tabindex' => $self->tabindex,
+                'tabindex' => '180',
                 $self->lastfm_geolocation_width,
             });
 
@@ -1141,6 +1146,7 @@ sub render_options_block {
                 $out .= qq{
                     <input
                         type="button" value="$button_label"
+                        tabindex="175"
                         style="float: left"
                         onclick="lastfm_current('$last_fm_user', true);"
                     >
@@ -1178,7 +1184,7 @@ sub render_options_block {
                 id => 'prop_adult_content',
                 class => 'select',
                 selected => $opts->{prop_adult_content} || "",
-                tabindex => $self->tabindex,
+                tabindex => '190',
             }, @adult_content_menu);
 
             $out .= LJ::help_icon_html("adult_content", "", " ");
@@ -1239,7 +1245,7 @@ sub render_options_block {
                 $out .= LJ::html_submit(
                     'action:spellcheck',
                     BML::ml('entryform.spellcheck'),
-                    { 'tabindex' => $self->tabindex }
+                    { 'tabindex' => '210' }
                 ) . "&nbsp;";
             }
             
@@ -1362,7 +1368,7 @@ sub render_security_container_block {
         'include_ids' => 1,
         'class' => 'select',
         'selected' => $opts->{'security'},
-        'tabindex' => $self->tabindex,
+        'tabindex' => "280",
         @secopts
     }, @secs) . "\n";
 
@@ -1387,7 +1393,7 @@ sub render_submitbar_block {
             BML::ml('entryform.delete'),
             {
                 'disabled' => $opts->{'disabled_delete'},
-                'tabindex' => $self->tabindex,
+                'tabindex' => '270',
                 'class' => "post-delete",
                 'onclick' => "return confirm('" .
                     LJ::ejs(BML::ml('entryform.delete.confirm')) . "')",
@@ -1414,7 +1420,7 @@ sub render_submitbar_block {
     my $preview_tabindex = $self->tabindex;
     my $preview = qq{
         <a class="post-preview"
-        tabindex="$preview_tabindex"
+        tabindex="290"
         onclick="return entryPreview(\$(\\'updateForm\\'));"
         href="#">
         $BML::ML{'entryform.preview'}
@@ -1439,7 +1445,7 @@ sub render_submitbar_block {
         my $onclick = "";
         $onclick .= "return sendForm('updateForm');" if ! $LJ::IS_SSL;
         
-        my $help_icon = LJ::help_icon("security",
+        my $help_icon = LJ::help_icon_html("security",
             "<span id='security-help'>\n", "\n</span>\n");
         $out .= $help_icon;
         
@@ -1468,7 +1474,7 @@ sub render_submitbar_block {
                 'onclick' => $onclick,
                 'class' => 'submit',
                 'id' => 'formsubmit',
-                'tabindex' => $self->tabindex,
+                'tabindex' => '300',
                 'disabled' => $disabled,
             }
         ) . "&nbsp;\n";
@@ -1481,7 +1487,7 @@ sub render_submitbar_block {
     
     if ($opts->{'mode'} eq "edit") {
         my $onclick = $LJ::IS_SSL ? '' : 'return true;';
-        my $help_icon = LJ::help_icon("security",
+        my $help_icon = LJ::help_icon_html("security",
             "<span id='security-help'>\n", "\n</span>\n");
         $out .= $help_icon;
         $out .= qq{ <div id="entryform-update-and-edit" class="submit-options"> };
@@ -1491,7 +1497,7 @@ sub render_submitbar_block {
             {
                 'onclick' => $onclick,
                 'disabled' => $opts->{'disabled_save'},
-                'tabindex' => $self->tabindex,
+                'tabindex' => '300'
             }
         ) . "&nbsp;\n";
 
@@ -1746,7 +1752,7 @@ sub render_body {
     $out .= LJ::html_textarea({
         'name' => 'event',
         'value' => $opts->{'event'},
-        'tabindex' => $self->tabindex,
+        'tabindex' => '100',
         'disabled' => $opts->{'disabled_save'},
         'id' => 'draft'
     });
