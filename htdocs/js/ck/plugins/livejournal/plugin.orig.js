@@ -644,6 +644,8 @@
 							if (range.collapsed === true) {
 								editor.insertElement(iframeClose);
 								iframeClose.insertBeforeMe(iframeOpen);
+								iframeClose.insertBeforeMe(new CKEDITOR.dom.element('br', editor.document));
+								iframeClose.insertBeforeMe(new CKEDITOR.dom.element('br', editor.document));
 							} else {
 								selection.lock();
 								startContainer = range.getTouchedStartNode();
@@ -1266,8 +1268,26 @@
 						};
 					})(),
 					'lj-map': function(element) {
-						var fakeElement = new CKEDITOR.htmlParser.element('iframe');
-						fakeElement.attributes.style = 'width:' + (isNaN(element.attributes.width) ? 500 : element.attributes.width) + 'px;' + 'height:' + (isNaN(element.attributes.height) ? 350 : element.attributes.height) + 'px;';
+						var fakeElement = new CKEDITOR.htmlParser.element('iframe'),
+							frameStyle = '',
+							bodyStyle = '',
+							width = Number(element.attributes.width),
+							height = Number(element.attributes.height);
+
+						if (!isNaN(width)) {
+							frameStyle += 'width:' + width + 'px;';
+							bodyStyle += 'width:' + (width - 2) + 'px;';
+						}
+
+						if (!isNaN(height)) {
+							frameStyle += 'height:' + height + 'px;';
+							bodyStyle += 'height:' + (height - 2) + 'px;';
+						}
+
+						if (frameStyle.length) {
+							fakeElement.attributes['style'] = frameStyle;
+							fakeElement.attributes['lj-style'] = bodyStyle;
+						}
 
 						fakeElement.attributes['lj-url'] = element.attributes.url ? encodeURIComponent(element.attributes.url) : '';
 						fakeElement.attributes['lj-class'] = 'lj-map';
@@ -1300,8 +1320,26 @@
 						if (element.attributes['lj-class'] && element.attributes['lj-class'].indexOf('lj-') + 1 == 1) {
 							return element;
 						}
-						var fakeElement = new CKEDITOR.htmlParser.element('iframe');
-						fakeElement.attributes.style = 'width:' + (isNaN(element.attributes.width) ? 500 : element.attributes.width) + 'px;' + 'height:' + (isNaN(element.attributes.height) ? 350 : element.attributes.height) + 'px;';
+						var fakeElement = new CKEDITOR.htmlParser.element('iframe'),
+							frameStyle = '',
+							bodyStyle = '',
+							width = Number(element.attributes.width),
+							height = Number(element.attributes.height);
+
+						if(!isNaN(width)) {
+							frameStyle += 'width:' + width + 'px;';
+							bodyStyle += 'width:' + (width - 2) + 'px;';
+						}
+
+						if(!isNaN(height)) {
+							frameStyle += 'height:' + height + 'px;';
+							bodyStyle += 'height:' + (height - 2) + 'px;';
+						}
+
+						if(frameStyle.length) {
+							fakeElement.attributes['style'] = frameStyle;
+							fakeElement.attributes['lj-style'] = bodyStyle;
+						}
 
 						fakeElement.attributes['lj-url'] = element.attributes.src ? encodeURIComponent(element.attributes.src) : '';
 						fakeElement.attributes['lj-class'] = 'lj-iframe';
