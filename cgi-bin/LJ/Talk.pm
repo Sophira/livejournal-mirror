@@ -1757,6 +1757,7 @@ sub talkform {
     my $entry = LJ::Entry->new( $journalu, ditemid => $opts->{ditemid} );
 
     my $is_person = $remote && $remote->is_person;
+    my $personal  = $journalu->is_person? 1 : 0;
     my $is_friend = LJ::is_friend( $journalu, $remote );
     my $remote_can_comment = $entry->registered_can_comment
         || ( $remote and $is_friend );
@@ -1855,8 +1856,11 @@ sub talkform {
         $usertype_default ||= $author_class->usertype_default($remote);
     }
 
+    # LJSUP-10659
+    @author_options = sort { $LJ::FORM_AUTH_PRIORITY{ lc $a->{'short_code'} } <=> $LJ::FORM_AUTH_PRIORITY{ lc $b->{'short_code'} } } @author_options;
+
     # LJSUP-10674
-    $usertype_default = 'openid' if $usertype_default eq 'openid_cookie';
+    $usertype_default = $1 if $usertype_default =~ m/^(\w+)_cookie$/;
 
     # from registered user or anonymous?
     my $screening = LJ::Talk::screening_level( $journalu, $entry->jitemid );
@@ -2058,12 +2062,12 @@ sub talkform {
         ),
         'friendsonly' => LJ::Lang::ml(
             '/talkpost.bml.opt.'
-                . ( $is_person ? 'friends' : 'members' ) . 'only',
+                . ( $personal ? 'friends' : 'members' ) . 'only',
             { 'username' => '<b>' . $journalu->username . '</b>', }
         ),
         'notafriend' => LJ::Lang::ml(
             '/talkpost_do.bml.error.nota'
-                . ( $is_person ? 'friend' : 'member' ),
+                . ( $personal ? 'friend' : 'member' ),
             { 'user' => $journalu->username, }
         ),
         'noaccount' => LJ::Lang::ml(
@@ -2106,6 +2110,7 @@ sub talkform {
         'is_person'              => $is_person,
         'is_identity'            => $remote && $remote->is_identity,
         'remote_can_comment'     => $remote_can_comment,
+        is_friend                => $is_friend,
         whocanreply              => $journalu->prop('opt_whocanreply'),
 
         # ml variables. it is weird that we've got to pass these to

@@ -1212,11 +1212,9 @@ HTML BODY.logged-out {
 .b-postform-alert-notafriend,
 .b-postform-alert-notreg,
 .b-postform-alert-regonly,
-.b-postform-alert-ajax {
-	display: none;
-	width: 70%;
-	}
+.b-postform-alert-ajax,
 .b-postform-alert-errors {
+	display: none;
 	width: 70%;
 	}
 
@@ -1493,6 +1491,10 @@ BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-use
 .b-postform-realauth-anonymous.b-postform-authtype-anonymous.b-postform-user-regonly.b-postform-user-screened-nonf .b-postform-alert-screened,
 .b-postform-authtype-anonymous.b-postform-user-regonly .b-postform-alert-logcommentips,
 
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-notreg .b-postform-alert-screened,
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-notreg.b-postform-user-screened-nonf .b-postform-alert-screened,
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-notreg .b-postform-alert-logcommentips,
+
 .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-notreg .b-postform-alert-screened,
 .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-notreg.b-postform-user-screened-nonf .b-postform-alert-screened,
 .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-notreg .b-postform-alert-logcommentips,
@@ -1520,6 +1522,7 @@ BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-use
 	}
 
 .b-postform-authtype-anonymous.b-postform-user-regonly .b-postform-alert-regonly,
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser.b-postform-user-notreg .b-postform-alert-notreg,
 .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-notreg .b-postform-alert-notreg,
 .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-notreg .b-postform-alert-notreg,
 .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-notreg .b-postform-alert-notreg,
@@ -1597,6 +1600,19 @@ BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-use
 .b-postform-authtype-anonymous.b-postform-user-regonly .b-postform-alert-ajax {
 	display: none;
 	}
+
+/* talkpost_do.bml page */
+.b-postform-realauth-anonymous.b-postform-authtype-anonymous .b-postform-alert-errors,
+.b-postform-realauth-cookieuser.b-postform-authtype-cookieuser .b-postform-alert-errors,
+.b-postform-realauth-facebook.b-postform-authtype-facebook .b-postform-alert-errors,
+.b-postform-realauth-twitter.b-postform-authtype-twitter .b-postform-alert-errors,
+.b-postform-realauth-google.b-postform-authtype-google .b-postform-alert-errors,
+.b-postform-realauth-openid.b-postform-authtype-openid .b-postform-alert-errors,
+.b-postform-realauth-mailru.b-postform-authtype-mailru .b-postform-alert-errors,
+.b-postform-realauth-vkontakte.b-postform-authtype-vkontakte .b-postform-alert-errors {
+	display: block;
+	}
+
 
 .b-postform-captchabox {
 	display: none;
@@ -1796,17 +1812,6 @@ BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-use
 			.b-postform-login-services-show .b-postform-login-services-item {
 				display: block;
 				}
-			/*
-			.b-postform-user-cookie .b-postform-login-services-show .b-postform-login-services-user,
-			.b-postform-useranonymous-cookie .b-postform-login-services-show .b-postform-login-services-user,
-			.b-postform-anonymous-cookie .b-postform-login-services-show .b-postform-login-services-cookieuser {
-				display: none;
-				}
-			.b-postform-useranonymous-cookie .b-postform-login-services-show .b-postform-login-services-cookieuser,
-			.b-postform-user-cookie.b-postform-ability-disabled-anonymous.b-postform-ability-disabled-user .b-postform-login-services-show .b-postform-login-services-user {
-				display: block;
-				}
-			*/
 				BODY .b-postform-login-services-item A:link,
 				BODY .b-postform-login-services-item A:visited {
 					display: block;
@@ -1885,9 +1890,23 @@ BODY .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-use
 			#js .b-postform-login-item .b-postform-login-service {
 				display: none;
 				}
-			#js .b-postform-login-anonymous,
-			#js .b-postform-login-cookieuser {
-				padding: 6px 0 0;
+			#js .b-postform-authtype-anonymous .b-postform-login-item,
+			#js .b-postform-realauth-cookieuser.b-postform-authtype-cookieuser .b-postform-login-item,
+			#js .b-postform-realauth-facebook.b-postform-authtype-facebook .b-postform-login-item,
+			#js .b-postform-realauth-twitter.b-postform-authtype-twitter .b-postform-login-item,
+			#js .b-postform-realauth-google.b-postform-authtype-google .b-postform-login-item,
+			#js .b-postform-realauth-openid.b-postform-authtype-openid .b-postform-login-item,
+			#js .b-postform-realauth-mailru.b-postform-authtype-mailru .b-postform-login-item,
+			#js .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte .b-postform-login-item {
+				padding: 7px 0 0;
+				}
+			#js .b-postform-realauth-facebook.b-postform-authtype-facebook.b-postform-user-deleted .b-postform-login-username,
+			#js .b-postform-realauth-twitter.b-postform-authtype-twitter.b-postform-user-deleted .b-postform-login-username,
+			#js .b-postform-realauth-google.b-postform-authtype-google.b-postform-user-deleted .b-postform-login-username,
+			#js .b-postform-realauth-openid.b-postform-authtype-openid.b-postform-user-deleted .b-postform-login-username,
+			#js .b-postform-realauth-mailru.b-postform-authtype-mailru.b-postform-user-deleted .b-postform-login-username,
+			#js .b-postform-realauth-vkontakte.b-postform-authtype-vkontakte.b-postform-user-deleted .b-postform-login-username {
+				text-decoration: line-through;
 				}
 			.b-postform-login-item .i-bubble {
 				padding: 6px 8px;
