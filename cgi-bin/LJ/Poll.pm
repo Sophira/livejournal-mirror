@@ -12,7 +12,7 @@ sub _memcache_key_prefix            { "poll" }
 sub _memcache_stored_props          {
     # first element of props is a VERSION
     # next - allowed object properties
-    return qw/ 2
+    return qw/ 4
                ditemid itemid
                pollid journalid posterid whovote whoview name status questions props
                results
@@ -926,7 +926,7 @@ sub question {
 
 sub load_aggregated_results {
     my $self = shift;
-
+    
     my %aggr_results;
     my $aggr_users;
 
@@ -950,12 +950,11 @@ sub load_aggregated_results {
         }
     }
 
-    if (scalar keys %aggr_results) {
+    #if (scalar keys %aggr_results) {
         $self->{results} = { counts => \%aggr_results, users => $aggr_users};
-    } else {
-        $self->{results} = 'no'; # we tryed - there are no aggregated results in DB => save negative status to prevent new attempts
-    }
-
+    #} else {
+    #    $self->{results} = 'no'; # we tryed - there are no aggregated results in DB => save negative status to prevent new attempts
+    #}
     # store poll data with loaded results
     $self->_store_to_memcache;
     $LJ::REQ_CACHE_POLL{ $self->id } = $self;
@@ -1068,7 +1067,6 @@ sub render_ans {
 #
 sub render {
     my ($self, %opts) = @_;
-
     my $remote = LJ::get_remote();
 
     my $ditemid   = $self->ditemid;
@@ -1617,15 +1615,17 @@ sub aggr_results {
     my $self = shift;
     my $qid  = shift;
 
-
     $self->load_aggregated_results
-        unless ref $self->{results};
+        unless ref $self->{results} && $self->{results}{counts};
+  
+    my $results  = $qid ? $self->{results}{counts}{$qid} : $self->{results}{counts};
 
-    return $qid ? %{$self->{results}{counts}{$qid}} : %{$self->{results}{counts}};
+    return $results ? %$results : ();
 }
 
 sub aggr_users {
     my $self = shift;
+
     my $qid  = shift;
 
     $self->load_aggregated_results
@@ -1659,7 +1659,6 @@ sub participants {
 
 sub render_new {
     my ($self, %opts) = @_;
-
     my $remote = LJ::get_remote();
 
     my $ditemid   = $self->ditemid;
@@ -1735,6 +1734,7 @@ sub render_new {
 
         my $q = $self->question($qid)
             or return $render->error('poll.error.questionnotfound');
+
 
         my $text = $q->text;
         LJ::Poll->clean_poll(\$text);
@@ -2354,7 +2354,6 @@ sub make_polls_clustered {
             }
         }
 
-        # copy submissions
         my $ssth = $dbhslo->prepare("SELECT userid, datesubmit FROM pollsubmission WHERE pollid=?");
         $ssth->execute($pollid);
         die $ssth->errstr if $ssth->err;

@@ -5431,6 +5431,8 @@ talk.anonwrote=Someone wrote,
 
 talk.anonwrote_comm=Someone wrote in [[commlink]],
 
+talk.answer=Answer
+
 talk.asanonymous=Anonymously
 
 talk.asuser=Another User
@@ -5643,6 +5645,8 @@ talk.next=Next
 
 talk.nextshortcut=Ctrl →
 
+talk.nextshortcutmac=Alt →
+
 talk.parentlink=Parent
 
 talk.photo=Photo
@@ -5662,6 +5666,8 @@ talk.postcomment=Add a comment
 talk.prev=Previous
 
 talk.prevshortcut=← Ctrl
+
+talk.prevshortcutmac=← Alt
 
 talk.readsimilar=Read similar journal entries:
 

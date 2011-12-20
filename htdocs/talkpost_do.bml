@@ -3,8 +3,8 @@
 #line 3
     use strict;
 
-    our ( %ML, %GET, %POST, $title, $body );
-    my ( $status, $result, $answer, $redirected, $user_url );
+    our ( %ML, %GET, %POST, %RQ, $title, $body );
+    my ( $status, $result, $answer, $redirected, $user_url, $message );
     my $add = '';
     my $need_captcha = 0;
 
@@ -238,7 +238,7 @@
         ## init.  this handles all the error-checking, as well.
         $init = LJ::Talk::Post::init(\%POST, $remote, \$need_captcha, \@errors);
 
-        return $error->($errors[-1]) if $ajax && int(@errors);
+        return $error->($errors[-1]) if $ajax && int(@errors) or defined @errors[0] and not @errors[0];
         return if LJ::Request->redirected;
 
         # Report errors in a friendly manner by regenerating the field.
@@ -474,17 +474,20 @@
             # otherwise, it's a screened comment.
             if ($journalu->{'journaltype'} eq 'C') {
                 $mlcode = $POST{'usertype'} eq 'anonymous'
-                    ? '.success.screened.comm.anon2'
-                    : '.success.screened.comm2';
-                return $redirect->($curl . '&screen=' . LJ::eurl($SC . $mlcode) . $cadr) if $ajax;
+                    ? '.success.screened.comm.anon3'
+                    : '.success.screened.comm3';
+                $message = $ML{$mlcode};
+                return $redirect->($commentlink) if $ajax;
             }
             else {
                 $mlcode = $POST{'usertype'} eq 'anonymous'
-                    ? '.success.screened.user.anon2'
-                    : '.success.screened.user2';
-                return $redirect->($curl . '&screen=' . LJ::eurl($SC . $mlcode) . $cadr) if $ajax;
+                    ? '.success.screened.user.anon3'
+                    : '.success.screened.user3';
+                $message = $ML{$mlcode};
+                return $redirect->($commentlink) if $ajax;
             }
         }
+
 
         $ok->($mlcode);
 
@@ -502,7 +505,8 @@
         # Sucessful!
         $title = $ML{'.title'};
 
-        return $ok->($ret) if $ajax;
+        $message = $ret;
+        return $redirect->($commentlink) if $ajax;
 
         return $ret;
 
@@ -516,26 +520,41 @@
         ? $LJ::COMMON_CODE{'chalresp_js'}
         : '';
 
+    my $talkurl;
+    my $user = LJ::load_user($POST{'journal'});
+    my $entry = $user? LJ::Entry->new( $user, ditemid => $POST{'itemid'} ) : undef;
+    my $args = $POST{'replyto'}? '?replyto='. ($POST{'replyto'} * 256 + ($entry? $entry->anum : 0)) : '?mode=reply';
+    my $url = $entry? $entry->url. $args : $LJ::SITEROOT;
+
     if ( $ajax ) {
-        my $user = LJ::load_user($POST{'journal'});
         my $parent = $init->{'parent'};
         my $comment = $init->{'comment'};
         $result = LJ::eurl($result);
         $add .= '&need_captcha=1' if $need_captcha;
-        $add .= '&hidden=screened&message='. $ML{'talk.error.commentscreened'} if $comment->{'state'} eq 'S';
-        $add .= '&hidden=spammed&message='.  $ML{'talk.error.commentspammed'}  if $comment->{'state'} eq 'B';
-        $user_url = $user? $user->journal_base : '';
+        $add .= '&hidden=screened' if $comment->{'state'} eq 'S';
+        $add .= '&hidden=spammed'  if $comment->{'state'} eq 'B';
+        $add .= '&redirect='. LJ::eurl($url) if $status eq 'error' and not $result;
+        $add .= '&message='. $message if $message;
+        # LJSUP-10671
+        if ( $POST{'talkpost_do'} ) {
+            $user_url = $LJ::SITEROOT;
+        } else {
+            $user_url = $user? $user->journal_base : '';
+        }
         return qq(
 <!DOCTYPE html>
 <html>
 <head></head>
-<body>
 <iframe src="$user_url/xdreceiver.html?type=commentator%2Fsubmit&status=$status&result=$result$add" />
 </body>
 </html>
 );
     }
     elsif ($site_scheme_wrap) {
+        if ( $status eq 'error' and not $result ) {
+            return BML::redirect($url);
+        }
+
         return BML::render_page({
             'body'  => $body,
             'title' => $title,
@@ -543,6 +562,7 @@
         });
     }
     else {
+
         return $body;
     }
 }

@@ -5,7 +5,7 @@ use base qw(LJ::Widget);
 use Carp qw(croak);
 use LJ::ExtBlock;
 use Storable qw//;
-
+use LJ::RelationService;
 
 =head
    ·         Arts & Culture
@@ -99,11 +99,14 @@ sub domains {
         my $comm_name = $community_for_domain{$candidate};
         $comm_name = $candidate unless $comm_name;
         my $comm = LJ::load_user($comm_name);
+        my $allow_access = LJ::check_rel($comm, $u, 'S') || 
+                           LJ::check_rel($comm, $u, 'A'); 
+
+        next unless $allow_access;
         next unless $comm;
 
         push @result, $candidate if $u and $u->can_manage($comm);
     }
-
     return @result;
 }
 

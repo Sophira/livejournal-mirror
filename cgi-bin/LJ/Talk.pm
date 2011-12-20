@@ -1800,6 +1800,7 @@ sub talkform {
         'journal'      => $journalu->username,
         'stylemine'    => $opts->{'stylemine'},
         'editid'       => $editid,
+        'talkpost_do'  => $opts->{'talkpost_do'}? 1 : 0,
     );
 
     # rate limiting challenge
@@ -1982,7 +1983,7 @@ sub talkform {
             my $apikey = LJ::conf_test( $LJ::RECAPTCHA{public_key} );
 
             $captcha_html .= $c->get_options_setter(
-                {   'theme' => 'white',
+                {   'theme' => 'clean',
                     'lang'  => BML::get_language(),
                 }
             );
@@ -2097,9 +2098,9 @@ sub talkform {
         'editid'                 => $editid,
         'entry_url'              => $entry->url,
         'nocomments'             => $entry->prop('opt_nocomments'),
-        'suspended'              => $entry->is_suspended_for($remote),
+        'suspended'              => $remote? $remote->is_suspended : 0,
         'deleted'                => $remote ? $remote->is_deleted || $remote->is_expunged : 0,
-        'will_be_screened'       => $entry->prop('opt_screening'),
+        will_be_screened         => $entry->prop('opt_screening')  || ($journalu? $journalu->prop("opt_whoscreened")  : 0),
 
         # various checks
         'remote_banned'          => LJ::is_banned( $remote, $journalu ),
@@ -2112,6 +2113,7 @@ sub talkform {
         'remote_can_comment'     => $remote_can_comment,
         is_friend                => $is_friend,
         whocanreply              => $journalu->prop('opt_whocanreply'),
+        email_active             => $remote? $remote->is_validated : 0,
 
         # ml variables. it is weird that we've got to pass these to
         # the template, but well, the logic here is considered too

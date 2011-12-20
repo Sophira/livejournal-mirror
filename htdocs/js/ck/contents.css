@@ -56,22 +56,20 @@ HTML {
 	}
 .lj-cut-wrap {
 	height: 9px!important;
-	margin: 5px 0;
 	}
 .lj-cut {
 	height: 7px!important;
-	cursor: pointer;
 	background-color: #FFF;
 	border: 0 dashed #BCBCBC;
-	background: url(/js/ck/images/ljcut.png) no-repeat 0 0;
+	background: url(/js/ck/images/ljcut.png?v=2) no-repeat 0 0;
 	}
 .lj-cut-open {
-	background-position: 0 2px;
+	background-position: 0 1px;
 	border-width: 0 0 1px;
 	}
 .lj-cut-close {
 	border-width: 1px 0 0;
-	background-position: 0 -8px;
+	background-position: 0 -27px;
 	}
 .lj-map-wrap,
 .lj-iframe-wrap,
