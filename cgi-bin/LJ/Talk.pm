@@ -373,7 +373,7 @@ sub can_unscreen {
 sub can_view_screened {
     my ($remote, $u, $up, $userpost) = @_;
     return 0 unless $remote;
-    return 0 if $remote->can_moderate($u);
+    return 0 if $remote->can_moderate($u) and not $remote->can_manage($u);
     return 1 if $remote->can_sweep($u);
     return LJ::Talk::can_delete($remote, $u, $up, $userpost);
 }
@@ -1872,6 +1872,9 @@ sub talkform {
     }
     elsif ( $screening eq 'F' ) {
         $willscreen = !( $remote && $is_person && $is_friend );
+    }
+    elsif ( $screening eq 'R' ) {
+        $willscreen = !($remote? $remote->is_validated : 0);
     }
 
     my ( $ml_willscreen, $ml_willscreenfriend );
