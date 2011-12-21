@@ -4319,7 +4319,8 @@ sub EntryPage__print_multiform_start
                         "no_comments: \"" . LJ::ejs($pr->{'text_multiform_no_comments'}) . "\"," .
                         "conf_delete: \"" . LJ::ejs($pr->{'text_multiform_conf_delete'}) . "\"" .
                     "})'>\n" .
-                LJ::html_hidden("ditemid", $this->{'entry'}->{'itemid'},
+                LJ::html_hidden("lj_form_auth", LJ::form_auth(1),
+                                "ditemid", $this->{'entry'}->{'itemid'},
                                 "journal", $this->{'entry'}->{'journal'}->{'username'}) . "\n");
 }
 
