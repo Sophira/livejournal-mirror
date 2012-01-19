@@ -540,7 +540,7 @@ sub clean
                                 last unless $opts->{journalid};
                                 my $u = LJ::load_userid($opts->{journalid});
                                 last unless $u && $u->is_personal;
-                            } 
+                            }
                             $src_allowed = 1;
                             last;
                         }
@@ -909,7 +909,7 @@ sub clean
                         delete $hash->{$attr} unless $tag eq "object";
                         next;
                     }
-                    
+
                     if ($attr eq 'width' || $attr eq 'height' ) {
                         if ($hash->{$attr} > 1024*2) {
                             $hash->{$attr} = 1024*2;
@@ -999,7 +999,11 @@ sub clean
                         }
                     }
 
-                    if (($attr eq 'class' || $attr eq 'id') && $opts->{'strongcleancss'}) {
+                    if (
+                        lc $tag ne 'lj-embed' &&
+                        ( $attr eq 'class' || $attr eq 'id' ) &&
+                        $opts->{'strongcleancss'} )
+                    {
                         delete $hash->{$attr};
                         next;
                     }
@@ -1149,11 +1153,11 @@ sub clean
                 ## LJSUP-10811: due to security issue only Flash is allowed
                 ## LJSV-1995: Embedded video from http://video.yandex.ru doesn't shown
                 if ($tag eq 'embed'){
-                   $hash->{type} = 'application/x-shockwave-flash'; 
+                   $hash->{type} = 'application/x-shockwave-flash';
                    push @$attrs => 'type' unless grep { $_ eq 'type' } @$attrs;
                 }
                 if ($tag eq 'object' and ($hash->{data} || $hash->{src})){
-                   $hash->{type} = 'application/x-shockwave-flash'; 
+                   $hash->{type} = 'application/x-shockwave-flash';
                    push @$attrs => 'type' unless grep { $_ eq 'type' } @$attrs;
                 }
 
@@ -1819,19 +1823,24 @@ sub clean_event
         return;
     }
 
+    my $cleancss = $opts->{'journalid'} ?
+        ! $LJ::STYLE_TRUSTED{ $opts->{'journalid'} } : 0;
+
     # slow path: need to be run it through the cleaner
     clean($ref, {
-        'linkify'       => 1,
-        'wordlength'    => $wordlength,
-        'addbreaks'     => $opts->{'preformatted'} ? 0 : 1,
-        'cutpreview'    => $opts->{'cutpreview'},
-        'eat'           => $event_eat,
-        'mode'          => 'allow',
-        'remove'        => $event_remove,
-        'autoclose'     => \@comment_close,
-        'cleancss'      => !$LJ::STYLE_TRUSTED{ $opts->{journalid} },
-        'noearlyclose'  => 1,
-        'tablecheck'    => 1,
+        'linkify'          => 1,
+        'wordlength'       => $wordlength,
+        'addbreaks'        => $opts->{'preformatted'} ? 0 : 1,
+        'cutpreview'       => $opts->{'cutpreview'},
+        'posterid'         => $opts->{'posterid'},
+        'eat'              => $event_eat,
+        'mode'             => 'allow',
+        'remove'           => $event_remove,
+        'autoclose'        => \@comment_close,
+        'cleancss'         => $cleancss,
+        'strongcleancss'   => $cleancss,
+        'noearlyclose'     => 1,
+        'tablecheck'       => 1,
         'ljrepost_allowed' => 1,
         %$opts,
     });
