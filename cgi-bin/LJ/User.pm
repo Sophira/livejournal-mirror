@@ -435,13 +435,7 @@ sub unset_remote
 
 sub preload_props {
     my $u = shift;
-
-    ## if called with with options, use LJ::load_user_props
-    if ($_[0] and ref $_[0]){
-        LJ::load_user_props($u, @_);
-    } else {
-        LJ->load_user_props_multi([$u], [@_]);
-    }
+    LJ::load_user_props($u, @_);
 }
 
 sub readonly {
@@ -6747,7 +6741,7 @@ sub load_user_props_multi {
     $props = [grep { defined and not ref } @$props];
     return unless @$props;
 
-    $users = { map { $_->{'userid'} => $_ } grep { ref } @$users };
+    $users = { map { $_->{'userid'} => $_ } grep { $_->{'statusvis'} ne 'X' and $_->{'clusterid'} } grep { ref } @$users };
     return unless %$users;
 
     my $groups = LJ::User::PropStorage->get_handler_multi(\@$props);
