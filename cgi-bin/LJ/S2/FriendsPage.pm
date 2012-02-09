@@ -63,6 +63,12 @@ sub FriendsPage
 
     LJ::load_user_props($remote, "opt_nctalklinks", "opt_stylemine", "opt_imagelinks", "opt_ljcut_disable_friends");
 
+    # load options for image links
+    my ($maximgwidth, $maximgheight) = (undef, undef);
+    ($maximgwidth, $maximgheight) = ($1, $2)
+        if ($remote && $remote->{'userid'} == $u->{'userid'} &&
+            $remote->{'opt_imagelinks'} =~ m/^(\d+)\|(\d+)$/);
+
     my $itemshow = S2::get_property_value($opts->{'ctx'}, "page_friends_items")+0;
     if ($itemshow < 1) { $itemshow = 20; }
     elsif ($itemshow > 50) { $itemshow = 50; }
@@ -215,16 +221,8 @@ sub FriendsPage
         return $lite{$id} = UserLite($posters{$id} || $friends{$id});
     };
 
-    my $eventnum      = 0;
+    my $eventnum = 0;
     my $hiddenentries = 0;
-    my $ljcut_disable = $remote ? $remote->{'opt_ljcut_disable_friends'} : undef;
-
-    my $replace_images_in_friendspage = 0;
-    my $replace_video = $remote ? $remote->opt_embedplaceholders : 0;
-
-    if( $u->equals($remote) ) {
-        $replace_images_in_friendspage = $remote->opt_placeholders_friendspage;
-    }
 
   ENTRY:
     foreach my $item (@items) {
@@ -288,38 +286,27 @@ sub FriendsPage
         }
 
         my $suspend_msg = $entry_obj && $entry_obj->should_show_suspend_msg_to($remote) ? 1 : 0;
-
         LJ::CleanHTML::clean_event(
             \$text,
             {
                  'preformatted'        => $logprops{$datakey}->{'opt_preformatted'},
                  'cuturl'              => $entry_obj->prop('reposted_from') || $entry_obj->url(%urlopts_style),
                  'entry_url'           => $entry_obj->prop('reposted_from') || $entry_obj->url,
-                 'ljcut_disable'       => $ljcut_disable,
+                 'maximgwidth'         => $maximgwidth,
+                 'maximgheight'        => $maximgheight,
+                 'ljcut_disable'       => $remote ? $remote->{'opt_ljcut_disable_friends'} : undef,
                  'suspend_msg'         => $suspend_msg,
                  'unsuspend_supportid' => $suspend_msg ? $entry_obj->prop("unsuspend_supportid") : 0,
                  'journalid'           => $entry_obj->journalid,
                  'posterid'            => $entry_obj->posterid,
-                 'img_placeholders'    => $replace_images_in_friendspage,
-                 'video_placeholders'  => $replace_video,
         });
 
-        LJ::expand_embedded(
-            $friends{$friendid},
-            $ditemid,
-            $remote,
-            \$text,
-            'video_placeholders' => $replace_video,
-        );
+        LJ::expand_embedded($friends{$friendid}, $ditemid, $remote, \$text);
 
-        $text = LJ::ContentFlag->transform_post(
-            'post'    => $text,
-            'journal' => $friends{$friendid},
-            'remote'  => $remote,
-            'entry'   => $entry_obj,
-        );
+        $text = LJ::ContentFlag->transform_post(post => $text, journal => $friends{$friendid},
+                                                remote => $remote, entry => $entry_obj);
 
-        my $userlite_poster  = $get_lite->($posterid);
+        my $userlite_poster = $get_lite->($posterid);
         my $userlite_journal = $get_lite->($friendid);
 
         # get the poster user

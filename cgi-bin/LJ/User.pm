@@ -4085,68 +4085,17 @@ sub opt_ctxpopup {
     return $prop eq 'Y';
 }
 
-# opt_imagelinks format:
-# 0|1 - replace images with placeholders at friends page
-# :   - delimiter
-# 0|1 - replace images with placeholders in comments at entry page
-sub get_opt_imagelinks {
-    my $u = shift;
-    my $opt = $u->prop("opt_imagelinks") || "0:0";
-    $opt = "0:0" unless $opt;
-    $opt = "1:0" unless $opt =~ /^\d\:\d$/;
-    return $opt;
-}
-
-sub opt_placeholders_friendspage {
-    my $u = shift;
-    my $opt = $u->get_opt_imagelinks;
-
-    if ( $opt =~ /^(\d)\:\d$/ ) {
-        return $1;
-    }
-
-    return 0;
-}
-
-sub opt_placeholders_comments {
-    my $u = shift;
-    my $opt = $u->get_opt_imagelinks;
-
-    if ( $opt =~ /^\d\:(\d)$/ ) {
-        return $1;
-    }
-
-    return 0;
-}
-
-sub get_opt_videolinks {
-    my $u = shift;
-    my $opt = $u->raw_prop("opt_embedplaceholders") || "0:0";
-    $opt = "0:0" unless $opt || $opt eq 'N';
-    $opt = "1:0" unless $opt =~ /^\d\:\d$/;
-    return $opt;
-}
-
 sub opt_embedplaceholders {
     my $u = shift;
-    my $opt = $u->get_opt_videolinks;
 
-    if ( $opt =~ /^(\d)\:\d$/ ) {
-        return $1;
+    my $prop = $u->raw_prop('opt_embedplaceholders');
+
+    if (defined $prop) {
+        return $prop;
+    } else {
+        my $imagelinks = $u->prop('opt_imagelinks');
+        return $imagelinks;
     }
-
-    return 0;
-}
-
-sub opt_videoplaceholders_comments {
-    my $u = shift;
-    my $opt = $u->get_opt_videolinks;
-
-    if ( $opt =~ /^\d\:(\d)$/ ) {
-        return $1;
-    }
-
-    return 0;
 }
 
 sub opt_showmutualfriends {
