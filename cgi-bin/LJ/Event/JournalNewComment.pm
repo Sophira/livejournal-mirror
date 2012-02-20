@@ -112,8 +112,8 @@ sub as_email_subject {
     }
 
     my $key = 'esn.mail_comments.subject.';
-    if ( my $comment_subject = $self->comment->subject_orig ) {
-        return LJ::strip_html($comment_subject);
+    if ($self->comment->subject_orig) {
+        return LJ::strip_html($self->comment->subject_orig);
     } elsif (LJ::u_equals($self->comment->poster, $u)) {
         $key .= $edited ? 'comment_you_edited' : 'comment_you_posted';
     } elsif ($self->comment->parent) {
@@ -129,14 +129,7 @@ sub as_email_subject {
             $key .= LJ::u_equals($self->comment->entry->poster, $u) ? 'reply_to_your_entry' : 'reply_to_an_entry';
         }
     }
-
-    my $ml_params = {};
-    if ( my $entry_subject = $self->comment->entry->subject_raw ) {
-        $key .= '.entry_subject';
-        $ml_params->{'subject'} = LJ::strip_html($entry_subject);
-    };
-
-    return LJ::Lang::get_text( $lang, $key, undef, $ml_params );
+    return LJ::Lang::get_text($lang, $key);
 }
 
 sub as_email_string {
