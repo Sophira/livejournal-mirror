@@ -1578,7 +1578,7 @@ sub load_comments
     }
     
     my $thread = $opts->{'thread'}+0;
-    my $show_parents = $LJ::S1_FOLDED_PARENTS;
+    my $show_parents = int $opts->{'visible_parents'};
     if ($thread && $show_parents) {
         while (my $parent_thread = $posts->{$thread}->{'parenttalkid'}) {
             $children->{$parent_thread} = [ $thread ];
