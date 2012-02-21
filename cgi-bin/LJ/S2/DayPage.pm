@@ -153,7 +153,7 @@ sub DayPage
 
         my $suspend_msg = $entry_obj && $entry_obj->should_show_suspend_msg_to($remote) ? 1 : 0;
         LJ::CleanHTML::clean_event(\$text, { 'preformatted' => $logprops{$itemid}->{'opt_preformatted'},
-                                             'cuturl' => $entry_obj->prop('reposted_from') || $entry_obj->url,
+                                             'cuturl' => $entry_obj->url,
                                              'entry_url' => $entry_obj->prop('reposted_from') || $entry_obj->url,
                                              'ljcut_disable' => $remote ? $remote->{'opt_ljcut_disable_lastn'} : undef,
                                              'suspend_msg' => $suspend_msg,
@@ -162,7 +162,6 @@ sub DayPage
                                              'posterid' => $entry_obj->posterid,
                                             });
         LJ::expand_embedded($u, $ditemid, $remote, \$text);
-
         $text = LJ::ContentFlag->transform_post(post => $text, journal => $u,
                                                 remote => $remote, entry => $entry_obj);
 
