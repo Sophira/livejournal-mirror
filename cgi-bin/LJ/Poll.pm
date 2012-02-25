@@ -1,7 +1,12 @@
 package LJ::Poll;
 use strict;
 use Carp qw (croak);
-use Class::Autouse qw (LJ::Entry LJ::Poll::Question LJ::Event::PollVote LJ::Typemap LJ::Text LJ::Poll::Render);
+use LJ::Entry; 
+use LJ::Poll::Question; 
+use LJ::Event::PollVote; 
+use LJ::Typemap; 
+use LJ::Text; 
+use LJ::Poll::Render;
 
 ##
 ## Memcache routines
