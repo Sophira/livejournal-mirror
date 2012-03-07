@@ -156,6 +156,7 @@ sub clean
     my $remove_positioning = $opts->{'remove_positioning'} || 0;
     my $target = $opts->{'target'} || '';
     my $ljrepost_allowed = ($opts->{ljrepost_allowed} && ! $opts->{'textonly'}) || 0;
+    my $ljspoiler_allowed = $opts->{'textonly'}? 0 : 1;
 
     my $poster = LJ::load_userid($opts->{posterid});
     my $put_nofollow = not ($poster and $poster->get_cap('paid') and not $poster->get_cap('trynbuy'));
@@ -466,7 +467,7 @@ sub clean
                 $newdata .= Encode::decode_utf8(LJ::WishElement->check_and_expand_entry($userid, $wishid));
             }
 
-            if ( $tag eq 'lj-spoiler' ) {
+            if ( $tag eq 'lj-spoiler' and $ljspoiler_allowed ) {
                 my $title = $attr->{'title'} ||
                     $attr->{'text'} ||
                     Encode::decode_utf8(
@@ -604,6 +605,7 @@ sub clean
                     or return 1;
                 return $code->($htmlcleaner, $seq, $attr);
             };
+
             next if !$@ && !$clean_res;
 
             # this is so the rte converts its source to the standard ljuser html
@@ -622,6 +624,7 @@ sub clean
                 $attr->{'title'} = $ljuser_text;
 
             }
+
             # stupid hack to remove the class='ljcut' from divs when we're
             # disabling them, so we account for the open div normally later.
             my $ljcut_div = $tag eq "div" && lc $attr->{class} eq "ljcut";
@@ -927,166 +930,170 @@ sub clean
                     delete $hash->{'action'} if $deny;
                 }
 
-              ATTR:
-                foreach my $attr (keys %$hash)
-                {
-                    if ($remove_all_attribs || $remove_attribs{$attr}) {
-                        delete $hash->{$attr};
-                        next;
-                    }
-
-                    if ($attr =~ /^(?:on|dynsrc)/) {
-                        delete $hash->{$attr};
-                        next;
-                    }
-
-                    if ($attr eq "data") {
-                        delete $hash->{$attr} unless $tag eq "object";
-                        next;
-                    }
-
-                    if ($attr eq 'width' || $attr eq 'height' ) {
-                        if ($hash->{$attr} > 1024*2) {
-                            $hash->{$attr} = 1024*2;
+                if ( $remove_all_attribs ) {
+                    $hash = {};
+                }
+                else {
+                  ATTR:
+                    foreach my $attr (keys %$hash) {
+                        if ( $remove_attribs{$attr} ) {
+                            delete $hash->{$attr};
+                            next;
                         }
-                    }
 
-                    ## warning: in commets left by anonymous users, <img src="something">
-                    ## is replaced by <a href="something"> (see 'extractimages' param)
-                    ## If "something" is "data:<script ...", we'll get a vulnerability
-                    if (($attr eq "href" || $attr eq 'src') && $hash->{$attr} =~ /^data/) {
-                        delete $hash->{$attr};
-                        next;
-                    }
+                        if ($attr =~ /^(?:on|dynsrc)/) {
+                            delete $hash->{$attr};
+                            next;
+                        }
 
-                    if ($attr =~ /(?:^=)|[\x0b\x0d]/) {
-                        # Cleaner attack:  <p ='>' onmouseover="javascript:alert(document/**/.cookie)" >
-                        # is returned by HTML::Parser as P_tag("='" => "='") Text( onmouseover...)
-                        # which leads to reconstruction of valid HTML.  Clever!
-                        # detect this, and fail.
-                        $total_fail->("$tag $attr");
-                        last TOKEN;
-                    }
+                        if ($attr eq "data") {
+                            delete $hash->{$attr} unless $tag eq "object";
+                            next;
+                        }
 
-                    # ignore attributes that do not fit this strict scheme
-                    unless ($attr =~ /^[\w_:-]+$/) {
-                        $total_fail->("$tag " . (%$hash > 1 ? "[...] " : "") . "$attr");
-                        last TOKEN;
-                    }
+                        if ($attr eq 'width' || $attr eq 'height' ) {
+                            if ($hash->{$attr} > 1024*2) {
+                                $hash->{$attr} = 1024*2;
+                            }
+                        }
 
-                    $hash->{$attr} =~ s/[\t\n]//g;
+                        ## warning: in commets left by anonymous users, <img src="something">
+                        ## is replaced by <a href="something"> (see 'extractimages' param)
+                        ## If "something" is "data:<script ...", we'll get a vulnerability
+                        if (($attr eq "href" || $attr eq 'src') && $hash->{$attr} =~ /^data/) {
+                            delete $hash->{$attr};
+                            next;
+                        }
 
-                    # IE ignores the null character, so strip it out
-                    $hash->{$attr} =~ s/\x0//g;
+                        if ($attr =~ /(?:^=)|[\x0b\x0d]/) {
+                            # Cleaner attack:  <p ='>' onmouseover="javascript:alert(document/**/.cookie)" >
+                            # is returned by HTML::Parser as P_tag("='" => "='") Text( onmouseover...)
+                            # which leads to reconstruction of valid HTML.  Clever!
+                            # detect this, and fail.
+                            $total_fail->("$tag $attr");
+                            last TOKEN;
+                        }
 
-                    # IE sucks:
-                    my $nowhite = $hash->{$attr};
-                    $nowhite =~ s/[\s\x0b]+//g;
-                    if ($nowhite =~ /(?:jscript|livescript|javascript|vbscript|about):/ix) {
-                        delete $hash->{$attr};
-                        next;
-                    }
+                        # ignore attributes that do not fit this strict scheme
+                        unless ($attr =~ /^[\w_:-]+$/) {
+                            $total_fail->("$tag " . (%$hash > 1 ? "[...] " : "") . "$attr");
+                            last TOKEN;
+                        }
 
-                    if ($attr eq 'style') {
-                        if ($opts->{'cleancss'}) {
-                            # css2 spec, section 4.1.3
-                            # position === p\osition  :(
-                            # strip all slashes no matter what.
-                            $hash->{style} =~ s/\\//g;
+                        $hash->{$attr} =~ s/[\t\n]//g;
 
-                            # and catch the obvious ones ("[" is for things like document["coo"+"kie"]
-                            foreach my $css ("/*", "[", qw(absolute fixed expression eval behavior cookie document window javascript -moz-binding)) {
-                                if ($hash->{style} =~ /\Q$css\E/i) {
-                                    delete $hash->{style};
-                                    next ATTR;
+                        # IE ignores the null character, so strip it out
+                        $hash->{$attr} =~ s/\x0//g;
+
+                        # IE sucks:
+                        my $nowhite = $hash->{$attr};
+                        $nowhite =~ s/[\s\x0b]+//g;
+                        if ($nowhite =~ /(?:jscript|livescript|javascript|vbscript|about):/ix) {
+                            delete $hash->{$attr};
+                            next;
+                        }
+
+                        if ($attr eq 'style') {
+                            if ($opts->{'cleancss'}) {
+                                # css2 spec, section 4.1.3
+                                # position === p\osition  :(
+                                # strip all slashes no matter what.
+                                $hash->{style} =~ s/\\//g;
+
+                                # and catch the obvious ones ("[" is for things like document["coo"+"kie"]
+                                foreach my $css ("/*", "[", qw(absolute fixed expression eval behavior cookie document window javascript -moz-binding)) {
+                                    if ($hash->{style} =~ /\Q$css\E/i) {
+                                        delete $hash->{style};
+                                        next ATTR;
+                                    }
+                                }
+
+                                if ($opts->{'strongcleancss'}) {
+                                    if ($hash->{style} =~ /-moz-|absolute|relative|outline|z-index|(?<!-)(?:top|left|right|bottom)\s*:|filter|-webkit-/io) {
+                                        delete $hash->{style};
+                                        next ATTR;
+                                    }
+                                }
+
+                                # remove specific CSS definitions
+                                if ($remove_colors) {
+                                    $hash->{style} =~ s/(?:background-)?color:.*?(?:;|$)//gi;
+                                }
+                                if ($remove_sizes) {
+                                    $hash->{style} =~ s/font-size:.*?(?:;|$)//gi;
+                                }
+                                if ($remove_fonts) {
+                                    $hash->{style} =~ s/font-family:.*?(?:;|$)//gi;
+                                }
+                                if ($remove_positioning) {
+                                    $hash->{style} =~ s/margin.*?(?:;|$)//gi;
+                                    $hash->{style} =~ s/height\s*?:.*?(?:;|$)//gi;
+                                    # strip excessive padding
+                                    $hash->{style} =~ s/padding[^:]*?:\D*\d{3,}[^;]*(?:;|$)//gi;
                                 }
                             }
 
-                            if ($opts->{'strongcleancss'}) {
-                                if ($hash->{style} =~ /-moz-|absolute|relative|outline|z-index|(?<!-)(?:top|left|right|bottom)\s*:|filter|-webkit-/io) {
-                                    delete $hash->{style};
-                                    next ATTR;
+                            if ($opts->{'clean_js_css'} && ! $LJ::DISABLED{'css_cleaner'}) {
+                                # and then run it through a harder CSS cleaner that does a full parse
+                                my $css = LJ::CSS::Cleaner->new;
+                                $hash->{style} = $css->clean_property($hash->{style});
+                            }
+                        }
+
+                        if (
+                            lc $tag ne 'lj-embed' &&
+                            ( $attr eq 'class' || $attr eq 'id' ) &&
+                            $opts->{'strongcleancss'} )
+                        {
+                            delete $hash->{$attr};
+                            next;
+                        }
+
+                        # reserve ljs_* ids for divs, etc so users can't override them to replace content
+                        if ($attr eq 'id' && $hash->{$attr} =~ /^ljs_/i) {
+                            delete $hash->{$attr};
+                            next;
+                        }
+
+                        if ($s1var) {
+                            if ($attr =~ /%%/) {
+                                delete $hash->{$attr};
+                                next ATTR;
+                            }
+
+                            my $props = $LJ::S1::PROPS->{$s1var};
+
+                            if ($hash->{$attr} =~ /^%%([\w:]+:)?(\S+?)%%$/ && $props->{$2} =~ /[aud]/) {
+                                # don't change it.
+                            } elsif ($hash->{$attr} =~ /^%%cons:\w+%%[^\%]*$/) {
+                                # a site constant with something appended is also fine.
+                            } elsif ($hash->{$attr} =~ /%%/) {
+                                my $clean_var = sub {
+                                    my ($mods, $prop) = @_;
+                                    # HTML escape and kill line breaks
+                                    $mods = "attr:$mods" unless
+                                        $mods =~ /^(color|cons|siteroot|sitename|img):/ ||
+                                        $props->{$prop} =~ /[ud]/;
+                                    return '%%' . $mods . $prop . '%%';
+                                };
+
+                                $hash->{$attr} =~ s/[\n\r]//g;
+                                $hash->{$attr} =~ s/%%([\w:]+:)?(\S+?)%%/$clean_var->(lc($1), $2)/eg;
+
+                                if ($attr =~ /^(href|src|lowsrc|style)$/) {
+                                    $hash->{$attr} = "\%\%[attr[$hash->{$attr}]]\%\%";
                                 }
                             }
 
-                            # remove specific CSS definitions
-                            if ($remove_colors) {
-                                $hash->{style} =~ s/(?:background-)?color:.*?(?:;|$)//gi;
-                            }
-                            if ($remove_sizes) {
-                                $hash->{style} =~ s/font-size:.*?(?:;|$)//gi;
-                            }
-                            if ($remove_fonts) {
-                                $hash->{style} =~ s/font-family:.*?(?:;|$)//gi;
-                            }
-                            if ($remove_positioning) {
-                                $hash->{style} =~ s/margin.*?(?:;|$)//gi;
-                                $hash->{style} =~ s/height\s*?:.*?(?:;|$)//gi;
-                                # strip excessive padding
-                                $hash->{style} =~ s/padding[^:]*?:\D*\d{3,}[^;]*(?:;|$)//gi;
-                            }
                         }
 
-                        if ($opts->{'clean_js_css'} && ! $LJ::DISABLED{'css_cleaner'}) {
-                            # and then run it through a harder CSS cleaner that does a full parse
-                            my $css = LJ::CSS::Cleaner->new;
-                            $hash->{style} = $css->clean_property($hash->{style});
-                        }
-                    }
-
-                    if (
-                        lc $tag ne 'lj-embed' &&
-                        ( $attr eq 'class' || $attr eq 'id' ) &&
-                        $opts->{'strongcleancss'} )
-                    {
-                        delete $hash->{$attr};
-                        next;
-                    }
-
-                    # reserve ljs_* ids for divs, etc so users can't override them to replace content
-                    if ($attr eq 'id' && $hash->{$attr} =~ /^ljs_/i) {
-                        delete $hash->{$attr};
-                        next;
-                    }
-
-                    if ($s1var) {
-                        if ($attr =~ /%%/) {
+                        # remove specific attributes
+                        if (($remove_colors && ($attr eq "color" || $attr eq "bgcolor" || $attr eq "fgcolor" || $attr eq "text")) ||
+                            ($remove_sizes && $attr eq "size") ||
+                            ($remove_fonts && $attr eq "face")) {
                             delete $hash->{$attr};
                             next ATTR;
                         }
-
-                        my $props = $LJ::S1::PROPS->{$s1var};
-
-                        if ($hash->{$attr} =~ /^%%([\w:]+:)?(\S+?)%%$/ && $props->{$2} =~ /[aud]/) {
-                            # don't change it.
-                        } elsif ($hash->{$attr} =~ /^%%cons:\w+%%[^\%]*$/) {
-                            # a site constant with something appended is also fine.
-                        } elsif ($hash->{$attr} =~ /%%/) {
-                            my $clean_var = sub {
-                                my ($mods, $prop) = @_;
-                                # HTML escape and kill line breaks
-                                $mods = "attr:$mods" unless
-                                    $mods =~ /^(color|cons|siteroot|sitename|img):/ ||
-                                    $props->{$prop} =~ /[ud]/;
-                                return '%%' . $mods . $prop . '%%';
-                            };
-
-                            $hash->{$attr} =~ s/[\n\r]//g;
-                            $hash->{$attr} =~ s/%%([\w:]+:)?(\S+?)%%/$clean_var->(lc($1), $2)/eg;
-
-                            if ($attr =~ /^(href|src|lowsrc|style)$/) {
-                                $hash->{$attr} = "\%\%[attr[$hash->{$attr}]]\%\%";
-                            }
-                        }
-
-                    }
-
-                    # remove specific attributes
-                    if (($remove_colors && ($attr eq "color" || $attr eq "bgcolor" || $attr eq "fgcolor" || $attr eq "text")) ||
-                        ($remove_sizes && $attr eq "size") ||
-                        ($remove_fonts && $attr eq "face")) {
-                        delete $hash->{$attr};
-                        next ATTR;
                     }
                 }
 
@@ -1127,9 +1134,22 @@ sub clean
                     if ($opts->{'extractimages'}) { $img_bad = 1; }
 
                     # don't use placeholders for small images
-                    if ($opts->{'img_placeholders'}) { $img_bad = 1; }
-                    if ( $opts->{'img_placeholders'} && defined $hash->{'width'} && $hash->{'width'} <= 140 ) { $img_bad = 0; }
-                    if ( $opts->{'img_placeholders'} && defined $hash->{'height'} && $hash->{'height'} <= 37 ) { $img_bad = 0; }
+                    if ($opts->{'img_placeholders'}) {
+                        if ( !defined $hash->{width} || ! defined $hash->{height} ) {
+                            $img_bad = 1;
+                        }
+                        else {
+                            if ( $hash->{'width'} > 140 && $hash->{'height'} > 37 ) {
+                                $img_bad = 1;
+                            }
+                            else {
+                                $img_bad = 0;
+                            }
+                        }
+                    }
+                    else {
+                        $img_bad = 0;
+                    }
 
                     ## Option 'allowed_img_attrs' provides a list of allowed attributes
                     if (my $allowed = $opts->{'allowed_img_attrs'}){
@@ -1159,13 +1179,13 @@ sub clean
                     }
 
                     if ($img_bad) {
-                        $newdata .= qq~<a class="b-mediaplaceholder b-mediaplaceholder-photo" ~ . ( $hash->{'width'} && $hash->{'height'} ? qq~style="width:$hash->{'width'}px;height:$hash->{'height'}px;" ~ : '' ) . qq~data-href="$href_b_link" href="~ .
+                        $newdata .= qq~<a class="b-mediaplaceholder b-mediaplaceholder-photo ~ . ( $hash->{'width'} && $hash->{'height'} ? qq~ b-mediaplaceholder-good" style="width:$hash->{'width'}px;height:$hash->{'height'}px;" ~ : '" ' ) . qq~data-href="$href_b_link" href="~ .
                             LJ::ehtml($hash->{'src'}) . '" onclick="return LiveJournal.placeholderClick(this, \'image\')">' .
                             '<span class="b-mediaplaceholder-outer">' .
                             '<span class="b-mediaplaceholder-inner">' .
                             '<i class="b-mediaplaceholder-pic"></i>' .
-                            '<span class="b-mediaplaceholder-label b-mediaplaceholder-view">' . LJ::Lang::ml("mediaplaceholder.viewimage") . '</span>'.
-                            '<span class="b-mediaplaceholder-label b-mediaplaceholder-loading">' . LJ::Lang::ml("mediaplaceholder.loading") . '</span>'.
+                            '<span class="b-mediaplaceholder-label b-mediaplaceholder-view">' . Encode::decode_utf8(LJ::Lang::ml("mediaplaceholder.viewimage")) . '</span>'.
+                            '<span class="b-mediaplaceholder-label b-mediaplaceholder-loading">' . Encode::decode_utf8(LJ::Lang::ml("mediaplaceholder.loading")) . '</span>'.
                             '</span>' .
                             '</span>' .
                             '</a>';
@@ -1173,7 +1193,7 @@ sub clean
                             '<a href="' . $href_b_link .'" class="b-mediaplaceholder-external" title="' . LJ::Lang::ml("mediaplaceholder.link") . '">' .
                             '<i class="b-mediaplaceholder-bg"></i>' .
                             '<i class="b-mediaplaceholder-pic"></i>' .
-                            '<span class="b-mediaplaceholder-inner">' . LJ::Lang::ml("mediaplaceholder.link") . '</span>' .
+                            '<span class="b-mediaplaceholder-inner">' . Encode::decode_utf8(LJ::Lang::ml("mediaplaceholder.link")) . '</span>' .
                             '</a>' : '';
                         $alt_output = 1;
                         $opencount{"img"}++;
@@ -1241,9 +1261,9 @@ sub clean
                     }
                 }
 
-                unless ($alt_output)
-                {
+                unless ($alt_output) {
                     my $allow;
+
                     if ($mode eq "allow") {
                         $allow = 1;
                         if ($action{$tag} eq "deny") { $allow = 0; }
@@ -1252,8 +1272,9 @@ sub clean
                         if ($action{$tag} eq "allow") { $allow = 1; }
                     }
 
-                    if ($allow && ! $remove{$tag})
-                    {
+                    my $newtag = '';
+
+                    if ($allow && ! $remove{$tag}) {
                         if ($opts->{'tablecheck'}) {
 
                             $allow = 0 if
@@ -1268,13 +1289,13 @@ sub clean
                                 ($tag eq 'table' && @tablescope && ! grep { $tablescope[-1]->{$_} } qw(td th));
                         }
 
-                        if ($allow) { $newdata .= "<$tag"; }
-                        else { $newdata .= "&lt;$tag"; }
+                        if ($allow) { $newtag .= "<$tag"; }
+                        else { $newtag .= "&lt;$tag"; }
 
                         # output attributes in original order, but only those
                         # that are allowed (by still being in %$hash after cleaning)
                         foreach (@$attrs) {
-                            $newdata .= " $_=\"" . LJ::ehtml($hash->{$_}) . "\""
+                            $newtag .= " $_=\"" . LJ::ehtml($hash->{$_}) . "\""
                                 if exists $hash->{$_};
                         }
 
@@ -1282,12 +1303,12 @@ sub clean
                         # actually close itself. Otherwise, a tag like <em /> can pass through as valid
                         # even though some browsers just render it as an opening tag
                         if ($slashclose && $tag =~ $slashclose_tags) {
-                            $newdata .= " /";
+                            $newtag .= " /";
                             $opencount{$tag}--;
                             $tablescope[-1]->{$tag}-- if $opts->{'tablecheck'} && @tablescope;
                         }
                         if ($allow) {
-                            $newdata .= ">";
+                            $newtag .= ">";
                             $opencount{$tag}++;
 
                             # maintain current table scope
@@ -1304,7 +1325,31 @@ sub clean
                             }
 
                         }
-                        else { $newdata .= "&gt;"; }
+                        else { $newtag .= "&gt;"; }
+
+                        # change iframe with video to placeholder according to user settings
+                        if ( lc $tag eq 'iframe' && $opts->{video_placeholders} ) {
+                            my $width  = $hash->{width};
+                            my $height = $hash->{height};
+                            $width  =~ s/px$//;
+                            $height =~ s/px$//;
+                            $width  = 960 if $width  > 960;
+                            $height = 750 if $height > 750;
+
+                            $width  = $width  =~ /^\d+$/ ? $width  : 320;
+                            $height = $height =~ /^\d+$/ ? $height : 240;
+
+                            $newdata .= LJ::placeholder_link(
+                                placeholder_html   => $newtag,
+                                width              => $width,
+                                height             => $height,
+                                img                => "$LJ::IMGPREFIX/videoplaceholder.png",
+                                remove_video_sizes => $opts->{remove_video_sizes},
+                            );
+                        }
+                        else {
+                            $newdata .= $newtag;
+                        }
                     }
                 }
             }
@@ -1843,7 +1888,7 @@ sub clean_subject
 }
 
 ## returns a pure text subject (needed in links, email headers, etc...)
-my $subjectall_eat = [qw[head title style layer iframe applet object]];
+my $subjectall_eat = [qw[head title style layer iframe applet object lj-spoiler ]];
 sub clean_subject_all
 {
     my $ref = shift;
