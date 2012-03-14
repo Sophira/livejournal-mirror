@@ -1413,6 +1413,7 @@ sub res_includes {
                 remoteJournalBase        => $remote && $remote->journal_base,
                 remoteUser               => $remote && $remote->user,
                 remoteLocale             => LJ::lang_to_locale( LJ::Lang::get_remote_lang() ),
+                pics_production          => LJ::is_enabled('pics_production'),
         );
         $site{default_copyright} = $default_copyright if LJ::is_enabled('default_copyright', $remote);
         $site{is_dev_server} = 1 if $LJ::IS_DEV_SERVER;
@@ -2045,8 +2046,8 @@ sub placeholder_link {
                 <span class="b-mediaplaceholder-outer">
                     <span class="b-mediaplaceholder-inner">
                         <i class="b-mediaplaceholder-pic"></i>
-                        <span class="b-mediaplaceholder-label b-mediaplaceholder-view">} . Encode::decode_utf8(LJ::Lang::ml("mediaplaceholder.viewvideo")) . qq{</span>
-                        <span class="b-mediaplaceholder-label b-mediaplaceholder-loading">} . Encode::decode_utf8(LJ::Lang::ml("mediaplaceholder.loading")) . qq{</span>
+                        <span class="b-mediaplaceholder-label b-mediaplaceholder-view">} . ($opts{no_encode} ? Encode::decode_utf8(LJ::Lang::ml("mediaplaceholder.viewvideo")) : Encode::encode_utf8(Encode::decode_utf8(LJ::Lang::ml("mediaplaceholder.viewvideo")))) . qq{</span>
+                        <span class="b-mediaplaceholder-label b-mediaplaceholder-loading">} . ($opts{no_encode} ? Encode::decode_utf8(LJ::Lang::ml("mediaplaceholder.loading")) : Encode::encode_utf8(Encode::decode_utf8(LJ::Lang::ml("mediaplaceholder.loading")))) . qq{</span>
                     </span>
                 </span>
             </a>

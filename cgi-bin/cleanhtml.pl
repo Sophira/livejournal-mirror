@@ -103,6 +103,8 @@ my %tag_substitute = (
 # slash and get the proper behavior from a browser.
 my $slashclose_tags = qr/^(?:area|base|basefont|br|col|embed|frame|hr|img|input|isindex|link|meta|param|lj-embed)$/i;
 
+our $EnableDynamicElements = undef;
+
 # <LJFUNC>
 # name: LJ::CleanHTML::clean
 # class: text
@@ -127,7 +129,6 @@ sub clean
     $$data = Encode::decode_utf8($$data);
 
     my $p = HTML::TokeParser->new($data);
-
     my $wordlength = $opts->{'wordlength'};
     my $addbreaks = $opts->{'addbreaks'};
     my $keepcomments = $opts->{'keepcomments'};
@@ -156,7 +157,14 @@ sub clean
     my $remove_positioning = $opts->{'remove_positioning'} || 0;
     my $target = $opts->{'target'} || '';
     my $ljrepost_allowed = ($opts->{ljrepost_allowed} && ! $opts->{'textonly'}) || 0;
-    my $ljspoiler_allowed = $opts->{'textonly'}? 0 : 1;
+
+    my $enable_dynamic_elements = $EnableDynamicElements;
+    unless ( defined $enable_dynamic_elements ) {
+        $enable_dynamic_elements = LJ::is_web_context();
+    }
+    $enable_dynamic_elements = 0 if $opts->{'textonly'};
+
+    my $ljspoiler_allowed = $enable_dynamic_elements;
 
     my $poster = LJ::load_userid($opts->{posterid});
     my $put_nofollow = not ($poster and $poster->get_cap('paid') and not $poster->get_cap('trynbuy'));
@@ -467,7 +475,9 @@ sub clean
                 $newdata .= Encode::decode_utf8(LJ::WishElement->check_and_expand_entry($userid, $wishid));
             }
 
-            if ( $tag eq 'lj-spoiler' and $ljspoiler_allowed ) {
+            if ( $tag eq 'lj-spoiler' ) {
+                next TOKEN unless $ljspoiler_allowed;
+
                 my $title = $attr->{'title'} ||
                     $attr->{'text'} ||
                     Encode::decode_utf8(
@@ -475,7 +485,7 @@ sub clean
 
                 $title = LJ::ehtml($title);
 
-                $newdata .= qq{<div class="lj-spoiler"><p class="lj-spoiler-head">[<b><a href="#">$title</a></b>]</p><div class="lj-spoiler-body">};
+                $newdata .= qq{<div class="lj-spoiler"><div class="lj-spoiler-head">[<b><a href="#">$title</a></b>]</div><div class="lj-spoiler-body">};
                 $ljspoilers_open++;
                 next TOKEN;
             }
@@ -486,14 +496,28 @@ sub clean
                     # XHTML style open/close tags done as a singleton shouldn't actually
                     # start a capture loop, because there won't be a close tag.
                     if ($attr->{'/'}) {
-                        $newdata .= LJ::run_hook("transform_embed", [$token],
-                                                 nocheck => $transform_embed_nocheck, wmode => $transform_embed_wmode, video_placeholders => $opts->{video_placeholders}, remove_video_sizes => $opts->{remove_video_sizes}) || "";
+                        $newdata .= LJ::run_hook(
+                            "transform_embed",
+                            [$token],
+                            nocheck            => $transform_embed_nocheck,
+                            wmode              => $transform_embed_wmode,
+                            video_placeholders => $opts->{video_placeholders},
+                            remove_video_sizes => $opts->{remove_video_sizes},
+                            no_encode          => $opts->{no_encode},
+                        ) || "";
                         next TOKEN;
                     }
 
                     $start_capture->($tag, $token, sub {
-                        my $expanded = LJ::run_hook("transform_embed", \@capture,
-                                                    nocheck => $transform_embed_nocheck, wmode => $transform_embed_wmode, video_placeholders => $opts->{video_placeholders}, remove_video_sizes => $opts->{remove_video_sizes});
+                        my $expanded = LJ::run_hook(
+                            "transform_embed",
+                            \@capture,
+                            nocheck            => $transform_embed_nocheck,
+                            wmode              => $transform_embed_wmode,
+                            video_placeholders => $opts->{video_placeholders},
+                            remove_video_sizes => $opts->{remove_video_sizes},
+                            no_encode          => $opts->{no_encode},
+                        );
                         $newdata .= $expanded || "";
                     });
                     next TOKEN;
@@ -930,170 +954,169 @@ sub clean
                     delete $hash->{'action'} if $deny;
                 }
 
-                if ( $remove_all_attribs ) {
-                    $hash = {};
-                }
-                else {
-                  ATTR:
-                    foreach my $attr (keys %$hash) {
-                        if ( $remove_attribs{$attr} ) {
-                            delete $hash->{$attr};
-                            next;
+              ATTR:
+                foreach my $attr (keys %$hash) {
+                    if ( $remove_all_attribs || $remove_attribs{$attr} ) {
+                        delete $hash->{$attr};
+                        next;
+                    }
+
+                    if ($attr =~ /^(?:on|dynsrc)/) {
+                        delete $hash->{$attr};
+                        next;
+                    }
+
+                    if ($attr eq "data") {
+                        delete $hash->{$attr} unless $tag eq "object";
+                        next;
+                    }
+
+                    if ($attr eq 'width' || $attr eq 'height' ) {
+                        if ($hash->{$attr} > 1024*2) {
+                            $hash->{$attr} = 1024*2;
                         }
+                    }
 
-                        if ($attr =~ /^(?:on|dynsrc)/) {
-                            delete $hash->{$attr};
-                            next;
-                        }
+                    ## warning: in commets left by anonymous users, <img src="something">
+                    ## is replaced by <a href="something"> (see 'extractimages' param)
+                    ## If "something" is "data:<script ...", we'll get a vulnerability
+                    if (($attr eq "href" || $attr eq 'src') && $hash->{$attr} =~ /^data/) {
+                        delete $hash->{$attr};
+                        next;
+                    }
 
-                        if ($attr eq "data") {
-                            delete $hash->{$attr} unless $tag eq "object";
-                            next;
-                        }
+                    if ($attr =~ /(?:^=)|[\x0b\x0d]/) {
+                        # Cleaner attack:  <p ='>' onmouseover="javascript:alert(document/**/.cookie)" >
+                        # is returned by HTML::Parser as P_tag("='" => "='") Text( onmouseover...)
+                        # which leads to reconstruction of valid HTML.  Clever!
+                        # detect this, and fail.
+                        $total_fail->("$tag $attr");
+                        last TOKEN;
+                    }
 
-                        if ($attr eq 'width' || $attr eq 'height' ) {
-                            if ($hash->{$attr} > 1024*2) {
-                                $hash->{$attr} = 1024*2;
-                            }
-                        }
+                    # ignore attributes that do not fit this strict scheme
+                    unless ($attr =~ /^[\w_:-]+$/) {
+                        $total_fail->("$tag " . (%$hash > 1 ? "[...] " : "") . "$attr");
+                        last TOKEN;
+                    }
 
-                        ## warning: in commets left by anonymous users, <img src="something">
-                        ## is replaced by <a href="something"> (see 'extractimages' param)
-                        ## If "something" is "data:<script ...", we'll get a vulnerability
-                        if (($attr eq "href" || $attr eq 'src') && $hash->{$attr} =~ /^data/) {
-                            delete $hash->{$attr};
-                            next;
-                        }
+                    $hash->{$attr} =~ s/[\t\n]//g;
 
-                        if ($attr =~ /(?:^=)|[\x0b\x0d]/) {
-                            # Cleaner attack:  <p ='>' onmouseover="javascript:alert(document/**/.cookie)" >
-                            # is returned by HTML::Parser as P_tag("='" => "='") Text( onmouseover...)
-                            # which leads to reconstruction of valid HTML.  Clever!
-                            # detect this, and fail.
-                            $total_fail->("$tag $attr");
-                            last TOKEN;
-                        }
+                    # IE ignores the null character, so strip it out
+                    $hash->{$attr} =~ s/\x0//g;
 
-                        # ignore attributes that do not fit this strict scheme
-                        unless ($attr =~ /^[\w_:-]+$/) {
-                            $total_fail->("$tag " . (%$hash > 1 ? "[...] " : "") . "$attr");
-                            last TOKEN;
-                        }
+                    # IE sucks:
+                    my $nowhite = $hash->{$attr};
+                    $nowhite =~ s/[\s\x0b]+//g;
+                    if ($nowhite =~ /(?:jscript|livescript|javascript|vbscript|about):/ix) {
+                        delete $hash->{$attr};
+                        next;
+                    }
 
-                        $hash->{$attr} =~ s/[\t\n]//g;
+                    if ($attr eq 'style') {
+                        if ($opts->{'cleancss'}) {
+                            # css2 spec, section 4.1.3
+                            # position === p\osition  :(
+                            # strip all slashes no matter what.
+                            $hash->{style} =~ s/\\//g;
 
-                        # IE ignores the null character, so strip it out
-                        $hash->{$attr} =~ s/\x0//g;
-
-                        # IE sucks:
-                        my $nowhite = $hash->{$attr};
-                        $nowhite =~ s/[\s\x0b]+//g;
-                        if ($nowhite =~ /(?:jscript|livescript|javascript|vbscript|about):/ix) {
-                            delete $hash->{$attr};
-                            next;
-                        }
-
-                        if ($attr eq 'style') {
-                            if ($opts->{'cleancss'}) {
-                                # css2 spec, section 4.1.3
-                                # position === p\osition  :(
-                                # strip all slashes no matter what.
-                                $hash->{style} =~ s/\\//g;
-
-                                # and catch the obvious ones ("[" is for things like document["coo"+"kie"]
-                                foreach my $css ("/*", "[", qw(absolute fixed expression eval behavior cookie document window javascript -moz-binding)) {
-                                    if ($hash->{style} =~ /\Q$css\E/i) {
-                                        delete $hash->{style};
-                                        next ATTR;
-                                    }
-                                }
-
-                                if ($opts->{'strongcleancss'}) {
-                                    if ($hash->{style} =~ /-moz-|absolute|relative|outline|z-index|(?<!-)(?:top|left|right|bottom)\s*:|filter|-webkit-/io) {
-                                        delete $hash->{style};
-                                        next ATTR;
-                                    }
-                                }
-
-                                # remove specific CSS definitions
-                                if ($remove_colors) {
-                                    $hash->{style} =~ s/(?:background-)?color:.*?(?:;|$)//gi;
-                                }
-                                if ($remove_sizes) {
-                                    $hash->{style} =~ s/font-size:.*?(?:;|$)//gi;
-                                }
-                                if ($remove_fonts) {
-                                    $hash->{style} =~ s/font-family:.*?(?:;|$)//gi;
-                                }
-                                if ($remove_positioning) {
-                                    $hash->{style} =~ s/margin.*?(?:;|$)//gi;
-                                    $hash->{style} =~ s/height\s*?:.*?(?:;|$)//gi;
-                                    # strip excessive padding
-                                    $hash->{style} =~ s/padding[^:]*?:\D*\d{3,}[^;]*(?:;|$)//gi;
+                            # and catch the obvious ones ("[" is for things like document["coo"+"kie"]
+                            foreach my $css ("/*", "[", qw(absolute fixed expression eval behavior cookie document window javascript -moz-binding)) {
+                                if ($hash->{style} =~ /\Q$css\E/i) {
+                                    delete $hash->{style};
+                                    next ATTR;
                                 }
                             }
 
-                            if ($opts->{'clean_js_css'} && ! $LJ::DISABLED{'css_cleaner'}) {
-                                # and then run it through a harder CSS cleaner that does a full parse
-                                my $css = LJ::CSS::Cleaner->new;
-                                $hash->{style} = $css->clean_property($hash->{style});
-                            }
-                        }
-
-                        if (
-                            lc $tag ne 'lj-embed' &&
-                            ( $attr eq 'class' || $attr eq 'id' ) &&
-                            $opts->{'strongcleancss'} )
-                        {
-                            delete $hash->{$attr};
-                            next;
-                        }
-
-                        # reserve ljs_* ids for divs, etc so users can't override them to replace content
-                        if ($attr eq 'id' && $hash->{$attr} =~ /^ljs_/i) {
-                            delete $hash->{$attr};
-                            next;
-                        }
-
-                        if ($s1var) {
-                            if ($attr =~ /%%/) {
-                                delete $hash->{$attr};
-                                next ATTR;
-                            }
-
-                            my $props = $LJ::S1::PROPS->{$s1var};
-
-                            if ($hash->{$attr} =~ /^%%([\w:]+:)?(\S+?)%%$/ && $props->{$2} =~ /[aud]/) {
-                                # don't change it.
-                            } elsif ($hash->{$attr} =~ /^%%cons:\w+%%[^\%]*$/) {
-                                # a site constant with something appended is also fine.
-                            } elsif ($hash->{$attr} =~ /%%/) {
-                                my $clean_var = sub {
-                                    my ($mods, $prop) = @_;
-                                    # HTML escape and kill line breaks
-                                    $mods = "attr:$mods" unless
-                                        $mods =~ /^(color|cons|siteroot|sitename|img):/ ||
-                                        $props->{$prop} =~ /[ud]/;
-                                    return '%%' . $mods . $prop . '%%';
-                                };
-
-                                $hash->{$attr} =~ s/[\n\r]//g;
-                                $hash->{$attr} =~ s/%%([\w:]+:)?(\S+?)%%/$clean_var->(lc($1), $2)/eg;
-
-                                if ($attr =~ /^(href|src|lowsrc|style)$/) {
-                                    $hash->{$attr} = "\%\%[attr[$hash->{$attr}]]\%\%";
+                            if ($opts->{'strongcleancss'}) {
+                                if ($hash->{style} =~ /-moz-|absolute|relative|outline|z-index|(?<!-)(?:top|left|right|bottom)\s*:|filter|-webkit-/io) {
+                                    delete $hash->{style};
+                                    next ATTR;
                                 }
                             }
 
+                            # remove specific CSS definitions
+                            if ($remove_colors) {
+                                $hash->{style} =~ s/(?:background-)?color:.*?(?:;|$)//gi;
+                            }
+
+                            if ($remove_sizes) {
+                                $hash->{style} =~ s/font-size:.*?(?:;|$)//gi;
+                            }
+
+                            if ($remove_fonts) {
+                                $hash->{style} =~ s/font-family:.*?(?:;|$)//gi;
+                            }
+
+                            if ($remove_positioning) {
+                                $hash->{style} =~ s/margin.*?(?:;|$)//gi;
+                                $hash->{style} =~ s/height\s*?:.*?(?:;|$)//gi;
+
+                                # strip excessive padding
+                                $hash->{style} =~ s/padding[^:]*?:\D*\d{3,}[^;]*(?:;|$)//gi;
+                            }
                         }
 
-                        # remove specific attributes
-                        if (($remove_colors && ($attr eq "color" || $attr eq "bgcolor" || $attr eq "fgcolor" || $attr eq "text")) ||
-                            ($remove_sizes && $attr eq "size") ||
-                            ($remove_fonts && $attr eq "face")) {
+                        if ($opts->{'clean_js_css'} && ! $LJ::DISABLED{'css_cleaner'}) {
+                            # and then run it through a harder CSS cleaner that does a full parse
+                            my $css = LJ::CSS::Cleaner->new;
+                            $hash->{style} = $css->clean_property($hash->{style});
+                        }
+                    }
+
+                    if (
+                        lc $tag ne 'lj-embed' &&
+                        ( $attr eq 'class' || $attr eq 'id' ) &&
+                        $opts->{'strongcleancss'} )
+                    {
+                        delete $hash->{$attr};
+                        next;
+                    }
+
+                    # reserve ljs_* ids for divs, etc so users can't override them to replace content
+                    if ($attr eq 'id' && $hash->{$attr} =~ /^ljs_/i) {
+                        delete $hash->{$attr};
+                        next;
+                    }
+
+                    if ($s1var) {
+                        if ($attr =~ /%%/) {
                             delete $hash->{$attr};
                             next ATTR;
                         }
+
+                        my $props = $LJ::S1::PROPS->{$s1var};
+
+                        if ($hash->{$attr} =~ /^%%([\w:]+:)?(\S+?)%%$/ && $props->{$2} =~ /[aud]/) {
+                            # don't change it.
+                        } elsif ($hash->{$attr} =~ /^%%cons:\w+%%[^\%]*$/) {
+                            # a site constant with something appended is also fine.
+                        } elsif ($hash->{$attr} =~ /%%/) {
+                            my $clean_var = sub {
+                                my ($mods, $prop) = @_;
+
+                                # HTML escape and kill line breaks
+                                $mods = "attr:$mods" unless
+                                    $mods =~ /^(color|cons|siteroot|sitename|img):/ ||
+                                    $props->{$prop} =~ /[ud]/;
+                                return '%%' . $mods . $prop . '%%';
+                            };
+
+                            $hash->{$attr} =~ s/[\n\r]//g;
+                            $hash->{$attr} =~ s/%%([\w:]+:)?(\S+?)%%/$clean_var->(lc($1), $2)/eg;
+
+                            if ($attr =~ /^(href|src|lowsrc|style)$/) {
+                                $hash->{$attr} = "\%\%[attr[$hash->{$attr}]]\%\%";
+                            }
+                        }
+                    }
+
+                    # remove specific attributes
+                    if (($remove_colors && ($attr eq "color" || $attr eq "bgcolor" || $attr eq "fgcolor" || $attr eq "text")) ||
+                        ($remove_sizes && $attr eq "size") ||
+                        ($remove_fonts && $attr eq "face")) {
+                        delete $hash->{$attr};
+                        next ATTR;
                     }
                 }
 
@@ -1190,7 +1213,7 @@ sub clean
                             '</span>' .
                             '</a>';
                         $newdata .= $href_b_link ?
-                            '<a href="' . $href_b_link .'" class="b-mediaplaceholder-external" title="' . LJ::Lang::ml("mediaplaceholder.link") . '">' .
+                            '<a href="' . $href_b_link .'" class="b-mediaplaceholder-external" title="' . Encode::decode_utf8(LJ::Lang::ml("mediaplaceholder.link")) . '">' .
                             '<i class="b-mediaplaceholder-bg"></i>' .
                             '<i class="b-mediaplaceholder-pic"></i>' .
                             '<span class="b-mediaplaceholder-inner">' . Encode::decode_utf8(LJ::Lang::ml("mediaplaceholder.link")) . '</span>' .
@@ -1345,6 +1368,7 @@ sub clean
                                 height             => $height,
                                 img                => "$LJ::IMGPREFIX/videoplaceholder.png",
                                 remove_video_sizes => $opts->{remove_video_sizes},
+                                no_encode          => 1,
                             );
                         }
                         else {
@@ -1464,7 +1488,7 @@ sub clean
             } elsif ( $tag eq 'lj-lang-container' ) {
                 shift @lj_lang_otherwise;
             } elsif ( $tag eq 'lj-spoiler' ) {
-                if ($ljspoilers_open) {
+                if ($ljspoiler_allowed && $ljspoilers_open) {
                     $newdata .= qq{</div></div>};
                     $ljspoilers_open--;
                 }
@@ -2116,6 +2140,7 @@ sub clean_comment
         'video_placeholders' => $opts->{'video_placeholders'},
         'remove_img_sizes'   => $opts->{'remove_img_sizes'},
         'remove_video_sizes' => $opts->{'remove_video_sizes'},
+        'no_encode'          => $opts->{'no_encode'},
     });
 }
 

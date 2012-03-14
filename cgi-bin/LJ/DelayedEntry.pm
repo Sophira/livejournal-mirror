@@ -380,7 +380,7 @@ sub allowmask {
 
 sub security {
     my ($self) = @_;
-    return $self->data->{security};
+    return $self->data->{security} || '';
 }
 
 sub props {
@@ -983,9 +983,13 @@ sub can_post_to {
     my $can_manage = $poster->can_manage($uowner) || 0;
     my $moderated = $uowner->prop('moderated') || '';
     my $need_moderated = ( $moderated =~ /^[1A]$/ ) ? 1 : 0;
-    if ( $req && $uowner->{'moderated'} eq 'F' ) {
+    if ( $req && $uowner->{'moderated'} && $uowner->{'moderated'} eq 'F' ) {
         ## Scan post for spam
         LJ::run_hook('spam_community_detector', $uowner, $req, \$need_moderated);
+    }
+
+    if ( LJ::is_banned($posterid, $uownerid) ) {
+        return 0;
     }
 
     my $can_post = ($uowner->is_community() && !$need_moderated) || $can_manage;
@@ -1051,20 +1055,6 @@ sub __extract_tag_list {
 
     $$tags = join(",", @tags_array);
     return \@tags_array;
-}
-
-sub __kill_dayct2_cache {
-    my ($u) = @_;
-    my $uid = LJ::want_userid($u) or return undef;
-
-    my $memkey = [$uid, "dayct2:$uid:p"];
-    LJ::MemCache::delete($memkey);
-
-    $memkey = [$uid, "dayct2:$uid:a"];
-    LJ::MemCache::delete($memkey);
-
-    $memkey = [$uid, "dayct2:$uid:g"];
-    LJ::MemCache::delete($memkey);
 }
 
 sub __statistics_absorber {

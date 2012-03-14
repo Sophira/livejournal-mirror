@@ -2362,6 +2362,7 @@ sub postevent {
 
                 $res->{'delayedid'} = $delayedid;
                 $res->{'type'}      = 'delayed';
+                $res->{'url'}       = $entry->url;
             } else {
                 $res->{'itemid'} = $parts[1];
                 $res->{'anum'} = $parts[2];
@@ -2423,8 +2424,9 @@ sub postevent {
                 return fail($err, 507);
             }
 
-            $res->{delayedid} = $entry->delayedid;
-            $res->{type}      = 'delayed';
+            $res->{'delayedid'} = $entry->delayedid;
+            $res->{'type'}      = 'delayed';
+            $res->{'url'}       = $entry->url;
 
             $u->set_prop( {"dupsig_post" => "$dupsig:" . $entry->delayedid . ":0"} );
             $release->();
@@ -2582,13 +2584,6 @@ sub postevent {
                      "UNIX_TIMESTAMP($qeventtime), $rlogtime, $anum)");
     return $fail->($err,501,$dberr) if $dberr;
 
-    if ( $req->{sticky} &&
-         $uowner->is_community() &&
-         !$u->can_manage($uowner) )
-    {
-        return fail($err, 158);
-    }
-
     # post become 'sticky post'
     if ( $req->{sticky} ) {
         $uowner->set_sticky_id($jitemid);
@@ -2605,7 +2600,6 @@ sub postevent {
     }
 
     LJ::MemCache::incr([$ownerid, "log2ct:$ownerid"]);
-    LJ::memcache_kill($ownerid, "dayct2");
 
     # set userprops.
     {
@@ -3323,8 +3317,6 @@ sub editevent {
     }
     return fail($err,501,$dbcm->errstr) if $dbcm->err;
 
-    LJ::memcache_kill($ownerid, "dayct2");
-
     if (defined $oldevent->{'anum'}) {
         $res->{'anum'} = $oldevent->{'anum'};
         $res->{'url'} = LJ::item_link($uowner, $itemid, $oldevent->{'anum'});
@@ -3577,8 +3569,9 @@ sub getevents {
             else {
                 return fail( $err, 218 );
             }
+
+            return $res;
         }
-        return $res;
     }
 
     # build the query to get log rows.  each selecttype branch is

@@ -6607,7 +6607,7 @@ sub wipe_major_memcache
     my $u = shift;
     my $userid = LJ::want_userid($u);
     foreach my $key ("userid","bio","talk2ct","log2ct",
-                     "log2lt","memkwid","dayct2","s1overr","s1uc","fgrp",
+                     "log2lt","memkwid","s1overr","s1uc","fgrp",
                      "friends","friendofs","tu","upicinf","upiccom",
                      "upicurl", "intids", "memct", "lastcomm")
     {
@@ -8184,41 +8184,41 @@ sub get_timezone {
 # non-zero count.  examples:
 #  [ [ 2003, 6, 5, 3 ], [ 2003, 6, 8, 4 ], ... ]
 #
-sub get_daycounts
-{
-    my ($u, $remote) = @_;
-    my $uid = LJ::want_userid($u) or return undef;
+sub get_daycounts {
+    my ( $u, $remote ) = @_;
 
-    my $memkind = 'p'; # public only, changed below
-    my $secwhere = "AND security='public'";
-    my $viewall = 0;
+    # ['public'], ['all'], or [ 'gmask', $gmask ]
+    my $kind;
     if ($remote) {
-        # do they have the viewall priv?
-        my %getargs = eval { LJ::Request->args } || (); # eval for check web context
-        if (defined $getargs{'viewall'} and $getargs{'viewall'} eq '1' and LJ::check_priv($remote, 'canview', '*')) {
+        my $viewall = 0;
+        if ( LJ::is_web_context() && LJ::Request->get_param('viewall') &&
+            LJ::check_priv( $remote, 'canview', '*' ) )
+        {
             $viewall = 1;
             LJ::statushistory_add($u->{'userid'}, $remote->{'userid'},
                 "viewall", "calendar");
         }
 
-        if ($remote->{'userid'} == $uid || $viewall) {
-            $secwhere = "";   # see everything
-            $memkind = 'a'; # all
-        } elsif ($remote->{'journaltype'} eq 'P') {
-            my $gmask = LJ::get_groupmask($u, $remote);
-            if ($gmask) {
-                $secwhere = "AND (security='public' OR (security='usemask' AND allowmask & $gmask))";
-                $memkind = 'g' . $gmask; # friends case: allowmask == gmask == 1
+        if ( LJ::u_equals( $u, $remote ) ) {
+            $kind = ['all'];
+        } else {
+            if ( my $gmask = LJ::get_groupmask($u, $remote) ) {
+                # friends case: allowmask == gmask == 1
+                $kind = [ 'gmask', $gmask ];
+            } else {
+                $kind = ['public'];
             }
         }
+    } else {
+        $kind = ['public'];
     }
 
     ##
-    ## the first element of array, that is stored in memcache, 
-    ## is the time of the creation of the list. The memcache is 
+    ## the first element of the array stored in memcache
+    ## is the time of the creation of the list. The memcache is
     ## invalid if there are new entries in journal since that time.
     ##
-    my $memkey = [$uid, "dayct2:$uid:$memkind"];
+    my $memkey = [ $u->userid, join( ':', 'dayct3', $u->userid, @$kind ) ];
     my $list = LJ::MemCache::get($memkey);
     if ($list) {
         my $list_create_time = shift @$list;
@@ -8229,9 +8229,14 @@ sub get_daycounts
     
     ## get lock to prevent multiple apache processes to execute the sql below.
     ## one process runs, the other wait for results 
-    my $release_lock = sub { $dbcr->selectrow_array("SELECT RELEASE_LOCK('$memkey')"); };
-    my $locked = $dbcr->selectrow_array("SELECT GET_LOCK('$memkey',10)");
-    return unless $locked; ## 10 seconds expired
+    my $release_lock = sub {
+        $dbcr->do( 'SELECT RELEASE_LOCK(?)', undef, $memkey->[1] );
+    };
+
+    my ($locked) = $dbcr->selectrow_array(
+        'SELECT GET_LOCK(?,2)', undef, $memkey->[1] );
+
+    return [] unless $locked; ## 2 seconds expired
 
     $list = LJ::MemCache::get($memkey);
     if ($list) {
@@ -8243,20 +8248,138 @@ sub get_daycounts
         }
     }
 
-    my $sth = $dbcr->prepare("SELECT year, month, day, COUNT(*) ".
-                             "FROM log2 WHERE journalid=? $secwhere GROUP BY 1, 2, 3");
-    $sth->execute($uid);
-    my @days;
-    while (my ($y, $m, $d, $c) = $sth->fetchrow_array) {
-        # we force each number from string scalars (from DBI) to int scalars,
-        # so they store smaller in memcache
-        push @days, [ int($y), int($m), int($d), int($c) ];
+    if ( LJ::is_enabled( 'dayct_month', $u ) ) {
+        $release_lock->();
+        my ( $min_year, $max_year ) = $dbcr->selectrow_array(
+            'SELECT MIN(year), MAX(year) FROM log2 WHERE journalid=?',
+            undef, $u->userid );
+
+        my $days = [];
+
+        foreach my $year ( $min_year .. $max_year ) {
+            foreach my $month ( 1 .. 12 ) {
+                my $month_daycounts =
+                    get_month_daycounts( $u, $kind, $year, $month );
+                push @$days, @$month_daycounts;
+            }
+        }
+
+        LJ::MemCache::set( $memkey, [ time, @$days ] );
+        return $days;
     }
 
-    LJ::MemCache::set($memkey, [time, @days]);
+    my ( $selecttype, $gmask ) = @$kind;
+    my $secwhere;
+    if ( $selecttype eq 'all' ) {
+        $secwhere = '';
+    } elsif ( $selecttype eq 'public' ) {
+        $secwhere = 'AND security="public"';
+    } elsif ( $selecttype eq 'gmask' ) {
+        $secwhere = "AND ( security='public' OR " .
+            "(security='usemask' AND allowmask & $gmask) )";
+    }
+
+    my $sth = $dbcr->prepare("SELECT year, month, day, COUNT(*) ".
+                             "FROM log2 WHERE journalid=? $secwhere " .
+                             "GROUP BY year, month, day");
+    $sth->execute( $u->userid );
+    my $days = [];
+    while ( my ( $y, $m, $d, $c ) = $sth->fetchrow_array ) {
+        # we force each number from string scalars (from DBI) to int scalars,
+        # so they store smaller in memcache
+        push @$days, [ int($y), int($m), int($d), int($c) ];
+    }
+
+    LJ::MemCache::set( $memkey, [time, @$days] );
 
     $release_lock->();
-    return \@days;
+    return $days;
+}
+
+sub get_month_daycounts {
+    my ( $u, $kind, $year, $month ) = @_;
+
+    my $memkind = join( ':', @$kind );
+
+    ##
+    ## the first element of the array stored in memcache
+    ## is the time of the creation of the list. The memcache is
+    ## invalid if there are new entries in journal since that time.
+    ##
+    my $memkey_base =
+        join( ':', 'dayct3', 'month', $year, $month, $u->userid, @$kind );
+    my $memkey = [ $u->userid, $memkey_base ];
+    my $memlockkey = [ $u->userid, $memkey_base . ':lock' ];
+
+    my $lock_acquired = 0;
+
+    my $lock = sub {
+        return if $lock_acquired;
+        $lock_acquired = 1;
+
+        return LJ::MemCache::add( $memlockkey, 1, 2 );
+    };
+
+    my $unlock = sub {
+        LJ::MemCache::delete($memlockkey);
+        $lock_acquired = 0;
+    };
+
+    my $list = LJ::MemCache::get($memkey);
+    if ($list) {
+        my $list_create_time = shift @$list;
+        my $list_exptime     = shift @$list;
+
+        my $need_recalculate = 0;
+
+        my $timeupdate       = $u->timeupdate;
+        my $timeupdate_year  = ( gmtime $timeupdate )[5] + 1900;
+        my $timeupdate_month = ( gmtime $timeupdate )[4] + 1;
+
+        $need_recalculate = 1
+            if $timeupdate_year == $year &&
+            $timeupdate_month == $month &&
+            $u->timeupdate > $list_create_time;
+
+        if ($need_recalculate) {
+            $need_recalculate = 0 unless $lock->();
+        }
+
+        return $list unless $need_recalculate;
+    }
+
+    return [] unless $lock->();
+
+    my ( $selecttype, $gmask ) = @$kind;
+    my $secwhere;
+    if ( $selecttype eq 'all' ) {
+        $secwhere = '';
+    } elsif ( $selecttype eq 'public' ) {
+        $secwhere = 'AND security="public"';
+    } elsif ( $selecttype eq 'gmask' ) {
+        $secwhere = "AND ( security='public' OR " .
+            "(security='usemask' AND allowmask & $gmask) )";
+    }
+
+    my $dbcr = LJ::get_cluster_def_reader($u);
+    
+    my $sth = $dbcr->prepare("SELECT day, COUNT(*) ".
+                             "FROM log2 WHERE journalid=? $secwhere AND " .
+                             "year=? AND month=? " .
+                             "GROUP BY day");
+    $sth->execute( $u->userid, $year, $month );
+    my $days = [];
+    while ( my ( $d, $c ) = $sth->fetchrow_array ) {
+        # we force each number from string scalars (from DBI) to int scalars,
+        # so they store smaller in memcache
+        push @$days, [ int($year), int($month), int($d), int($c) ];
+    }
+
+    my $exptime = time + 3600 + int( rand(3600) );
+    LJ::MemCache::set( $memkey, [ time, $exptime, @$days ] );
+
+    $unlock->();
+    return $days;
 }
 
 ## input: $u, $remote, $year, $month

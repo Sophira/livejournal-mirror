@@ -560,7 +560,7 @@ sub render_metainfo_block {
     };
 
     if ( $opts->{'mode'} eq "edit" && $can_edit_date ) {
-        if ( $opts->{'delayed'} ) {
+        if ( $opts->{'delayedid'} ) {
             $out .= qq{
                 <label class="title entrydate-title-date">$BML::ML{'entryform.postponed.until'}</label>
             };
@@ -573,12 +573,13 @@ sub render_metainfo_block {
         $out .= qq{
             <label class="title entrydate-title-post">$BML::ML{'entryform.post'}</label>
         };
+        $out .= qq{
+            <label class="title entrydate-title-until">$BML::ML{'entryform.postponed.until'}</label>
+        };
     }
 
-    $out .= qq{
-        <label class="title entrydate-title-until">$BML::ML{'entryform.postponed.until'}</label>
-    };
     
+
     my $backdateout = "";
     if (!LJ::is_enabled("delayed_entries")) {
         my $backdate_check = LJ::html_check({
@@ -1632,7 +1633,6 @@ sub render_ljphoto_block {
         'privacyData'     => LJ::Widget::Fotki::Photo->get_user_groups($remote),
         'type'            => 'upload',
         'guid'            => $auth_token,
-        'pics_production' => LJ::is_enabled('pics_production'),
     };
 
     my $photouploader_params_out = LJ::JSON->to_json($photouploader_params);
