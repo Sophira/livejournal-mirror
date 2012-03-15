@@ -31,7 +31,7 @@ use LJ::RelationService;
 my %domains = (
     hmp_ontd        => 'Homepage/ONTD',
     hmp_spotlight   => 'Homepage/Spotlight',
-    anythingdisney  => 'AnythingDisney',
+    anythingdisney  => 'AnythingDiz',
     bullying_begone => 'bullying_begone',
     map { ($_ => $_) } qw{
         ontd-political
@@ -77,6 +77,17 @@ my @order = qw/
     hmp_ontd
     anythingdisney
     bullying_begone
+    ontd-political
+    aramatheydidnt
+    craftgrrlontd-political
+    aramatheydidnt
+    craftgrrl
+    vaginapagina
+    ontd-cats
+    ontdgames
+    spookypoo
+    beauty101
+    lesbian
 /;
 =head
     culture
