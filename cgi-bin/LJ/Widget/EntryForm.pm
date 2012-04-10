@@ -107,14 +107,15 @@ sub should_show_userpicselect {
 
 sub should_show_lastfm {
     my ($self) = @_;
-
-    return $self->opts->{'prop_last_fm_user'} ? 1 : 0;
+    return $self->remote->prop('music_engine') eq LJ::Setting::Music::LastFM->pkgkey ? 1 : 0;
 }
 
 sub should_show_trava {
     my ($self) = @_;
     return 0 unless LJ::Setting::Music::Trava->good_ip;
-    return $self->opts->{'prop_last_fm_user'} ? 0 : 1;
+
+    my $me = $self->remote->prop('music_engine');
+    return ! $me || $me eq LJ::Setting::Music::Trava->pkgkey ? 1 : 0;
 }
 
 sub tabindex {
@@ -176,7 +177,6 @@ sub need_res {
         js/rte.js
         js/jquery/jquery.lj.basicWidget.js
         js/jquery/jquery.xdomainrequest.js
-        js/jquery/jquery.lj.trava.js
         js/jquery/jquery.lj.modalWindow.js
         js/jquery/jquery.lj.entryDatePicker.js
         js/jquery/jquery.timeentry.min.js
@@ -199,8 +199,9 @@ sub need_res {
     }
 
     if ( $self->should_show_trava ) {
-        # put trava js here
-        push @ret, qw();
+        push @ret, qw(
+            js/jquery/jquery.lj.trava.js
+        );
     }
     elsif ( $self->should_show_lastfm ) {
         push @ret, qw(
@@ -1154,7 +1155,7 @@ sub render_options_block {
                 'class'     => 'text',
                 'size'      => '35',
                 'maxlength' => LJ::std_max_length(),
-                'tabindex'  => '180',
+                'tabindex'  => '175',
                 $self->lastfm_geolocation_width,
             });
 
@@ -1167,7 +1168,7 @@ sub render_options_block {
                     <input
                         id="entryform-music-search"
                         type="button" value="$button_label"
-                        tabindex="175"
+                        tabindex="180"
                         style="float: left"
                     >
                     <input
@@ -1176,15 +1177,6 @@ sub render_options_block {
                     >
                     $help_icon
                 };
-
-                # automatically detect current music only if creating new entry
-                #if ($opts->{'mode'} eq 'update') {
-                    #$out .= $self->wrap_js(qq{
-                        #trava_current('$trava_uid', false);
-                    #});
-                #}
-
-
             }
             elsif ( $self->should_show_lastfm ) {
                 my $last_fm_user = LJ::ejs($opts->{'prop_last_fm_user'});
@@ -1357,9 +1349,9 @@ sub render_options_block {
     }
 
     $out .= "</ul>";
-    $out .= $self->wrap_js(q~
-        jQuery('#entryform-music-wrapper').trava().trava('getNowListen');
-    ~) if $self->should_show_trava;
+    $out .= '<script type="text/javascript">';
+    $out .= q~jQuery('#entryform-music-wrapper').trava()~ . ( $opts->{'mode'} eq "edit" ? ';' : q~.trava('getNowListen');~ );
+    $out .= '</script>';
 
     return $out;
 }
@@ -1741,6 +1733,7 @@ sub render_body {
         /update.bml.music.settings.search
         /update.bml.msg.newalbums
         /update.bml.msg.newalbums.organise
+        entryform.music.search
     ) );
 
     # usejournal has no point if you're trying to use the account you're logged

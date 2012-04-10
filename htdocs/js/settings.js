@@ -9,7 +9,7 @@ LiveJournal.register_hook('init_settings', function ($) {
 		confirm_msg: LiveJournal.getLocalizedStr('.form.confirm', null, 'Save your changes?'),
 		form_changed: false,
 		navclickSave: function(e) {
-			if (!Settings.form_changed || e.isDefaultPrevented()) {
+			if (!Settings.form_changed || e.isDefaultPrevented() || this.target === '_blank') {
 				return;
 			}
 
@@ -39,7 +39,7 @@ LiveJournal.register_hook('init_settings', function ($) {
 		connectLink: '.music-settings-connect',
 		disconnectLink: '.music-settings-disconnect',
 		userName: '.music-settings-username',
-		musicSelect: 'select[name="music_select"]',
+		musicSelect: 'select[name="LJ__Setting__Music_music_engine"]',
 		uIdInput: 'input[name="' + uIdInputName + '"]'
 	};
 
@@ -93,6 +93,7 @@ LiveJournal.register_hook('init_settings', function ($) {
 	musicSelect.bind('change', onChangesMusic);
 
 	travaElement.trava({
+			searchControl: false,
 			uid: UID
 		})
 		.bind('travalogin', function (evt, data) {

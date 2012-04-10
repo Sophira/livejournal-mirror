@@ -48,7 +48,13 @@
 		 * @private
 		 */
 		_create: function () {
+			this._visible = false;
 			this._makeNodes();
+			this.hide();
+			$(document.body)
+				.append(this._faderNode)
+				.append(this._popupNode);
+
 		},
 
 		/**
@@ -82,6 +88,12 @@
 				}
 			}
 
+			function onScroll(evt) {
+				if (!this._visible) { return; }
+
+				this.updatePosition();
+			}
+
 			return function () {
 				var options = this.options;
 				var selectors = options.selectors;
@@ -90,6 +102,7 @@
 					.delegate(selectors.closeBtn, 'click', this, onClose);
 
 				this._faderNode.bind('click', this, onClose);
+				$(window).scroll(LJ.throttle(onScroll.bind(this), 200));
 
 				$(document).bind('keydown', this, onCloseEsc);
 			}
@@ -137,12 +150,11 @@
 				this._contentNode.css('height', this.options.height);
 			}
 
+			this._visible = true;
 			this.updatePosition();
 
-			$(document.body)
-				.append(this._faderNode)
-				.append(this._popupNode);
-			
+			this._faderNode.show();
+			this._popupNode.show();
 			this._trigger('show');
 		},
 
@@ -151,8 +163,10 @@
 		 * @function
 		 */
 		hide: function () {
-			this._faderNode.detach();
-			this._popupNode.detach();
+			this._visible = false;
+			//we have replaced detach with hide, because it may be really slow in internet explorer
+			this._faderNode.hide();
+			this._popupNode.hide();
 			this._trigger('hide');
 		}
 	};

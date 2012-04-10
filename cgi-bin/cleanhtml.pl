@@ -444,6 +444,12 @@ sub clean {
                 next TOKEN;
             }
 
+            if ( $tag eq 'lj-music' ) {
+                $newdata .= LJ::Setting::Music::format_ljmusic( $attr->{'provider'}, $attr->{'id'} );
+
+                next TOKEN;
+            }
+
             ## lj-userpic:
             ##      <lj-userpic> - current journal's default userpic
             ##      <lj-userpic remote> - remote user's default userpic
@@ -704,7 +710,7 @@ sub clean {
                     my $etext = $link_text->();
                     my $url = LJ::ehtml($cut);
                     $newdata .= "<div>" if $tag eq "div";
-                    $newdata .= "<b class=\"ljcut-link\">&#9988;&nbsp;<a href=\"$url#cutid$cutcount\">$etext</a>&nbsp;</b>";
+                    $newdata .= qq|<b class="ljcut-link">&#9986;&middot;&middot;&middot;&thinsp;<a href="$url#cutid$cutcount">$etext</a></b>|;
                     $newdata .= "</div>" if $tag eq "div";
                     unless ($opts->{'cutpreview'}) {
                         push @eatuntil, $tag;
@@ -1905,14 +1911,14 @@ sub clean_subject
     my $opts = shift || {};
 
     clean($ref, {
-        'wordlength' => 40,
-        'addbreaks' => 0,
-        'eat' => $subject_eat,
-        'mode' => 'deny',
-        'allow' => $subject_allow,
-        'remove' => $subject_remove,
-        'autoclose' => $subject_allow,
-        'noearlyclose' => 1,
+        'wordlength'     => 40,
+        'addbreaks'      => 0,
+        'eat'            => $subject_eat,
+        'mode'           => 'deny',
+        'allow'          => $subject_allow,
+        'remove'         => $subject_remove,
+        'autoclose'      => $subject_allow,
+        'noearlyclose'   => 1,
         'remove_attribs' => [qw/id class style/],
         %$opts,
     });

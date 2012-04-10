@@ -942,15 +942,19 @@ td.tabs {
 	top: 20px;
 	right: 20px;
 	}
-.b-music-list-logo {
+.b-music-list-side {
 	overflow: hidden;
 	margin: 12px 0;
 	}
-	.b-music-list-logo A {
-		display: inline-block;
+	.b-music-list-logo {
+		float: left;
 		width: 96px;
 		height: 24px;
 		background: url(/img/trava-logo.png?ver=1) 0 0 no-repeat;
+		}
+	.b-music-popup-searching {
+		float: right;
+		margin-top: 3px;
 		}
 .b-music-list-searching-wrapper {
 	position: relative;
@@ -983,8 +987,20 @@ td.tabs {
 	width: 750px;
 	margin: 0;
 	}
+	.b-music-item .b-music-item-player EMBED,
+	.b-music-item .b-music-item-player OBJECT {
+		display: none;
+		}
+	.b-music-item-hover .b-music-item-player EMBED,
+	.b-music-item-hover .b-music-item-player OBJECT {
+		display: block;
+		} 
+	.b-music-item:hover,
+	.b-music-item.odd:hover {
+		background-color: #d0e4f0;
+		}
 .b-music-item-header {
-	width: 745px;
+	width: 750px;
 	}
 .b-music-item.odd {
 	background: #ebebeb;
@@ -993,25 +1009,28 @@ td.tabs {
 	.b-music-item-header DD,
 	.b-music-item DT,
 	.b-music-item DD {
-		display: table-cell;
+		display: inline-block;
 		margin: 0;
 		vertical-align: middle;
 		}
 	.b-music-item-header DT,
 	.b-music-item-header DD {
 		width: 200px;
-		max-width: 200px;
 		}
 	.b-music-item-artist,
 	.b-music-item-album,
 	.b-music-item-track {
-		width: 200px;		
+		width: 200px;
 		color: #3f5f9e;
 		}
 		.b-music-item-artist SPAN,
 		.b-music-item-album SPAN,
 		.b-music-item-track SPAN {
+			position: relative;
+			display: inline-block;
+			padding: 9px 5px 10px 3px;
 			cursor: pointer;
+			font-size: 11px;
 			}
 		.b-music-item-artist SPAN:hover,
 		.b-music-item-album SPAN:hover,
@@ -1019,11 +1038,11 @@ td.tabs {
 			text-decoration: underline;
 			}
 	.b-music-item-player {
-		width: 106px;
-		min-width: 106px;
-		padding: 0;
+		width: 150px;
+		min-width: 150px;
+		text-align: right;
 		}
-		
+
 .b-music-list-state-error .b-music-item-header,
 .b-music-list-state-error .b-music-list-preloader-wrapper,
 .b-music-list-state-error .b-music-item-body,

@@ -348,7 +348,7 @@ body<=
         $current{'Mood'} = "$moodpic$moodname";
     }
     if ($props->{'current_music'}) {
-        $current{'Music'} = LJ::LastFM::format_current_music_string($props->{'current_music'});
+        $current{'Music'} = LJ::Setting::Music::format_current_music_string($props->{'current_music'});
         LJ::CleanHTML::clean_subject(\$current{'Music'});
     }
 

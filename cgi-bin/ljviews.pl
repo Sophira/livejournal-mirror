@@ -1002,7 +1002,6 @@ sub current_mood_str {
 
 sub current_music_str {
     my $val = shift;
-
     $val = LJ::Setting::Music::format_current_music_string($val);
     LJ::CleanHTML::clean_subject(\$val);
     return $val;
