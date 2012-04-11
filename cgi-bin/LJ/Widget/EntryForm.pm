@@ -107,11 +107,18 @@ sub should_show_userpicselect {
 
 sub should_show_lastfm {
     my ($self) = @_;
-    return $self->remote->prop('music_engine') eq LJ::Setting::Music::LastFM->pkgkey ? 1 : 0;
+
+    if ( $LJ::DISABLED{'trava'} ) {
+        return $self->remote->prop('last_fm_user') ? 1 : 0;
+    }
+    else {
+        return $self->remote->prop('music_engine') eq LJ::Setting::Music::LastFM->pkgkey ? 1 : 0;
+    }
 }
 
 sub should_show_trava {
     my ($self) = @_;
+    return 0 if $LJ::DISABLED{'trava'};
     return 0 unless LJ::Setting::Music::Trava->good_ip;
 
     my $me = $self->remote->prop('music_engine');
