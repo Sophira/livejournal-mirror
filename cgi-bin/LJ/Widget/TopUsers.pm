@@ -51,9 +51,6 @@ sub _fetch_data {
             my $userpic = undef;
             $userpic = $user->userpic() if $user;
 
-            warn "Cannot load user with id=$_->{userid}\n" unless $user;
-            warn "Cannot load userpic with id=$_->{userid}\n" unless $userpic;
-
             if ($count && $user && $userpic) {
                 push @{$keys{$key}->{'data'}},
                     {
