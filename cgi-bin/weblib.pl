@@ -849,6 +849,8 @@ sub create_qr_div {
                                       {'name' => 'saved_ptid', 'id' => 'saved_ptid'},
                                       ));
 
+    %userpicmap = map { (LJ::ehtml($_) => $userpicmap{$_}) } keys %userpicmap;
+
     my $userpicmap = LJ::JSON->to_json(\%userpicmap);
     $ret .= qq{
                var userpicmap = $userpicmap;
@@ -1160,7 +1162,14 @@ sub entry_form_decode
 
     if ( $POST->{'prop_current_music'} ) {
         if ( length( $POST->{'prop_current_music'} ) > 197 ) {
-            $req->{'prop_current_music'} = substr( $POST->{'prop_current_music'}, 0, 197 ) . '...';
+            my $pos = index( $POST->{'prop_current_music'}, '|' );
+
+            if ( $pos == -1 ) {
+                $req->{'prop_current_music'} = substr( $POST->{'prop_current_music'}, 0, 197 ) . '...';
+            }
+            else {
+                $req->{'prop_current_music'} = substr( substr($POST->{'prop_current_music'}, 0, $pos), 0, 197 ) . '... ' . substr( $POST->{'prop_current_music'}, $pos );
+            }
         }
         else {
             $req->{'prop_current_music'} = $POST->{'prop_current_music'};

@@ -1989,6 +1989,7 @@ sub Entry
     my $p = $arg->{'props'};
     if ($p->{'current_music'}) {
         $e->{'metadata'}->{'music'} = LJ::Setting::Music::format_current_music_string($p->{'current_music'});
+        LJ::CleanHTML::clean_subject(\$e->{'metadata'}->{'music'});
     }
     if (my $mid = $p->{'current_moodid'}) {
         my $theme = defined $arg->{'moodthemeid'} ? $arg->{'moodthemeid'} : $u->{'moodthemeid'};
@@ -2224,7 +2225,6 @@ sub Image_userpic
     my $p = $pi->{'pic'}->{$picid};
     my $k = $pi->{'kw'};
     my $kwstr = join(', ', ( grep { $k->{$_}{'picid'} eq $picid } (keys %$k) ) );
-    my $alttext = $kwstr;
 
     return Null("Image") unless $p;
     return {
@@ -2232,7 +2232,7 @@ sub Image_userpic
         'url' => "$LJ::USERPIC_ROOT/$picid/$u->{'userid'}",
         'width' => $p->{'width'},
         'height' => $p->{'height'},
-        'alttext' => $alttext,
+        'alttext' => LJ::ehtml($kwstr),
     };
 }
 
