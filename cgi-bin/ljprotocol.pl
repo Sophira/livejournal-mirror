@@ -3075,10 +3075,6 @@ sub editevent {
             $uowner->remove_sticky_entry_id();
         }
 
-    $dbh->do("UPDATE userusage SET timeupdate=NOW() ".
-             "WHERE userid=$ownerid");
-    LJ::MemCache::set([$ownerid, "tu:$ownerid"], pack("N", time()), 30*60);
-
         return $res;
     }
 
