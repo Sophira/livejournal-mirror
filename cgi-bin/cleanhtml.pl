@@ -449,6 +449,9 @@ sub clean {
 
                 next TOKEN;
             }
+            elsif ( $tag eq 'lj-music' ) {
+                $newdata .= $token->[4];
+            }
 
             ## lj-userpic:
             ##      <lj-userpic> - current journal's default userpic
