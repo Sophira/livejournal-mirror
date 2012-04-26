@@ -2897,6 +2897,8 @@ fotki.album.add.more=Add more
 fotki.album.add.photos|staleness=1
 fotki.album.add.photos=You can add one or more photos at once using "Ctrl" button or "Shift"
 
+fotki.album.add.selected=Add to entry selected
+
 fotki.album.add.to.entry|staleness=1
 fotki.album.add.to.entry=Add to entry
 
@@ -2933,6 +2935,8 @@ fotki.album.browse.photo=Browse
 fotki.album.cancel.album=Cancel
 
 fotki.album.custom.size=Custom
+
+fotki.album.change=All your current selection will be lost. Do you really want to change the album?
 
 fotki.album.click.image|staleness=1
 fotki.album.click.image=Click on image to remove it
@@ -2971,6 +2975,8 @@ fotki.album.edit.empty.photo.desc=(no description)
 
 fotki.album.edit.empty.photo.title|staleness=1
 fotki.album.edit.empty.photo.title=(no title)
+
+fotki.album.edit.okey=Ok
 
 fotki.album.edit.save|staleness=1
 fotki.album.edit.save=Save
@@ -3044,6 +3050,8 @@ fotki.album.link.upload=Upload
 fotki.album.link.upload.new|staleness=1
 fotki.album.link.upload.new=Upload new
 
+fotki.album.load.more=Loading more..
+
 fotki.album.manage.albums|staleness=1
 fotki.album.manage.albums=Manage albums
 
@@ -3053,7 +3061,7 @@ fotki.album.new.album.name=New album name
 fotki.album.no.photo|staleness=1
 fotki.album.no.photo=No photo
 
-fotki.album.edit.okey=OK
+fotki.album.no.pics=There are no photos in this album.
 
 fotki.album.paste.url=Paste url
 
@@ -3182,13 +3190,19 @@ fotki.migration.conditions=Before the end of the transfer process you have acces
 
 fotki.migration.button=Start
 
+fotki.migration.data.transferred=Your data are being transferred from the old photo hosting service to the new one.
+
 fotki.migration.decline=You are not have access to FotoBilder
 
 fotki.migration.label=Select this checkbox if you want migrate to new LJ PhotoHosting
 
 fotki.migration.started.text=Migration was started
 
+fotki.migration.started.link=<a href="[[link]]">Go to the albums list</a>
+
 fotki.migration.title=Promo page
+
+fotki.migration.try.again=This can take a few minutes; please wait and try again.
 
 fotki.photo.recover|staleness=1
 fotki.photo.recover=You can recover it, before you clicking "Save all" button

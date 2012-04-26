@@ -239,6 +239,93 @@ LJ.throttle = function(func, delay) {
 };
 
 
+			return false;
+		};
+
+	var consoleShim = {
+		log: function() {
+			if (jQuery.browser.msie && consoleExists()) {
+				console.log( [].join.apply(arguments) );
+			} else {
+				runIfExists('log', arguments);
+			}
+		}
+	};
+
+	var timers = {};
+	consoleShim.time = function(label) {
+		if (!runIfExists('time', arguments) && !timers[label]) {
+			timers[label] = +new Date();
+		}
+	}
+
+	consoleShim.timeEnd = function(label) {
+		if (!runIfExists('timeEnd', arguments) && timers[label]) {
+			var now = +new Date();
+			consoleShim.log(label + ': ' + (now - timers[label]) + 'ms');
+			delete timers[label];
+		}
+	}
+
+	return consoleShim;
+}();
+
+LJ._const = {};
+
+/**
+ * Define a constant.
+ *
+ * @param {string} name name of the constant. All spaces will be replaced with underline.
+ *     if constant was already defined, the function will throw the exception.
+ * @param {*} value A value of the constant.
+ */
+LJ.defineConst = function(name, value) {
+	name = name.toUpperCase().replace(/\s+/g, '_');
+
+	if (LJ._const.hasOwnProperty(name)) {
+		throw new Error('constant was already defined');
+	} else {
+		LJ._const[name] = value;
+	}
+
+}
+
+/**
+ * Get the value of the constant.
+ *
+ * @param {string} name The name of the constant.
+ * @return {*} The value of the constant or undefined if constant was not defined.
+ */
+LJ.getConst = function(name) {
+	name = name.toUpperCase().replace(/\s+/g, '_');
+
+	return (LJ._const.hasOwnProperty(name) ? LJ._const[name] : void 0);
+}
+
+LJ.DOM = LJ.DOM || {};
+
+
+/**
+ * Inject stylesheet into page.
+ *
+ * @param {string} Stylesheet filename to inject.
+ * @param {global} Global object.
+ */
+LJ.DOM.injectStyle = function(fileName, _window) {
+	var w = _window || window,
+		head = w.document.getElementsByTagName("head")[0],
+		cssNode = w.document.createElement('link');
+	
+	cssNode.type = 'text/css';
+	cssNode.rel = 'stylesheet';
+	cssNode.href = fileName;
+	
+	head.appendChild(cssNode);
+
+	//console.log(fileName + ' injected from ' + w.location.href);
+};
+
+
 /* object extensions */
 if (!Object.extend)
 	Object.extend = function (d, s){

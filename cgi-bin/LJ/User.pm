@@ -201,7 +201,7 @@ sub create_community {
     $u->set_prop("moderated", $opts{moderated});
     $u->set_prop("adult_content", $opts{journal_adult_settings}) if LJ::is_enabled("content_flag");
 
-    my $remote = LJ::get_remote();
+    my $remote = $opts{'owner'} || LJ::get_remote();
 
 	die "No remote user!\n" unless $remote;
 
@@ -239,7 +239,7 @@ sub create_syndicated {
              undef, $u->id, $opts{feedurl});
     die $dbh->errstr if $dbh->err;
 
-    my $remote = LJ::get_remote();
+    my $remote = $opts{'creator'} || LJ::get_remote();
     LJ::statushistory_add($remote, $u, "synd_create", "acct: " . $u->user);
 
     return $u;
@@ -3859,15 +3859,21 @@ sub can_use_ljphoto {
 
     return 0 if $LJ::DISABLED{'new_ljphoto'};
 
+=head
+    ## Open access to a new photohosting for all users
+    ## LJSUP-11893
     foreach my $comm_name (@LJ::LJPHOTO_ALLOW_FROM_COMMUNITIES) {
         my $comm = LJ::load_user ($comm_name);
         next unless $comm && $comm->is_visible;
         return 1 if $u->can_manage ($comm) or $comm->is_friend($u); 
     }
+=cut
 
-    return 1 if $u->prop ('fotki_migration_status');
+    ## return 1 if $u->prop ('fotki_migration_status');
 
-    return 0;
+    return 0 if $u->is_identity;
+
+    return 1;
 }
 
 sub can_upload_photo {
