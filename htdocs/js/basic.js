@@ -238,6 +238,13 @@ LJ.throttle = function(func, delay) {
 	}
 };
 
+LJ.console = function() {
+	var consoleExists = function() { return 'console' in window },
+		runIfExists = function(method, args) {
+			if (consoleExists() && console[method]) {
+				console[method].apply(console, args);
+				return true;
+			}
 
 			return false;
 		};
