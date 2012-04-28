@@ -3869,11 +3869,7 @@ sub can_use_ljphoto {
     }
 =cut
 
-    ## return 1 if $u->prop ('fotki_migration_status');
-
-    return 0 if $u->is_identity;
-
-    return 1;
+    return $u->is_personal && $u->prop('fotki_migration_status') ? 1 : 0;
 }
 
 sub can_upload_photo {
