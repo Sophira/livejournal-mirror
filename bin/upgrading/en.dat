@@ -2996,6 +2996,8 @@ fotki.album.index.title.beta=beta
 fotki.album.index.windowtitle|staleness=1
 fotki.album.index.windowtitle=PhotoAlbums
 
+fotki.album.link.add.photo.to.entry=Add to post
+
 fotki.album.link.add.to.entry|staleness=1
 fotki.album.link.add.to.entry=Add to entry
 
@@ -3063,6 +3065,8 @@ fotki.album.no.photo=No photo
 
 fotki.album.no.pics=There are no photos in this album.
 
+fotki.album.paste.from.album=Paste from Album
+
 fotki.album.paste.url=Paste url
 
 fotki.album.paste.url.here=Paste image url here
@@ -3093,6 +3097,8 @@ fotki.album.remove_photo=Remove photo
 
 fotki.album.remove_photo_desc|staleness=1
 fotki.album.remove_photo_desc=Remove this photo
+
+fotki.album.remove_selected_desc=Selected images will be removed from the album.
 
 fotki.album.resize.to.post|staleness=1
 fotki.album.resize.to.post=Resize to post:
