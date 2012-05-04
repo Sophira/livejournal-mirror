@@ -38,7 +38,6 @@ use Class::Autouse qw(
                       TheSchwartz::Job
                       LJ::AdTargetedInterests
                       LJ::Comment
-                      LJ::Widget::Comment
                       LJ::Knob
                       LJ::ExternalSite
                       LJ::ExternalSite::Vox
