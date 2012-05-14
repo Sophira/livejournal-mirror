@@ -49,56 +49,56 @@ sub comment_props {
 
 package LJ::S2Theme::classic::ashfire;
 use base qw(LJ::S2Theme::classic);
-sub cats { qw( clean warm ) }
+sub cats { qw( ) }
 
 package LJ::S2Theme::classic::brownleather;
 use base qw(LJ::S2Theme::classic);
-sub cats { qw( clean warm nature ) }
+sub cats { qw( ) }
 
 package LJ::S2Theme::classic::calmfire;
 use base qw(LJ::S2Theme::classic);
-sub cats { qw( clean warm ) }
+sub cats { qw( ) }
 
 package LJ::S2Theme::classic::desktop;
 use base qw(LJ::S2Theme::classic);
-sub cats { qw( clean warm ) }
+sub cats { qw( ) }
 
 package LJ::S2Theme::classic::everblue;
 use base qw(LJ::S2Theme::classic);
-sub cats { qw( clean cool ) }
+sub cats { qw( ) }
 sub designer { "everdred" }
 
 package LJ::S2Theme::classic::everwhite;
 use base qw(LJ::S2Theme::classic);
-sub cats { qw( clean ) }
+sub cats { qw( ) }
 sub designer { "everdred" }
 
 package LJ::S2Theme::classic::forest;
 use base qw(LJ::S2Theme::classic);
-sub cats { qw( clean cool nature ) }
+sub cats { qw( ) }
 
 package LJ::S2Theme::classic::lowercurtain;
 use base qw(LJ::S2Theme::classic);
-sub cats { qw( clean dark ) }
+sub cats { qw( ) }
 
 package LJ::S2Theme::classic::mexicanfood;
 use base qw(LJ::S2Theme::classic);
-sub cats { qw( clean warm ) }
+sub cats { qw( ) }
 
 package LJ::S2Theme::classic::satinhandshake;
 use base qw(LJ::S2Theme::classic);
-sub cats { qw( clean warm ) }
+sub cats { qw( ) }
 
 package LJ::S2Theme::classic::stripes;
 use base qw(LJ::S2Theme::classic);
-sub cats { qw( clean ) }
+sub cats { qw( ) }
 
 package LJ::S2Theme::classic::sunny;
 use base qw(LJ::S2Theme::classic);
-sub cats { qw( clean warm ) }
+sub cats { qw( ) }
 
 package LJ::S2Theme::classic::valentine;
 use base qw(LJ::S2Theme::classic);
-sub cats { qw( clean warm ) }
+sub cats { qw( ) }
 
 1;

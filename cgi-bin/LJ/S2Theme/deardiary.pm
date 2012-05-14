@@ -46,36 +46,37 @@ sub comment_props {
 
 ### Themes ###
 
+
 package LJ::S2Theme::deardiary::cellular;
 use base qw(LJ::S2Theme::deardiary);
-sub cats { qw( cool illustrated modern pattern ) }
+sub cats { qw( ) }
 
-package LJ::S2Theme::deardiary::nature;
+package LJ::S2Theme::deardiary::;
 use base qw(LJ::S2Theme::deardiary);
-sub cats { qw( cool illustrated modern nature pattern ) }
+sub cats { qw( ) }
 
 package LJ::S2Theme::deardiary::redrock;
 use base qw(LJ::S2Theme::deardiary);
-sub cats { qw( warm dark illustrated modern pattern ) }
+sub cats { qw( ) }
 
 package LJ::S2Theme::deardiary::regal;
 use base qw(LJ::S2Theme::deardiary);
-sub cats { qw( cool dark illustrated modern pattern ) }
+sub cats { qw( ) }
 
 package LJ::S2Theme::deardiary::royalty;
 use base qw(LJ::S2Theme::deardiary);
-sub cats { qw( cool illustrated modern ) }
+sub cats { qw( ) }
 
 package LJ::S2Theme::deardiary::striking;
 use base qw(LJ::S2Theme::deardiary);
-sub cats { qw( dark illustrated modern pattern tech ) }
+sub cats { qw( ) }
 
 package LJ::S2Theme::deardiary::unsaturates;
 use base qw(LJ::S2Theme::deardiary);
-sub cats { qw( illustrated modern pattern ) }
+sub cats { qw( ) }
 
 package LJ::S2Theme::deardiary::wired;
 use base qw(LJ::S2Theme::deardiary);
-sub cats { qw( cool illustrated modern pattern tech ) }
+sub cats { qw( ) }
 
 1;

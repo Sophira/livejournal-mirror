@@ -33,40 +33,41 @@ sub comment_props {
 
 ### Themes ###
 
+
 package LJ::S2Theme::variableflow::bow;
 use base qw(LJ::S2Theme::variableflow);
-sub cats { qw( clean ) }
+sub cats { qw(  ) }
 
 package LJ::S2Theme::variableflow::dirtyterminal;
 use base qw(LJ::S2Theme::variableflow);
-sub cats { qw( clean dark ) }
+sub cats { qw(   ) }
 
 package LJ::S2Theme::variableflow::greyarea;
 use base qw(LJ::S2Theme::variableflow);
-sub cats { qw( clean dark ) }
+sub cats { qw(   ) }
 
-package LJ::S2Theme::variableflow::nature;
+package LJ::S2Theme::variableflow::;
 use base qw(LJ::S2Theme::variableflow);
-sub cats { qw( clean warm nature ) }
+sub cats { qw(    ) }
 
 package LJ::S2Theme::variableflow::purplepower;
 use base qw(LJ::S2Theme::variableflow);
-sub cats { qw( clean warm ) }
+sub cats { qw(   ) }
 
 package LJ::S2Theme::variableflow::redready;
 use base qw(LJ::S2Theme::variableflow);
-sub cats { qw( clean warm ) }
+sub cats { qw(   ) }
 
 package LJ::S2Theme::variableflow::slinkypink;
 use base qw(LJ::S2Theme::variableflow);
-sub cats { qw( clean warm ) }
+sub cats { qw(   ) }
 
 package LJ::S2Theme::variableflow::vossnaranja;
 use base qw(LJ::S2Theme::variableflow);
-sub cats { qw( clean ) }
+sub cats { qw(  ) }
 
 package LJ::S2Theme::variableflow::wob;
 use base qw(LJ::S2Theme::variableflow);
-sub cats { qw( clean dark ) }
+sub cats { qw(   ) }
 
 1;

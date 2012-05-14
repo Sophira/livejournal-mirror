@@ -25,18 +25,18 @@ sub text_props {
 
 package LJ::S2Theme::sturdygesture::boxedin;
 use base qw(LJ::S2Theme::sturdygesture);
-sub cats { qw( clean ) }
+sub cats { qw(  ) }
 
 package LJ::S2Theme::sturdygesture::boxless;
 use base qw(LJ::S2Theme::sturdygesture);
-sub cats { qw( clean ) }
+sub cats { qw(  ) }
 
 package LJ::S2Theme::sturdygesture::martialblue;
 use base qw(LJ::S2Theme::sturdygesture);
-sub cats { qw( clean cool ) }
+sub cats { qw(   ) }
 
 package LJ::S2Theme::sturdygesture::redmond;
 use base qw(LJ::S2Theme::sturdygesture);
-sub cats { qw( clean cool ) }
+sub cats { qw(   ) }
 
 1;
