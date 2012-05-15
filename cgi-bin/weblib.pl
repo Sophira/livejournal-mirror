@@ -22,6 +22,7 @@ use Class::Autouse qw(
                       );
 use LJ::ControlStrip;
 use LJ::SiteScheme;
+use LJ::Pics::Album;
 use Apache::WURFL;
 use Encode;
 
@@ -2295,7 +2296,20 @@ sub get_body_class_for_service_pages {
     } elsif ($uri =~ m!^/shop(/.*)?$!) {
         push @classes, "shop-page";
     } elsif ($uri =~ m!^/pics(/.*)?$!) {
-        push @classes, "framework-page";
+        if (LJ::_is_pics_branding_active()) {
+            my ($user) = $host =~ /([\w\-]{1,15})\.\Q$LJ::DOMAIN\E$/;
+            $user = LJ::get_remote () || LJ::load_user ($user);
+            if ($user && LJ::Pics::Album->list( 'userid' => $user->userid )) {
+                ## photos exists
+                push @classes, "framework-page-view";
+            } else {
+                ## no photos
+                push @classes, "framework-page-promo";
+            }
+        } else {
+            ## branding is not active
+            push @classes, "framework-page";
+        }
     } elsif ($uri =~ m!^/browse(/.*)?$!) {
         push @classes, "catalogue-page";
     } elsif ($uri =~ m!^/games(/.*)?$! || $host eq "$LJ::USERAPPS_SUBDOMAIN.$LJ::DOMAIN") {
