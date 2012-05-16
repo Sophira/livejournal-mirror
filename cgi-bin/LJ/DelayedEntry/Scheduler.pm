@@ -59,9 +59,9 @@ sub __load_delayed_entries {
     my ($dbh) = @_;
     my @entries;
 
-    my $list = $dbh->selectall_arrayref("SELECT journalid, delayedid, posterid " .
-                                        "FROM delayedlog2 ".
-                                        "WHERE posttime <= NOW() LIMIT 1000");
+    my $list = $dbh->selectall_arrayref( "SELECT journalid, delayedid, posterid " .
+                                         "FROM delayedlog2 ".
+                                         "WHERE posttime <= NOW() AND finaltime IS NULL LIMIT 1000" );
     foreach my $tuple (@$list) {
         push @entries, LJ::DelayedEntry->load_data($dbh,
                                                    { journalid  => $tuple->[0],
@@ -147,43 +147,26 @@ sub on_pulse {
                         print "The entry with subject " . $entry->subject;
                         print "\ndelayed id = " . $entry->delayedid . 
                         print " and post date " . $entry->posttime;
-                        print " is deleted becouse USER CANNOT POST\n";
                     }
 
                     __notify_user(  $entry->poster,
                                     $entry->journal);
-                    $entry->delete();
                     next;
                 }
 
                 my $post_status = $entry->convert();
 
                 # do we need to send error
-                if ( $post_status->{error_message} ) {
-                    __send_error($entry->poster, 
-                                $entry->data->{subject},
-                                $post_status->{error_message});
-
-                    if ($verbose) {
-                        print "(posting failed)The entry with subject " . $entry->subject;
-                        print "\ndelayed id = " . $entry->delayedid . 
-                        print " and post date " . $entry->posttime . "\n";
-                    }
+                if ( $post_status->{'error_message'} ) {
+                    warn "(posting failed) The entry with subject " . $entry->subject .
+                          "\ndelayed id = " . $entry->delayedid . 
+                          " and post date " . $entry->posttime . 
+                          " error : " . $post_status->{'error_message'};
+                    
                 } elsif ($verbose) {
                         print "(posting)The entry with subject " . $entry->subject;
                         print "\ndelayed id = " . $entry->delayedid . 
                         print " and post date " . $entry->posttime . "\n";
-                }
-
-                if ( $post_status->{delete_entry} ) {
-                    if ($verbose) {
-                        print "The entry with subject " . $entry->subject;
-                        print "\ndelayed id = " . $entry->delayedid . 
-                        print " and post date " . $entry->posttime;
-                        print " is deleted\n";
-                    }
-
-                    $entry->delete();
                 }
             }
         } 
