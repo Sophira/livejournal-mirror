@@ -552,6 +552,7 @@ CREATE TABLE `domains` (
   `type` char(5) default NULL,
   `name` char(80) default NULL,
   PRIMARY KEY  (`domainid`),
+  UNIQUE KEY `domain` (`domain`),
   KEY `userid` (`userid`),
   KEY `rcptid` (`userid`)
 )
@@ -4444,6 +4445,11 @@ register_alter(sub {
             do_alter("domains", "ALTER TABLE domains ADD COLUMN type char(5)");
             do_alter("domains", "ALTER TABLE domains ADD COLUMN name char(80)");
     }
+
+    unless (index_name("domains", "UNIQUE:domain")) {
+        do_alter("domains", "ALTER TABLE domains ADD UNIQUE (domain)");
+    }
+
 });
 
 register_alter(sub {
@@ -4462,6 +4468,20 @@ register_alter(sub {
                  "ALTER TABLE eventratescounters " .
                  "CHANGE COLUMN jitemid itemid MEDIUMINT UNSIGNED NOT NULL");
     }
+});
+
+register_alter(sub {
+
+    my $dbh = shift;
+    my $runsql = shift;
+
+    unless (column_type("delayedlog2", "finaltime")) {
+        do_alter( "delayedlog2",
+                  "ALTER TABLE delayedlog2 " .
+                  "ADD finaltime datetime DEFAULT NULL, " . 
+                  "ADD url VARCHAR(255) DEFAULT NULL" );
+    }
+
 });
 
 register_alter(sub {

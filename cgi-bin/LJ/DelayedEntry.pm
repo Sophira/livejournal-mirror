@@ -109,6 +109,7 @@ sub create {
                   $delayedid,
                   $data_ser );
 
+
     my $memcache_key = "delayed_entry:$journalid:$delayedid";
     LJ::MemCache::set($memcache_key, $data_ser, 3600);
 
@@ -120,6 +121,7 @@ sub create {
     $self->{delayed_id} = $delayedid;
 
     $self->{default_dateformat} = $opts->{'dateformat'} || 'S2';
+    $self->__set_mark($req);
     __statistics_absorber($journal, $poster);
 
     return $self;
@@ -191,6 +193,7 @@ sub update {
                         $data_ser, $journalid, $delayedid );
     $self->{data} = $req;
 
+    $self->__set_mark($req);
     my $memcache_key = "delayed_entry:$journalid:$delayedid";
     LJ::MemCache::set($memcache_key, $data_ser, 3600);
 }
@@ -206,6 +209,19 @@ sub convert {
     my $err = 0;
     my $res = LJ::Protocol::do_request("postevent", $req, \$err, $flags);
     my $fail = !defined $res->{itemid} && $res->{message};
+
+
+    if ( $err || !$fail ) {
+        my $url = $res->{'url'} || '';
+        $self->journal->do( "UPDATE delayedlog2 SET ".
+                            "finaltime=NOW(), url=? " .
+                            "WHERE delayedid = ? AND " .
+                                  "journalid = ?", 
+                            undef,
+                            $url,
+                            $self->delayedid,
+                            $self->journalid ); 
+    }
 
     return { 'delete_entry'  => (!$fail || $err < 500),
              'error_message' => $res->{message},
@@ -224,12 +240,27 @@ sub convert_from_data {
     if ($fail) {
         $self->update($req);
     }
+
+    
+    if ( $err || !$fail ) {
+        my $url = $res->{'url'} || '';
+        $self->journal->do( "UPDATE delayedlog2 SET ".
+                            "finaltime=NOW(), url=? " .
+                            "WHERE delayedid = ? AND " .
+                                  "journalid = ?",
+                            undef,
+                            $url,
+                            $self->delayedid,
+                            $self->journalid );
+    }
+
     return { 'delete_entry' => (!$fail || $err < 500),
              'res' => $res };
 }
 
 sub delete {
     my ($self) = @_;
+
     __assert( $self->{delayed_id}, "no delayed id" );
     __assert( $self->{journal}, "no journal" );
 
@@ -299,6 +330,7 @@ sub timezone {
     if (!$remote) {
         return 0;
     }
+
     return $remote->prop("timezone");
 }
 
@@ -330,12 +362,17 @@ sub posttime_as_unixtime {
 }
 
 sub posttime {
-    my ($self, $u) = @_;
+    my ($self, $use_original_timezone) = @_;
     my $posttime = $self->system_posttime;
     my $timezone = $self->timezone;
+
+    if ($use_original_timezone) {
+        $timezone = $self->post_timezone;
+    }
     if (!$timezone) {
         return $posttime;
     }
+
     my $epoch = $self->posttime_as_unixtime;
     my $dt = DateTime->from_epoch( 'epoch' => $epoch );
     $dt->set_time_zone( $timezone );
@@ -359,8 +396,9 @@ sub logtime_mysql {
 }
 
 sub alldatepart {
-    my ($self, $style) = @_;
-    my $mysql_time = $self->posttime;
+    my ($self, $style, $use_original_timezone) = @_;
+
+    my $mysql_time = $self->posttime($use_original_timezone);
     if ( ($style && $style eq 'S1') || $self->{default_dateformat} eq 'S1') {
         return LJ::TimeUtil::->alldatepart_s1($mysql_time);
     }
@@ -668,6 +706,10 @@ sub get_entry_by_id {
         $sql_poster = 'AND posterid = ' . $user->userid . " ";
     }
 
+    unless ($options->{'show_posted'}) {
+        $sql_poster = " AND finaltime IS NULL ";
+    }
+
     my $dbcr = LJ::get_cluster_master($journal)
         or die "get cluster for journal failed";
 
@@ -764,6 +806,7 @@ sub entries_exists {
 
     my ($delayeds) =  $dbcr->selectcol_arrayref("SELECT delayedid " .
                                                 "FROM delayedlog2 WHERE journalid=$journalid AND posterid = $userid ".
+                                                "AND finaltime IS NULL " .
                                                 "LIMIT 1");
     return @$delayeds;
 }
@@ -779,7 +822,7 @@ sub get_usersids_with_delated_entry {
 
     return $dbcr->selectcol_arrayref(  "SELECT posterid " .
                                        "FROM delayedlog2 ".
-                                       "WHERE journalid = $journalid GROUP BY posterid" );
+                                       "WHERE journalid = $journalid AND finaltime IS NULL GROUP BY posterid" );
 }
 
 sub get_entries_count {
@@ -804,7 +847,7 @@ sub get_entries_count {
 
     return $dbcr->selectrow_array(  "SELECT count(delayedid) " .
                                     "FROM delayedlog2 ".
-                                    "WHERE journalid=$journalid" );
+                                    "WHERE journalid=$journalid AND finaltime IS NULL" );
 }
 
 sub get_entries_by_journal {
@@ -855,7 +898,8 @@ sub get_entries_by_journal {
     my $journalid = $journal->userid;
 
     return $dbcr->selectcol_arrayref("SELECT delayedid " .
-                                     "FROM delayedlog2 WHERE journalid=$journalid $sql_poster".
+                                     "FROM delayedlog2 WHERE journalid=$journalid $sql_poster ".
+                                     "AND finaltime IS NULL " .
                                      "ORDER BY $sticky_sql revptime DESC $sql_limit");
 }
 
@@ -882,6 +926,7 @@ sub get_first_entry {
 
     my ($id) = $dbcr->selectrow_array("SELECT delayedid " .
                                       "FROM delayedlog2 WHERE journalid=?  $sql_poster".
+                                      "AND finaltime IS NULL " .
                                       "ORDER BY is_sticky ASC, revptime DESC LIMIT 1", undef, $journal->userid);
     return $id || 0;
 }
@@ -908,6 +953,7 @@ sub get_last_entry {
 
     my ($id) = $dbcr->selectrow_array("SELECT delayedid " .
                                       "FROM delayedlog2 WHERE journalid=?  $sql_poster".
+                                      "AND finaltime IS NULL " .
                                       "ORDER BY is_sticky DESC, revptime ASC LIMIT 1", undef, $journal->userid);
     return $id || 0;
 }
@@ -959,6 +1005,7 @@ sub get_itemid_near2 {
         if ($is_current_sticky) {
             my ($new_stime) = $dbr->selectrow_array("SELECT revptime " .
                                                     "FROM delayedlog2 WHERE journalid=? $sql_poster AND is_sticky = 0 ".
+                                                    "AND finaltime IS NULL " .
                                                     "ORDER BY revptime LIMIT 1", undef, $jid);
             if ($new_stime < $stime) {
                 $stime = $new_stime;
@@ -973,6 +1020,7 @@ sub get_itemid_near2 {
     my $result_ref = $dbr->selectcol_arrayref(  "SELECT delayedid FROM delayedlog2 use index (rlogtime,revptime) ".
                                                 "WHERE journalid=? AND $sql_item_rule AND delayedid <> ? ".
                                                 $sql_poster. " ".
+                                                "AND finaltime IS NULL " .
                                                 "ORDER BY is_sticky $order_sticky, revptime $order LIMIT 2",
                                                 undef, $jid, $stime, $delayedid);
     return 0 unless $result_ref;
@@ -1014,6 +1062,22 @@ sub can_post_to {
                                             "WHERE userid=$uownerid AND targetid=$posterid ".
                                             "AND type IN ('A','M','N') LIMIT 1" );
     return $relcount ? 1 : 0;
+}
+
+sub dupsig_check {
+    my ($class, $journal, $posterid, $req) = @_;
+
+    my $signature = __get_mark($journal->userid, $posterid);
+    return unless $signature;
+
+    my @parts = split(/:/, $signature);
+    my $current_signature = __signature($req);
+
+    if ($current_signature eq $parts[0]) {
+        my $delayedid = $parts[1];
+        return LJ::DelayedEntry->get_entry_by_id( $journal, 
+                                                  $delayedid );
+    }
 }
 
 sub __delayed_entry_can_see {
@@ -1134,6 +1198,34 @@ sub __statistics_absorber {
 
     LJ::MemCache::incr($stat_key, 1) ||
         (LJ::MemCache::add($stat_key, 0),  LJ::MemCache::incr($stat_key, 1));
+}
+
+
+sub __get_mark {
+    my ($journalid, $posterid, $req) = @_;
+
+    my $memcache_key = "delayed_entry_dup:$journalid:$posterid";
+    my ($postsig) = LJ::MemCache::get($memcache_key);
+
+    return $postsig;
+}
+
+sub __set_mark {
+    my ($self, $req) = @_; 
+    my $signature = __signature($req) . ":" . $self->delayedid;
+
+    my $journalid = $self->journalid;
+    my $posterid  = $self->posterid;
+
+    my $memcache_key = "delayed_entry_dup:$journalid:$posterid";
+    LJ::MemCache::set($memcache_key, $signature, 35);
+}
+
+sub __signature {
+    my ($req) = @_;
+    my $dupsig = Digest::MD5::md5_hex(join('', map { $req->{$_} }
+                                           qw(subject event usejournal security allowmask)));
+    return $dupsig;
 }
 
 sub __serialize {
