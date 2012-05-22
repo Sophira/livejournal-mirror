@@ -2419,7 +2419,7 @@ sub get_body_class_for_service_pages {
     ){
         push @classes, "p-friendstimes";
     }
-    if ($uri =~ m!^/update\.bml!) {
+    if ($uri =~ m!^/(?:update|editjournal)\.bml!) {
         push @classes, "b-foto-branding"
             if LJ::_is_pics_branding_active();
     }
