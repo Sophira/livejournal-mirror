@@ -43,7 +43,6 @@ body<=
     if ($mode eq "edit") {
         LJ::need_res(qw(
                         stc/entry.css
-                        stc/trava.css
                         stc/editjournal.css
                         stc/widgets/selecttags.css
                         js/inputcomplete.js
