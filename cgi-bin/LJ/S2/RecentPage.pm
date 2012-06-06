@@ -55,6 +55,12 @@ sub RecentPage
 
     LJ::load_user_props($remote, "opt_nctalklinks", "opt_ljcut_disable_lastn");
 
+    if ($remote) {
+        LJ::need_string(qw/repost.confirm.delete
+                        confirm.bubble.yes
+                        confirm.bubble.no/);
+    }
+
     my $get = $opts->{'getargs'};
 
     if ($opts->{'pathextra'}) {
