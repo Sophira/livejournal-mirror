@@ -5027,14 +5027,6 @@ HTML BODY .i-ljuser {
 		font-size: 14px !important;
 		color: #000 !important;
 		}
-	.b-popup-content A:link,
-	.b-popup-content A:visited {
-		color: #3F5F9E !important;
-		}
-	.b-popup-content A:hover,
-	.b-popup-content A:active {
-		color: #3F5F9E !important;
-		}
 	.b-popup-content .b-popup-submit-options {
 		padding-top: 5px !important;
 		border: none;
