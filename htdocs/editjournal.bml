@@ -40,8 +40,6 @@ body<=
 
     my $editprivacy_link = "<p class='i-bubble b-bubble-lite b-bubble-editprivacy b-bubble-noarrow'>" . BML::ml('.editprivacy', { aopts => "href='editprivacy.bml'" }) . "</p>";
 
-    LJ::Controller::Post->rte_langmap();
-
     if ($mode eq "edit") {
         LJ::need_res(qw(
                         stc/entry.css
@@ -68,7 +66,6 @@ body<=
         LJ::need_res(qw(
                         stc/editjournal.css
                         ));
-        LJ::need_string(qw/repost.confirm.delete/);
     }
 
     # append months names tranlation to Site.ml_text['month.names.long']  

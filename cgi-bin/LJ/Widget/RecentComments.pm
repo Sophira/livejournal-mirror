@@ -18,7 +18,6 @@ sub render_body {
 
     my $u = $opts{user} && LJ::isu($opts{user}) ? $opts{user} : LJ::get_remote();
     return "" unless $u;
-    return "" if $u->is_identity;
 
     my $limit = defined $opts{limit} ? $opts{limit} : 3;
 

@@ -598,16 +598,6 @@ sub delete_all {
         push @ret, {qid => $item->qid};
     }
 
-    my $u = $self->u;
-    my $interface = $opts{'interface'};
-
-    $u->log_event('inbox_massdel', {
-                         remote => $u,
-                         actiontarget => scalar @items,
-                         method => 'delete_all',
-                         view   => $view,  
-                         via    => $interface, });
-
     # Delete items
     foreach my $item (@items) {
         if ($opts{spam}) {
