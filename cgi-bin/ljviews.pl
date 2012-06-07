@@ -1271,6 +1271,9 @@ sub create_view_lastn
     my $replace_video = $remote ? $remote->opt_embedplaceholders : 0;
 
     # spit out the S1
+    LJ::need_string(qw/confirm.bubble.yes
+                       confirm.bubble.no/);
+
 
   ENTRY:
     foreach my $item (@items) {
@@ -1298,7 +1301,7 @@ sub create_view_lastn
                          'journalu'          => \$journalu,
                          'posterid'          => \$posterid,
                          'security'          => \$security,
-                         'event'             => \$event,
+                         'event_raw'         => \$event,
                          'subject'           => \$subject,
                          'reply_count'       => \$replycount };
 
@@ -1848,6 +1851,10 @@ sub create_view_friends {
     my $lastday = -1;
     my $eventnum = 0;
 
+    LJ::need_string(qw/confirm.bubble.yes
+                       confirm.bubble.no/);
+
+
   ENTRY:
     foreach my $item (@items)
     {
@@ -1881,7 +1888,7 @@ sub create_view_friends {
         my $event      = $logtext->{$datakey}->[1];
 
         my $repost_entry_obj;
-        my $journalu;
+        my $journalu = $entry_obj->journal;
 
         my $content =  { 'original_post_obj' => \$entry_obj,
                          'repost_obj'        => \$repost_entry_obj,
@@ -1889,12 +1896,13 @@ sub create_view_friends {
                          'journalu'          => \$journalu,
                          'posterid'          => \$posterid,
                          'security'          => \$security,
-                         'event'             => \$event,
+                         'event_raw'         => \$event,
                          'subject'           => \$subject,
                          'reply_count'       => \$replycount,
                          'cluster_id'        => \$clusterid, };
 
         if (LJ::Entry::Repost->substitute_content( $entry_obj, $content )) {
+
             $friendid = $journalu->userid;
             $logprops{$itemid} = $entry_obj->props;
             $friends{$friendid} = $journalu;
@@ -2409,6 +2417,9 @@ sub create_view_calendar
             LJ::fill_var_props($vars, 'CALENDAR_YEAR_LINKS', { "years" => $yearlinks });
     }
 
+    LJ::need_string(qw/confirm.bubble.yes
+                       confirm.bubble.no/);
+
     foreach my $year (@years)
     {
         $$months .= LJ::fill_var_props($vars, 'CALENDAR_NEW_YEAR', {
@@ -2717,7 +2728,7 @@ sub create_view_day
                          'journalu'          => \$journalu,
                          'posterid'          => \$posterid,
                          'security'          => \$security,
-                         'event'             => \$event,
+                         'event_raw'         => \$event,
                          'subject'           => \$subject,
                          'reply_count'       => \$replycount };
 

@@ -3336,7 +3336,7 @@ DIV.lj_ippu_app {
 	width: 16px;
 	height: 16px;
 	margin:0 2px 0 0;
-	background-image: url(/img/icon-social-capital.png?v=1);
+	background-image: url(/img/icon-social-capital.png?v=19876);
 	background-repeat: no-repeat;
 	background-position: 0 50%;
 	}
@@ -3502,7 +3502,7 @@ DIV.lj_ippu_app {
 			text-align: center;
 			}
 			.b-subjecticon {
-				background-image: url(/img/subjecticons.gif?v=1);
+				background-image: url(/img/subjecticons.gif?v=19333);
 				background-repeat: no-repeat;
 				cursor: pointer;
 				}
@@ -3731,10 +3731,11 @@ A.lj-button-link:active {
 	vertical-align: middle !important;
 	text-shadow: 0 1px 0 #FFF;
 	color: #000!important;
+	cursor: pointer !important;
 	}
 .lj-button-light.repost-button-inactive .lj-button-b {
 	color: #999 !important;
-	cursor: text !important;
+	cursor: default !important;
 	}
 .lj-button-light.repost-button-active .lj-button-b {
 	background: #E6E7E9 !important;
@@ -3775,8 +3776,13 @@ A.lj-button-link:active {
 	background-color: #FFF!important;
 	color: #000!important;
 	text-shadow: 0 1px 0 #FFF !important;
+	cursor: pointer !important;
 	}
-.repost-button .lj-button-c.empty .lj-button-arrow {
+.lj-button-light.repost-button-inactive .lj-button-c {
+	cursor: pointer !important;
+	}
+.repost-button .lj-button-c.empty .lj-button-arrow,
+.repost-button .lj-button-c.empty .lj-like-item-count {
 	display: none!important;
 	}
 .lj-button-light.repost-button .lj-button-arrow {
@@ -3801,7 +3807,8 @@ A.lj-button-link:active {
 	}
 .b-reposted-popup {
 	margin: -5px 0 0;
-	width: 600px;
+	max-width: 600px;
+	min-width: 300px;
 	line-height: 22px !important;
 	font-size: 12px !important;
 	font-family: Arial, Verdana, sans-serif !important;
@@ -4540,7 +4547,7 @@ BODY div .b-helplink:active {
 		margin: 0;
 		padding: 0;
 		font: 0/0 serif;
-		background-image: url(/img/btn_actions.png?v=15742);
+		background-image: url(/img/btn_actions.png?v=19689);
 		background-repeat: no-repeat;
 		cursor: pointer;
 		}
@@ -4978,6 +4985,8 @@ HTML BODY .i-ljuser {
 		color: #FFF;
 		}
 
+
+
 /* Content plus Aside
 --------------------------------------*/
 .b-contentplus-container {
@@ -5009,15 +5018,14 @@ HTML BODY .i-ljuser {
 /* Popup content
 --------------------------------------*/
 .b-popup-content {
-	max-width: 300px;
-	text-align: left;
+	text-align: left !important;
 	}
 	.b-popup-content H5 {
 		padding: 0;
 		margin: 0 0 10px 0;
-		font-weight: bold;
-		font-size: 14px;
-		color: #000;
+		font-weight: bold !important;
+		font-size: 14px !important;
+		color: #000 !important;
 		}
 	.b-popup-content .b-popup-submit-options {
 		padding-top: 5px !important;

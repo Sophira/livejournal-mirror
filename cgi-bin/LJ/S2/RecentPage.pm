@@ -55,6 +55,12 @@ sub RecentPage
 
     LJ::load_user_props($remote, "opt_nctalklinks", "opt_ljcut_disable_lastn");
 
+    if ($remote) {
+        LJ::need_string(qw/repost.confirm.delete
+                        confirm.bubble.yes
+                        confirm.bubble.no/);
+    }
+
     my $get = $opts->{'getargs'};
 
     if ($opts->{'pathextra'}) {
@@ -174,7 +180,7 @@ sub RecentPage
                          'posterid'          => \$posterid,
                          'security'          => \$security,
                          'allowmask'         => \$allowmask,
-                         'event'             => \$text,
+                         'event_raw'         => \$text,
                          'subject'           => \$subject,
                          'reply_count'       => \$replycount,
                          'userlite'          => \$lite_journalu, };
@@ -187,7 +193,10 @@ sub RecentPage
 
             $lite_journalu = UserLite($entry_obj->journal);
             $apu_lite{$entry_obj->journalid} = $lite_journalu;
+            $apu{$entry_obj->journalid} = $entry_obj->journal;
+
             if (!$apu_lite{$posterid}) {
+                $apu{$posterid} = $entry_obj->poster;
                 $apu_lite{$posterid} = UserLite($entry_obj->poster);
             }
         }
@@ -296,6 +305,7 @@ sub RecentPage
             }
         }
 
+        warn "text $text";
         my $entry = $lastentry = Entry($journalu, {
             'subject' => $subject,
             'text' => $text,

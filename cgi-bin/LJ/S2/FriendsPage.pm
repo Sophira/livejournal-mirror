@@ -63,6 +63,11 @@ sub FriendsPage
     my $ret;
 
     LJ::load_user_props($remote, "opt_nctalklinks", "opt_stylemine", "opt_imagelinks", "opt_ljcut_disable_friends");
+    if ($remote) {
+        LJ::need_string(qw/repost.confirm.delete
+                        confirm.bubble.yes
+                        confirm.bubble.no/);
+    }
 
     my $itemshow = S2::get_property_value($opts->{'ctx'}, "page_friends_items")+0;
     if ($itemshow < 1) { $itemshow = 20; }
@@ -270,14 +275,15 @@ sub FriendsPage
                          'posterid'          => \$posterid,
                          'security'          => \$security,
                          'allowmask'         => \$allowmask,
-                         'event_friend'      => \$text,
+                         'event_raw'         => \$text,
                          'subject'           => \$subject,
                          'reply_count'       => \$replycount, };
 
         if (LJ::Entry::Repost->substitute_content( $entry_obj, $content )) {
             next ENTRY unless $entry_obj->visible_to($remote);
 
-            $friend   = $poster = $entry_obj->journal;
+            $friend   = $entry_obj->journal;
+            $poster   = $entry_obj->poster;
 
             $posters{$posterid} = $poster;
             $friends{$friendid} = $friend;
@@ -452,6 +458,8 @@ sub FriendsPage
             'tags'              => \@taglist,
             'permalink_url'     => $permalink,
             'moodthemeid'       => $moodthemeid,
+            'real_journalid' => $repost_entry_obj ? $repost_entry_obj->journalid : undef,
+            'real_itemid'    => $repost_entry_obj ? $repost_entry_obj->jitemid : undef,
         });
 
         $entry->{'_ymd'} = join('-', map { $entry->{'time'}->{$_} } qw(year month day));
