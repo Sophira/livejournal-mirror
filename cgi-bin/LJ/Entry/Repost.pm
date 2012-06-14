@@ -112,10 +112,14 @@ sub __create_post {
     my $err = 0;
     my $flags = { 'noauth'             => 1,
                   'use_custom_time'    => 0,
-                  'u'                  => $u };
+                  'u'                  => $u,
+                  'entryrepost'        => 1, };
+
+    my $event_text_stub = LJ::Lang::ml('entry.reference.event_text', { 'url' =>  $url}) | 
+                          "Entry reposted from $url";
 
     my %req = ( 'username'    => $u->user,
-                'event'       => LJ::Lang::ml('entry.reference.event_text', { 'url' =>  $url}),
+                'event'       => $event_text_stub,
                 'subject'     => '',
                 'tz'          => $timezone,
               );
@@ -430,16 +434,47 @@ sub substitute_content {
             my $journal = int($org_journalid) ? LJ::want_user($org_journalid) : undef;
             
             my $fake_entry = LJ::Entry->new( $journal, jitemid => $org_jitemid);
-             
-            my $event = LJ::Lang::ml( 'entry.reference.journal.delete',
-                                      'datetime'     => $entry_obj->eventtime_mysql, 
-                                      'url'          => $fake_entry->url);
 
+            my $subject = LJ::Lang::ml( 'entry.reference.journal.delete.subject' );   
+            my $event   = LJ::Lang::ml( 'entry.reference.journal.delete',
+                                        'datetime'     => $entry_obj->eventtime_mysql, 
+                                        'url'          => $fake_entry->url);
 
-            ${$opts->{'event'}} = $event;
+            if ($opts->{'original_post_obj'}) {
+                ${$opts->{'original_post_obj'}}= $entry_obj;
+            }
+
+            if ($opts->{'removed'}) {
+                ${$opts->{'removed'}} = 1;
+            }
+           
+            if ($opts->{'repost_obj'}) {
+                ${$opts->{'repost_obj'}} = $fake_entry;
+            }
+ 
+            if ($opts->{'subject_repost'}) {
+                ${$opts->{'subject_repost'}} = $subject;
+            }
+
+            if ($opts->{'subject'}) {
+                ${$opts->{'subject'}}  = $subject;
+            }
+ 
+            if ($opts->{'event_raw'}) {
+                ${$opts->{'event_raw'}} = $event;
+            }
+
+            if ($opts->{'event'}) {
+                ${$opts->{'event'}} = $event;
+            }
+
             return 1;    
         }
         return 0;
+    }
+
+    if ($opts->{'removed'}) {
+        ${$opts->{'removed'}} = 0;
     }
 
     if ($opts->{'anum'}) {

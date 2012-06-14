@@ -150,6 +150,7 @@ sub FriendsPage
     my %friends;
     my %friends_row;
     my %idsbycluster;
+    my %reposts;
 
     my @items = LJ::get_friend_items({
         'u'                 => $u,
@@ -253,7 +254,6 @@ sub FriendsPage
             $text    =~ s{<(?!/?lj)(.*?)>} {&lt;$1&gt;}gi;
         }
 
-
         if ($LJ::UNICODE && $logprops{$datakey}->{'unknown8bit'}) {
             LJ::item_toutf8($friends{$friendid}, \$subject, \$text, $logprops{$datakey});
         }
@@ -266,6 +266,7 @@ sub FriendsPage
         my $ditemid = $itemid * 256 + $item->{'anum'};
         my $entry_obj = LJ::Entry->new($friends{$friendid}, ditemid => $ditemid);
         my $repost_entry_obj;
+        my $removed;
         
         my $content =  { 'original_post_obj' => \$entry_obj,
                          'repost_obj'        => \$repost_entry_obj,
@@ -277,9 +278,11 @@ sub FriendsPage
                          'allowmask'         => \$allowmask,
                          'event_raw'         => \$text,
                          'subject'           => \$subject,
+                         'removed'           => \$removed,
                          'reply_count'       => \$replycount, };
 
         if (LJ::Entry::Repost->substitute_content( $entry_obj, $content )) {
+            next ENTRY if $removed;
             next ENTRY unless $entry_obj->visible_to($remote);
 
             $friend   = $entry_obj->journal;
@@ -287,10 +290,31 @@ sub FriendsPage
 
             $posters{$posterid} = $poster;
             $friends{$friendid} = $friend;
-            $datakey   = "$friendid $itemid";
+            $datakey  = "repost $friendid $itemid";    
+
+            if (!$reposts{$datakey}) {
+                $reposts{$datakey} = 1;
+            } else {
+                $reposts{$datakey}++;
+            }
+
+            if (!$logprops{$datakey}) {
+                $logprops{$datakey} = $entry_obj->props;
+ 
+                # mark as repost
+                $logprops{$datakey}->{'repost'}         = 'e';
+                $logprops{$datakey}->{'repost_author'}  = $entry_obj->poster->user; 
+                $logprops{$datakey}->{'repost_subject'} = $entry_obj->subject_html;
+                $logprops{$datakey}->{'repost_url'}     = $entry_obj->url;
+            }
         }
 
-        if ( $remote && $logprops{$datakey}->{'repost'} && $remote->prop('hidefriendsreposts') && ! $remote->prop('opt_ljcut_disable_friends') ) {
+        if ( ($remote && 
+              $logprops{$datakey}->{'repost'} && 
+              $remote->prop('hidefriendsreposts') && 
+              ! $remote->prop('opt_ljcut_disable_friends')) ||
+              $reposts{$datakey} > 1 ) 
+        {
             $text = LJ::Lang::ml(
                 'friendsposts.reposted',
                 {
@@ -309,12 +333,6 @@ sub FriendsPage
              && $remote->{'userid'} != $friendid )
         {
             $urlopts_style{'style'} = 'mine';
-        }
-
-        my %urlopts_nc;
-
-        if ( $replycount && $remote && $remote->{'opt_nctalklinks'} ) {
-            $urlopts_nc{'nc'} .= $replycount;
         }
 
         my $suspend_msg = $entry_obj && $entry_obj->should_show_suspend_msg_to($remote) ? 1 : 0;
@@ -399,9 +417,9 @@ sub FriendsPage
         }
 
         my $journalbase = LJ::journal_base($friends{$friendid});
-        my $permalink = $eobj->url;
-        my $readurl   = $eobj->url( %urlopts_style, %urlopts_nc );
-        my $posturl   = $eobj->url( %urlopts_style, 'mode' => 'reply' );
+        my $permalink = $eobj->permalink_url;
+        my $readurl   = $eobj->comments_url(%urlopts_style);
+        my $posturl   = $eobj->reply_url(%urlopts_style);
 
         my $comments = CommentInfo({
             'read_url'    => $readurl,
@@ -413,6 +431,7 @@ sub FriendsPage
             'screened'    => ($logprops{$datakey}->{'hasscreened'} && $remote &&
                                ($remote->{'user'} eq $fr->{'user'} || $remote->can_manage($fr))) ? 1 : 0,
         });
+
         $comments->{show_postlink} = $eobj->posting_comments_allowed;
         $comments->{show_readlink} = $eobj->comments_shown && ($replycount || $comments->{'screened'});
 

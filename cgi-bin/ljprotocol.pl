@@ -230,7 +230,7 @@ sub error_message
     ($code, $des) = ($1, $2) if $code =~ /^(\d\d\d):(.+)/;
 
     my $prefix = "";
-    my $error = LJ::Lang::ml("xmlrpc.error.$code") || "BUG: Unknown error code ($code)!";
+    my $error = LJ::Lang::ml("xmlrpc.error.$code") || LJ::Lang::get_text(undef, "xmlrpc.error.$code") || "BUG: Unknown error code ($code)!";
     $prefix = LJ::Lang::ml('xmlrpc.client_error') if $code >= 200;
     $prefix = LJ::Lang::ml('xmlrpc.server_error') if $code >= 500;
     my $totalerror = "$prefix$error";
@@ -1576,7 +1576,7 @@ sub sendmessage
     @to = keys %to;
 
     my @msg;
-    BML::set_language('en'); # FIXME
+    BML::set_language('en') unless BML::get_language();
 
     foreach my $to (@to) {
         my $tou = LJ::load_user($to);
@@ -2893,6 +2893,7 @@ sub postevent {
         'jobs'      => \@jobs,  # for hooks to push jobs onto
         'req'       => $req,
         'res'       => $res,
+        'entryrepost' => $flags->{'entryrepost'},
     });
 
     # cluster tracking

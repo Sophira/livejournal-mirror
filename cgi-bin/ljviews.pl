@@ -1290,6 +1290,8 @@ sub create_view_lastn
 
         my $username = $user;
         my $repost_entry_obj;
+        my $removed;
+
         my $content =  { 'original_post_obj' => \$entry_obj,
                          'repost_obj'        => \$repost_entry_obj,
                          'ditemid'           => \$ditemid,
@@ -1298,10 +1300,14 @@ sub create_view_lastn
                          'security'          => \$security,
                          'event_raw'         => \$event,
                          'subject'           => \$subject,
+                         'removed'           => \$removed,
                          'reply_count'       => \$replycount };
 
         if (LJ::Entry::Repost->substitute_content( $entry_obj, $content )) {
-            next ENTRY unless $entry_obj->visible_to($remote, {'viewall' => $viewall, 'viewsome' => $viewsome});
+            next ENTRY if $removed && !LJ::u_equals($u, $remote);
+            next ENTRY unless $entry_obj->visible_to($remote, {'viewall'  => $viewall, 
+                                                               'viewsome' => $viewsome});
+
             $username = $entry_obj->poster->username;
             $posteru{$posterid} = $entry_obj->poster;
             $logprops{$itemid} = $entry_obj->props;
@@ -1617,6 +1623,7 @@ sub create_view_friends {
     my ($ret, $u, $vars, $remote, $opts) = @_;
     my $sth;
     my $user = $u->{'user'};
+    my %reposts;
 
     # Check if we should redirect due to a bad password
     $opts->{'redir'} = LJ::bad_password_redirect({ 'returl' => 1 });
@@ -1894,14 +1901,36 @@ sub create_view_friends {
                          'cluster_id'        => \$clusterid, };
 
         if (LJ::Entry::Repost->substitute_content( $entry_obj, $content )) {
-
             $friendid = $journalu->userid;
             $logprops{$itemid} = $entry_obj->props;
             $friends{$friendid} = $journalu;
             $pu = $entry_obj->poster;
+
+            $datakey = "repost $friendid $itemid";
+
+            if (!$reposts{$datakey}) {
+                $reposts{$datakey} = 1;
+            } else {
+                $reposts{$datakey}++;
+            }
+
+            if (!$logprops{$datakey}) {
+                $logprops{$datakey} = $entry_obj->props;
+
+                # mark as repost
+                $logprops{$datakey}->{'repost'}         = 'e';
+                $logprops{$datakey}->{'repost_author'}  = $entry_obj->poster->user;
+                $logprops{$datakey}->{'repost_subject'} = $entry_obj->subject_html;
+                $logprops{$datakey}->{'repost_url'}     = $entry_obj->url;
+            }
         }
 
-        if ( $logprops{$datakey}->{'repost'} && $remote && $remote->prop('hidefriendsreposts') && ! $remote->prop('opt_ljcut_disable_friends') ) {
+        if ( ($logprops{$datakey}->{'repost'} &&
+              $remote && 
+              $remote->prop('hidefriendsreposts') && \
+              ! $remote->prop('opt_ljcut_disable_friends')) ||
+              $reposts{$datakey} > 1 ) 
+        {
             $event = LJ::Lang::ml(
                 'friendsposts.reposted',
                 {
@@ -2711,6 +2740,7 @@ sub create_view_day
         my $event = $logtext->{$itemid}->[1];
 
         my $repost_entry_obj;
+        my $removed;
         my $content =  { 'original_post_obj' => \$entry_obj,
                          'repost_obj'        => \$repost_entry_obj,
                          'ditemid'           => \$ditemid,
@@ -2719,9 +2749,11 @@ sub create_view_day
                          'security'          => \$security,
                          'event_raw'         => \$event,
                          'subject'           => \$subject,
+                         'removed'           => \$removed,
                          'reply_count'       => \$replycount };
 
-        if (LJ::Entry::Repost->substitute_content( $entry_obj, $content )) {
+        if (LJ::Entry::Repost->substitute_conten( $entry_obj, $content )) {
+            next ENTRY if $removed;
             $username = $entry_obj->poster->user;
             $logprops{$itemid} = $entry_obj->props;
         }

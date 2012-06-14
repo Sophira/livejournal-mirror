@@ -38,7 +38,8 @@ body<=
     my $ret;
     my $getextra = undef;
 
-    my $editprivacy_link = "<p class='i-bubble b-bubble-lite b-bubble-editprivacy b-bubble-noarrow'>" . BML::ml('.editprivacy', { aopts => "href='editprivacy.bml'" }) . "</p>";
+    my $editprivacy_link = "<p class='i-bubble b-bubble-lite b-bubble-editprivacy b-bubble-noarrow'>" . 
+                           BML::ml('.editprivacy', { aopts => "href='editprivacy.bml'" }) . "</p>";
 
     LJ::Controller::Post->rte_langmap();
 
@@ -67,8 +68,12 @@ body<=
     } else {
         LJ::need_res(qw(
                         stc/editjournal.css
+                        js/jquery/jquery.lj.confirmbubble.js
+                        templates/Widgets/popupcontent.tmpl
                         ));
-        LJ::need_string(qw/repost.confirm.delete/);
+        LJ::need_string(qw/repost.confirm.delete
+                        confirm.bubble.yes
+                        confirm.bubble.no/);
     }
 
     # append months names tranlation to Site.ml_text['month.names.long']  
@@ -607,7 +612,6 @@ LIKE_FAQ
             #    be placed in the correct BML head portion later
             # -- this is a hack, should be done by weblib and pushed into \$$head above
             #    in a way which is compatible with both this page and update.bml
-            my $is_sup = LJ::SUP->is_remote_sup() ? 1 : 0;
             LJ::need_string('entryform.close.confirm');
 
             $$head .= qq|
@@ -619,7 +623,6 @@ LIKE_FAQ
 
 
         function initUpdateBml() {
-            window.isSupUser = $is_sup;
             $onload
             window.initEditor();
         }

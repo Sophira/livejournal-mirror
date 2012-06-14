@@ -2505,7 +2505,7 @@ sub Page__get_alien_post {
             'comments'         => get_comments_info($entry),
             'tags'             => get_sorted_tags($entry),
             'userpic'          => $userpic,
-            'permalink_url'    => $entry->url,
+            'permalink_url'    => $entry->permalink_url,
 
             # for now, these are not implemented
             'new_day'          => 0,
@@ -3994,19 +3994,40 @@ sub _Entry__get_link
     my $remote = LJ::get_remote();
     my $null_link = { '_type' => 'Link', '_isnull' => 1 };
     my $real_user = $this->{'real_journalid'} ? LJ::want_user($this->{'real_journalid'}) : undef;
+    my $entry = LJ::Entry->new($journalu, ditemid => $this->{'itemid'});
+
+    my $link_override;
+    LJ::run_hooks( 'override_s2_link', $journalu, $entry, $key,
+        \$link_override );
+    return $link_override if $link_override;
 
     if ($this->{'real_itemid'}) {
         if ($key eq 'delete_repost') {
             return $null_link unless $remote;
-            return $null_link unless LJ::u_equals($remote, $real_user);
 
-            my $entry = LJ::Entry->new($journalu, ditemid => $this->{'itemid'});
-            my $link = LJ::S2::Link($entry->url,
-                            $ctx->[S2::PROPS]->{"text_delete_repost"},
-                            LJ::S2::Image("$LJ::IMGPREFIX/btn_delete_repost.gif", 24, 24));
-            $link->{'_raw'} = LJ::Entry::Repost->render_delete_js( $entry->url );
-            return $link;
+            unless (LJ::u_equals($remote, $real_user)) {
+                my $link = $entry->prop('repost_link');
+                my ($journalid, $jitemid) = split(/:/, $link);
+            
+                return $null_link unless int($journalid);
+                my $reposted_entry = LJ::Entry->new(int($journalid), 
+                                                    jitemid => int($jitemid));
+
+                my $link = LJ::S2::Link($reposted_entry->url,
+                                $ctx->[S2::PROPS]->{"text_delete_repost"},
+                                LJ::S2::Image("$LJ::IMGPREFIX/btn_delete_repost.gif", 24, 24));
+
+                $link->{'_raw'} = LJ::Entry::Repost->render_delete_js( $reposted_entry->url );
+                return $link;
+            } else {
+                my $link = LJ::S2::Link($entry->url,
+                                $ctx->[S2::PROPS]->{"text_delete_repost"},
+                                LJ::S2::Image("$LJ::IMGPREFIX/btn_delete_repost.gif", 24, 24));
+                $link->{'_raw'} = LJ::Entry::Repost->render_delete_js( $entry->url );
+                return $link;
+            }
         }
+        return $null_link unless LJ::u_equals($remote, $real_user);
     }
 
     if ($key eq "edit_entry") {
@@ -4023,8 +4044,6 @@ sub _Entry__get_link
                         LJ::S2::Image("$LJ::IMGPREFIX/btn_edit.gif", 24, 24));
         }
 
-        my $entry = LJ::Entry->new($journalu->{'userid'}, ditemid => $this->{'itemid'});
-
         return LJ::S2::Link("$LJ::SITEROOT/editjournal.bml?journal=$journal&amp;itemid=$this->{'itemid'}",
                         $ctx->[S2::PROPS]->{"text_edit_entry"},
                         LJ::S2::Image("$LJ::IMGPREFIX/btn_edit.gif", 24, 24));
@@ -4033,7 +4052,6 @@ sub _Entry__get_link
 
     if ($key eq "edit_tags") {
         return $null_link if (LJ::is_enabled('entry_reference') && $this->{'real_itemid'});
-        my $entry = LJ::Entry->new($journalu->{'userid'}, ditemid => $this->{'itemid'});
 
         return $null_link 
             unless $remote && LJ::Tags::can_add_entry_tags( $remote, $entry );
@@ -4049,7 +4067,6 @@ sub _Entry__get_link
     }
 
     if ( $key eq 'share') {
-        my $entry = LJ::Entry->new($journalu->{'userid'}, ditemid => $this->{'itemid'});
         return $null_link
             unless LJ::is_enabled('sharing') && $entry->is_public;
 
@@ -4065,7 +4082,6 @@ sub _Entry__get_link
 
     if ($key eq "share_facebook") {
 
-        my $entry = LJ::Entry->new($journalu->{'userid'}, ditemid => $this->{'itemid'});
         return $null_link unless $entry->security eq 'public';
         my $entry_url = LJ::eurl($entry->url);
         my $url = "http://www.facebook.com/sharer.php?u=$entry_url";
@@ -4075,7 +4091,6 @@ sub _Entry__get_link
 
     if ($key eq "share_twitter") {
 
-        my $entry = LJ::Entry->new($journalu->{'userid'}, ditemid => $this->{'itemid'});
         return $null_link unless $entry->security eq 'public';
         my $post_id = $entry->journalid . ':' . $entry->ditemid;
         my $entry_url = LJ::eurl($entry->url);
@@ -4086,7 +4101,6 @@ sub _Entry__get_link
 
     if ($key eq "share_email") {
 
-        my $entry = LJ::Entry->new($journalu->{'userid'}, ditemid => $this->{'itemid'});
         return $null_link unless $entry->security eq 'public';
         my $entry_url = LJ::eurl($entry->url);
         my $entry_title = LJ::eurl($entry->subject_text);
@@ -4097,7 +4111,6 @@ sub _Entry__get_link
 
     if ($key eq "facebook_like") {
 
-        my $entry = LJ::Entry->new($journalu->{'userid'}, ditemid => $this->{'itemid'});
         return $null_link unless $entry->security eq 'public';
         my $entry_url = LJ::eurl($entry->url);
         my $url = "http://www.facebook.com/plugins/like.php?href=$entry_url&amp;layout=button_count&amp;show_faces=false&amp;width=150&amp;action=like&amp;colorscheme=dark&amp;height=21";
@@ -4148,7 +4161,6 @@ sub _Entry__get_link
 
     if ($key eq "flag") {
         return $null_link unless LJ::is_enabled("content_flag");
-        my $entry = LJ::Entry->new($journalu->{'userid'}, ditemid => $this->{'itemid'});
 
         return $null_link unless $remote && $remote->can_see_content_flag_button( content => $entry );
         return LJ::S2::Link(LJ::ContentFlag->adult_flag_url($entry),
@@ -4186,7 +4198,7 @@ sub _Entry__get_link
         return $null_link if $LJ::DISABLED{'esn'};
         return $null_link unless $remote && $remote->can_use_esn;
         return $null_link if $remote->has_subscription(
-                                                       journal => LJ::load_user($journal),
+                                                       journal => $journalu,
                                                        event   => "JournalNewComment",
                                                        arg1    => $this->{'itemid'},
                                                        arg2    => 0,
@@ -4217,7 +4229,7 @@ sub _Entry__get_link
         return $null_link if $LJ::DISABLED{'esn'};
         return $null_link unless $remote && $remote->can_use_esn;
         my @subs = $remote->has_subscription(
-                                             journal => LJ::load_user($journal),
+                                             journal => $journalu,
                                              event => "JournalNewComment",
                                              arg1 => $this->{'itemid'},
                                              arg2 => 0,
@@ -4799,7 +4811,7 @@ sub Page__get_last_entries {
                 'comments'          => get_comments_info($entry),
                 'tags'              => get_sorted_tags($entry),
                 'userpic'           => $userpic,
-                'permalink_url'     => $entry->url,
+                'permalink_url'     => $entry->permalink_url,
 
                 # for now, these are not implemented
                 'new_day'           => 0,
@@ -4900,7 +4912,7 @@ sub Page__get_entries_by_tags {
 
             'tags'             => get_sorted_tags($entry),
             'userpic'          => $userpic,
-            'permalink_url'    => $entry->url,
+            'permalink_url'    => $entry->permalink_url,
 
             # for now, these are not implemented
             'new_day'          => 0,
@@ -4927,7 +4939,7 @@ sub get_comments_info {
     my $replycount = $entry->prop('replycount');
 
     return LJ::S2::CommentInfo({
-        'read_url'      => $entry->url,
+        'read_url'      => $entry->comments_url,
         'post_url'      => $entry->reply_url,
         'count'         => $replycount,
         'maxcomments'   =>
