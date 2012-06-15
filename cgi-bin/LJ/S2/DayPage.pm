@@ -48,7 +48,9 @@ sub DayPage
     my $viewall = 0;
     my $viewsome = 0; # see public posts from suspended users
     if ($remote) {
-        LJ::need_string(qw/repost.confirm.delete 
+        LJ::need_string(qw/repost.confirm.delete
+                        entry.reference.label.reposted 
+                        entry.reference.label.title
                         confirm.bubble.yes
                         confirm.bubble.no/);
 
