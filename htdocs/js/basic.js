@@ -578,18 +578,20 @@ LJ.define('LJ.Util.Date');
 	/**
 	 * Get timezone from the date object in the canonical way.
 	 *
-	 * @param {Date} date The date object.
 	 * @return {string} A string representation of timezone, eg +0400
 	 */
-	LJ.Util.Date.timezone = function(date) {
+	LJ.Util.Date.timezone = function() {
 		var offset = (-(new Date).getTimezoneOffset() / 0.6),
 			str = '';
 
 		if (offset > 0) {
 			str += '+';
+		} else if (offset < 0) {
+			str += '-';
+			offset = -offset;
 		}
 
-			str += ('' + offset).pad(4, '0');
+		str += ('' + offset).pad(4, '0');
 
 		return str;
 	}
@@ -737,7 +739,7 @@ LJ.Support = LJ.Support || {};
 LJ.Support.geoLocation = 'geolocation' in navigator;
 //Incomplete implementation from modernizr
 LJ.Support.touch = ('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch;
-LJ.Support.cors = window.XMLHttpRequest && 'withCredentials' in new XMLHttpRequest() || 'XDomainRequest' in window;
+LJ.Support.cors = window.XMLHttpRequest && 'withCredentials' in new XMLHttpRequest();
 
 
 /* object extensions */
