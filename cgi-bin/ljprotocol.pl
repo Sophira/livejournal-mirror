@@ -1726,6 +1726,19 @@ sub login
     $res->{'fullname'} = $uowner->{'name'};
     LJ::text_out(\$res->{'fullname'}) if $ver >= 1;
 
+    # Identity info 
+    if ($uowner->is_identity){
+        my $i = $uowner->identity;
+        $res->{'identity_type'}    = $i->pretty_type;
+        $res->{'identity_value'}   = $i->value;
+        $res->{'identity_url'}     = $i->url($uowner);
+        $res->{'identity_display'} = $uowner->display_name;
+    } else {
+        foreach (qw(identity_display identity_url identity_value identity_type)) {
+            $res->{$_} = '';
+        }
+    }
+
     if ($req->{'clientversion'} =~ /^\S+\/\S+$/) {
         eval {
             LJ::Request->notes("clientver", $req->{'clientversion'});
@@ -3912,9 +3925,7 @@ sub getevents {
         my $evt = {};
         $evt->{'itemid'} = $itemid;
 
-        # now my own post, so need to check for suspended prop
-        if ($jposterid != $posterid) {
-            my $entry = LJ::Entry->new_from_row(
+        my $entry = LJ::Entry->new_from_row(
                 'journalid' => $ownerid,
                 'jitemid'   => $itemid,
                 'allowmask' => $mask,
@@ -3924,6 +3935,20 @@ sub getevents {
                 'anum'      => $anum,
             );
 
+        my $content =  { 'original_post_obj' => \$entry,
+                         'journalid'         => \$ownerid,
+                         'itemid'            => \$itemid,
+                         'allowmask'         => \$mask,
+                         'posterid'          => \$jposterid,
+                         'eventtime'         => \$eventtime,
+                         'security'          => \$sec,
+                         'anum'              => \$anum,
+                         'reply_count'       => \$replycount,};
+
+        LJ::Entry::Repost->substitute_content( $entry, $content );
+
+        # now my own post, so need to check for suspended prop
+        if ($jposterid != $posterid) {
             next if($entry->is_suspended_for($u));
         }
 
