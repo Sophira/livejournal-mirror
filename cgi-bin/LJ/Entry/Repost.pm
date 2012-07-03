@@ -71,17 +71,22 @@ sub __create_repost_record {
     my ($u, $itemid, $repost_journalid, $repost_itemid) = @_;
 
     my $journalid = $u->userid;
-
-    $u->do('INSERT INTO repost2(journalid,
-                                jitemid,
-                                reposterid,
-                                reposted_jitemid,
-                                repost_time)  VALUES(?,?,?,?, NOW())',
+    my $time  = time();
+    my $query = 'INSERT INTO repost2(journalid,
+                                    jitemid,
+                                    reposterid,
+                                    reposted_jitemid';
+    $query .= LJ::is_enabled('repost2_with_time') ? 
+                            ',repost_time) VALUES(?,?,?,?,?)' :
+                            ') VALUES(?,?,?,?)'; 
+                                    
+    $u->do( $query,
             undef,
             $u->userid,
             $itemid,
             $repost_journalid,
-            $repost_itemid, );
+            $repost_itemid,
+            $time );
 
     my $memcache_key_count = "reposted_count:$journalid:$itemid";
     my $memcache_key_status = "reposted_itemid:$journalid:$itemid:$repost_journalid";
@@ -136,25 +141,10 @@ sub __create_post {
     my $res = LJ::Protocol::do_request("postevent", \%req, \$err, $flags);
 
     $flags->{u} = undef;
-    my $fail = !defined $res->{itemid} && $res->{message};
-    if ($fail) {
-         warn "repost_create: 1, request " . LJ::compact_dumper(%req);
-              " flags: " . LJ::compact_dumper($flags) .
-              " result: " . LJ::compact_dumper($res) .
-              " error: $err" if $err;
-
-         $$error = LJ::API::Error->make_error( $res->{message},($err || -10000) );
+    if ($err) {
+         my ($code, $text) = split(/:/, $err);
+         $$error = LJ::API::Error->make_error( $text, -$code );
          return;
-    }
-
-    if ($err) {    
-        warn "repost_create: 2, request " . LJ::compact_dumper(%req) .
-            " flags: " . LJ::compact_dumper($flags) .
-            " result: " . LJ::compact_dumper($res) .
-            " error: $err";
-
-        $$error = LJ::API::Error->get_error('create_entry_failed');
-        return;
     }
 
     return LJ::Entry->new($u, jitemid => $res->{'itemid'} );
@@ -231,12 +221,11 @@ sub __clear_reposters_list {
     my $subkey = "$journalid:$jitemid";
     my $memcached_key_list = "reposters_keys_list:$subkey";
 
-    my ($keys_list) = LJ::MemCache::get($memcached_key_list);
-    if ($keys_list) {
+    my ($keys_list) = LJ::MemCache::get($memcached_key_list) ;
+    if (defined $keys_list) {
         my @keys = split(/:/, $keys_list);
         foreach my $key (@keys) {
             my $memcache_key = "reposters_list_chunk:$subkey:$key";
-
             LJ::MemCache::delete($memcache_key);
         }
     }
@@ -253,7 +242,7 @@ sub __put_reposters_list {
     if ($lastrequest) {
         LJ::MemCache::append($memcache_keys_list,":$lastrequest");
     } else {
-        LJ::MemCache::add($memcache_keys_list, "$lastrequest", REPOST_KEYS_EXPIRING);
+        LJ::MemCache::set($memcache_keys_list, "$lastrequest", REPOST_KEYS_EXPIRING);
     }
     
     my $serialized = LJ::JSON->to_json( $data );
@@ -267,6 +256,7 @@ sub __get_reposters_list {
 
     my $data;
     my $reposters = LJ::MemCache::get($memcache_key);
+
     if ($reposters) {
         eval {
             $data = LJ::JSON->from_json($reposters);
@@ -286,11 +276,14 @@ sub __get_reposters {
         or die "get cluster for journal failed";
 
     my $final_limit = REPOST_USERS_LIST_LIMIT + 1;
-    my $reposters = $dbcr->selectcol_arrayref( 'SELECT reposterid ' .
-                                               'FROM repost2 ' .
-                                               'WHERE journalid = ? AND jitemid = ? ' . 
-                                               'ORDER BY repost_time ' .
-                                               "LIMIT $lastrequest, $final_limit",
+    my $query_reposters = 'SELECT reposterid ' .
+                          'FROM repost2 ' .
+                          'WHERE journalid = ? AND jitemid = ? ';
+
+    $query_reposters .=  LJ::is_enabled('repost2_with_time') ? 'ORDER BY repost_time ' :  '';
+    $query_reposters .= "LIMIT $lastrequest, $final_limit";
+
+    my $reposters = $dbcr->selectcol_arrayref( $query_reposters,
                                                undef,
                                                $u->userid,
                                                $jitemid,);
@@ -330,7 +323,7 @@ sub get_list {
                                         $jitemid,
                                         $lastrequest );
 
-    my $reposters_info = { users => {} };
+    my $reposters_info = { users => [] };
     my $users = $reposters_info->{'users'};
 
     my $reposters_count = scalar @$repostersids;
@@ -343,8 +336,7 @@ sub get_list {
 
     foreach my $reposter (@$repostersids) {
         my $u = LJ::want_user($reposter);
-
-        $users->{$u->user} = { 'url' => $u->journal_base, };
+        push @$users, { user => $u->user,  'url' => $u->journal_base, };
     }  
  
     $reposters_info->{'last'}   = $lastrequest + 1;
@@ -452,7 +444,7 @@ sub create {
 }
 
 sub substitute_content {
-    my ($class, $entry_obj, $opts) = @_;
+    my ($class, $entry_obj, $opts, $props) = @_;
 
     my $remote = LJ::get_remote();
     my $original_entry_obj = $entry_obj->original_post;
@@ -556,51 +548,46 @@ sub substitute_content {
         ${$opts->{'eventtime'}} = $entry_obj->eventtime_mysql;
     }
 
-    if ($opts->{'event_raw'}) {
-        my $text_var =  LJ::u_equals($remote, $entry_obj->poster) ? 'entry.reference.journal.owner' :
-                                                                    'entry.reference.journal.guest';
-
-        my $event_text = $original_entry_obj->event_raw;
-        my $event =  LJ::Lang::ml($text_var,
-                                    { 'author'       => LJ::ljuser2($original_entry_obj->poster),
-                                      'reposter'     => LJ::ljuser2($entry_obj->poster),
-                                      'datetime'     => $entry_obj->eventtime_mysql,
-                                      'text'         => $event_text, });
-
-        ${$opts->{'event_raw'}} = $event;
-    }
-
     if ($opts->{'event'}) {
-        my $text_var =  LJ::u_equals($remote, $entry_obj->poster) ? 'entry.reference.journal.owner' : 
-                                                                    'entry.reference.journal.guest';
-
         my $event_text = $original_entry_obj->event_raw;
-        my $event =  LJ::Lang::ml($text_var,  
-                                    { 'author'       => LJ::ljuser2($original_entry_obj->poster),
-                                      'reposter'     => LJ::ljuser2($entry_obj->poster),
-                                      'datetime'     => $entry_obj->eventtime_mysql,
-                                      'text'         => $event_text, });
 
-        ${$opts->{'event'}} = $event;
+        if ($props->{use_repost_signature}) { 
+            my $text_var =  LJ::u_equals($remote, $entry_obj->poster) ? 'entry.reference.journal.owner' : 
+                                                                        'entry.reference.journal.guest';
+    
+            my $event =  LJ::Lang::ml($text_var,  
+                                        { 'author'       => LJ::ljuser2($original_entry_obj->poster),
+                                          'reposter'     => LJ::ljuser2($entry_obj->poster),
+                                          'datetime'     => $entry_obj->eventtime_mysql,
+                                          'text'         => $event_text, });
+            ${$opts->{'event'}} = $event;
+        } else {
+            ${$opts->{'event'}} = $event_text;
+        }
     }
 
     if ($opts->{'event_friend'}) {
         my $event_text = $original_entry_obj->event_raw;
-        my $journal = $original_entry_obj->journal;
-        
-        my $text_var = $journal->is_community ? 'entry.reference.friends.community' :
-                                                'entry.reference.friends.journal';
 
-        $text_var .= LJ::u_equals($remote, $entry_obj->poster) ? '.owner' : '.guest';
+        if ($props->{use_repost_signature}) {
+            my $journal = $original_entry_obj->journal;
+            
+            my $text_var = $journal->is_community ? 'entry.reference.friends.community' :
+                                                    'entry.reference.friends.journal';
 
-        my $event = LJ::Lang::ml($text_var, 
-                                   { 'author'           => LJ::ljuser2($original_entry_obj->poster),
-                                     'communityname'    => LJ::ljuser2($original_entry_obj->journal),
-                                     'reposter'         => LJ::ljuser2($entry_obj->poster),
-                                     'datetime'         => $entry_obj->eventtime_mysql,
-                                     'text'             => $event_text, });
+            $text_var .= LJ::u_equals($remote, $entry_obj->poster) ? '.owner' : '.guest';
+    
+            my $event = LJ::Lang::ml($text_var, 
+                                       { 'author'           => LJ::ljuser2($original_entry_obj->poster),
+                                         'communityname'    => LJ::ljuser2($original_entry_obj->journal),
+                                         'reposter'         => LJ::ljuser2($entry_obj->poster),
+                                         'datetime'         => $entry_obj->eventtime_mysql,
+                                         'text'             => $event_text, });
 
-        ${$opts->{'event_friend'}} = $event;
+            ${$opts->{'event_friend'}} = $event;
+        } else {
+            ${$opts->{'event_friend'}} = $event_text;
+        }
     }
 
     if ($opts->{'subject_repost'}) {
