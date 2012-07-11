@@ -3,16 +3,21 @@
  For licensing, see LICENSE.html or http://ckeditor.com/license
  */
 
+
+
 CKEDITOR.editorConfig = function(config) {
 	CKEDITOR.plugins.addExternal( 'ljcolor', 'plugins/lj/ljcolor/plugin.js' );
+	CKEDITOR.plugins.addExternal( 'ljlink', 'plugins/lj/ljlink/plugin.js' );
 
-	var ljplugins = [/*'ljspell', */'livejournal', 'ljcolor'],
+	var ljplugins = [/*'ljspell', */ (Site.page.ljpost) ? 'livejournal' : 'livejournal_old', 'ljcolor', 'ljlink'],
 		plugins = [
 			'ajax',
 			'basicstyles',
 			'bidi',
 			'blockquote',
 			'button',
+			'colorbutton',
+			'colordialog',
 			'dialog',
 			'enterkey',
 			'entities',
@@ -21,7 +26,6 @@ CKEDITOR.editorConfig = function(config) {
 			'htmldataprocessor',
 			'image',
 			'keystrokes',
-			'link',
 			'list',
 			'liststyle',
 			'pastefromword',
@@ -31,7 +35,8 @@ CKEDITOR.editorConfig = function(config) {
 			'toolbar',
 			'undo',
 			'wysiwygarea',
-			'onchange'
+			'onchange',
+			'link'
 		];
 
 	config.language = 'ru';
@@ -61,51 +66,92 @@ CKEDITOR.editorConfig = function(config) {
 	config.autoGrow_maxHeight = 400;
 	config.contentsLangDirection = 'ltr';
 	config.fillEmptyBlocks = false;
-	config.tabIndex = 1;
+	config.tabIndex = 41;
 	config.tabSpaces = 2;
 	config.startupShowBorders = false;
 	config.toolbarCanCollapse = false;
 	config.disableNativeSpellChecker = false;
-	config.toolbar_Full = [
-		[
+	
+	var toolbar = [];
+
+
+	function ifEnabled(condition, what) {
+		return condition ? what : undefined;
+	}
+
+	if (Site.page.ljpost) {
+		toolbar = [
+			'Bold', 'Italic', 'Underline', 'Strike', 'FontSize', 'LJColor',
+
+			'-',
+
+			'LJLink2', 'LJUserLink',
+
+			'-',
+
+			'image',
+			ifEnabled(Site.media_embed_enabled, 'LJEmbedLink'),
+
+			'LJCut',
+			'LJSpoiler',
+			
+			'LJLike',
+
+			'LJPollLink',
+			'NumberedList',
+			'BulletedList',
+
+			'LJJustifyLeft',
+			'LJJustifyCenter',
+			'LJJustifyRight',
+
+			'Undo',
+			'Redo'
+		];
+	} else {
+		toolbar = [
 			'Bold',
 			'Italic',
 			'Underline',
 			'Strike',
-			'LJColor',
+			'TextColor',
 			'FontSize',
+
 			'-',
+
 			'LJLink',
 			'LJUserLink',
-			'image'
-		]
-	];
+			'image',
 
-	// if (window.ljphotoEnabled) {
-	// 	config.toolbar_Full[0].push('LJImage_beta');
-	// }
+			'LJPollLink',
+			'LJCutLink',
+			'LJCut',
+			'LJLike',
+			'LJSpoiler',
 
-	if (top.Site.media_embed_enabled) {
-		config.toolbar_Full[0].push('LJEmbedLink');
+			'-',
+
+			'UnorderedList',
+			'OrderedList',
+			'NumberedList',
+			'BulletedList',
+
+			'-',
+
+			'LJJustifyLeft',
+			'LJJustifyCenter',
+			'LJJustifyRight',
+
+			'-',
+
+			'Undo',
+			'Redo'
+		];
 	}
 
-	config.toolbar_Full[0].push('LJPollLink',
-		'LJCutLink',
-		'LJCut',
-		'LJLike',
-		'LJSpoiler',
-		'-',
-		'UnorderedList',
-		'OrderedList',
-		'NumberedList',
-		'BulletedList',
-		'-',
-		'LJJustifyLeft',
-		'LJJustifyCenter',
-		'LJJustifyRight',
-		'-',
-		'Undo',
-		'Redo');
+	config.toolbar_Full = [
+		toolbar.filter(function(el) { return el; })
+	];
 
 	config.enterMode = CKEDITOR.ENTER_BR;
 	config.shiftEnterMode = CKEDITOR.ENTER_P;
