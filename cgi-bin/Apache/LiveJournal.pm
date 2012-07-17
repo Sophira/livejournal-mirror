@@ -426,6 +426,13 @@ sub trans {
         }
     }
 
+    if ($host=~m!^(?:http://)?([\w-]+)\.\Q$LJ::USER_DOMAIN\E(?:$|/)!xo) {
+        my $username = $1;
+        if ($username && (my $redir_url = $LJ::DOMAIN_JOURNALS{LJ::canonical_username($username)})) {
+            $redir_url = "http://".$redir_url unless $redir_url =~ m!https?://!;
+            return redir($redir_url.$uri);
+        }
+    }
 
     # process controller
     # if defined
