@@ -5184,7 +5184,7 @@ sub authorize
     
     my $auth_method = $req->{'auth_method'};
 
-    return 1 if ($flags->{noauth});
+    return 1 if ($flags->{noauth} || $flags->{nopassword});
 
     if ($auth_method eq 'oauth') {
 
