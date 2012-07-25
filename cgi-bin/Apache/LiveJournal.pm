@@ -341,7 +341,7 @@ sub trans {
     ## and LJTimes (e.g. http://stat.livejournal.com/tools/endpoints/lj_times_full_js.bml?lang=ru)
     ## Production static files are served by CDN (http://l-stat.livejournal.com)
     if ($LJ::IS_LJCOM_BETA && $host eq 'stat.livejournal.com' 
-        && $uri !~ m!^/(stc|img|js)! && $uri !~ m!\.bml$!) 
+        && $uri !~ m!^/(stc|img|js|palimg)! && $uri !~ m!\.bml$!) 
     {
          $uri = "/stc$uri";
          LJ::Request->uri($uri);
@@ -383,7 +383,10 @@ sub trans {
     ## JS/CSS file concatenation
     ## skip it for .bml.
     if (
-        ($host eq "stat.$LJ::DOMAIN" and LJ::Request->uri !~ /\.bml$/) or
+        ($host eq "stat.$LJ::DOMAIN" 
+            and LJ::Request->uri !~ /\.bml$/        ## BML is allowed on stat. domain
+            and LJ::Request->uri !~ m|/palimg/|     ## PaletteModify actions are processed by other handler
+            ) or
         ($LJ::IS_SSL and LJ::Request->unparsed_uri =~ /\?\?/)
     ){
         Apache::LiveJournal::ConcatHeadFiles->load;
@@ -393,7 +396,7 @@ sub trans {
     }
 
     ##
-    ## Process old/non-cacnonical URL and renamed accounts.
+    ## Process old/non-canonical URL and renamed accounts.
     if ($host !~ /^www\./){
         my $uri         = LJ::Request->uri;
         my $current_url = "http://$host$uri";
@@ -432,6 +435,9 @@ sub trans {
             $redir_url = "http://".$redir_url unless $redir_url =~ m!https?://!;
             return redir($redir_url.$uri);
         }
+        my $partner_url;
+        LJ::run_hook('override_journal_url', LJ::load_user($username), \$partner_url);
+        return redir($partner_url) if $partner_url;
     }
 
     # process controller
