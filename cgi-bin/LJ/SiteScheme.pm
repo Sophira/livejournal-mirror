@@ -110,6 +110,15 @@ sub show_mobile_link {
     return 0;
 }
 
+sub lentaru_branding {
+    my $time = time;
+    my $time_start = 1343332800; # 27.07.2012 00:00 MSK
+    my $time_end   = 1344801599; # 12.08.2012 23:59 MSK
+
+    return 1 if ($time > $time_start && $time < $time_end);
+    return 0;
+}
+
 sub common_template_params {
     my ( $class, $args ) = @_;
 
@@ -209,6 +218,7 @@ sub common_template_params {
     my $remote_wallet_link     = 0;
     my $remote_ljphoto_url     = '';
     my $remote_can_use_ljphoto = 0;
+    my $remote_is_sup          = 0;
 
     if ($remote) {
         my $username = $remote->username;
@@ -239,6 +249,7 @@ sub common_template_params {
         $remote_wallet_link     = LJ::Pay::Wallet->get_wallet_link($remote);
         $remote_ljphoto_url     = $remote->journal_base . '/pics/';
         $remote_can_use_ljphoto = $remote->can_use_ljphoto ? 1 : 0;
+        $remote_is_sup          = LJ::SUP->is_remote_sup();
     }
 
     my $need_loginform = 0;
@@ -348,6 +359,28 @@ sub common_template_params {
     ## see also cgi-bin/LJ/Hooks/Homepage.pm
     my $branding = LJ::run_hook("service_page_branding", { scheme => $class->code }); 
 
+    if ($remote_is_sup && lentaru_branding) {
+        LJ::need_res(qw{ 
+            js/jquery/jquery.lj.lentaRu.js
+            stc/widgets/flags.css
+            stc/widgets/olympics.css
+            templates/Widgets/olympics/olympics_bubble.tmpl
+        });
+
+        my $json = LJ::MemCache::get('lentaru_olympics_json');
+        if ($json) {
+            LJ::need_var(lentaRu => {result => $json});
+        } else {    
+            my $browser = LWP::UserAgent->new;
+            my $response = $browser->get( 'http://olympic2012.lenta.ru/export/medals-top.json' );
+            if ($response->is_success) {
+                $json = eval { LJ::JSON->from_json($response->decoded_content) };
+                LJ::MemCache::set('lentaru_olympics_json', $json, 1800);
+                LJ::need_var(lentaRu => {result => $json});
+            }
+        }
+    }
+
     return {
         'pretitle'           => $args->{'pretitle'},
         'title'              => $args->{'title'},
@@ -426,6 +459,7 @@ sub common_template_params {
         'ml_copyright_header' => $ml_copyright_header,
 
         'branding'            => $branding,
+        'lentaru_branding'    => $remote_is_sup && lentaru_branding,
     };
 }
 
