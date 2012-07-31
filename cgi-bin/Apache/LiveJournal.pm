@@ -426,14 +426,6 @@ sub trans {
         }
     }
 
-    if ($host=~m!^(?:http://)?([\w-]+)\.\Q$LJ::USER_DOMAIN\E(?:$|/)!xo) {
-        my $username = $1;
-        if ($username && (my $redir_url = $LJ::DOMAIN_JOURNALS{LJ::canonical_username($username)})) {
-            $redir_url = "http://".$redir_url unless $redir_url =~ m!https?://!;
-            return redir($redir_url.$uri);
-        }
-    }
-
     # process controller
     # if defined
     if ( my $controller = LJ::Request->notes('controller') ) {
@@ -663,6 +655,19 @@ sub trans {
         return redir($redirect_url);
     }
 
+    if ($host=~m!^(?:http://)?([\w-]+)\.\Q$LJ::USER_DOMAIN\E(?:$|/)!xo) {
+        my $username = $1;
+        if ($username && (my $redir_url = $LJ::DOMAIN_JOURNALS{LJ::canonical_username($username)})) {
+            $redir_url = "http://".$redir_url unless $redir_url =~ m!https?://!;
+            return redir($redir_url.$uri);
+        }
+        my $partner_url;
+        unless (LJ::remote_bounce_url()) {
+            LJ::run_hook('override_journal_url', LJ::load_user($username), \$partner_url);
+            return redir($partner_url) if $partner_url;
+        }
+    }
+ 
     my $journal_view = sub {
         my $opts = shift;
         $opts ||= {};
@@ -2382,7 +2387,11 @@ sub db_logger
         return if $uri =~ m!^/(img|userpic)/!;
     }
 
-    my $rec = LJ::AccessLogRecord->new(LJ::Request->r);
+    my @recs = ( LJ::AccessLogRecord->new );
+    if ( my $additional_records = $LJ::REQ_GLOBAL{'deferred_log_records'} ) {
+        push @recs, @$additional_records;
+    }
+
     my @sinks = (
                  LJ::AccessLogSink::Database->new,
                  LJ::AccessLogSink::DInsertd->new,
@@ -2395,7 +2404,9 @@ sub db_logger
     }
 
     foreach my $sink (@sinks) {
-        $sink->log($rec);
+        foreach my $rec (@recs) {
+            $sink->log($rec);
+        }
     }
 }
 
