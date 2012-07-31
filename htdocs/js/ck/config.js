@@ -35,21 +35,28 @@ CKEDITOR.editorConfig = function(config) {
 			'undo',
 			'wysiwygarea',
 			'onchange',
-			'link',
-			'autogrow'
+			'link'
 		];
 
 	if (Site.page.ljpost) {
-		ljplugins.push('ljfont');
+		plugins.push('autogrow');
+		config.autoGrow_minHeight = 400;
+
+		ljplugins.push('ljspell', 'ljfont');
 	}
 
 	config.language = 'ru';
 	config.autoParagraph = false;
 	config.autoUpdateElement = false;
 	config.docType = '<!DOCTYPE html>';
-	config.contentsCss = '/js/ck/contents.css?t=' + Site.version;
 
-	config.styleText = Site.statprefix + '/js/ck/contents.css?t=' + Site.version;
+	if (Site.page.ljpost) {
+		config.contentsCss = '/js/ck/contents_new.css?t=' + Site.version;
+		config.styleText = Site.statprefix + '/js/ck/contents_new.css?t=' + Site.version;
+	} else {
+		config.contentsCss = '/js/ck/contents.css?t=' + Site.version;
+		config.styleText = Site.statprefix + '/js/ck/contents.css?t=' + Site.version;
+	}
 
 	//config.scayt_autoStartup = true;
 
@@ -107,6 +114,8 @@ CKEDITOR.editorConfig = function(config) {
 			'LJJustifyLeft',
 			'LJJustifyCenter',
 			'LJJustifyRight',
+
+			'LJSpell',
 
 			'Undo',
 			'Redo'

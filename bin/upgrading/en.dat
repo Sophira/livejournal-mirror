@@ -2233,6 +2233,24 @@ esn.journal_new_entry.posted_new_entry=[[who]] posted a new entry in [[journal]]
 esn.journal_new_entry.updated_their_journal|staleness=1
 esn.journal_new_entry.updated_their_journal=[[who]] updated their journal!
 
+esn.journal_new_repost.head_comm|staleness=1
+esn.journal_new_repost.head_comm=There is a new repost by [[reposter]] posted by [[poster]] [[about]] in [[community]]![[tags]]
+
+esn.journal_new_repost.head_user|staleness=1
+esn.journal_new_repost.head_user=[[reposter]] has repost entry [[about]].[[tags]]
+
+esn.journal_new_repost_community.subject|staleness=1
+esn.journal_new_repost_community.subject=[[reposter]] has reposted entry posted by [[poster]] in [[community]]
+
+esn.journal_new_repost.subject|staleness=1
+esn.journal_new_repost.subject=[[reposter]] has reposted post from [[poster]]
+
+esn.user_new_repost_community.ashtml|staleness=1
+esn.user_new_repost_community.ashtml=[[reposter]] has reposted entry posted by [[poster]] in [[community]]
+
+esn.user_new_repost.ashtml|staleness=1
+esn.user_new_repost.ashtml=[[reposter]] has repost entry [[about]].[[tags]]
+
 esn.mail_comments.alert.anonymous_edited_reply_to_a_comment|staleness=1
 esn.mail_comments.alert.anonymous_edited_reply_to_a_comment=Anonymous user edited a [[openlink]]reply[[closelink]] to a comment.
 
@@ -5862,6 +5880,35 @@ talk.editcomment=Save comment
 
 talk.edited=Edited:
 
+talk.editpic.blank=open in new window
+
+talk.editpic.border=Border
+
+talk.editpic.default=Default
+
+talk.editpic.head=Image Properties
+
+talk.editpic.height=Height
+
+talk.editpic.horizontal=Horizontal
+
+talk.editpic.left=&larr; Left
+
+talk.editpic.none=None
+
+talk.editpic.right=Right &rarr;
+
+talk.editpic.save=Save
+talk.editpic.src=Image URL
+
+talk.editpic.title=Title
+
+talk.editpic.url=Link URL
+
+talk.editpic.width=Width
+
+talk.editpic.vertical=Vertical
+
 talk.edittags=Tags
 
 talk.emptypostalert=You need to write something first
@@ -6046,6 +6093,8 @@ talk.font.huge=Huge
 
 talk.map.button=Insert
 
+talk.general.save=Save
+
 talk.map.example=http://goo.gl/maps/1Zgq
 
 talk.map.main=Map
@@ -6053,6 +6102,10 @@ talk.map.main=Map
 talk.spoiler.main=Spoiler
 
 talk.spoiler.button=Insert
+
+talk.link.button=Insert
+
+talk.link.button.delete=Delete
  
 talk.loading=Loading...
  
@@ -6158,6 +6211,8 @@ talk.poll.settings.whovote=Who can vote in this poll?
 talk.poll.settings.whovote.all=All
 
 talk.poll.settings.whovote.friends=Friends
+
+talk.poll.title=Create Poll
 
 talk.poll.type.add=Add question
 
