@@ -10,12 +10,15 @@ use Carp qw(croak);
 use Class::Autouse qw(LJ::Entry);
 use base 'LJ::Event';
 
+use LJ::Event::JournalNewEntry;
+
 ############################################################################
 # constructor & property overrides
 #
 
 sub new {
     my ($class, $entry) = @_;
+
     croak 'Not an LJ::Entry' unless blessed $entry && $entry->isa("LJ::Entry");
     return $class->SUPER::new( $entry->poster, 
                                $entry->journalid, 
@@ -37,7 +40,7 @@ sub poster {
     my ($self) = @_;
     my $entry  = $self->entry;
 
-    return $self->u;
+    return $entry->poster;
 }
 
 sub posterid {
@@ -96,22 +99,20 @@ sub real_ditemid {
 
 sub matches_filter {
     my ($self, $subscr) = @_;
+ 
+    my $ditemid = $self->arg2;
+    my $evtju   = $self->event_journal;
+    return 0 unless $evtju && $ditemid; # TODO: throw error?
 
-    # does the entry actually exist?
-    return 0 unless $self->journalid && $self->real_ditemid; # TODO: throw error?
-
-    # construct the entry so we can determine visibility
-    my $entry = $self->entry;
+    my $entry = LJ::Entry->new($evtju, ditemid => $ditemid);
     return 0 unless $entry && $entry->valid; # TODO: throw error?
     return 0 unless $entry->visible_to($subscr->owner);
 
-    # journalid of 0 means 'all friends', so if the poster is
-    # a friend of the subscription owner, then they match
-    return 1 if ! $subscr->journalid && LJ::is_friend($subscr->owner, $self->poster);
+    # all posts by friends
+    return 1 if ! $subscr->journalid && LJ::is_friend($subscr->owner, $self->event_journal);
 
-    # otherwise we have a journalid, see if it's the specific
-    # journal that the subscription is watching
-    return LJ::u_equals($subscr->journal, $self->poster);
+    # a post on a specific journal
+    return LJ::u_equals( $subscr->journal, $evtju );
 }
 
 
@@ -320,8 +321,9 @@ sub _as_email {
     # make hyperlinks for options
     # tags 'poster' and 'journal' cannot contain html <a> tags
     # when it used between [[openlink]] and [[closelink]] tags.
-    my $vars = { poster  => $poster_text, 
-                 journal => $journal_text, };
+    my $vars = { poster    => $poster_text, 
+                 journal   => $reposter_name,
+                 community => $journal, };
 
     $email .= LJ::Lang::get_text($lang, $ml_head_string, undef,
                 {
@@ -350,12 +352,10 @@ sub _as_email {
                                                     "$LJ::SITEROOT/community/join.bml?comm=$journal_user" ],
                 'esn.read_user_entries'     => [ 1, $journal_url ],
                 'esn.add_friend'            => [ LJ::is_friend($u, $self->reposter)? 0 : 5,
-                                                    "$LJ::SITEROOT/friends/add.bml?user=" . $u->user  ],
+                                                    "$LJ::SITEROOT/friends/add.bml?user=" . $reposter->user  ],
             });
 
-    return $email;
-
-    
+    return $email; 
 }
 
 sub as_email_string {
@@ -377,8 +377,9 @@ sub subscriptions {
 
     my @subs;
     foreach my $subsc (@entry_subs) {
-        my $row = { userid  => $subsc->{'userid'},
-                    ntypeid => $subsc->{'ntypeid'},
+        my $row = { userid      => $subsc->{'userid'},
+                    journalid   => $subsc->{'journalid'},
+                    ntypeid     => $subsc->{'ntypeid'},
                   };
 
         push @subs, LJ::Subscription->new_from_row($row);
