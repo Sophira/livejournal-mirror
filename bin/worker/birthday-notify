@@ -2,6 +2,7 @@
 use strict;
 use lib "$ENV{LJHOME}/cgi-bin";
 use LJ::NewWorker::Manual;
+use POSIX;
 LJ::NewWorker::Manual::BirthdayNotify->start();
 
 ################################################################################
@@ -136,11 +137,12 @@ sub work {
         debug("Firing off notification for " . $u->user);
         LJ::Event::Birthday->new($u)->fire;
 
-        my $birthday_time = $bdays->{$u->id} - time() - 86400;
-        if ($birthday_time < 86400) {
-            $birthday_time = 1;
-        }
-        LJ::Event::Birthday->new($u, $birthday_time)->fire;
+        my $notify = DateTime->from_epoch( epoch => $bdays->{$u->id} );
+        $notify->set_second(0);
+        $notify->set_minute(0);
+        $notify->set_hour($notify->hour % 12);
+
+        LJ::Event::Birthday->new($u, $notify->epoch)->fire;
         $ct++;
     }
 
