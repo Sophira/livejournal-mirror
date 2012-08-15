@@ -17,13 +17,10 @@ CKEDITOR.editorConfig = function(config) {
 			'button',
 			'colorbutton',
 			'colordialog',
-			'dialog',
 			'enterkey',
 			'entities',
-			'font',
 			'format',
 			'htmldataprocessor',
-			'image',
 			'keystrokes',
 			'list',
 			'liststyle',
@@ -35,7 +32,6 @@ CKEDITOR.editorConfig = function(config) {
 			'undo',
 			'wysiwygarea',
 			'onchange',
-			'link'
 		];
 
 	if (Site.page.ljpost) {
@@ -43,6 +39,8 @@ CKEDITOR.editorConfig = function(config) {
 		config.autoGrow_minHeight = 400;
 
 		ljplugins.push('ljspell', 'ljfont');
+	} else {
+		plugins.push('dialog', 'image', 'link', 'font');
 	}
 
 	config.language = 'ru';
@@ -81,7 +79,7 @@ CKEDITOR.editorConfig = function(config) {
 	config.tabSpaces = 2;
 	config.startupShowBorders = false;
 	config.toolbarCanCollapse = false;
-	config.disableNativeSpellChecker = false;
+	config.disableNativeSpellChecker = true;
 	
 	var toolbar = [];
 
@@ -91,7 +89,7 @@ CKEDITOR.editorConfig = function(config) {
 
 	if (Site.page.ljpost) {
 		toolbar = [
-			'Bold', 'Italic', 'Underline', 'Strike', 'ljFontSize', 'LJColor',
+			'Bold', 'Italic', 'Underline', 'Strike', 'LJFont', 'LJColor',
 
 			'-',
 
@@ -99,7 +97,7 @@ CKEDITOR.editorConfig = function(config) {
 
 			'-',
 
-			'image',
+			'LJImage',
 			ifEnabled(Site.media_embed_enabled, 'LJEmbedLink'),
 
 			'LJCut',

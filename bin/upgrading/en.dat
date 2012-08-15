@@ -2842,6 +2842,8 @@ eventrates.users_who_like_it=Users who like it
 eventrates.view_all|staleness=1
 eventrates.view_all=View all
 
+fcklang.ljfont=Change font
+
 fcklang.ljimage=Insert/Edit Image
 fcklang.ljimage.beta=Insert/Edit Image Beta
 
@@ -5887,11 +5889,15 @@ talk.editcomment=Save comment
 
 talk.edited=Edited:
 
+talk.editpic.alignment=Alignment
+
 talk.editpic.blank=open in new window
 
 talk.editpic.border=Border
 
 talk.editpic.default=Default
+
+talk.editpic.eq=Constrain Proportions
 
 talk.editpic.head=Image Properties
 
@@ -5906,6 +5912,9 @@ talk.editpic.none=None
 talk.editpic.right=Right &rarr;
 
 talk.editpic.save=Save
+
+talk.editpic.space=Space
+
 talk.editpic.src=Image URL
 
 talk.editpic.title=Title
@@ -5965,6 +5974,10 @@ talk.error.commentspammed=Your comment was marked as spam according to system-wi
 talk.error.deleted=This journal is deleted.
 
 talk.error.deleted.title=Deleted
+
+talk.error.image.loading=Image source URL is missing
+
+talk.error.invalidusejournal=No such journal or community
 
 talk.error.mustlogin=You must be logged in to view this protected entry.
 
@@ -6030,6 +6043,8 @@ talk.error.suspendedentry=This entry is suspended. You can visit the journal <a 
 
 talk.error.suspendedentryreply|staleness=1
 talk.error.suspendedentryreply=This entry is suspended. You cannot reply to it. You can visit the journal <a [[aopts]]>here</a>.
+
+talk.error.usernotexist=No such user
 
 talk.expandall=Expand All
 
@@ -7941,8 +7956,12 @@ web.controlstrip.btn.logout=Log out
 web.controlstrip.btn.password|staleness=1
 web.controlstrip.btn.password=Password
 
+web.controlstrip.btn.search=Find
+
 web.controlstrip.btn.searchall|staleness=1
 web.controlstrip.btn.searchall=Search at LiveJournal
+
+web.controlstrip.btn.searchjournal=Search at [[journal]]
 
 web.controlstrip.btn.username|staleness=1
 web.controlstrip.btn.username=Username
@@ -7971,6 +7990,8 @@ web.controlstrip.links.create=Create an Account
 
 web.controlstrip.links.customgroups|staleness=1
 web.controlstrip.links.customgroups=Custom groups
+
+web.controlstrip.links.default=Default
 
 web.controlstrip.links.editcommmembers=Edit Members
 
