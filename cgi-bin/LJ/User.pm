@@ -2040,7 +2040,9 @@ sub clear_prop {
 
 sub journal_base {
     my $u = shift;
-    return LJ::journal_base($u);
+    return $u->{'journal_base'} if $u->{'journal_base'};
+    $u->{'journal_base'} = LJ::journal_base($u);
+    return $u->{'journal_base'};
 }
 
 sub allpics_base {
@@ -3928,7 +3930,7 @@ sub can_upload_photo {
     return 0 unless $u->can_use_ljphoto();
 
     ## Basic user has no access to ljphoto
-    return 0 if not ($u->get_cap('paid') or $u->in_class('plus') );
+    return 0 unless $u->get_cap('disk_quota');
 
     return 1;
 }
@@ -9045,6 +9047,10 @@ sub add_friend
 
     my @add_ids = ref $to_add eq 'ARRAY' ? map { LJ::want_userid($_) } @$to_add : ( LJ::want_userid($to_add) );
     return 0 unless @add_ids;
+
+    # clean widget cache
+    my $widget_key = "friend_birthdays:" . $userid;
+    LJ::MemCache::delete($widget_key);
 
     my $friender = LJ::load_userid($userid);
 

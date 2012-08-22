@@ -275,6 +275,9 @@
 	dtd['lj-repost'] = {};
 	dtd['lj-raw'] = dtd.div;
 
+	// set allowed tags for poll, for reference check
+	// http://docs.cksource.com/ckeditor_api/symbols/CKEDITOR.dtd.html
+	
 	dtd['lj-poll'] = {
 		'lj-pq': 1
 	};
@@ -287,6 +290,11 @@
 	dtd['lj-pi'] = {
 		'#': 1
 	};
+
+	['a', 'b', 'em', 'i', 'img', 'strong', 'u', 'lj-user'].forEach(function(tag) {
+		dtd['lj-pq'][tag] = 1;
+		dtd['lj-pi'][tag] = 1;
+	});
 
 	dtd.$block.iframe = dtd.$inline.iframe;
 	delete dtd.$inline.iframe;
@@ -584,30 +592,15 @@
 					hooked = false,
 					styles = {},
 					defaultFont = 'normal',  // This value probably should not be hardcoded
-					currentFont = defaultFont,
-					sizes = config.fontSize_sizes,
-					style = config.fontSize_style,
+					currentFont = config.LJFontDefault,
+					sizes = config.LJFontSize,
+					style = config.LJFontStyle,
 					selectedItem = 'b-fontsize-select-item-active',
 					i, part, vars, name, $items = jQuery();
 
-				sizes = sizes.split(';');
-
-				for (i = 0; i < sizes.length; i++) {
-					part = sizes[i];
-
-					if (part) {
-						part = part.split( '/' );
-
-						vars = {};
-						name = sizes[i] = part[0].toLowerCase();
-
-						vars['size'] = part[1] || name;
-
-						styles[name] = new CKEDITOR.style(style, vars);
-						styles[name]._.definition.name = name;
-					} else {
-						sizes.splice(i--, 1);
-					}
+				for (name in sizes) {
+					styles[name] = new CKEDITOR.style(style, { size: sizes[name] });
+					styles[name]._.definition.name = name;
 				}
 
 				function setValue(value) {
@@ -658,7 +651,7 @@
 				});
 
 				editor.ui.addButton(button, {
-					label: CKLang[button] || 'BUTTON',
+					label: CKLang[button],
 					command: button
 				});
 
@@ -1094,8 +1087,8 @@
 				LiveJournal.register_hook('map_response', function(text) {
 					var iframe = new CKEDITOR.dom.element('iframe', editor.document);
 
-					var width = 800,
-						height = 600,
+					var width = 425,
+						height = 350,
 						frameStyle = "", bodyStyle = "";
 
 					if (!isNaN(width)) {
@@ -1409,6 +1402,10 @@
 			// LJ Poll
 			(function() {
 				var button = 'LJPollLink';
+
+				if (!LJ.pageVar('remoteUser', true)) {
+					return;
+				}
 
 				LiveJournal.register_hook('poll_response', function(ljData) {
 					var poll = new Poll(ljData), // Poll.js
@@ -1836,7 +1833,8 @@
 								newElement.attributes.frameBorder = 0;
 								break;
 							case 'lj-poll':
-								newElement = new CKEDITOR.htmlParser.fragment.fromHtml(decodeURIComponent(element.attributes['lj-data'])).children[0];
+								var data = decodeURIComponent(element.attributes['lj-data']);
+								newElement = new CKEDITOR.htmlParser.fragment.fromHtml(data).children[0];
 								break;
 							case 'lj-repost':
 								newElement = new CKEDITOR.htmlParser.element('lj-repost');

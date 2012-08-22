@@ -123,17 +123,6 @@ sub new
     # save the singleton if it doesn't exist
     $singletons{$journalid}->{$jitemid} = $self;
 
-    my $link = $self->prop('repost_link');
-    if ($link) {
-        my ($journalid, $jitemid) = split(/:/, $link);
-        my $user = int($journalid) ? LJ::want_user(int($journalid)) : undef;
-        if ($user && $jitemid)
-        {        
-            my $reposted_entry = LJ::Entry->new(int($journalid), jitemid => int($jitemid));
-            $self->{'original_post_obj'} = $reposted_entry if $reposted_entry->valid;
-        }
-    }
-
     return $self;
 }
 
@@ -1544,14 +1533,30 @@ sub can_delete_journal_item {
 }
 
 sub convert_to_repost {
-    my ($class, $mark) = @_;
-    $class->set_prop( 'repost_link' =>  $mark);
+    my ($self, $mark) = @_;
+    $self->set_prop( 'repost_link' =>  $mark);
 } 
 
 sub original_post {
-    my ($class) = @_;
-
-    return $class->{'original_post_obj'};
+    my ($self) = @_;
+    
+    my $loaded_prop = $self->{'original_post_obj'};
+    
+    unless ($loaded_prop) {
+        my $link = $self->prop('repost_link');
+        if ($link) {
+            my ($journalid, $jitemid) = split(/:/, $link);
+            my $user = int($journalid) ? LJ::want_user(int($journalid)) : undef;
+            if ($user && $jitemid)
+            {     
+                my $reposted_entry = LJ::Entry->new(int($journalid), jitemid => int($jitemid));
+                $loaded_prop =  $reposted_entry if $reposted_entry->valid;
+                $self->{'original_post_obj'} = $loaded_prop;
+            }
+        }
+    }
+    
+    return $loaded_prop;
 }
 
 sub repost_offer {

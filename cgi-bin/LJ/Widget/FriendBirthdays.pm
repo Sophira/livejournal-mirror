@@ -19,6 +19,13 @@ sub render_body {
     my $u = $opts{user} && LJ::isu($opts{user}) ? $opts{user} : LJ::get_remote();
     return "" unless $u;
 
+    my $cache_key  = "friend_birthdays:" . $u->userid;
+    my $cache_data = LJ::MemCache::get($cache_key);
+    if ($cache_data) {
+        return $cache_data;
+    }
+
+
     my $limit = defined $opts{limit} ? $opts{limit} : 5;
 
     my @bdays = $u->get_friends_birthdays( months_ahead => 1 );
@@ -71,8 +78,9 @@ sub render_body {
     $ret .= "</ul>"  if  $opts{friends_link} or $opts{paidtime_link};
 
     $ret .= '</div></div></div></div></div></div>';
-    
-        
+
+    LJ::MemCache::set($cache_key, $ret, 60*60*12);
+ 
     return $ret;
 }
 

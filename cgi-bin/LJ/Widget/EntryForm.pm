@@ -451,7 +451,7 @@ sub render_metainfo_block {
     $out .= "<script>try { \$('journal_timezone').value = - (new Date).getTimezoneOffset()/0.6; } catch(e) {} </script>";
     $out .= "<div id='metainfo-wrap'>";
 
-    if ( LJ::is_enabled('post_controller') and $remote ) {
+    if ( LJ::is_enabled('post_controller') and $remote or LJ::is_enabled('post_private_beta') ) {
         $out .= "<p class=\"b-updatepage-switchver\">";
         $out .= "<button type=\"submit\" name=\"ljpost:on\" value=\"1\" class=\"b-updatepage-switchver-button\">";
         $out .= "<span class=\"b-updatepage-switchver-inner\">". LJ::Lang::ml('talk.post.beta.turn.on') ."</span>";
@@ -895,7 +895,7 @@ sub render_options_block {
 
             my $checkbox = LJ::html_check({
                 'type'     => 'check',
-                'class'    => 'paid_repost_on',
+                'class'    => 'b-updatepage-paidrepost-check',
                 'value'    => '1',
                 'name'     => 'paid_repost_on',
                 'id'       => 'paid_repost_on',
@@ -909,7 +909,14 @@ sub render_options_block {
                 LJ::Lang::ml('entryform.paid_repost.current_budget', {qty => $budget}) : 
                 '' ;
 
-            $out .= qq{$checkbox $checkbox_text $current_budget <br />};
+            my $help = LJ::help_icon_html('paid_repost');
+
+            $out .= qq{<span class="b-updatepage-paidrepost-agreement">};
+            $out .= qq{$checkbox};
+            $out .= qq{<label for="paid_repost_on" class="b-updatepage-paidrepost-label">$checkbox_text</label>};
+            $out .= qq{$help};
+            $out .= qq{<strong class="b-updatepage-paidrepost-current">$current_budget</strong>};
+            $out .= qq{</span>};
 
             my ($label, $opts);
             unless ($offer) {
@@ -920,10 +927,9 @@ sub render_options_block {
                 };
                 $label = LJ::Lang::ml('entryform.paid_repost.budget');
             } else {
-                $out .= LJ::html_hidden({ 'name' => 'revoke_repost_offer' });
-                
                 $opts = {
                     'name'  => 'add_repost_budget',
+                    'id'    => 'repost_budget',
                     'value' => $opts->{add_repost_budget},
                 };
 
@@ -938,7 +944,10 @@ sub render_options_block {
                 %$opts,
             });
 
-            $out .= "$label  $field";
+            $out .= qq{<span class="b-updatepage-paidrepost-fields">};
+            $out .= qq{<label for="repost_budget" class="b-updatepage-paidrepost-label">$label</label>};
+            $out .= qq{<span class="b-updatepage-paidrepost-budget">$field</span>};
+            $out .= qq{</span>};
 
             return $out;
         },         
@@ -1824,6 +1833,17 @@ JS
 	jQuery(function () {
 		InOb.handleInsertImageBeta('add', $insert_photos_json);
 	});
+</script>
+JS
+    }
+
+    if (LJ::is_enabled('paid_repost')) {
+        LJ::need_res('js/jquery/post/jquery.lj.paidRepost.js');
+        $out .= <<JS
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery('#entryform-paid_repost-wrapper').paidRepost();
+    });
 </script>
 JS
     }

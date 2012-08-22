@@ -940,3 +940,38 @@ td.tabs {
 			border-bottom: 1px solid #3F5F9E;
 			}
 
+
+
+/* paid repost */
+.b-updatepage-paidrepost {
+	}
+	.b-updatepage-paidrepost-agreement {
+		display: none;
+		font-size: 11px;
+		}
+	.b-updatepage-paidrepost-fields {
+		display: none;
+		padding: 5px 0;
+		font-size: 11px;
+		}
+	.b-updatepage-paidrepost-enabled .b-updatepage-paidrepost-agreement,
+	.b-updatepage-paidrepost-enabled .b-updatepage-paidrepost-fields {
+		display: block;
+		}
+		.b-updatepage-paidrepost-label {
+			}
+		.b-updatepage-paidrepost-check {
+			margin: 0 0.5em 0 0;
+			}
+		.b-updatepage-paidrepost-current {
+			margin: 0 0 0 1.5em;
+			}
+		.b-updatepage-paidrepost-budget {
+			margin: 0 0 0 0.5em;
+			padding: 0 20px 0 0;
+			background: url(/img/icons/paidrepost.png?v=1) no-repeat 100% 50%;
+			}
+	.b-updatepage-paidrepost-unchecked .b-updatepage-paidrepost-fields {
+		opacity: 0.3;
+		}
+

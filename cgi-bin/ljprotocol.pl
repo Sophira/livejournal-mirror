@@ -2584,6 +2584,14 @@ sub postevent {
         LJ::run_hook('spam_community_detector', $uowner, $req, \$need_moderated);
     }
 
+    if ( $uowner->is_community && 
+         $uowner->user eq $LJ::WIDGET_FEATURED_COMMUNITY_NAME ) {
+
+        #reset widget featured_communities
+        my $featured_communities_key  = 'featured_communities:widget:data:' .  $LJ::WIDGET_FEATURED_COMMUNITY_NAME;
+        LJ::MemCache::delete($featured_communities_key);
+    }
+
 
     # if posting to a moderated community, store and bail out here
     if ($uowner->{'journaltype'} eq 'C' && $need_moderated && !$flags->{'nomod'}) {
@@ -3294,7 +3302,7 @@ sub editevent {
                 jitemid     => $itemid,
                 budget      => $req->{repost_budget},
                 add_budget  => $req->{add_repost_budget},
-                revoke      => $req->{revoke_repost_offer},
+                revoke      => !$req->{paid_repost_on},
             },
             \$error,
         );
@@ -3465,8 +3473,7 @@ sub editevent {
             $req->{props}->{repost_offer} = $offer_id if $offer_id;
             
         } elsif($repost_offer_action eq 'edit') {
-            
-            $repost_offer->add_budget(\$error, int $req->{add_repost_budget}) or 
+            $repost_offer->add_budget(\$error, $repost_offer->{add_budget}) or 
                 fail(\$warning,160,$error);
        
         } elsif($repost_offer_action eq 'revoke') {
