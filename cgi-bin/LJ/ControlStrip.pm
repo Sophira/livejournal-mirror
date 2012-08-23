@@ -358,8 +358,8 @@ sub render
         pop @early_date;
         pop @last_date;
 
-        if (@last_date[1] != 0) {
-            @last_date[1] -= 1;
+        if ($last_date[1] != 0) {
+            $last_date[1] -= 1;
         }
 
         if (@early_date[1] != 0) {
@@ -368,9 +368,9 @@ sub render
 
         my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
             gmtime();
-        if ( @last_date[0] < ($year + 1900) ||
-             @last_date[1] < $mon     ||
-             @last_date[2] < $mday )
+        if ( $last_date[0] < ($year + 1900) ||
+             $last_date[1] < $mon     ||
+             $last_date[2] < $mday )
         {
             @last_date = ($year + 1900, $mon, $mday);
         }
