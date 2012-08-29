@@ -890,7 +890,7 @@ sub render_options_block {
             return '' unless LJ::is_enabled("paid_repost");
             
             my ($offer, $budget) = ($opts->{repost_offer}, $opts->{repost_budget});
-            
+
             my $out = '';
 
             my $checkbox = LJ::html_check({
@@ -899,14 +899,18 @@ sub render_options_block {
                 'value'    => '1',
                 'name'     => 'paid_repost_on',
                 'id'       => 'paid_repost_on',
+                'tabindex' => '220',
                 'selected' => ($budget > 0 ? 1 : 0),
-                $opts->{'prop_opt_preformatted'} || $opts->{'event_format'},
                 'label'    => "",
+                'raw'      => "autocomplete='off'",
             });
             my $checkbox_text = LJ::Lang::ml('entryform.paid_repost.checkbox');
             
+            my $qty = $budget;
+            $qty =~ s/(\d{1,3})(?=(\d{3})+$)/$1 /g;
+
             my $current_budget = $offer && $budget ? 
-                LJ::Lang::ml('entryform.paid_repost.current_budget', {qty => $budget}) : 
+                LJ::Lang::ml('entryform.paid_repost.current_budget', {qty => $qty}) : 
                 '' ;
 
             my $help = LJ::help_icon_html('paid_repost');
@@ -922,14 +926,12 @@ sub render_options_block {
             unless ($offer) {
                 $opts = {
                     'name'  => 'repost_budget',
-                    'id'    => 'repost_budget',
                     'value' => $budget,
                 };
                 $label = LJ::Lang::ml('entryform.paid_repost.budget');
             } else {
                 $opts = {
                     'name'  => 'add_repost_budget',
-                    'id'    => 'repost_budget',
                     'value' => $opts->{add_repost_budget},
                 };
 
@@ -939,6 +941,8 @@ sub render_options_block {
             }
 
             my $field = LJ::html_text({
+                'id'       => 'repost_budget',
+                'tabindex' => '220',
                 'size'     => '10',
                 'raw'      => "autocomplete='off'",
                 %$opts,
@@ -978,8 +982,8 @@ sub render_options_block {
                 'value'    => 'sticky',
                 'name'     => 'sticky_type',
                 'id'       => 'sticky_type',
+                'tabindex' => '220',
                 'selected' => $selected,
-                $opts->{'prop_opt_preformatted'} || $opts->{'event_format'},
                 'label'    => "",
             });
 
@@ -1004,8 +1008,8 @@ sub render_options_block {
                 'value'    => '1',
                 'name'     => 'prop_opt_backdated',
                 'id'       => 'do_not_add_type',
+                'tabindex' => '220',
                 'selected' => $selected,
-                $opts->{'prop_opt_preformatted'} || $opts->{'event_format'},
                 'label'    => "",
             });
             my $help = LJ::help_icon_html('backdate');

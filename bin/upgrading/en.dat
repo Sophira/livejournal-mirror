@@ -6114,6 +6114,8 @@ talk.editpic.left=&larr; Left
 talk.editpic.none|staleness=1
 talk.editpic.none=None
 
+talk.editpic.imagesize=Image Size
+
 talk.editpic.right|staleness=1
 talk.editpic.right=Right &rarr;
 
@@ -10213,6 +10215,12 @@ xmlrpc.error.221=Unknown language
 
 xmlrpc.error.222|staleness=1
 xmlrpc.error.222=Cannot create or update paid repost button via API
+
+xmlrpc.error.223|staleness=1
+xmlrpc.error.223=Repost budget is empty
+
+xmlrpc.error.224|staleness=1
+xmlrpc.error.224=Repost budget is not numeic
 
 xmlrpc.error.300|staleness=1
 xmlrpc.error.300=Don't have access to requested journal

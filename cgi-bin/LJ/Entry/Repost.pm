@@ -320,7 +320,7 @@ sub get_status {
     my $paid     = 0;
     my $cost     = 0;
     
-    my $is_owner = ($entry_obj->posterid == $u->userid) ? 1 : 0;
+    my $is_owner = ($u && $entry_obj->posterid == $u->userid) ? 1 : 0;
 
     if ($u) {
         ($reposted, $cost) = __get_repost( $entry_obj->journal, 
@@ -338,12 +338,17 @@ sub get_status {
         }
     }
 
-    return  { 'count'    =>  __get_count($entry_obj->journal, $entry_obj->jitemid), 
-              'reposted' => $reposted,
-              'paid'     => $paid,
-              'cost'     => $cost,
-              $is_owner ? ('budget' => $entry_obj->repost_budget) : (),
-            };
+    my $result = { 'count'    =>  __get_count($entry_obj->journal, $entry_obj->jitemid), 
+                   'reposted' => $reposted,
+                   'paid'     => $paid,
+                   'cost'     => $cost,
+                 };
+
+    if ($is_owner && $paid) {
+        $result->{budget} = $entry_obj->repost_budget;
+    }
+
+    return $result;    
 }
 
 sub get_budget {
