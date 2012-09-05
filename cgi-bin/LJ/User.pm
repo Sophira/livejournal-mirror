@@ -2901,7 +2901,7 @@ sub get_reader_weight {
  
     $reader_weight = $resp->{reader_weight};
 
-    LJ::MemCache::set( $memkey, $reader_weight, 60*60);
+    LJ::MemCache::set( $memkey, $reader_weight, 60);
 
     return $reader_weight;
 }
