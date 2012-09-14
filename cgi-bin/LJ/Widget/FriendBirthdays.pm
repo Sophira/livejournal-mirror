@@ -19,7 +19,7 @@ sub render_body {
     my $u = $opts{user} && LJ::isu($opts{user}) ? $opts{user} : LJ::get_remote();
     return "" unless $u;
 
-    my $cache_key  = "friend_birthdays:" . $u->userid;
+    my $cache_key  = "friend_birthdays_2:" . $u->userid;
     my $cache_data = LJ::MemCache::get($cache_key);
     if ($cache_data) {
         return $cache_data;
@@ -62,7 +62,6 @@ sub render_body {
         $ret .= "<td>" . $class->ml('widget.friendbirthdays.userbirthday', {'month' => LJ::Lang::ml(LJ::Lang::month_short_langcode($month)), 'day' => $day}) . "</td>";
         $ret .= "<td><a href='$LJ::SITEROOT/shop/view.bml?item=paidaccount&gift=1&for=" . $u->user . "' title='" .  $class->ml('widget.friendbirthdays.gift') . "' class='gift-link'><span>";
         $ret .= $class->ml('widget.friendbirthdays.gift') . "</span></a></td>";
-        $ret .= "<td>" . (scalar @$wishes ? "<a href='$wish_url' class='wish-link' title='" . $class->ml('widget.friendbirthdays.wishlist') . "'><span>" . $class->ml('widget.friendbirthdays.wishlist') . "</span></a>" : "&nbsp;") . "</td>";
         $ret .= "</tr>";
     }
 

@@ -4,6 +4,9 @@ use strict;
 use base qw(LJ::Widget);
 use Carp qw(croak);
 use LJ::Text;
+use String::CRC32;
+
+use constant { WIDGET_EXPIRE_TIME => 15*60};
 
 sub need_res {
     return qw( stc/widgets/recentcomments.css );
@@ -48,6 +51,16 @@ sub render_body {
     # return if no comments
     return "<h2><span>" . $class->ml('widget.recentcomments.title') . "</span></h2><div class='warningbar'>" . $class->ml('widget.recentcomments.nocomments', {'aopts' => "href='$LJ::SITEROOT/update.bml'"}) . "</div>"
         unless @comments && defined $comments[0];
+
+    my $key_part = crc32(join(':', map { $_->{jtalkid} } @comments));
+    my $key = "recent_comments_widget:$key_part:" .
+              ":" . $lncode .
+              ":" . $u->userid;
+
+    my $data = LJ::MemCache::get($key);
+    if ($data) {
+        return $data;
+    }
 
     # there are comments, print them
     @comments = reverse @comments; # reverse the comments so newest is printed first
@@ -95,6 +108,7 @@ sub render_body {
     $ret .= "</ul>";
     $ret .= "</div>";
 
+    LJ::MemCache::set($key, $ret, WIDGET_EXPIRE_TIME);
     return $ret;
 }
 
