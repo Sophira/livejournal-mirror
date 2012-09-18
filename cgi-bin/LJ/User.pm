@@ -2094,9 +2094,11 @@ sub wishlist_url {
 sub profile_url {
     my ($u, %opts) = @_;
 
+    my $remote = LJ::get_remote();
+
     my $url;
     if ($u->{journaltype} eq "I") {
-        if ($LJ::DISABLED{profile_controller}) {
+        if ($LJ::DISABLED{profile_controller} || ($remote && $remote->prop('profile_ver') eq "1" && !$remote->prop('profile_ver_noswitch'))) {
             $url = "$LJ::SITEROOT/userinfo.bml?userid=$u->{'userid'}&t=I";
             $url .= "&mode=full" if $opts{full};
         } else {
@@ -6507,6 +6509,14 @@ sub is_spamprotection_enabled {
     return 0 if $LJ::DISABLED{'spam_button'};
     my $spamprotection = $u->prop('spamprotection');
     return 1 if (!defined($spamprotection) || $spamprotection eq 'Y');
+    return 0;
+}
+
+sub check_non_whitelist_enabled {
+    my $u = shift;
+    return 0 if $LJ::DISABLED{'spam_button'};
+    my $check_non_whitelist = $u->prop('check_non_whitelist');
+    return 1 if (!defined($check_non_whitelist) || $check_non_whitelist eq 'Y');
     return 0;
 }
 

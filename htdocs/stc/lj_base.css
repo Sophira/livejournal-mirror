@@ -581,10 +581,6 @@ SUP.i-new {
 /* Styles for messagers,
 Must be removed after implementation of Framework! */
 .appwidget-sitemessages {
-	position: absolute;
-	top: 50px;
-	z-index: 4000;
-	width: 100%;
 	padding: 0;
 	}
 .mobile-msg .appwidget-sitemessages {
@@ -2754,7 +2750,7 @@ HTML BODY .i-ljuser {
 	cursor: pointer;
 	background: #F7F7F7;
 	border-bottom: 1px solid #ECECEC;
-	font-size: 11px;
+	font-size: 13px;
 	}
 
 /* Steps
