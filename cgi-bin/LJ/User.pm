@@ -6597,6 +6597,15 @@ sub push_subscription {
     return $u->{push_subscriptions}{$key} || {};
 }
 
+sub disable_promo_announce {
+    my $u = shift;
+    $u->set_prop('promo_announce_disabled', 1);
+}
+
+sub promo_announce_disabled {
+    my $u = shift;
+    return $u->prop('promo_announce_disabled') || 0;
+}
 
 package LJ;
 
@@ -10445,7 +10454,7 @@ sub get_userid
 
     $user = LJ::canonical_username($user);
 
-    if (exists $LJ::PRELOADED_USER_IDS{$user} && !$LJ::IS_DEV_SERVER) { return $LJ::PRELOADED_USER_IDS{user}; }
+    if (exists $LJ::PRELOADED_USER_IDS{$user} && !$LJ::IS_DEV_SERVER) { return $LJ::PRELOADED_USER_IDS{$user}; }
     if ($LJ::CACHE_USERID{$user}) { return $LJ::CACHE_USERID{$user}; }
 
     my $userid = LJ::MemCache::get("uidof:$user");

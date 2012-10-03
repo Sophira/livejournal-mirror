@@ -182,8 +182,8 @@
         ## in future support for other quick embeds will be added.
         ## TODO: use oEmbed for YouTube (http://apiblog.youtube.com/2009/10/oembed-support.html)
         if ($url =~ m!http://www.youtube.com/watch\?v=([\w\-]+)! || $url =~ m!http://www.youtube.com/v/([\w\-]+)!) {
-            $event .= <<"EMBED";
-<object width="640" height="385"><param name="movie" value="http://www.youtube.com/v/$1"></param><param name="allowFullScreen" value="true"></param><param name="allowscriptaccess" value="always"></param><embed src="http://www.youtube.com/v/$1" type="application/x-shockwave-flash" allowscriptaccess="always" allowfullscreen="true" width="640" height="385"></embed></object>
+            $event = <<"EMBED";
+<iframe width="490" height="370" src="http://www.youtube.com/embed/$1" frameborder="0" allowfullscreen="allowfullscreen" data-link="http://www.youtube.com/watch?v=$1"></iframe>
 EMBED
         }
     }
@@ -795,8 +795,10 @@ head<=
     # The draft might contain BML like syntax and cause problems
     BML::noparse();
 
-    LJ::need_string('entryform.close.confirm'); 
-    
+    LJ::need_string(qw(
+        entryform.close.confirm
+    )); 
+
     # append months names tranlation to Site.ml_text['month.names.long']  
     my @ml_months = map { LJ::Lang::month_long_langcode($_) } (1 .. 12);
     my @ml_months_texts = map { LJ::Lang::ml($_) } @ml_months;

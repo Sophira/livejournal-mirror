@@ -775,15 +775,18 @@ sub is_relation_type_to {
     my $types  = shift;
     my %opts   = @_;
     
-    return undef unless $types && $u && $friend;
+    return undef unless $u && $friend;
+    return undef unless ref $types eq 'ARRAY';
 
     my $userid = LJ::want_userid($u);
     my $friendid = LJ::want_userid($friend);
 
+    $types = join ",", map {"'$_'"} @$types;
+
     my $dbh = LJ::get_db_writer();
     my $relcount = $dbh->selectrow_array("SELECT COUNT(*) FROM reluser ".
                                          "WHERE userid=$userid AND targetid=$friendid ".
-                                         "AND type IN (?)", undef, $types);
+                                         "AND type IN ($types)");
     return $relcount;
 }
 

@@ -10,19 +10,11 @@ title<=
 _code?>
 <=title
 head<=
-<style type='text/css'>
-    fieldset { display: block; width: 320px; border: 1px solid #ccc; margin: 0 15px 15px 0; padding: 8px; }
-    fieldset div { min-height: 170px; }
-    * html fieldset div { height: 190px; }
-    *:first-child+html fieldset div { min-height: 190px; }
-    #left-column, #right-column { float: left; }
-    legend { color: #036; font-size: 1.2em; font-weight: bold; }
-    p.input-wrapper { margin-left: 27px; text-indent: -27px; }
-    label { color: #444; }
-    label b { color: #000; }
-    .standout { clear: left; max-width: 695px; }
-    .standout table { margin: 0 auto; }
-</style>
+<?_code
+{
+    LJ::need_res( qw( stc/community/settings.css js/community/settings.js ) );
+}
+_code?>
 <=head
 body<=
 <?_code
@@ -451,10 +443,10 @@ body<=
     $ret .= "<p class='input-wrapper'>";
     $ret .= LJ::html_check({ type => 'radio', id => 'moderate_filter', name => 'moderated', value => 'F', selected => ($info{moderated} eq 'F') ? 1 : 0 });
     $ret .= " <label for='moderate_filter'>$ML{'.label.moderationyes_filter'}</label><br />";
-    $ret .= "<a href='/community/whitelist.bml?authas=$GET{authas}' id='moderate_filter_link' style='display:none'>$ML{'.label.whitelist'}</a>";
+    $ret .= "<a href='/community/whitelist.bml?authas=$GET{authas}' id='moderate_filter_link'>$ML{'.label.whitelist'}</a>";
     $ret .= "<noscript><a href='/community/whitelist.bml?authas=$GET{authas}'>$ML{'.label.whitelist'}</a></noscript>";
     $ret .= "</p>";
-    $ret .= "<p class='input-wrapper'>";
+    $ret .= "<p class='input-wrapper input-wrapper-whitelist'>";
     $ret .= LJ::html_check({ type => 'checkbox', id => 'check_non_whitelist', name => 'check_non_whitelist', value => 'Y', selected => ($info{'check_non_whitelist'} eq 'Y') ? 1 : 0 });
     $ret .= " <label for='check_non_whitelist'>$ML{'.label.check_non_whitelist'}</label></p>";
     $ret .= "</p>";
@@ -465,24 +457,6 @@ body<=
     $ret .= "<div style='clear: left; max-width: 695px;'><?standout <input type='submit' value='" .
         ($mode eq 'create' ? "$ML{'.button.createcommunity'}" : "$ML{'.button.changecommunity2'}") .
         "' /> standout?></div></form>";
-
-    $ret .= q|<script type="text/javascript">
-        (function()
-        {
-            var moderated_inp = $('moderate_filter'),
-                link = $('moderate_filter_link'),
-                inps = moderated_inp.form.moderated,
-                i = -1;
-            while (inps[++i])
-            {
-                inps[i].onclick = function()
-                {
-                    link.style.display = this == moderated_inp ? 'inline' : 'none';
-                }
-            }
-            moderated_inp.checked && (link.style.display = 'inline');
-        })();
-    </script>|;
 
     return $print_with_ad->($ret);
 }

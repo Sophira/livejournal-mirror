@@ -1300,6 +1300,13 @@ date.next=Next month
 date.prev|staleness=1
 date.prev=Prev month
 
+dialogs.yes=OK
+dialogs.no=Cancel
+
+dialog.confirm.antispam.text=You see on moderation entry version. You can reset to old version or continue editing
+dialog.confirm.antispam.yes=Back to old version
+dialog.confirm.antispam.no=Edit new version
+
 Email=Email
 
 email.newacct.body<<
@@ -2463,6 +2470,28 @@ Options:
 esn.moderated_submission.subject|staleness=1
 esn.moderated_submission.subject=Moderated submission notification
 
+esn.moderated_edited_submission.body<<
+There has been a new submission into the community '[[community]]'
+which you moderate.
+
+Entry author [[user]] have updated [[subject]] and added the following new links/images:
+
+[[susp_list]]
+
+Options:
+
+  - Accept or reject this submission
+    [[moderateurl]]
+  - View the entire moderation queue
+    [[viewurl]]
+
+--
+[[sitename]] Team
+[[siteroot]]
+.
+
+esn.moderated_edited_submission.subject=Moderated submission notification
+
 esn.month.day_apr|staleness=1
 esn.month.day_apr=April [[day]]
 
@@ -2949,6 +2978,9 @@ fcklang.ljimage.wizardnotice=Image must be edited inside the Link Wizard
 fcklang.ljimage.wizardnoticelink|staleness=1
 fcklang.ljimage.wizardnoticelink=Go to Image wizard
 
+fcklang.ljlike|staleness=1
+fcklang.ljlike=Like buttons
+
 fcklang.ljlike.button.facebook|staleness=1
 fcklang.ljlike.button.facebook=Facebook
 
@@ -2997,6 +3029,15 @@ fcklang.ljlink.wizardnotice=Link must be edited inside the Link Wizard
 
 fcklang.ljlink.wizardnoticelink|staleness=1
 fcklang.ljlink.wizardnoticelink=Go to link wizard
+
+fcklang.ljimage|staleness=1
+fcklang.ljmap=Insert map
+
+fcklang.ljpoll|staleness=1
+fcklang.ljpoll=Insert poll
+
+fcklang.ljspell|staleness=1
+fcklang.ljspell=Spellcheck
 
 fcklang.ljrepost|staleness=1
 fcklang.ljrepost=Repost
@@ -6915,6 +6956,8 @@ talk.post.submit.delete=Delete Entry
 talk.post.submit.post|staleness=1
 talk.post.submit.post=Post Entry
 
+talk.post.submit.post.queued=Post one more entry
+
 talk.post.submit.postto|staleness=1
 talk.post.submit.postto=Post to
 
@@ -7035,6 +7078,8 @@ talk.result.success.queue.extra=Tags added to entry. Moderator can remove some
 
 talk.result.success.queue.short|staleness=1
 talk.result.success.queue.short=Entry added
+
+talk.result.success.queue.title=Post an Entry
 
 talk.result.success.tags|staleness=1
 talk.result.success.tags=This tags were not added:

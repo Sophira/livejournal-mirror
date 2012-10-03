@@ -761,3 +761,19 @@ __________________________________________*/
 /* transparency for ie */
 .lj_embedcontent { zoom:expression(runtimeStyle.zoom = '1',allowTransparency = true); }
 
+/* Fix Box-sizing IE7-IE8
+----------------------------------------------*/
+*+html .b-dialog-prompt-wrap {
+	margin: 0 10px 0 0;
+	}
+	
+*+html .b-dialog-btn {
+	overflow: hidden;
+	padding: 2px 5px;
+	}
+
+/* usefullinks widget */
+*+html .w-counter-num-op {
+    display: none !important;
+    background: none !important;
+    }

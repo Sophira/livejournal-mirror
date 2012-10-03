@@ -5344,4 +5344,44 @@ sub _is_secure_resource {
                         $/x;
 }
 
+sub Page__journalpromo {
+    my ($ctx, $this) = @_;
+
+    my $opts;
+    
+    $opts->{'remote'} = LJ::get_remote();
+    $opts->{'journal'} = $LJ::S2::CURR_PAGE->{'journal'}->{'_u'};
+
+    my $ret = '';
+    
+    eval { $ret = "LJ::Widget::JournalPromo"->render(%$opts); };
+
+    if ($@) {
+        warn "Error when Page::journalpromo() try to call LJ::Widget::JournalPromo->render() from LJ::S2:\n$@\n";
+        return '';
+    }
+
+    return $ret;
+}
+
+sub Page__render_journalpromo {
+    my ($ctx, $this) = @_;
+
+    return 0 if $LJ::S2::CURR_PAGE->{'view'} !~ /^recent|tag|entry|day$/;
+
+    return 0 if $LJ::REQ_GLOBAL{'journalpromo_showed'}++;
+    
+    my $rendered = Page__journalpromo($ctx, $this);
+    $S2::pout->($rendered);
+
+    return $rendered ? 1 : 0;
+}
+
+*RecentPage__render_journalpromo = \&Page__render_journalpromo;
+*EntryPage__render_journalpromo = \&Page__render_journalpromo;
+*ReplyPage__render_journalpromo = \&Page__render_journalpromo;
+*DayPage__render_journalpromo = \&Page__render_journalpromo;
+
+sub FriendsPage__render_journalpromo {0}
+
 1;

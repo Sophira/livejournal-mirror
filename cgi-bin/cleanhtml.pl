@@ -751,7 +751,7 @@ sub clean {
                     my $url = LJ::ehtml($cut);
                     $newdata .= "<div>" if $tag eq "div";
                     my $data_ids = "";
-                    if ($opts->{entry_url}) {
+                    if ($opts->{entry_url} && $opts->{entry_url} ne '#') {
                         my $entry = LJ::Entry->new_from_url($opts->{entry_url});
                         my $ditemid = 0;
                         my $journalid = $entry->journalid;
@@ -1954,7 +1954,7 @@ my @comment_close = qw(
 );
 my @comment_all = (@comment_close, "img", "br", "hr", "p", "col", "iframe");
 
-my $userbio_eat = $event_eat;
+my $userbio_eat = [ @$event_eat, 'div' ];
 my $userbio_remove = $event_remove;
 my @userbio_close = @comment_close;
 

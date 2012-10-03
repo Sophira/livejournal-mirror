@@ -103,7 +103,11 @@ body<=
         $ret .= "<li><strong>$prop</strong>: $props{$prop}$extra</li><br />";
     }
     if ($entry->is_sticky) {
-        $ret .= "<li><strong>Post is sticky</strong>: Y";
+        $ret .= "<li><strong>Post is sticky</strong>: Y</li><br />";
+    }
+    my $modid = $entry->prop("mod_queue_id");
+    if ($modid) {
+        $ret .= "<li><strong>New content in moderation queue</strong>: Yes, ID = $modid</li><br />";
     }
     $ret .= "</ul>";
 

@@ -1,6 +1,12 @@
 (function() {
+	CKEDITOR.editor.prototype.lightSetData = function(data) {
+		this.document.getBody().setHtml(this.dataProcessor.toHtml(data));
+		this.fire('contentDom');
+	};
+
 	var CKLang = CKEDITOR.lang[CKEDITOR.lang.detect()] || {};
 	jQuery.extend(CKLang, LJ.pageVar('rtedata'));
+	window.CKLang = CKLang;
 
 	if (Site.page.ljpost) {
 		CKEDITOR.styleText = Site.statprefix + '/js/ck/contents_new.css?t=' + Site.version;
@@ -477,11 +483,15 @@
 					}
 				} while (node = node.getParent());
 
+				var editorCommand;
 				if (isSelection) {
 					for (command in ljTagsData) {
 						if (ljTagsData.hasOwnProperty(command) && (!noteData || !noteData.hasOwnProperty(command))) {
 							delete ljTagsData[command].node;
-							editor.getCommand(command).setState(CKEDITOR.TRISTATE_OFF);
+							editorCommand = editor.getCommand(command);
+							if (editorCommand) {
+								editorCommand.setState(CKEDITOR.TRISTATE_OFF);
+							}
 						}
 					}
 				}
@@ -524,6 +534,31 @@
 					return '<iframe class="lj-repost-wrap" lj-class="lj-repost" frameborder="0" allowTransparency="true" lj-text="' + text + '" lj-button="' + buttonTitle + '" lj-content="' + content + '"></iframe>';
 				}
 
+				// dom walker
+				function walk(node, callback) {
+					var skip,
+						tmp,
+						depth = 0;
+
+					do {
+						if (!skip) {
+							skip = callback.call(node, depth) === false;
+						}
+
+						if (!skip && (tmp = node.firstChild)) {
+							depth++;
+						} else if (tmp = node.nextSibling) {
+							skip = false;
+						} else {
+							tmp = node.parentNode;
+							depth--;
+							skip = true;
+						}
+
+						node = tmp;
+					} while ( depth > 0 );
+				}
+
 				editor.dataProcessor.toHtml = function(html, fixForBody) {
 					html = html.replace(/<lj [^>]*?>/gi, closeTag)
 						.replace(/<lj-map [^>]*?>/gi, closeTag)
@@ -535,12 +570,25 @@
 						.replace(/<lj-repost\s*(?:button\s*=\s*(?:"([^"]*?)")|(?:"([^']*?)"))?.*?>([\s\S]*?)<\/lj-repost>/gi, createRepost)
 						.replace(/<lj-embed(.*?)>([\s\S]*?)<\/lj-embed>/gi, createEmbed);
 
+					// https://jira.sup.com/browse/LJSUP-13714
+					html = html.replace(/<table[^>]*>((.|\n)*?)<\/table>/i, function(table) {
+						var span = document.createElement('span');
+						span.innerHTML = table;
+						
+						walk(span, function() {
+							if (this.nodeType === 3) {
+								if (this.parentNode.nodeName.toLowerCase() !== 'td') {
+									this.nodeValue = this.nodeValue.replace(/\n/ig, '');
+								}
+							}
+						});
+
+						return span.innerHTML;
+					});
+
 					if (!$('event_format').checked) {
 						html = html.replace(/(<lj-raw.*?>)([\s\S]*?)(<\/lj-raw>)/gi, createLJRaw);
-
-						if (!window.switchedRteOn) {
-							html = html.replace(/\n/g, '<br />');
-						}
+						html = html.replace(/\n/g, '<br/>');
 					}
 
 					html = CKEDITOR.htmlDataProcessor.prototype.toHtml.call(this, html, fixForBody);
@@ -999,7 +1047,7 @@
 						iframe.setAttribute('style', "width: 490px; height:370px;");
 						iframe.setAttribute('lj-style', "width: 480px; height:360px;");
 						iframe.setAttribute('allowfullscreen', 'true');
-						iframe.setAttribute('lj-content', encodeURIComponent("<div " + background + " class='lj-embed-inner lj-rtebox-inner'>iframe</div>"));
+						iframe.setAttribute('lj-content', encodeURIComponent("<div " + background + " class='lj-embed-inner lj-rtebox-inner'>" + (background ? "" : "iframe") + "</div>"));
 					} else {
 						iframe.setAttribute('lj-class', 'lj-embed');
 						iframe.setAttribute('class', 'lj-embed-wrap lj-rtebox');
@@ -1382,7 +1430,7 @@
 							for (var i = ranges.length - 1; i >= 0; i--) {
 								var range = ranges[i];
 								var encloseNode = range.getEnclosedNode();
-								if (encloseNode && encloseNode.is('iframe')) {
+								if (encloseNode && encloseNode.type === CKEDITOR.NODE_ELEMENT && encloseNode.is('iframe')) {
 									return;
 								}
 
@@ -1791,11 +1839,23 @@
 						if (element.attributes['lj-class'] && element.attributes['lj-class'].indexOf('lj-') + 1 == 1) {
 							return element;
 						}
+
 						var fakeElement = new CKEDITOR.htmlParser.element('iframe'),
 							frameStyle = '',
 							bodyStyle = '',
 							width = Number(element.attributes.width),
 							height = Number(element.attributes.height);
+
+						// partner iframe, fix width/height from style attribute
+						if (element.attributes.src.indexOf('kroogi.com') !== -1 && element.attributes.style) {
+							var matchWidth = element.attributes.style.match(/width:\s([0-9]+)px;/i),
+								matchHeight = element.attributes.style.match(/height:\s([0-9]+)px;/i);
+
+							if (matchHeight.length === 2 && matchWidth.length === 2) {
+								width = Number(matchWidth.pop());
+								height = Number(matchHeight.pop());
+							}
+						}
 
 						if (!isNaN(width)) {
 							frameStyle += 'width:' + width + 'px;';
@@ -1951,14 +2011,14 @@
 									while (node) {
 										if (node.name == 'iframe') {
 											var DFclassName = node.attributes['lj-class'];
-											if (DFclassName.indexOf(className + '-close') + 1) {
+											if (DFclassName && DFclassName.indexOf(className + '-close') + 1) {
 												if (isCanBeNested && index) {
 													index--;
 												} else {
 													newElement.next = node;
 													break;
 												}
-											} else if (DFclassName.indexOf(className + '-open') + 1) {
+											} else if (DFclassName && DFclassName.indexOf(className + '-open') + 1) {
 												if (isCanBeNested) {
 													index++;
 												} else {

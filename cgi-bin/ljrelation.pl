@@ -15,6 +15,7 @@ use LJ::RelationService;
 # D - spammer
 # W - journal sweeper
 # C - do not receive mass mailing from community
+# J - ban in journalpromo
 #########################
 
 # <LJFUNC>

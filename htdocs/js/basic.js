@@ -2298,3 +2298,31 @@ HTTPReq = {
 		return enc.join("&");
 	}
 };
+
+/**
+ * Object responsible for statistic integration
+ * @param  {jQuery} $ jQuery
+ * @return {Object}   Methods for statistic interation
+ */
+LJ.Stat = (function ($) {
+	var selector = '#hello-world',	// block for statistic addition
+		el = null;					// cached jquery element
+
+	/**
+	 * Adds counter via inserting image on the page
+	 * @param {String} img Image url
+	 */
+	function addCounter( url ) {
+		var img = $('<img />', {
+			src: url,
+			alt: 'lj-counter'
+		});
+		// cache selector
+		el = el || $(selector);
+		el.append(img);
+	}
+
+	return {
+		addCounter: addCounter
+	};
+}(jQuery));

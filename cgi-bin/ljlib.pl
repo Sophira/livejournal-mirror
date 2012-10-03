@@ -1729,7 +1729,7 @@ sub load_props
         next unless defined $keyname{$t};
         next if defined $LJ::CACHE_PROP{$t};
         my $tablename = $t eq "rate" ? "ratelist" : "${t}proplist";
-        $dbr ||= LJ::get_db_reader();
+        $dbr ||= LJ::get_db_writer();
         my $sth = $dbr->prepare("SELECT * FROM $tablename");
         $sth->execute;
         while (my $p = $sth->fetchrow_hashref) {

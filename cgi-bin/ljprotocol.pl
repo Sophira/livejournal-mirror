@@ -3152,107 +3152,148 @@ sub editevent {
         return $res if $res->{type};
     }
 
-    # don't moderate admins, moderators & pre-approved users
-    unless ( LJ::RelationService->is_relation_type_to( $ownerid, $posterid, [ 'A','M','N' ] ) ) {
+    # don't moderate admins, moderators, pre-approved users & unsuspicious users
+    my $is_unsuspicious_user = 0;
+    LJ::run_hook('is_unsuspicious_user_in_comm', $posterid, \$is_unsuspicious_user);
+    my $is_approved_user = LJ::RelationService->is_relation_type_to( $ownerid, $posterid, [ 'A','M','N' ] );
+    unless ( $is_unsuspicious_user || $is_approved_user ) {
+
+        my $entry = LJ::Entry->new($ownerid, jitemid => $itemid);
+        my $modid_old = $entry->prop("mod_queue_id");
+
+        my $need_moderated_old = 0;
+
+        my $suspicious_list_old = {};
+        LJ::run_hook('spam_community_detector', $uowner, { event => $entry->event_html }, \$need_moderated_old, $suspicious_list_old);
 
         my $need_moderated = 0;
+
+        my $suspicious_list = {};
         if ( $uowner->check_non_whitelist_enabled() ) {
-            LJ::run_hook('spam_community_detector', $uowner, $req, \$need_moderated);
+            LJ::run_hook('spam_community_detector', $uowner, $req, \$need_moderated, $suspicious_list);
         }
+        
+        foreach ( keys %$suspicious_list_old ) {
+            delete $suspicious_list->{$_};
+        }
+        $need_moderated = scalar keys %$suspicious_list;
 
-        if ($uowner->{'journaltype'} eq 'C' && $need_moderated && !$flags->{'nomod'}) {
+        if ($uowner->{'journaltype'} eq 'C' && !$flags->{'nomod'}) {
 
-            $req->{'_moderate'}->{'authcode'} = LJ::make_auth_code(15);
+            
+            if ($need_moderated) {
 
-            # create tag <lj-embed> from HTML-tag <embed>
-            LJ::EmbedModule->parse_module_embed($uowner, \$req->{event});
+                $req->{'_moderate'}->{'authcode'} = LJ::make_auth_code(15);
 
-            my $fr = $dbcm->quote(Storable::nfreeze($req));
-            return fail($err, 409) if length($fr) > 200_000;
+                # create tag <lj-embed> from HTML-tag <embed>
+                LJ::EmbedModule->parse_module_embed($uowner, \$req->{event});
 
-            # store
-            my $modid = LJ::alloc_user_counter($uowner, "M");
-            return fail($err, 501) unless $modid;
+                my $fr = $dbcm->quote(Storable::nfreeze($req));
+                return fail($err, 409) if length($fr) > 200_000;
 
-            $uowner->do("INSERT INTO modlog (journalid, modid, posterid, subject, logtime) ".
-                        "VALUES ($ownerid, $modid, $posterid, ?, NOW())", undef,
-                        LJ::text_trim($req->{'subject'}, 30, 0));
-            return fail($err, 501) if $uowner->err;
+                # store
+                my $modid = LJ::alloc_user_counter($uowner, "M");
+                return fail($err, 501) unless $modid;
 
-            $uowner->do("INSERT INTO modblob (journalid, modid, request_stor) ".
-                        "VALUES ($ownerid, $modid, $fr)");
-            if ($uowner->err) {
-                $uowner->do("DELETE FROM modlog WHERE journalid=$ownerid AND modid=$modid");
-                return fail($err, 501);
-            }
+                $uowner->do("INSERT INTO modlog (journalid, modid, posterid, subject, logtime) ".
+                            "VALUES ($ownerid, $modid, $posterid, ?, NOW())", undef,
+                            LJ::text_trim($req->{'subject'}, 30, 0));
+                return fail($err, 501) if $uowner->err;
 
-            # alert moderator(s)
-            my $mods = LJ::load_rel_user($dbh, $ownerid, 'M') || [];
-            if (@$mods) {
-                # load up all these mods and figure out if they want email or not
-                my $modlist = LJ::load_userids(@$mods);
-
-                my @emails;
-                my $ct;
-                foreach my $mod (values %$modlist) {
-                    last if $ct > 20;  # don't send more than 20 emails.
-
-                    next unless $mod->is_visible;
-
-                    LJ::load_user_props($mod, 'opt_nomodemail');
-                    next if $mod->{opt_nomodemail};
-                    next if $mod->{status} ne "A";
-
-                    push @emails,
-                        {
-                            to          => $mod->email_raw,
-                            browselang  => $mod->prop('browselang'),
-                            charset     => $mod->mailencoding || 'utf-8',
-                        };
-
-                    ++$ct;
+                $uowner->do("INSERT INTO modblob (journalid, modid, request_stor) ".
+                            "VALUES ($ownerid, $modid, $fr)");
+                if ($uowner->err) {
+                    $uowner->do("DELETE FROM modlog WHERE journalid=$ownerid AND modid=$modid");
+                    return fail($err, 501);
+                }
+                
+                if ($modid_old) {
+                    $uowner->do("DELETE FROM modlog WHERE journalid=$ownerid AND modid=$modid_old");
+                    return fail($err, 501) if $uowner->err;
+                    $uowner->do("DELETE FROM modblob WHERE journalid=$ownerid AND modid=$modid_old");
+                    return fail($err, 501) if $uowner->err;
                 }
 
-                foreach my $to (@emails) {
-                    # TODO: html/plain text.
-                    my $body = LJ::Lang::get_text(
-                        $to->{'browselang'},
-                        'esn.moderated_submission.body', undef,
-                        {
-                            user        => $u->{'user'},
-                            subject     => $req->{'subject'},
-                            community   => $uowner->{'user'},
-                            modid       => $modid,
-                            siteroot    => $LJ::SITEROOT,
-                            sitename    => $LJ::SITENAME,
-                            moderateurl => "$LJ::SITEROOT/community/moderate.bml?authas=$uowner->{'user'}&modid=$modid",
-                            viewurl     => "$LJ::SITEROOT/community/moderate.bml?authas=$uowner->{'user'}",
+                $entry->set_prop("mod_queue_id", $modid);
+            
+                my $suspicious_text = "";
+                foreach ( sort keys %$suspicious_list ) {
+                    $suspicious_text .= "   - $suspicious_list->{$_}->{type} - $suspicious_list->{$_}->{url}\n";
+                }
+
+                # alert moderator(s)
+                my $mods = LJ::load_rel_user($dbh, $ownerid, 'M') || [];
+                if (@$mods) {
+                    # load up all these mods and figure out if they want email or not
+                    my $modlist = LJ::load_userids(@$mods);
+
+                    my @emails;
+                    my $ct;
+                    foreach my $mod (values %$modlist) {
+                        last if $ct > 20;  # don't send more than 20 emails.
+
+                        next unless $mod->is_visible;
+
+                        LJ::load_user_props($mod, 'opt_nomodemail');
+                        next if $mod->{opt_nomodemail};
+                        next if $mod->{status} ne "A";
+
+                        push @emails,
+                            {
+                                to          => $mod->email_raw,
+                                browselang  => $mod->prop('browselang'),
+                                charset     => $mod->mailencoding || 'utf-8',
+                            };
+
+                        ++$ct;
+                    }
+
+                    foreach my $to (@emails) {
+                        # TODO: html/plain text.
+                        my $body = LJ::Lang::get_text(
+                            $to->{'browselang'},
+                            'esn.moderated_edited_submission.body', undef,
+                            {
+                                user        => $u->{'user'},
+                                subject     => $req->{'subject'},
+                                community   => $uowner->{'user'},
+                                modid       => $modid,
+                                siteroot    => $LJ::SITEROOT,
+                                sitename    => $LJ::SITENAME,
+                                moderateurl => "$LJ::SITEROOT/community/moderate.bml?authas=$uowner->{'user'}&modid=$modid",
+                                viewurl     => "$LJ::SITEROOT/community/moderate.bml?authas=$uowner->{'user'}",
+                                susp_list   => $suspicious_text,
+                            });
+
+                        my $subject = LJ::Lang::get_text($to->{'browselang'},'esn.moderated_edited_submission.subject');
+
+                        LJ::send_mail({
+                            'to'        => $to->{to},
+                            'from'      => $LJ::DONOTREPLY_EMAIL,
+                            'charset'   => $to->{charset},
+                            'subject'   => $subject,
+                            'body'      => $body,
                         });
-
-                    my $subject = LJ::Lang::get_text($to->{'browselang'},'esn.moderated_submission.subject');
-
-                    LJ::send_mail({
-                        'to'        => $to->{to},
-                        'from'      => $LJ::DONOTREPLY_EMAIL,
-                        'charset'   => $to->{charset},
-                        'subject'   => $subject,
-                        'body'      => $body,
-                    });
-                }
-            }
-
-            my $msg = translate($u, "modpost", undef);
-            return {
-                'message' => $msg,
-                xc3 => {
-                    u => $u,
-                    post => {
-                        coords      => $req->{props}->{current_coords},
-                        has_images  => ($req->{event} =~ /pics\.livejournal\.com/ ? 1 : 0),
-                        from_mobile => ($req->{event} =~ /m\.livejournal\.com/ ? 1 : 0)
                     }
                 }
-            };
+
+                my $msg = translate($u, "modpost", undef);
+                return {
+                    'message' => $msg,
+                    xc3 => {
+                        u => $u,
+                        post => {
+                            coords      => $req->{props}->{current_coords},
+                            has_images  => ($req->{event} =~ /pics\.livejournal\.com/ ? 1 : 0),
+                            from_mobile => ($req->{event} =~ /m\.livejournal\.com/ ? 1 : 0)
+                        }
+                    }
+                };
+            } elsif ($modid_old) {
+                $uowner->do("DELETE FROM modlog  WHERE journalid=? and  modid=?", undef, $ownerid, $modid_old);
+                $uowner->do("DELETE FROM modblob WHERE journalid=? and  modid=?", undef, $ownerid, $modid_old);
+                $entry->set_prop("mod_queue_id", undef);
+            }
         }
     }
 

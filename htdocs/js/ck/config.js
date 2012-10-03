@@ -179,7 +179,7 @@ CKEDITOR.editorConfig = function(config) {
 		[ CKEDITOR.CTRL + 89 /*Y*/, 'redo' ],
 		[ CKEDITOR.CTRL + CKEDITOR.SHIFT + 90 /*Z*/, 'redo' ],
 
-		[ CKEDITOR.CTRL + 76 /*L*/, 'link' ],
+		[ CKEDITOR.CTRL + 76 /*L*/, 'LJLink2' ],
 
 		[ CKEDITOR.CTRL + 66 /*B*/, 'bold' ],
 		[ CKEDITOR.CTRL + 73 /*I*/, 'italic' ],
