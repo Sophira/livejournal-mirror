@@ -161,6 +161,7 @@ sub clean {
     my %remove_attribs = ($opts->{'remove_attribs'}) ?
         (map {$_ => 1} @{ $opts->{'remove_attribs'} }) : ();
     my $remove_positioning = $opts->{'remove_positioning'} || 0;
+    my $placeholders = $opts->{'placeholders'} || 0;
     my $target = $opts->{'target'} || '';
     my $ljrepost_allowed = ($opts->{ljrepost_allowed} && ! $opts->{'textonly'}) || 0;
     my $cut_retrieve     =  $opts->{cut_retrieve} || 0;
@@ -661,7 +662,7 @@ sub clean {
             my $clean_res = eval {
                 my $cleantag = $tag;
                 $cleantag =~ s/^.*://s;
-                $cleantag =~ s/[^\w]//g;
+                $cleantag =~ s/[^\w]//go;
                 no strict 'subs';
                 my $meth = "CLEAN_$cleantag";
                 my $seq   = $token->[3];  # attribute names, listref
@@ -751,16 +752,18 @@ sub clean {
                     my $url = LJ::ehtml($cut);
                     $newdata .= "<div>" if $tag eq "div";
                     my $data_ids = "";
-                    if ($opts->{entry_url}) {
+                    if ($opts->{entry_url} && $opts->{entry_url} ne '#') {
                         my $entry = LJ::Entry->new_from_url($opts->{entry_url});
                         my $ditemid = 0;
                         my $journalid = $entry->journalid;
                         if ($entry && $entry->valid) {
                             $ditemid = $entry->ditemid;
                         }
-                        $data_ids = qq(data-widget='ljcut' data-widget-options='{ "journalid": "$journalid", "ditemid": "$ditemid", "cutid": "$cutcount" }');
+                        $data_ids = qq(data-widget='ljcut' data-widget-options='{ "journalid": "$journalid", "ditemid": "$ditemid", "cutid": "$cutcount", "placeholders" : $placeholders }');
                     }
-                    $newdata .= "<b $data_ids class=\"ljcut-link lj-widget\">(&nbsp;<a href=\"$url#cutid$cutcount\" class=\"ljcut-link-expand\">$etext</a><a href=\"$url#cutid$cutcount\" class=\"ljcut-link-collapse\">".Encode::decode_utf8(LJ::Lang::ml("ljcut.collapse"))."</a>&nbsp;)</b>";
+                    $newdata .= "<b $data_ids class=\"ljcut-link lj-widget\"><span class='ljcut-brace'>(&nbsp;</span><span class=\"ljcut-decor\"><a href=\"$url#cutid$cutcount\" class=\"ljcut-link-expand\">$etext</a>";
+                    $newdata .= "<a href=\"$url#cutid$cutcount\" class=\"ljcut-link-collapse\">".Encode::decode_utf8(LJ::Lang::ml("ljcut.collapse"))."</a>" unless $opts->{no_ljcut_collapse};
+                    $newdata .= "</span><span class='ljcut-brace'>&nbsp;)</span></b>";
                     $newdata .= "</div>" if $tag eq "div";
                     unless ($opts->{'cutpreview'}) {
                         push @eatuntil, $tag;
@@ -960,7 +963,7 @@ sub clean {
 
                     # IE sucks:
                     my $nowhite = $hash->{$attr};
-                    $nowhite =~ s/[\s\x0b]+//g;
+                    $nowhite =~ s/[\s\x0b]+//go;
                     if ($nowhite =~ /(?:jscript|livescript|javascript|vbscript|about):/ix) {
                         delete $hash->{$attr};
                         next;
@@ -1130,8 +1133,20 @@ sub clean {
                             $img_bad = 1;
                         }
 
-                    }
-                    else {
+                    } elsif ( my $maxwidth = $opts->{'maximgwidth'} ) {
+                        $img_bad = 0;
+
+                        my $width = $hash->{'width'};
+                        if ( $width && $width !~ /\%$/ ) {
+                            $width =~ s/\D//g;
+                            if ( int $width > $maxwidth ) {
+                                delete $hash->{'width'};
+                                delete $hash->{'height'};
+                            }
+                        }
+
+                        #$img_bad = 1 if ( $opts->{'img_placeholders'} );
+                    } else {
                         $img_bad = 0;
                     }
 
@@ -1684,7 +1699,7 @@ sub clean {
     # after the <table> was closed) causing unnecessary problems
     if (ref $opts->{'autoclose'} eq "ARRAY") {
         foreach my $tag (@{$opts->{'autoclose'}}) {
-            next if $tag =~ /^(?:tr|td|th|tbody|thead|tfoot|li)$/;
+            next if $tag =~ /^(?:tr|td|th|tbody|thead|tfoot|li)$/o;
             if ($opencount{$tag}) {
                 $newdata .= "</$tag>" x $opencount{$tag};
             }
@@ -1823,9 +1838,9 @@ sub ExpandLJURL
          'faq' => sub {
              my $id = shift()+0;
              if ($id) {
-                 return "support/faqbrowse.bml?faqid=$id";
+                 return "support/faq/$id.html";
              } else {
-                 return "support/faq.bml";
+                 return "support/faq/";
              }
          },
          'memories' => sub {

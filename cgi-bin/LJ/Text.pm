@@ -169,8 +169,10 @@ sub truncate {
     cluck "unknown options: " . Dumper(\%opts)
         if %opts;
 
-    cluck "not actually truncating"
-        unless $bytes || $chars;
+    unless ( $bytes || $chars ) {
+        cluck "not actually truncating: no 'bytes' or 'chars' " .
+            "parameter passed to LJ::Text::truncate";
+    }
 
     $str = $class->truncate_to_bytes($str, $bytes) if $bytes;
     $str = $class->truncate_to_chars($str, $chars) if $chars;

@@ -890,6 +890,7 @@ sub render_options_block {
             return '' unless LJ::is_enabled("paid_repost");
             
             my ($paid_repost_on, $budget) = ($opts->{paid_repost_on}, $opts->{current_repost_budget});
+            my $limit_sc = $opts->{repost_limit_sc} || $LJ::PAYREPOST_MIN_SOCIAL_CAPITAL;
 
             my $out = '';
 
@@ -937,6 +938,21 @@ sub render_options_block {
             $out .= qq{<span class="b-updatepage-paidrepost-fields">};
             $out .= qq{<label for="repost_budget" class="b-updatepage-paidrepost-label">$label</label>};
             $out .= qq{<span class="b-updatepage-paidrepost-budget">$field</span>};
+            $out .= qq{</span>};
+
+            my $limit_sc_label = LJ::Lang::ml('talk.post.paidrepost.limit_sc');    
+            my $limit_sc_field = LJ::html_text({
+                'name'     => 'repost_limit_sc',
+                'value'    => $limit_sc,
+                'id'       => 'repost_limit_sc',
+                'tabindex' => '225',
+                'size'     => '10',
+                'raw'      => "autocomplete='off'",
+            });
+
+            $out .= qq{<span class="b-updatepage-paidrepost-fields">};
+            $out .= qq{<label class="b-updatepage-paidrepost-label">$limit_sc_label</label>};
+            $out .= qq{<span class="b-updatepage-paidrepost-cs">$limit_sc_field</span>};
             $out .= qq{</span>};
             
             return $out;

@@ -436,6 +436,7 @@ sub common_template_params {
         'remote_wallet_link'     => $remote_wallet_link,
         'remote_ljphoto_url'     => $remote_ljphoto_url,
         'remote_can_use_ljphoto' => $remote_can_use_ljphoto,
+        'remote_is_sup'          => $remote_is_sup,
 
         'need_loginform'              => $need_loginform,
         'loginform_returnto'          => $loginform_returnto,

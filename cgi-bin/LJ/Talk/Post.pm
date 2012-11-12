@@ -136,16 +136,23 @@ sub enter_comment {
     $talkprop{'picture_keyword'} = $comment->{picture_keyword};
 
     $talkprop{'opt_preformatted'} = $comment->{preformat} ? 1 : 0;
+
     my $opt_logcommentips = $journalu->{'opt_logcommentips'};
-    if ($opt_logcommentips eq "A" ||
-        ($opt_logcommentips eq "S" && $comment->{usertype} !~ /^(?:user|cookieuser)$/))
-    {
-        if (LJ::is_web_context()) {
-            my $ip = LJ::Request->remote_ip;
-            my $forwarded = LJ::Request->header_in('X-Forwarded-For');
-            $ip = "$forwarded, via $ip" if $forwarded && $forwarded ne $ip;
-            $talkprop{'poster_ip'} = $ip;
+
+    if (LJ::is_web_context()) {
+        my $ip = LJ::Request->remote_ip;
+        my $forwarded = LJ::Request->header_in('X-Forwarded-For');
+        $ip = "$forwarded, via $ip" if $forwarded && $forwarded ne $ip;
+
+        if ($opt_logcommentips eq "A" ||
+            ($opt_logcommentips eq "S" && $comment->{usertype} !~ /^(?:user|cookieuser)$/))
+        {
+                $talkprop{'poster_ip'} = $ip;
         }
+
+        my $uniq = LJ::UniqCookie->current_uniq();
+        $talkprop{'uniq'} = $uniq; 
+        $talkprop{'poster_ip_force'} = $ip; 
     }
 
     # remove blank/0 values (defaults)

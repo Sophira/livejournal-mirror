@@ -184,6 +184,13 @@ $maint{'clean_caches'} = sub
     }
     print "    deleted $cnt_delete\n";
 
+    print "-I- Remove outdated sessions.\n";
+    LJ::disconnect_dbs();
+    foreach my $c (@LJ::CLUSTERS) {
+        my $dbh = LJ::get_cluster_master($c);
+        $dbh->do("DELETE FROM sessions WHERE timeexpire < UNIX_TIMESTAMP() LIMIT 100000");
+    }
+
     LJ::run_hooks('extra_cache_clean');
     LJ::disconnect_dbs();
 

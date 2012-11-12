@@ -292,7 +292,7 @@ sub __create_repost {
                                                   qty              => $cost,
                                                   );
         unless($blid){
-            return $fail->($err || LJ::API::Error->get_error('repost_blocking_error'));
+            return $fail->(LJ::API::Error->get_error('repost_blocking_error'));
         }
     }
 
@@ -343,11 +343,11 @@ sub get_status {
     my $result = { 'count'    =>  __get_count($entry_obj->journal, $entry_obj->jitemid), 
                    'reposted' => $reposted,
                    'paid'     => $paid,
-                   'cost'     => $cost,
+                   'cost'     => LJ::delimited_number( $cost ),
                  };
 
     if ($is_owner && $paid) {
-        $result->{budget} = $entry_obj->repost_budget;
+        $result->{budget} = LJ::delimited_number( $entry_obj->repost_budget );
     }
 
     return $result;    

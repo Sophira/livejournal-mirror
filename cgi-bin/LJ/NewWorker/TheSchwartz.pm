@@ -27,6 +27,7 @@ sub help {
         "-r | --schwartz-role=role  connect to db with specified role (defualt is '$schwartz_role')\n";
 }
 
+sub find_job_limit  { }
 sub capabilities    { }
 sub on_idle         { }
 sub on_afterwork    { }
@@ -47,6 +48,7 @@ sub _init {
 
     $sclient = LJ::theschwartz({ role => $schwartz_role }) or die "Could not get schwartz client";
     $sclient->set_verbose( $class->schwartz_verbose_handler || $class->verbose );
+    $sclient->set_find_job_limit( $class->find_job_limit );
     foreach my $classname ($class->capabilities) {
         warn "The Schwartz run(): can_do('$classname').\n" if $verbose;
         $sclient->can_do($classname);

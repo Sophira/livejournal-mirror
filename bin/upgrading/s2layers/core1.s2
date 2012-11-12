@@ -635,6 +635,18 @@ class Page
 
     function builtin get_alien_post( string url ) : Entry
     "Returns any public entry from any journal having give_posts_to_alien prop. Recipient must have get_alien_posts prop";
+
+    function builtin viewer_sees_journalpromo() : bool
+    "Return true if journal promo is not empty.";
+        
+    function builtin is_journalpromo() : bool
+    "Return true if journal promo is not empty and was not shown.";
+
+    function builtin journalpromo() : string
+    "Returns rendered journal promo.";
+
+    function builtin render_journalpromo() : bool
+    "Print rendered journal promo and return true if journal promo is not empty.";
 }
 
 class TagsPage extends Page

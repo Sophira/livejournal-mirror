@@ -17,7 +17,7 @@ jQuery.fn.ljAddContextualPopup = function(){
  * - if two arguments have been provided: setting selection from startPos to endPos
  * - if one argument: set cursor to startPos
  * - if no arguments: get selection of field
- * 
+ *
  * @param  {number} startPos Start caret position
  * @param  {number} endPos   End caret position.
  */
@@ -46,6 +46,12 @@ jQuery.fn.caret = function (startPos, endPos) {
 	} else {
 		return LJ.DOM.getSelection($el);
 	}
+};
+
+
+jQuery.fn.isCollapsed = function() {
+	var selection = LJ.DOM.getSelection(this.get(0));
+	return selection.start === selection.end;
 };
 
 jQuery.fn.hourglass = function(xhr){
@@ -114,7 +120,7 @@ jQuery.fn.placeholder = (function()
 			return this.each(function() {
 				if (this.getAttribute("placeholder")) {
 					var $this = jQuery(this);
-					
+
 					if (!$this.data('jQuery-has-placeholder')) {
 						$this.focus(check_focus).blur(check_blur);
 
@@ -449,22 +455,119 @@ jQuery.fn.selectFix = function () {
 
 /**
  * Parse lj-likes plugin
- * It parse all elements with class 'lj-like', uncomment their content
+ * It parses all elements with class 'lj-like', uncomment their content
  * and parse with LiveJournal.parseLikeButtons()
+ *
+ * @todo Move plugin to separate file
  */
 ;(function ($) {
 	'use strict';
 
-	$.fn.ljLikes = function () {
+	// empty collection that will contain not parsed lj-like elements
+	// that are currently on the page
+	var _likes = $();
 
-		return $(this).each(function () {
-			$(this).find('.lj-like').each(function () {
-				$(this).html(function (html) {
-					// remove comments node
-					return $.trim( $(this).html().replace(/<!--([\s\S]*?)-->/mig, '$1') );
-				});
-				LiveJournal.parseLikeButtons($(this));
-			});
+	/**
+	 * Remove comments inside node and parse likes
+	 * @param  {Object} node jQuery node
+	 * @return {Object}      jQuery node
+	 */
+	function parse(node) {
+		var html = node.html();
+
+		html = $.trim( html.replace(/<!--([\s\S]*?)-->/mig, '$1') );
+		LiveJournal.parseLikeButtons( node.html(html) );
+
+		return node;
+	}
+
+	/**
+	 * handler for scroll event for lazy loading of likes
+	 */
+	function lazyLoad() {
+		var screenableLikes = null;
+
+		if ( _likes.length === 0 ) {
+			return;
+		}
+
+		// find likes that are on the screen
+		screenableLikes = _likes.filter(':screenable');
+
+		if ( !screenableLikes.length ) {
+			return;
+		}
+
+		screenableLikes.each(function () {
+			var node = $(this);
+
+			// move parsing to the end of the event loop
+			setTimeout(function () {
+				parse( node );
+			}, 0);
 		});
+
+		// remove handled likes from the queue
+		_likes = _likes.not(screenableLikes);
+	}
+
+	// after document ready, cuz LiveJournal namespace is not defined yet
+	$(function () {
+		// handle scroll event, for mobile devices we don't threshold lazyLoad
+		// because it fires only at the end of scrolling (iOS)
+		$(window).on('scroll', LJ.Support.touch ? lazyLoad : LJ.threshold(lazyLoad, 1000));
+	});
+
+	$.fn.ljLikes = function (opts) {
+		var likes = null;
+
+		if ( this.length === 0 ) {
+			return this;
+		}
+
+		opts = $.extend({}, $.fn.ljLikes.defaults, opts || {});
+
+		// find elements with lj-likes class
+		likes = this.find('.lj-like')
+			.add( this.filter('.lj-like') )
+			// filter all previously used elements to prevent double parsing
+			.filter(function () {
+				return !this.used;
+			});
+
+		if (likes.length === 0) {
+			return this;
+		}
+
+		// mark all items as used
+		likes.each(function () {
+			this.used = true;
+		});
+
+		if ( !opts.lazy ) {
+			// not lazy: immediately parsing
+			likes.each(function () {
+				var node = $(this);
+
+				// parse should be deferred
+				setTimeout(function () {
+					parse( node );
+				}, 0);
+			});
+		} else {
+			// add likes for further lazy loading
+			_likes = _likes.add( likes );
+			// parse all added screenable elements
+			lazyLoad();
+		}
+
+		return this;
+	};
+
+	// default plugin options
+	$.fn.ljLikes.defaults = {
+		// lazy loading of likes - will be parsed when becomes screenable
+		// if false - we will parse likes at the moment
+		lazy: true
 	};
 }(jQuery));

@@ -362,7 +362,7 @@ sub get_layer_owners {
     # see what we can get out of memcache first
     my @keys;
     push @keys, [ $_, "s2lo:$_" ] foreach @lids;
-    my $memc = LJ::MemCache::get_multi(@keys);
+    my $memc = LJ::MemCacheProxy::get_multi(@keys);
     foreach my $lid (@lids) {
         if (my $uid = $memc->{"s2lo:$lid"}) {
             delete $need{$lid};
@@ -380,7 +380,7 @@ sub get_layer_owners {
         foreach my $row (@$res) {
             # save info and add to memcache
             $ret->{$row->[0]} = $row->[1];
-            LJ::MemCache::add([ $row->[0], "s2lo:$row->[0]" ], $row->[1]);
+            LJ::MemCacheProxy::add([ $row->[0], "s2lo:$row->[0]" ], $row->[1]);
         }
     }
 
@@ -405,10 +405,13 @@ sub load_layers {
     my @from_db;   # lid, lid, lid, ...
     my @need_memc; # lid, lid, lid, ...
 
+    my $sysid = LJ::get_userid('system');
+    my $us_ls = LJ::S2::get_layer_owners(@lids);
     # initial sweep, anything loaded for less than 60 seconds is golden
     # if dev server, only cache layers for 1 second
     foreach my $lid (@lids) {
-        if (my $loaded = S2::layer_loaded($lid, $LJ::IS_DEV_SERVER ? 1 : 60)) {
+        my $tmo = $us_ls->{$lid}->{userid} == $sysid ? 3600 : 60;
+        if (my $loaded = S2::layer_loaded($lid, $LJ::IS_DEV_SERVER ? 1 : $tmo)) {
             # it's loaded and not more than 60 seconds load, so we just go
             # with it and assume it's good... if it's been recompiled, we'll
             # figure it out within the next 60 seconds
@@ -438,9 +441,7 @@ sub load_layers {
     return $maxtime unless @from_db;
 
     # figure out who owns what we need
-    my $us = LJ::S2::get_layer_owners(@from_db);
-    my $sysid = LJ::get_userid('system');
-
+    my $us = LJ::S2::get_layer_owners(@from_db); 
     # break it down by cluster
     my %bycluster; # cluster => [ lid, lid, ... ]
     foreach my $lid (@from_db) {
@@ -2871,6 +2872,8 @@ sub _get_Entry_ebox_args {
 }
 
 sub Entry__viewer_sees_ebox {
+    return 0 if Page__viewer_sees_journalpromo(@_);
+
     my $args = _get_Entry_ebox_args(@_);
     return $args ? LJ::should_show_ad($args):0;
 }
@@ -2929,6 +2932,9 @@ sub journal_current_datetime {
     $hour = $neg ? "-$hour" : "$hour";
     $timezone = $hour . $partial_hour;
 
+    return $u->{'__cached_s2_tz_' . $timezone} 
+        if $u->{'__cached_s2_tz_' . $timezone};
+    
     my $now = DateTime->now( time_zone => $timezone );
     $ret->{year} = $now->year;
     $ret->{month} = $now->month;
@@ -2941,6 +2947,7 @@ sub journal_current_datetime {
     # so first we make DT's be 0-based/Sun-Sat, then shift it up to 1-based.
     $ret->{_dayofweek} = ($now->day_of_week % 7) + 1;
 
+    $u->{'__cached_s2_tz_' . $timezone} = $ret;
     return $ret;
 }
 
@@ -3890,7 +3897,19 @@ sub UserLite__ljuser
         $params->{link_color} = $link_color->{as_string};
     }
 
-    return LJ::ljuser($UserLite->{_u}, $params );
+    my $u = $UserLite->{_u};
+    my $key .= 'c:';
+       $key .= 'sa:' .  $params->{side_alias} if $params->{side_alias};
+       $key .= ':ij:' . $params->{in_journal} if $params->{in_journal};
+       $key .= ':lc:' . $params->{link_color} if $params->{link_color};
+
+    my $ljuser = $u->{'_cache_ljuser'}->{$key};
+    if (!$ljuser) {
+        $ljuser = LJ::ljuser($u, $params );
+        $u->{'_cache_ljuser'}->{$key} = $ljuser;
+    }
+
+    return $ljuser;
 }
 
 sub UserLite__get_link
@@ -4003,10 +4022,20 @@ sub _Entry__get_link
     my $journalu = $this->{'journal'}->{'_u'};
     my $poster   = $this->{'poster'}->{'username'};
     my $posteru  = $this->{'poster'}->{'_u'};
-    my $remote = LJ::get_remote();
+    my $remote   = $this->{'remote'};
+    unless ($remote) {
+        $remote = LJ::get_remote();
+        $this->{'remote'} = $remote;
+    }
+
     my $null_link = { '_type' => 'Link', '_isnull' => 1 };
     my $real_user = $this->{'real_journalid'} ? LJ::want_user($this->{'real_journalid'}) : undef;
-    my $entry = LJ::Entry->new($journalu, ditemid => $this->{'itemid'});
+
+    my $entry = $this->{'_cache_entry_obj'}; 
+    if (!$entry) {
+        $entry = LJ::Entry->new($journalu, ditemid => $this->{'itemid'});
+        $this->{'_cache_entry_obj'} = $entry;
+    }
 
     my $link_override;
     LJ::run_hooks( 'override_s2_link', $journalu, $entry, $key,
@@ -4040,9 +4069,7 @@ sub _Entry__get_link
             }
         }
         return $null_link unless LJ::u_equals($remote, $real_user);
-    }
-
-    if ($key eq "edit_entry") {
+    } elsif ($key eq "edit_entry") {
         return $null_link if (LJ::is_enabled('entry_reference') && $this->{'real_itemid'});
         return $null_link unless $remote &&
                                     ( LJ::u_equals( $remote, $journalu ) ||
@@ -4071,14 +4098,10 @@ sub _Entry__get_link
         return LJ::S2::Link("$LJ::SITEROOT/edittags.bml?journal=$journal&amp;itemid=$this->{'itemid'}",
                         $ctx->[S2::PROPS]->{"text_edit_tags"},
                         LJ::S2::Image("$LJ::IMGPREFIX/btn_edittags.gif", 24, 24));
-    }
-
-    if ($key eq "tell_friend") {
+    } elsif ($key eq "tell_friend") {
         # after share this! has been nuked, this one is gone too
         return $null_link;
-    }
-
-    if ( $key eq 'share') {
+    } elsif ( $key eq 'share') {
         return $null_link
             unless LJ::is_enabled('sharing') && $entry->is_public;
 
@@ -4090,28 +4113,20 @@ sub _Entry__get_link
         $link->{'_raw'} = LJ::Share->render_js( { 'entry' => $entry } );
 
         return $link;
-    }
-
-    if ($key eq "share_facebook") {
-
+    } elsif ($key eq "share_facebook") {
         return $null_link unless $entry->security eq 'public';
         my $entry_url = LJ::eurl($entry->url);
         my $url = "http://www.facebook.com/sharer.php?u=$entry_url";
         my $link = LJ::S2::Link($url, $ctx->[S2::PROPS]->{"text_share_facebook"}, LJ::S2::Image("$LJ::IMGPREFIX/btn_facebook.gif", 24, 24));
         return $link;
-    }
-
-    if ($key eq "share_twitter") {
-
+    } elsif ($key eq "share_twitter") {
         return $null_link unless $entry->security eq 'public';
         my $post_id = $entry->journalid . ':' . $entry->ditemid;
         my $entry_url = LJ::eurl($entry->url);
         my $entry_title = LJ::eurl($entry->subject_text);
         my $link = LJ::S2::Link("http://twitter.com/share?url=$entry_url&text=$entry_title", $ctx->[S2::PROPS]->{"text_share_twitter"}, LJ::S2::Image("$LJ::IMGPREFIX/twitter.gif", 24, 24));
         return $link;
-    }
-
-    if ($key eq "share_email") {
+    } elsif ($key eq "share_email") {
 
         return $null_link unless $entry->security eq 'public';
         my $entry_url = LJ::eurl($entry->url);
@@ -4119,9 +4134,7 @@ sub _Entry__get_link
         my $url = "http://api.addthis.com/oexchange/0.8/forward/email/offer?username=internal&url=$entry_url&title=$entry_title";
         my $link = LJ::S2::Link($url, $ctx->[S2::PROPS]->{"text_share_email"}, LJ::S2::Image("$LJ::IMGPREFIX/btn_email.gif", 24, 24));
         return $link;
-    }
-
-    if ($key eq "facebook_like") {
+    } elsif ($key eq "facebook_like") {
 
         return $null_link unless $entry->security eq 'public';
         my $entry_url = LJ::eurl($entry->url);
@@ -4129,16 +4142,12 @@ sub _Entry__get_link
         my $link = LJ::S2::Link($url, 'caption unused', LJ::S2::Image("$LJ::IMGPREFIX/btn_facebook.gif", 24, 24));
         $link->{_raw} = qq|<iframe src="$url" scrolling="no" frameborder="0" style="border:none;overflow:hidden;width:150px;height:21px;" allowTransparency="true"></iframe>|;
         return $link;
-    }
-
-    if ($key eq "mem_add") {
+    } elsif ($key eq "mem_add") {
         return $null_link if ($LJ::DISABLED{'memories'} || $this->{delayedid});
         return LJ::S2::Link("$LJ::SITEROOT/tools/memadd.bml?journal=$journal&amp;itemid=$this->{'itemid'}",
                             $ctx->[S2::PROPS]->{"text_mem_add"},
                             LJ::S2::Image("$LJ::IMGPREFIX/btn_memories.gif", 24, 24));
-    }
-
-    if ($key eq "nav_prev") {
+    } elsif ($key eq "nav_prev") {
         my $options = { 'use_sticky' => 1,
                         'itemid'     => int($this->{'itemid'}/256),
                         '_preview'   => $this->{'_preview'},
@@ -4153,9 +4162,7 @@ sub _Entry__get_link
         } else {
             return $null_link;
         }
-    }
-
-    if ($key eq "nav_next") {
+    } elsif ($key eq "nav_next") {
         my $options = { 'use_sticky' => 1,
                         'itemid'     => int($this->{'itemid'}/256),
                       };
@@ -4169,46 +4176,55 @@ sub _Entry__get_link
         } else {
             return $null_link;
         }
-    }
-
-    if ($key eq "flag") {
+    } elsif ($key eq "flag") {
         return $null_link unless LJ::is_enabled("content_flag");
 
         return $null_link unless $remote && $remote->can_see_content_flag_button( content => $entry );
         return LJ::S2::Link(LJ::ContentFlag->adult_flag_url($entry),
                             $ctx->[S2::PROPS]->{"text_flag"},
                             LJ::S2::Image("$LJ::IMGPREFIX/button-flag.gif", 24, 24));
-    }
-
-    if ($key eq "give_button") {
+    } elsif ($key eq "give_button") {
         return $null_link;
     }
 
-    my $etypeid          = 'LJ::Event::JournalNewComment'->etypeid;
-    my $newentry_etypeid = 'LJ::Event::JournalNewEntry'->etypeid;
-
-    my ($newentry_sub) = $remote ? $remote->has_subscription(
-                                                             journalid      => $journalu->id,
-                                                             event          => "JournalNewEntry",
-                                                             require_active => 1,
-                                                             ) : undef;
-
-    my $newentry_auth_token;
-
-    if ($newentry_sub) {
-        $newentry_auth_token = LJ::Auth->ajax_auth_token($remote, '/__rpc_esn_subs',
-                                                         subid     => $newentry_sub->id,
-                                                         action    => 'delsub',);
-    } elsif ($remote) {
-        $newentry_auth_token = LJ::Auth->ajax_auth_token($remote, '/__rpc_esn_subs',
-                                                         journalid => $journalu->id,
-                                                         action    => 'addsub',
-                                                         etypeid   => $newentry_etypeid,);
+    my $etypeid = $this->{'__jnc_cache'};
+    unless ($etypeid) {
+        $etypeid = 'LJ::Event::JournalNewComment'->etypeid;
+        $this->{'__jnc_cache'} = $etypeid;
     }
+
+    my $__get_newentry_info = sub {
+        my $newentry_etypeid = 'LJ::Event::JournalNewEntry'->etypeid;
+            
+        my $newentry_sub = $this->{__newentry_sub}->{$journalu->id};
+        if ($remote && !$newentry_sub) { 
+            ($newentry_sub) = $remote->has_subscription( journalid      => $journalu->id,
+                                                        event          => "JournalNewEntry",
+                                                        require_active => 1,);
+    
+            $this->{__newentry_sub}->{$journalu->id} = $newentry_sub;
+        }
+    
+        my $newentry_auth_token;
+    
+        if ($newentry_sub) {
+            $newentry_auth_token = LJ::Auth->ajax_auth_token($remote, '/__rpc_esn_subs',
+                                                             subid     => $newentry_sub->id,
+                                                             action    => 'delsub',);
+        } elsif ($remote) {
+            $newentry_auth_token = LJ::Auth->ajax_auth_token($remote, '/__rpc_esn_subs',
+                                                             journalid => $journalu->id,
+                                                             action    => 'addsub',
+                                                             etypeid   => $newentry_etypeid,);
+        }
+        
+        return ($newentry_sub, $newentry_auth_token);
+    };
 
     if ($key eq "watch_comments") {
         return $null_link if $LJ::DISABLED{'esn'};
         return $null_link unless $remote && $remote->can_use_esn;
+        
         return $null_link if $remote->has_subscription(
                                                        journal => $journalu,
                                                        event   => "JournalNewComment",
@@ -4217,6 +4233,8 @@ sub _Entry__get_link
                                                        require_active => 1,
                                                        );
 
+        my ($newentry_sub, $newentry_auth_token) = $__get_newentry_info->();
+
         my $auth_token = LJ::Auth->ajax_auth_token($remote, '/__rpc_esn_subs',
                                                    journalid => $journalu->id,
                                                    action    => 'addsub',
@@ -4224,6 +4242,7 @@ sub _Entry__get_link
                                                    arg1      => $this->{itemid},
                                                    );
 
+        my $newentry_etypeid = 'LJ::Event::JournalNewEntry'->etypeid;
         return LJ::S2::Link("$LJ::SITEROOT/manage/subscriptions/entry.bml?journal=$journal&amp;itemid=$this->{'itemid'}",
                             $ctx->[S2::PROPS]->{"text_watch_comments"},
                             LJ::S2::Image("$LJ::IMGPREFIX/btn_track.gif", 24, 24, 'Track This',
@@ -4250,10 +4269,12 @@ sub _Entry__get_link
         my $subscr = $subs[0];
         return $null_link unless $subscr;
 
+        my ($newentry_sub, $newentry_auth_token) = $__get_newentry_info->();
         my $auth_token = LJ::Auth->ajax_auth_token($remote, '/__rpc_esn_subs',
                                                    subid  => $subscr->id,
                                                    action => 'delsub');
 
+        my $newentry_etypeid = 'LJ::Event::JournalNewEntry'->etypeid;
         return LJ::S2::Link("$LJ::SITEROOT/manage/subscriptions/entry.bml?journal=$journal&amp;itemid=$this->{'itemid'}",
                             $ctx->[S2::PROPS]->{"text_unwatch_comments"},
                             LJ::S2::Image("$LJ::IMGPREFIX/btn_tracking.gif", 24, 24, 'Untrack this',
@@ -5343,5 +5364,72 @@ sub _is_secure_resource {
                             (?:js|css|tmpl)   # extension
                         $/x;
 }
+
+sub Page__viewer_sees_journalpromo {
+    my ($ctx, $this) = @_;
+
+    return 0 if $LJ::S2::CURR_PAGE->{'view'} !~ /^recent|tag|entry|day$/;
+
+    my $opts;
+    
+    $opts->{'remote'} = LJ::get_remote();
+    $opts->{'journal'} = $LJ::S2::CURR_PAGE->{'journal'}->{'_u'};
+
+    my $ret = 0;
+    eval { $ret = "LJ::Widget::JournalPromo"->is_visible(%$opts); };
+
+    if ($@) {
+        warn "Error when Page::viewer_sees_journalpromo() try to call LJ::Widget::JournalPromo->is_visible() from LJ::S2:\n$@\n";
+        return 0;   
+    }
+    return $ret;
+}
+
+sub Page__is_journalpromo {
+
+    return 0 if $LJ::REQ_GLOBAL{'journalpromo_showed'};
+    
+    return Page__viewer_sees_journalpromo(@_);
+}
+
+sub Page__journalpromo {
+    my ($ctx, $this) = @_;
+
+    my $opts;
+    
+    $opts->{'remote'} = LJ::get_remote();
+    $opts->{'journal'} = $LJ::S2::CURR_PAGE->{'journal'}->{'_u'};
+
+    my $ret = '';
+    
+    eval { $ret = "LJ::Widget::JournalPromo"->render(%$opts); };
+
+    if ($@) {
+        warn "Error when Page::journalpromo() try to call LJ::Widget::JournalPromo->render() from LJ::S2:\n$@\n";
+        return '';
+    }
+
+    return $ret;
+}
+
+sub Page__render_journalpromo {
+    my ($ctx, $this) = @_;
+
+    return 0 if $LJ::S2::CURR_PAGE->{'view'} !~ /^recent|tag|entry|day$/;
+
+    return 0 if $LJ::REQ_GLOBAL{'journalpromo_showed'}++;
+    
+    my $rendered = Page__journalpromo($ctx, $this);
+    $S2::pout->($rendered);
+
+    return $rendered ? 1 : 0;
+}
+
+*RecentPage__render_journalpromo = \&Page__render_journalpromo;
+*EntryPage__render_journalpromo = \&Page__render_journalpromo;
+*ReplyPage__render_journalpromo = \&Page__render_journalpromo;
+*DayPage__render_journalpromo = \&Page__render_journalpromo;
+
+sub FriendsPage__render_journalpromo {0}
 
 1;

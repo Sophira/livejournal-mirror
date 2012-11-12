@@ -477,6 +477,7 @@ sub t_post_fake_entry {
 
     # pass-thru opts
     $req{usejournal} = $opts{usejournal} if $opts{usejournal};
+
     $flags->{usejournal_okay} = $opts{usejournal_okay} if $opts{usejournal_okay};
 
     LJ::do_request(\%req, \%res, $flags);
@@ -484,7 +485,9 @@ sub t_post_fake_entry {
     die "Error posting: $res{errmsg}" unless $res{'success'} eq "OK";
     my $jitemid = $res{itemid} or die "No itemid";
 
-    return LJ::Entry->new($u, jitemid => $jitemid);
+    my $uowner = $opts{usejournal} ? LJ::load_user($opts{usejournal}) : $u;
+
+    return LJ::Entry->new($uowner, jitemid => $jitemid);
 }
 
 package LJ::Entry;

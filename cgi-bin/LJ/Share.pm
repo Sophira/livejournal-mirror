@@ -77,11 +77,12 @@ sub request_resources {
 sub render_js {
     my ( $class, $opts ) = @_;
 
+    my $cache_key;
     if ( my $entry = delete $opts->{'entry'} ) {
-        $opts->{'title'}        = LJ::ejs( LJ::Text->drop_html($entry->subject_raw) );
+        $opts->{'title'}        = LJ::ejs( $entry->subject_drop_html );
         $opts->{'url'}          = $entry->url;
 
-        if ($opts->{'title'}){
+        if ($opts->{'title'}) {
             $opts->{'title'}       = Encode::decode_utf8($opts->{'title'});
             $opts->{'title'}       =~ s/\r|\n|\x85|\x{2028}|\x{2029}//gsm;
             $opts->{'title'}       = Encode::encode_utf8($opts->{'title'});
@@ -90,9 +91,10 @@ sub render_js {
     }
 
     my $opts_out = LJ::JSON->to_json($opts);
-
-    return
+    my $result_text = 
         qq{<script type="text/javascript">LJShare.link($opts_out);</script>};
+
+    return $result_text;
 }
 
 1;

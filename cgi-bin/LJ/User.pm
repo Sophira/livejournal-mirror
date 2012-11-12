@@ -454,6 +454,12 @@ sub preload_props {
     LJ::load_user_props($u, @_);
 }
 
+sub prefetch_subscriptions {
+    my $u = shift;
+    my @subs = LJ::Subscription->find($u, prefetch => 1); 
+    $u->{__subscriptions} = \@subs;
+}
+
 sub readonly {
     my $u = shift;
     return LJ::get_cap($u, "readonly");
@@ -943,7 +949,7 @@ sub note_activity {
     my $memkey = [ $uid, "uactive:$atype:$uid" ];
 
     # get activity key from memcache
-    my $atime = LJ::MemCache::get($memkey);
+    my $atime = LJ::MemCacheProxy::get($memkey);
 
     # nothing to do if we got an $atime within the last hour
     return 1 if $atime && $atime > $now - $explen;
@@ -961,7 +967,7 @@ sub note_activity {
            undef, $yr, $mo, $dy, $hr, $uid, $atype);
 
     # set a new memcache key good for $explen
-    LJ::MemCache::set($memkey, $now, $explen);
+    LJ::MemCacheProxy::set($memkey, $now, $explen);
 
     return 1;
 }
@@ -2054,8 +2060,7 @@ sub clear_prop {
 sub journal_base {
     my $u = shift;
     return $u->{'journal_base'} if $u->{'journal_base'};
-    $u->{'journal_base'} = LJ::journal_base($u);
-    return $u->{'journal_base'};
+    return LJ::journal_base($u);
 }
 
 sub allpics_base {
@@ -2102,15 +2107,20 @@ sub profile_url {
             $url = "$LJ::SITEROOT/userinfo.bml?userid=$u->{'userid'}&t=I";
             $url .= "&mode=full" if $opts{full};
         } else {
-            $url = "$LJ::SITEROOT/profile?userid=$u->{'userid'}&t=I";
+            $url = "$LJ::SITEROOT/profile";
+            $url .= "/friendlist" if $opts{'friendlist'};
+            $url .= "?userid=$u->{'userid'}&t=I";
             $url .= "&mode=full" if $opts{full};
         }
     } else {
         $url = $u->journal_base . "/profile";
+        $url .= "/friendlist" if $opts{'friendlist'};
         $url .= "?mode=full" if $opts{full};
     }
     return $url;
 }
+
+
 
 sub addfriend_url {
     my $u = shift;
@@ -2125,7 +2135,7 @@ sub gift_url {
     croak "invalid user object passed" unless LJ::isu($u);
     my $item = $opts->{item} ? delete $opts->{item} : '';
 
-    return "$LJ::SITEROOT/shop/view.bml?item=$item&gift=1&for=$u->{'user'}";
+    return "$LJ::SITEROOT/shop/vgift.bml?to=$u->{'user'}";
 }
 
 # return the URL to the send message page
@@ -3661,6 +3671,9 @@ sub subscribe_entry_comments_via_sms {
 sub has_subscription {
     my ($u, %params) = @_;
     croak "No parameters" unless %params;
+
+    $params{postprocess} = $u->{__subscriptions} 
+        unless $params{postprocess};
 
     return LJ::Subscription->find($u, %params);
 }
@@ -5495,8 +5508,13 @@ sub is_in_beta {
 sub timezone {
     my $u = shift;
 
+    return $u->{'__timezone_offset'} 
+            if exists $u->{'__timezone_offset'};
+    
     my $offset = 0;
     LJ::get_timezone($u, \$offset);
+
+    $u->{'__timezone_offset'} = $offset;
     return $offset;
 }
 
@@ -5647,7 +5665,7 @@ sub can_super_manage {
     return undef if $u->{journaltype} =~ /^[PYR]$/;
 
     # check for supermaintainer access
-    return 1 if LJ::check_rel($u, $remote, 'S');
+    return 1 if LJ::RelationService->is_relation_to($u, $remote, 'S');
 
     # not passed checks, return false
     return undef;
@@ -5674,7 +5692,7 @@ sub can_moderate {
     return undef if $u->{journaltype} =~ /^[PYR]$/;
 
     # check for moderate access
-    return 1 if LJ::check_rel($u, $remote, 'M');
+    return 1 if LJ::RelationService->is_relation_to($u, $remote, 'M');
 
     # passed not checks, return false
     return undef;
@@ -5703,8 +5721,7 @@ sub can_manage {
     # check for supermaintainer
     return 1 if $remote->can_super_manage($u);
 
-    # check for admin access
-    return undef unless LJ::check_rel($u, $remote, 'A');
+    return 0 unless LJ::RelationService->is_relation_to($u, $remote, 'A');
 
     # passed checks, return true
     return 1;
@@ -6524,8 +6541,10 @@ sub is_spamprotection_enabled {
 sub check_non_whitelist_enabled {
     my $u = shift;
     return 0 if $LJ::DISABLED{'spam_button'};
+    return 0 unless $u->is_community;
+    return 0 if $u->prop("moderated") eq 'N';
     my $check_non_whitelist = $u->prop('check_non_whitelist');
-    return 1 if (!defined($check_non_whitelist) || $check_non_whitelist eq 'Y');
+    return 1 if defined($check_non_whitelist) && $check_non_whitelist eq 'Y';
     return 0;
 }
 
@@ -7050,8 +7069,7 @@ sub _extend_user_object {
 # args: userids
 # returns: hashref with keys ids, values $u refs.
 # </LJFUNC>
-sub load_userids
-{
+sub load_userids {
     my %u;
     LJ::load_userids_multiple([ map { $_ => \$u{$_} } @_ ]);
     return \%u;
@@ -7327,24 +7345,26 @@ sub load_user
 
 sub load_users {
     my @users = @_;
-    
+
     my %need = map {$_ => 1} @users;
 
     ## skip loaded
     my %loaded;
-    foreach my $user (@users){
+
+    foreach my $user ( @users ) {
         if (my $u = $LJ::REQ_CACHE_USER_NAME{$user}) {
             $loaded{$u->userid} = $u;
             delete $need{$u->userid};
         }
     }
 
-    ## username to userid
-    my $uids = LJ::MemCache::get_multi( map {"uidof:$_"} keys %need );
-    my $us = LJ::load_userids( values %$uids );
-    while (my ($k, $v) = each %loaded){
+    ## username to userid and load
+    my $us = LJ::load_userids( LJ::get_userid_multi( [keys %need] ) );
+
+    while ( my ($k, $v) = each %loaded ) {
         $us->{$k} = $v;
     }
+
     return $us;
 }
 
@@ -7416,7 +7436,7 @@ sub memcache_get_u
 {
     my @keys = @_;
     my @ret;
-    my $users = LJ::MemCache::get_multi(@keys) || {};
+    my $users = LJ::MemCacheProxy::get_multi(@keys) || {};
     while (my ($key, $ar) = each %$users) {
         my $row = LJ::MemCache::array_to_hash("user", $ar, $key)
             or next;
@@ -7433,8 +7453,8 @@ sub memcache_set_u
     my $expire = time() + 1800;
     my $ar = LJ::MemCache::hash_to_array("user", $u);
     return unless $ar;
-    LJ::MemCache::set([$u->{'userid'}, "userid:$u->{'userid'}"], $ar, $expire);
-    LJ::MemCache::set("uidof:$u->{user}", $u->{userid});
+    LJ::MemCacheProxy::set([$u->{'userid'}, "userid:$u->{'userid'}"], $ar, $expire);
+    LJ::MemCacheProxy::set("uidof:$u->{user}", $u->{userid});
 }
 
 # <LJFUNC>
@@ -7501,7 +7521,10 @@ sub journal_base
             $user = LJ::load_user($user);
         }
 
+        return $user->{'journal_base'} 
+            if $user->{'journal_base'};
         my $hookurl = LJ::run_hook("journal_base", $user, $vhost);
+        $user->{'journal_base'} = $hookurl if (isu($user) && $hookurl);
         return $hookurl if $hookurl;
     }
 
@@ -10456,14 +10479,13 @@ sub canonical_username
 # des-user: Username whose userid to look up.
 # returns: Userid, or 0 if invalid user.
 # </LJFUNC>
-sub get_userid
-{
+sub get_userid {
     &nodb;
     my $user = shift;
 
     $user = LJ::canonical_username($user);
 
-    if (exists $LJ::PRELOADED_USER_IDS{$user} && !$LJ::IS_DEV_SERVER) { return $LJ::PRELOADED_USER_IDS{user}; }
+    if (exists $LJ::PRELOADED_USER_IDS{$user} && !$LJ::IS_DEV_SERVER) { return $LJ::PRELOADED_USER_IDS{$user}; }
     if ($LJ::CACHE_USERID{$user}) { return $LJ::CACHE_USERID{$user}; }
 
     my $userid = LJ::MemCache::get("uidof:$user");
@@ -10487,6 +10509,19 @@ sub get_userid
     }
 
     return ($userid+0);
+}
+
+# TODO: Rewrite that function in more optimal way!
+sub get_userid_multi {
+    my($users) = @_;
+    my @res;
+
+    for my $user ( @$users ) {
+        my $userid = LJ::get_userid( $user );
+        push @res, $userid if $userid;
+    }
+
+    return @res;
 }
 
 # <LJFUNC>

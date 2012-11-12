@@ -981,6 +981,22 @@ CREATE TABLE `logkwsum` (
 )
 EOC
 
+register_tablecreate('logleft', <<'EOC');
+CREATE TABLE `logleft` (
+    `userid` int(10) unsigned NOT NULL, 
+    `posttime` datetime NOT NULL, 
+    `journalid` int(10) unsigned NOT NULL, 
+    `ditemid` mediumint(8) unsigned NOT NULL, 
+    `ip` varchar(15), 
+    `uniq` varchar(15),
+    `publicitem` bool,
+    KEY `userid` (`userid`),
+    KEY `posttime` (`posttime`),
+    KEY `ip` (`ip`),
+    KEY `uniq` (`uniq`)
+)
+EOC
+
 register_tablecreate('logprop2', <<'EOC');
 CREATE TABLE `logprop2` (
   `journalid` int(10) unsigned NOT NULL,

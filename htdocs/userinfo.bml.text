@@ -239,6 +239,12 @@
 .friends.mutual|staleness=1
 .friends.mutual=Mutual Friends
 
+.friends.mutual.friendof|staleness=1
+.friends.mutual.friendof=Mutual Friends of
+
+.friends.mutual.friends|staleness=1
+.friends.mutual.friends=Mutual Friends
+
 .friends.mutual.with.you|staleness=1
 .friends.mutual.with.you=Mutual with you
 

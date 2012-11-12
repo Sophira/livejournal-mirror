@@ -4,11 +4,14 @@
  */
 
 CKEDITOR.editorConfig = function(config) {
+	'use strict';
+
 	CKEDITOR.plugins.addExternal( 'ljcolor', 'plugins/lj/ljcolor/plugin.js' );
-	CKEDITOR.plugins.addExternal( 'ljlink',  'plugins/lj/ljlink/plugin.js' );
-	CKEDITOR.plugins.addExternal( 'ljfont',  'plugins/lj/ljfont/plugin.js' );
-	CKEDITOR.plugins.addExternal( 'ljcut2',  'plugins/lj/ljcut/plugin.js' );
-	CKEDITOR.plugins.addExternal( 'ljuser2',  'plugins/lj/ljuser/plugin.js' );
+	CKEDITOR.plugins.addExternal( 'ljlink', 'plugins/lj/ljlink/plugin.js' );
+	CKEDITOR.plugins.addExternal( 'ljfont', 'plugins/lj/ljfont/plugin.js' );
+	CKEDITOR.plugins.addExternal( 'ljcut2', 'plugins/lj/ljcut/plugin.js' );
+	CKEDITOR.plugins.addExternal( 'ljuser2', 'plugins/lj/ljuser/plugin.js' );
+	CKEDITOR.plugins.addExternal( 'ljautogrow', 'plugins/lj/ljautogrow/plugin.js' );
 
 	var ljplugins = [/*'ljspell', */ (Site.page.ljpost) ? 'livejournal' : 'livejournal_old', 'ljcolor', 'ljlink'],
 		plugins = [
@@ -37,10 +40,7 @@ CKEDITOR.editorConfig = function(config) {
 		];
 
 	if (Site.page.ljpost) {
-		plugins.push('autogrow');
-		config.autoGrow_minHeight = 400;
-
-		ljplugins.push('ljspell', 'ljfont', 'ljcut2', 'ljuser2');
+		ljplugins.push('ljautogrow', 'ljspell', 'ljfont', 'ljcut2', 'ljuser2');
 	} else {
 		plugins.push('dialog', 'image', 'link', 'font');
 	}
@@ -103,10 +103,10 @@ CKEDITOR.editorConfig = function(config) {
 			'LJImage',
 			ifEnabled(Site.media_embed_enabled, 'LJEmbedLink'),
 
-			'LJCut',
-			// 'LJCut2',
+			// 'LJCut',
+			'LJCut2',
 			'LJSpoiler',
-			
+
 			'LJMap',
 			'LJLike',
 
@@ -179,7 +179,7 @@ CKEDITOR.editorConfig = function(config) {
 		[ CKEDITOR.CTRL + 89 /*Y*/, 'redo' ],
 		[ CKEDITOR.CTRL + CKEDITOR.SHIFT + 90 /*Z*/, 'redo' ],
 
-		[ CKEDITOR.CTRL + 76 /*L*/, 'link' ],
+		[ CKEDITOR.CTRL + 76 /*L*/, 'LJLink2' ],
 
 		[ CKEDITOR.CTRL + 66 /*B*/, 'bold' ],
 		[ CKEDITOR.CTRL + 73 /*I*/, 'italic' ],
@@ -211,7 +211,7 @@ CKEDITOR.editorConfig = function(config) {
 		config.protectedSource.push(/<lj-poll-\d+\s*\/?>/gi); // created lj polls;
 	}
 
-	config.LJFontDefault = 'normal'; 
+	config.LJFontDefault = 'normal';
 
 	config.LJFontStyle = {
 		element: 'span',
@@ -226,7 +226,7 @@ CKEDITOR.editorConfig = function(config) {
 		large: '1.4em',
 		huge: '1.8em'
 	};
-	
+
 	config.protectedSource.push(/<lj-replace name="first_post"\s*\/?>/gi);
 };
 

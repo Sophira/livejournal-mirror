@@ -15,6 +15,7 @@ use LJ::RelationService;
 # D - spammer
 # W - journal sweeper
 # C - do not receive mass mailing from community
+# J - ban in journalpromo
 #########################
 
 # <LJFUNC>
@@ -63,7 +64,7 @@ sub is_banned
     # for speed: common case is non-community posting and replies
     # in own journal.  avoid db hit.
     return 0 if ($uid == $jid);
-
+    
     # edge from journal -> user
     return LJ::check_rel($jid, $uid, 'B');
 }

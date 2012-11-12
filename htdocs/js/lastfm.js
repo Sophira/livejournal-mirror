@@ -1,65 +1,81 @@
-function lastfm_current ( username, show_error ) {
-    document.getElementById('prop_current_music').value = show_error ? "Running, please wait..." : "";
+LJ.LastFM = {
+    /*
+     * Get current playing (or just listened) track in last.fm
+     * http://www.last.fm/api/show/user.getRecentTracks
+     * @param {String} user LastFM username
+     * @param {Function(Object)} callback Argument is the current track, see last.fm API
+     */
+    getNowPlaying: function(user, callback) {
+        'use strict';
 
-    var req = { method : "POST", 
-        data : HTTPReq.formEncoded({ "username" : username }),
-        url : "/tools/endpoints/lastfm_current_track.bml",
-        onData : function (info) { import_handle(info, show_error) },
-        onError : import_error
-    };
-    HTTPReq.getJSON(req);
-};
-
-var jobstatus;
-var timer;
-
-function import_handle(info, show_error) {
-    if (info.error) {
-        document.getElementById('prop_current_music').value = info.error;
-        return import_error(info.error);
-    }
-
-    if (info.handle) {
-        jobstatus = new JobStatus(info.handle, function (info) { got_track(info, show_error) } );
-        timer = window.setInterval(jobstatus.updateStatus.bind(jobstatus), 1500);
-    } else if (show_error) {
-        document.getElementById('prop_current_music').value = "TODO: Gearman no job. Please run";
-        import_error('TODO: Gearman no job. Please run.');
-    }
-
-    done = 0; // If data already received or not
-};
-
-function got_track (info, show_error) {
-    if (info.running) {
-    } else {
-        window.clearInterval(timer);
-
-        if (info.status == "success") {
-            if (done)
+        jQuery.ajax({
+            url: 'http://ws.audioscrobbler.com/2.0/',
+            dataType: 'json',
+            cache: false,
+            data: {
+                method: 'user.getrecenttracks',
+                user: user,
+                api_key: Site.page.last_fm_api_key,
+                format: 'json'
+            }
+        }).done(function(res) {
+            if (res.error) {
+                console.error('Last.FM error: ' + res.message);
                 return;
+            }
 
-            done = 1;
+            var tracks = res.recenttracks,
+                last = tracks && tracks.track[0],
+                nowPlaying = null,
+                date = null,
+                justListened = false;
 
-            eval('var result = ' + info.result);
-            if (result.error) {
-                document.getElementById('prop_current_music').value = '';
-                if (show_error) {
-                    LiveJournal.ajaxError(result.error);
+            if (last.name && last.artist && last.artist.name) {
+
+                if (last.date) {
+                    date = +new Date(Number(last.date.uts) * 1000),
+                    justListened = +new Date() - date < 300000;
                 }
-            } else {
-                document.getElementById('prop_current_music').value = result.data;
+
+                if ((last['@attr'] && last['@attr'].nowplaying) || justListened) {
+                    nowPlaying = {
+                        artist: last.artist.name,
+                        name: last.name,
+                        _: last
+                    };
+                }
             }
-        } else {
-            document.getElementById('prop_current_music').value = '';
-            if (show_error) {
-                LiveJournal.ajaxError('Failed to receive track from Last.fm.');
+
+            if (callback) {
+                callback(nowPlaying);
             }
-        }
+        });
     }
+};
+
+function lastfm_current ( username, show_error ) {
+    'use strict';
+
+    var user = Site.page.last_fm_user;
+    if (!user) {
+        console.error('No last.fm user');
+        return;
+    }
+
+    var input = document.getElementById('prop_current_music');
+
+    input.value = 'Loading...';
+    LJ.LastFM.getNowPlaying(user, function(track) {
+        if (track) {
+            input.value = '{artist} - {name} | Powered by Last.fm'.supplant(track);
+        } else {
+            input.value = '';
+        }
+    });
 }
 
-function import_error(msg) {
-    LiveJournal.ajaxError(msg);
+if (Site.page.ljpost) {
+    jQuery(function() {
+        lastfm_current();
+    });
 }
-

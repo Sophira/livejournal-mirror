@@ -100,6 +100,7 @@ sub handler
 
     LJ::Request->free();
     LJ::Request->init($r);
+    LJ::Request->start_request();
 
     if ($LJ::SHOW_SLOW_QUERIES) {
         my $method = LJ::Request->method;
@@ -388,6 +389,7 @@ sub trans {
             and LJ::Request->uri !~ m|/palimg/|     ## PaletteModify actions are processed by other handler
             and LJ::Request->uri !~ m|^/__api/?|
             and LJ::Request->uri !~ m|^/__tmpl/|
+            and LJ::Request->uri !~ m|^$LJ::CDN_SITE_MESSAGE_URL/?|
             ) or
         ($LJ::IS_SSL and LJ::Request->unparsed_uri =~ /\?\?/)
     ){

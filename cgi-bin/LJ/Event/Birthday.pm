@@ -100,13 +100,17 @@ sub as_html {
 sub as_html_actions {
     my ($self) = @_;
 
+    my $lang = $self->bdayuser->prop('browselang') || $LJ::DEFAULT_LANG;
+    my $lang_var = 'send.a.gift';
+    my $giftlink = LJ::Lang::get_text($lang,$lang_var);
+
     my $gifturl = $self->bdayuser->gift_url({ item => 'vgift' });
     my $ret .= "<div class='actions'>";
-    $ret .= " <a href='$gifturl'>Send a Gift</a>";
+    $ret .= " <a href='$gifturl'>$giftlink</a>";
     unless ($LJ::DISABLED{wishlist_v2}) {
-    if (LJ::WishList->have_current($self->bdayuser)) {
-        $ret .= " View user's <a href='".$self->bdayuser->wishlist_url."'>Wishlist</a>";
-    }
+        if (LJ::WishList->have_current($self->bdayuser)) {
+            $ret .= " View user's <a href='".$self->bdayuser->wishlist_url."'>Wishlist</a>";
+        }
     }
     $ret .= "</div>";
 

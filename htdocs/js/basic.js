@@ -143,7 +143,7 @@ LJ.require = function(path) {
 
 /**
  * Get a variable, defined especially for this page in the Site.page.
- * 
+ *
  * @param {string} name Variable name.
  * @param {boolean} global A flag to check, whether the variable is local to page or not.
  *
@@ -208,27 +208,6 @@ LJ.DelayedCall.prototype.stop = function() {
 };
 
 /**
- * Add pub/sub functionality for an object.
- *
- * @param {Object} obj Target object.
- */
-LJ.addPubSub = function(obj) {
-	var o = jQuery({});
-
-	obj.addEventListener = function() {
-		o.on.apply(o, arguments);
-	};
-
-	obj.removeEventListener = function() {
-		o.off.apply(o, arguments);
-	};
-
-	obj.dispatchMessage = function() {
-		o.trigger.apply(o, arguments);
-	};
-};
-
-/**
  * Format number according to locale. E.g. 1000000 becomes 1,000,000.
  *
  * @param {number} num Number to format.
@@ -285,8 +264,8 @@ LJ.throttle = function(func, delay) {
 };
 
 /**
- * Create function that will call target function at most once 
- * per every delay. Arguments are queued and when delay ends 
+ * Create function that will call target function at most once
+ * per every delay. Arguments are queued and when delay ends
  * function is called with last supplied arguments set. Optionally
  * arguments queue can be preserved on call, so all sheduled will be done.
  *
@@ -326,7 +305,7 @@ LJ.threshold = function (f, delay, preserve) {
 					lock = false;
 					batch = batchSize;
 					callback.call(caller);
-				}, delay); 
+				}, delay);
 
 				break;
 			}
@@ -348,69 +327,14 @@ LJ.threshold = function (f, delay, preserve) {
 				batch = batchSize;
 			}
 		}
-	}; 
+	};
 
 	return threshold;
 };
 
-LJ.console = function() {
-	var consoleExists = function() { return 'console' in window; },
-		runIfExists = function(method, args) {
-			if (consoleExists() && console[method]) {
-				console[method].apply(console, args);
-				return true;
-			}
-
-			return false;
-		};
-
-	var consoleShim = {
-		log: function() {
-			if (jQuery.browser.msie && consoleExists()) {
-				var args = [].slice.call(arguments);
-
-				args = args.map(function(el) {
-					if (typeof el === 'object') {
-						try {
-							return LiveJournal.JSON.stringify(el);
-						} catch (e) {
-							return el;
-						}
-					} else {
-						return el;
-					}
-				});
-				console.log( args.join(' ') );
-			} else {
-				runIfExists('log', arguments);
-			}
-		},
-
-		warn: function() {
-			if (!runIfExists('warn', arguments)) {
-				var args = ['Warn: '].concat([].slice.call(arguments, 0));
-				this.log.apply(this, args);
-			}
-		}
-	};
-
-	var timers = {};
-	consoleShim.time = function(label) {
-		if (!runIfExists('time', arguments) && !timers[label]) {
-			timers[label] = +new Date();
-		}
-	};
-
-	consoleShim.timeEnd = function(label) {
-		if (!runIfExists('timeEnd', arguments) && timers[label]) {
-			var now = +new Date();
-			consoleShim.log(label + ': ' + (now - timers[label]) + 'ms');
-			delete timers[label];
-		}
-	};
-
-	return consoleShim;
-}();
+if (typeof console !== undefined) {
+	LJ.console = console;
+}
 
 LJ._const = {};
 
@@ -678,11 +602,11 @@ LJ.DOM.injectStyle = function(fileName, _window) {
 	var w = _window || window,
 		head = w.document.getElementsByTagName("head")[0],
 		cssNode = w.document.createElement('link');
-	
+
 	cssNode.type = 'text/css';
 	cssNode.rel = 'stylesheet';
 	cssNode.href = fileName;
-	
+
 	head.appendChild(cssNode);
 };
 
@@ -781,7 +705,7 @@ LJ.DOM.setCursor = function (node, position) {
 	if (!node.nodeName) {
 		node = node.get(0);
 	}
-	
+
 	text = ( 'value' in node ? node.value : node.text ).replace(/\r/, ''),
 	length = text.length;
 
@@ -864,7 +788,7 @@ LJ.UI.template = function(name, data) {
 		html;
 
 	if (!tmplObj) {
-		LJ.console.log('Warn: template ', name, ' was called but is not defined yet.'); 
+		LJ.console.log('Warn: template ', name, ' was called but is not defined yet.');
 		return jQuery();
 	}
 
@@ -890,7 +814,7 @@ LJ.UI.mixin = function(name, module) {
 		if (LJ.UI._mixins.hasOwnProperty(name)) {
 			return LJ.UI._mixins[name];
 		} else {
-			LJ.console.log('Warn: Mixin ', name, ' was called but is not defined yet.'); 
+			LJ.console.log('Warn: Mixin ', name, ' was called but is not defined yet.');
 		}
 	} else {
 		LJ.UI._mixins[name] = module;
@@ -1002,7 +926,7 @@ LJ.UI.mixin = function(name, module) {
 	};
 
 	/**
-	 * Init widgets with specific entry point or all remaining 
+	 * Init widgets with specific entry point or all remaining
 	 *
 	 * @param {String} entryPoint Entry point name
 	 */
@@ -1034,7 +958,7 @@ LJ.UI.mixin = function(name, module) {
 					LJ.console.warn('Widget ' + widget.name + ' was not loaded');
 					continue;
 				}
-			} 
+			}
 		}
 	};
 }());
@@ -1229,20 +1153,21 @@ if (!Object.override)
  *
  * @return {Array} Array with properties names.
  */
-Object.extend(Object, {
-	keys: function(o) {
-		if (o !== Object(o)) {
-			throw new TypeError('Object.keys called on non-object');
-		}
-		var ret=[],p;
-		for(p in o) if(Object.prototype.hasOwnProperty.call(o,p)) ret.push(p);
-		return ret;
+
+Object.extend(Function.prototype, {
+	bindEventListener: function(object) {
+		var method = this; // Use double closure to work around IE 6 memory leak.
+		return function(e) {
+			e = Event.prep(e);
+			return method.call(object, e);
+		};
 	}
 });
 
-
-Object.extend(Function.prototype, {
-	bind: function(that) { // .length is 1
+// for back compatiblity with legacy code
+// we can't rely on version === 9 because of browser/document mode
+if (jQuery.browser.msie) {
+	Function.prototype.bind = function(that) { // .length is 1
 		var target = this,
 			slice = [].slice;
 		if (typeof target.apply != "function" || typeof target.call != "function")
@@ -1272,16 +1197,8 @@ Object.extend(Function.prototype, {
 		};
 
 		return bound;
-	},
-	
-	bindEventListener: function(object) {
-		var method = this; // Use double closure to work around IE 6 memory leak.
-		return function(e) {
-			e = Event.prep(e);
-			return method.call(object, e);
-		};
 	}
-});
+}
 
 Object.extend(Function, {
 	defer: function(func, args/*, more than one*/) {
@@ -1464,11 +1381,6 @@ Object.extend(String.prototype, {
 		).slice(-length);
 	},
 
-	trim: function()
-	{
-		return this.replace(/^\s+|\s+$/g, '');
-	},
-
 	supplant: function(o)
 	{
 		return this.replace(/{([^{}]*)}/g,
@@ -1479,29 +1391,12 @@ Object.extend(String.prototype, {
 	}
 });
 
-Object.extend(Date, {
-	/**
-	 * Return timestamp number for current moment.
-	 *
-	 * @return {Number} A Timestamp.
-	 */
-	now: function() {
-		return new Date().valueOf();
+// will be shimmed using es6-shim later
+if (typeof String.prototype.startsWith !== 'function') {
+	String.prototype.startsWith = function(start) {
+		return this.slice(0, String(start).length) === start;
 	}
-});
-
-Object.extend(Array, {
-	/**
-	 * Returns true if an object is an array, false if it is not.
-	 *
-	 * @param {Object} Argument to test.
-	 *
-	 * @return {Boolean} Test result.
-	 */
-	isArray: function(arg) {
-		return Object.prototype.toString.call(arg) == '[object Array]';
-	}
-});
+}
 
 /* extend array object */
 Object.extend(Array.prototype, {
@@ -1558,349 +1453,6 @@ Object.extend(Array.prototype, {
 			}
 		}
 		return this.length;
-	},
-
-	/* javascript 1.5 array methods */
-	/* http://developer-test.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Objects:Array#Methods */
-	/**
-	 * Creates a new array with all elements that pass the test implemented by the provided function.
-	 *
-	 * @param {Function} fun Function to test each element of the array.
-	 * @param {Function} thisp Object to use as this when executing callback.
-	 *
-	 * @param {Array} Filtered array.
-	 */
-	filter: function(fun/*, thisp*/)
-	{
-		var thisp = arguments[1] || null;
-		if (typeof fun !== "function") {
-			throw new TypeError("First argument is not callable");
-		}
-
-		for (var i = 0, len = this.length >>> 0, res = []; i < len; i++) {
-			if (i in this) {
-				var val = this[i]; // in case fun mutates this
-				if (fun.call(thisp, val, i, this))
-					res.push(val);
-			}
-		}
-		
-		return res;
-	},
-	
-	/**
-	 * Executes a provided function once per array element.
-	 *
-	 * @param {Function} fun Function to test each element of the array.
-	 * @param {Function} thisp Object to use as this when executing callback.
-	 *
-	 * @return {Void}
-	 */
-	forEach: function(fun/*, thisp*/)
-	{
-		if (typeof fun !== "function") {
-			throw new TypeError("First argument is not callable");
-		}
-
-		var thisp = arguments[1] || null;
-		for (var i = 0, len = this.length >>> 0; i < len; i++) {
-			if (i in this) {
-				fun.call(thisp, this[i], i, this);
-			}
-		}
-	},
-	
-	/**
-	 * Returns the first index at which a given element can be found in the array,
-	 * or -1 if it is not present.
-	 *
-	 * @param {Object} elt Element to locate in the array.
-	 * @param {Number} from The index at which to begin the search. Defaults to 0, i.e.
-	 *     the whole array will be searched. If the index is greater than or equal
-	 *     to the length of the array, -1 is returned, i.e. the array will not be
-	 *     searched. If negative, it is taken as the offset from the end of the array.
-	 *     Note that even when the index is negative, the array is still searched
-	 *     from front to back. If the calculated index is less than 0, the whole
-	 *     array will be searched.
-	 *
-	 * @return {Number} Array index.
-	 */
-	indexOf: function(elt/*, from*/)
-	{
-		if (this === null || this === void 0) {
-			throw new TypeError();
-		}
-
-		var len = this.length >>> 0;
-		
-		var from = Number(arguments[1]) || 0;
-		from = from < 0
-				? Math.ceil(from)
-				: Math.floor(from);
-		if (from < 0) {
-			from += len;
-		}
-		for (; from < len; from++) {
-			if (((from in this) || (len > from + 1 && this[from] === void 0)) && this[from] === elt) {
-				return from;
-			}
-		}
-		return -1;
-	},
-	
-	/**
-	 * Returns the last index at which a given element can be found in the array,
-	 * or -1 if it is not present. The array is searched backwards, starting at fromIndex.
-	 *
-	 * @param {Object} elt Element to locate in the array.
-	 * @param {Number=0} from The index at which to start searching backwards. Defaults to
-	 *     the array's length, i.e. the whole array will be searched. If the index is
-	 *     greater than or equal to the length of the array, the whole array will be
-	 *     searched. If negative, it is taken as the offset from the end of the array.
-	 *     Note that even when the index is negative, the array is still searched from
-	 *     back to front. If the calculated index is less than 0, -1 is returned, i.e.
-	 *     the array will not be searched. 
-	 *
-	 * @return {Number} Array index.
-	 */
-	lastIndexOf: function(elt/*, from*/)
-	{
-		var len = this.length >>> 0;
-		if (len === 1) {
-			return -1;
-		}
-		
-		var from = Number(arguments[1]);
-
-		if (arguments.length === 1) {
-			from = len;
-		} else {
-			if (isNaN(from)) {
-				if (arguments[1] === void 0) {
-					from = 0;
-				} else {
-					from = -1;
-				}
-			} else {
-				from = (from < 0)
-					? Math.ceil(from)
-					: Math.floor(from);
-				if (from < 0) {
-					from += len;
-				} else if (from >= len) {
-					from = len - 1;
-				}
-			}
-		}
-		
-		for (; from > -1; from--) {
-			if (((from in this) || (len > from + 1 && this[from] === void 0)) && this[from] === elt) {
-				return from;
-			}
-		}
-		return -1;
-	},
-
-	/**
-	 * Tests whether all elements in the array pass the test implemented by the provided function.
-	 *
-	 * Implementation from https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/every
-	 *
-	 * @param {Function} fun Function to test for each element.
-	 * @param {Object=} thisp Object to use as this when executing fun.
-	 *
-	 * @return {Boolean} Test result.
-	 */
-	every: function(fun/*, thisp */) {
-		if (this === void 0 || this === null) {
-			throw new TypeError();
-		}
-
-		var t = Object(this);
-		var len = t.length >>> 0;
-		if (typeof fun !== "function") {
-			throw new TypeError();
-		}
-
-		var thisp = arguments[1];
-		for (var i = 0; i < len; i++) {
-			if (i in t && !fun.call(thisp, t[i], i, t)) {
-				return false;
-			}
-		}
-
-		return true;
-	},
-
-	/**
-	 * Tests whether some element in the array passes the test implemented
-	 * by the provided function.
-	 *
-	 * Implementation from https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/some
-	 *
-	 * @param {Function} fun Function to test for each element.
-	 * @param {Object=} thisp Object to use as this when executing fun.
-	 *
-	 * @return {Boolean} Test result.
-	 */
-	some: function(fun/*, thisp */) {
-		if (this === void 0 || this === null) {
-			throw new TypeError();
-		}
-
-		var t = Object(this);
-		var len = t.length >>> 0;
-		if (typeof fun !== "function") {
-			throw new TypeError();
-		}
-
-		var thisp = arguments[1];
-		for (var i = 0; i < len; i++) {
-			if (i in t && fun.call(thisp, t[i], i, t)) {
-				return true;
-			}
-		}
-
-		return false;
-	},
-
-	/**
-	 * Creates a new array with the results of calling a provided function on every element in this array.
-	 *
-	 * Implementation from https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/map
-	 *
-	 * @param {Function} callback Function that produces an element of the new Array from an element of the current one.
-	 * @param {Object=} thisp Object to use as this when executing fun.
-	 *
-	 * @return {Boolean} New array.
-	 */
-	map: function(callback/*, thisp*/ ) {
-		var A, k;
-		var thisp = arguments[1] || null;
-
-		if (this == null) {
-			throw new TypeError(" this is null or not defined");
-		}
-
-		var O = Object(this);
-		var len = O.length >>> 0;
-
-		if ({}.toString.call(callback) != "[object Function]") {
-			throw new TypeError(callback + " is not a function");
-		}
-
-		A = new Array(len);
-		k = 0;
-		while(k < len) {
-			var kValue, mappedValue;
-
-			if (k in O) {
-				kValue = O[ k ];
-				mappedValue = callback.call(thisp, kValue, k, O);
-				A[ k ] = mappedValue;
-			}
-			k++;
-		}
-
-		return A;
-	},
-
-	/**
-	 * Apply a function against an accumulator and each value of the array (from left-to-right)
-	 * as to reduce it to a single value.
-	 *
-	 * Implementation from https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/Reduce
-	 *
-	 * @param {Function} accumulator Function to execute on each value in the array.
-	 * @param {Object=} initial Object to use as the first argument to the first call of the callback.
-	 *
-	 * @return {Object} Result of function application.
-	 */
-	reduce: function(accumulator/*, initial */) {
-		var i, l = Number(this.length), curr;
-		
-		if (typeof accumulator !== "function") { // ES5 : "If IsCallable(callbackfn) is false, throw a TypeError exception."
-			throw new TypeError("First argument is not callable");
-		}
-
-		if (l === 0) {
-			if (arguments.length > 1) {
-				return arguments[1];
-			} else {
-				throw new TypeError("No initial value for empty array");
-			}
-		}
-
-		if (l === null && (arguments.length <= 1)) {// == on purpose to test 0 and false.
-			throw new TypeError("Array length is 0 and no second argument");
-		}
-		
-		if (arguments.length <= 1) {
-			curr = this[0]; // Increase i to start searching the secondly defined element in the array
-			i = 1; // start accumulating at the second element
-		} else {
-			curr = arguments[1];
-		}
-		
-		for (i = i || 0 ; i < l ; ++i) {
-			if(i in this) {
-				curr = accumulator.call(undefined, curr, this[i], i, this);
-			}
-		}
-		
-		return curr;
-	},
-
-	/**
-	 * Apply a function simultaneously against two values of the array (from right-to-left)
-	 * as to reduce it to a single value.
-	 *
-	 * @param {Function} callbackfn Function to execute on each value in the array.
-	 * @param {Object=} initial Object to use as the first argument to the first call of the callback.
-	 *
-	 * @return {Object} Result of function application.
-	 */
-	reduceRight: function(callbackfn/*, initial */) {
-		if (this === void 0 || this === null) {
-			throw new TypeError();
-		}
-
-		var t = Object(this);
-		var len = t.length >>> 0;
-		if (typeof callbackfn !== "function") {
-			throw new TypeError();
-		}
-
-		// no value to return if no initial value, empty array
-		if (len === 0 && arguments.length === 1)
-			throw new TypeError();
-
-		var k = len - 1;
-		var accumulator;
-		if (arguments.length >= 2) {
-			accumulator = arguments[1];
-		} else {
-			do {
-				if (k in this) {
-					accumulator = this[k--];
-					break;
-				}
-
-				// if array contains no values, no initial value to return
-				if (--k < 0) {
-					throw new TypeError();
-				}
-			} while (true);
-		}
-
-		while (k >= 0) {
-			if (k in t) {
-				accumulator = callbackfn.call(undefined, accumulator, t[k], k, t);
-			}
-			k--;
-		}
-
-		return accumulator;
 	}
 });
 
@@ -2298,3 +1850,91 @@ HTTPReq = {
 		return enc.join("&");
 	}
 };
+
+/**
+ * Object responsible for statistic integration
+ * @param  {jQuery} $ jQuery
+ * @return {Object}   Methods for statistic interation
+ */
+LJ.Stat = (function ($) {
+	var selector = '#hello-world',	// block for statistic addition
+		el = null;					// cached jquery element
+
+	/**
+	 * Adds counter via inserting image on the page
+	 * @param {String} img Image url
+	 */
+	function addCounter( url ) {
+		var img = $('<img />', {
+			src: url,
+			alt: 'lj-counter'
+		});
+		// cache selector
+		el = el || $(selector);
+		el.append(img);
+	}
+
+	return {
+		addCounter: addCounter
+	};
+}(jQuery));
+
+LJ.siteMessage = (function ($) {
+	'use strict';
+
+	var scheme = LJ.pageVar('scheme'),
+		messageSelector = '.appwidget-sitemessages',
+		selectors = {
+			lanzelot: { selector: '#main_body', method: 'before' },
+			horizon: { selector: '#big-content-wrapper', method: 'prepend' },
+			lynx: { selector: 'body', method: 'prepend' },
+
+			// for journal pages
+			journal: { selector: '#lj_controlstrip_new', method: 'after' }
+		},
+		// placeholder for methods to return
+		methods = null;
+
+	// we should run code only when document is ready and only for user
+	// that is not currently logged in
+	$(function () {
+		if (!Site.remoteUser) {
+			// wait for API initialization (inside of livejournal.js)
+			setTimeout(methods.get.bind(methods), 0);
+		}
+	});
+
+	methods = {
+		/**
+		 * Retrieve message from server and show it
+		 */
+		get: function () {
+			var that = this;
+
+			LJ.Api.call('sitemessage.get_message', {}, function (content) {
+				that.show(content);
+			});
+		},
+
+		/**
+		 * Show content as message
+		 * @param  {String} content Html representation of the message
+		 */
+		show: function (content) {
+			var type = selectors[ scheme ? scheme : 'journal' ];
+
+			// we should do nothing for this scheme yet
+			if (scheme === 'schemius') {
+				return;
+			}
+
+			// remove existed messages
+			$(messageSelector).remove();
+
+			// add message on the page
+			$(type.selector)[type.method](content);
+		}
+	};
+
+	return methods;
+}(jQuery));

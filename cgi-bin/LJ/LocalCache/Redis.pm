@@ -4,7 +4,6 @@ use base(LJ::LocalCache);
 use strict;
 use warnings;
 
-use utf8;
 use Redis;
 
 my $local_connection;
@@ -19,14 +18,8 @@ sub __get_read_connection {
         }
     }    
 
-    if ($local_connection) {
-        $local_connection = undef
-            unless $local_connection->ping;
-        return $local_connection;
-    }
-     
-    $local_connection = eval { Redis->new(encoding => undef, 
-                                          debug => 0) };
+    $local_connection = eval { Redis->new( encoding => undef,
+                                           debug => 0) };
     if ($@ && $LJ::IS_DEV_SERVER) {
         warn "get read connection error: $@";
     }
@@ -37,16 +30,20 @@ sub __get_read_connection {
 sub __get_write_conneciton {
     if ($master_connection) {
         return $master_connection;
-    }   
+    }  
+
+    if (! $LJ::MASTER_REDIS_LIGTH_CACHE) {
+        return __get_read_connection();
+    } 
 
     $master_connection = eval { Redis->new(
         server => $LJ::MASTER_REDIS_LIGTH_CACHE,
         debug  => 0,
-        encoding => undef); 
+        encoding => undef ); 
     };
     
     if ($@ && $LJ::IS_DEV_SERVER) {
-        warn "get write conenction error: $@" if $LJ::IS_DEV_SERVER;
+        warn "get write conenction error: $@";
         return;
     }
 
@@ -60,10 +57,7 @@ sub get {
         return;
     }
 
-    my $value = $connection->get($key);
-
-    return unless $value;
-    return utf8::encode($value);
+    return $connection->get($key);
 }
 
 sub get_multi {
@@ -82,7 +76,7 @@ sub get_multi {
         my $value = shift @data;
 
         if ($value) {
-            $result->{$key} = utf8::encode($value); 
+            $result->{$key} = $value;
         } else {
             push @{$not_fetched_keys}, $key;
         }
@@ -94,13 +88,13 @@ sub get_multi {
 sub set {
     my ($class, $key, $value, $expire) = @_;
     my $connection = __get_write_conneciton();
-    if (!$connection || !$value) {
+    if (!$connection) {
         return 0;
     }
 
     my $result = $connection->set( $key, 
-                                   utf8::decode($value) );
-
+                                   $value);
+    
     if ($expire) {
         $connection->expire($key, $expire);
     }
@@ -186,7 +180,6 @@ sub rpush {
         return 0;
     }
 
-    $value = utf8::decode($value);
     return $connection->rpush($key, $value);    
 }
 
@@ -198,7 +191,6 @@ sub lpush {
         return 0;
     }
 
-    $value = utf8::decode($value);
     return $connection->lpush($key, $value);
 }
 
@@ -210,9 +202,7 @@ sub lpop {
         return undef;
     }
 
-    my $value = $connection->lpop($key);
-    return unless $value;
-    return unf8::encode($value);
+    return $connection->lpop($key);
 }
 
 sub rpop {
@@ -223,11 +213,8 @@ sub rpop {
         return undef;
     }
 
-    my $value = $connection->rpop($key);
-    return unless $value;
-    return unf8::encode($value);
+    return $connection->rpop($key);
 }
 
 1;
-
 

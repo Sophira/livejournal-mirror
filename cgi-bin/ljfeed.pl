@@ -212,14 +212,8 @@ sub make_feed {
     foreach my $entry_obj (@objs) {
         next ENTRY if $entry_obj->poster->{'statusvis'} eq 'S';
         next ENTRY if $entry_obj && $entry_obj->is_suspended_for($remote);
-    
-        my $reposted = LJ::Entry::Repost->substitute_content($entry_obj,
-                                                           { 'original_post_obj' => \$entry_obj,} );
-
-        if ($reposted) {
-            next ENTRY if $entry_obj->poster->{'statusvis'} eq 'S';
-            next ENTRY if $entry_obj && $entry_obj->is_suspended_for($remote);
-        }
+   
+        next ENTRY if $entry_obj->original_post;
     
         my $ditemid = $entry_obj->{ditemid};
         if ( $LJ::UNICODE && $entry_obj->prop('unknown8bit') ) {

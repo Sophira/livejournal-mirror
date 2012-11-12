@@ -411,6 +411,24 @@ sub as_alert {
     return $self->as_string($u);
 }
 
+# return a string representing an "Web Notification" body (or another popup
+# notification type)
+# notification sent to the passed user notifying them that this event has
+# happened.
+#
+# this is a virtual function; base class function returns whatever default
+# structure method returns.
+#
+# $wlm->send($u, $event->as_web_body($u));
+sub as_web_notification {
+    my ($self, $u) = @_;
+    return { title   => $self->as_email_subject($u),
+             content => $self->as_string($u),
+             tag     => '',
+             icon    => '',
+             url     => '' };             
+}
+
 # return a string representing an email subject of an email notification sent
 # to the passed user notifying them that this event has happened.
 #
