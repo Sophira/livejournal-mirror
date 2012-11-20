@@ -4453,7 +4453,7 @@ sub set_statusvis {
     my $ret = LJ::update_user($u, { statusvis => $statusvis,
                                  raw => 'statusvisdate=NOW()' });
 
-    LJ::run_hook("props_changed", $u, {statusvis => $statusvis});
+    LJ::run_hooks("props_changed", $u, {statusvis => $statusvis});
 
     $u->fb_push;
 
@@ -8932,7 +8932,7 @@ sub modify_caps {
     $u->{caps} = $newcaps;
     $argu->{caps} = $newcaps if ref $argu; # temp hack
 
-    LJ::run_hook("props_changed", $u, {caps => $newcaps});
+    LJ::run_hooks("props_changed", $u, {caps => $newcaps});
     
     return $u;
 }
@@ -10147,9 +10147,14 @@ sub make_journal
         $opts->{tagids} = [];
         $opts->{'tagmap'} = {};
         my $tags = LJ::Tags::get_usertags($u, { remote => $remote });
-        my %kwref = ( map { $tags->{$_}->{name} => $_ } keys %{$tags || {}} );
+
+        my %kwref = ();
+        foreach my $tagid (keys %$tags) {
+            push @{$kwref{LJ::Text->normalize_tag_name ($tags->{$tagid}->{'name'})}}, $tagid;
+        }
+
         foreach my $tagname (@{$opts->{tags}}) {
-            unless ($kwref{$tagname}) {
+            unless ($kwref{LJ::Text->normalize_tag_name ($tagname)}) {
                 LJ::Request->pnotes ('error' => 'e404');
                 LJ::Request->pnotes ('remote' => LJ::get_remote ());
                 $opts->{'handler_return'} = "404 Not Found";
@@ -10157,8 +10162,8 @@ sub make_journal
             }
             #return $error->("Sorry, one or more specified tags do not exist.", "404 Not Found")
             #    unless $kwref{$tagname};
-            push @{$opts->{tagids}}, $kwref{$tagname};
-            $opts->{'tagmap'}->{$tagname} = $kwref{$tagname};
+            push @{$opts->{'tagids'}}, @{$kwref{LJ::Text->normalize_tag_name ($tagname)}};
+            $opts->{'tagmap'}->{$tagname} = $kwref{LJ::Text->normalize_tag_name ($tagname)};
         }
 
         $opts->{tagmode} = $opts->{getargs}->{mode} eq 'and' ? 'and' : 'or';
@@ -10200,7 +10205,7 @@ sub make_journal
     }
 
     unless ($geta->{'viewall'} && LJ::check_priv($remote, "canview", "suspended") ||
-            $opts->{'pathextra'} =~ m#/(\d+)/stylesheet$#) { # don't check style sheets
+            $opts->{'pathextra'} =~ m#/(\d+)/stylesheet$#) { ## don't check style sheets
         if ($u->is_deleted){
             my $warning = LJ::Lang::get_text(LJ::Lang::get_effective_lang(), 
                                     'journal.deleted', undef, {username => $u->username})

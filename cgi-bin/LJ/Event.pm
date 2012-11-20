@@ -562,7 +562,7 @@ sub fire_job {
         if (ref $val eq "CODE") {
             $val->($self);
         } else {
-            warn $self->as_string . "\n";
+            warn $self->as_string( $self->event_journal ) . "\n";
         }
     }
 

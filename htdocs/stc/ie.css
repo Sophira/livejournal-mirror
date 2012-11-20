@@ -793,12 +793,6 @@ __________________________________________*/
 	padding: 2px 5px;
 	}
 
-/* usefullinks widget */
-*+html .w-counter-num-op {
-    display: none !important;
-    background: none !important;
-    }
-
 /* CVK */
 
 .b-cvk-rc,
@@ -844,5 +838,17 @@ __________________________________________*/
 .journalpromo-buttons,
 .your-price .b-journalpromo-notice {
 	display: inline;
+	}
+
+/* Dengi Online */
+
+.b-payment-list .b-payment-item {
+	display: inline;
+	}
+.confirm-form-subsection {
+	width: 350px;
+	}
+.confirm-form-section DL {
+	zoom: 1;
 	}
 

@@ -174,7 +174,7 @@ sub clean {
 
     my $ljspoiler_allowed = $enable_dynamic_elements;
 
-    my $poster = LJ::load_userid($opts->{posterid});
+    my $poster = $opts->{poster} || LJ::load_userid($opts->{posterid});
     my $put_nofollow = not ($poster and $poster->get_cap('paid') and not $poster->get_cap('trynbuy'));
 
     my $viewer_lang = $opts->{'viewer_lang'};
@@ -1207,7 +1207,7 @@ sub clean {
                 }
 
                 if ($tag eq "a" and $hash->{href} and $put_nofollow) {
-                    if ($hash->{href} =~ m!^https?://([^/]+?)(/.*)?$!) {
+                    if ($hash->{href} =~ m!^(https?://)?([^/]+?)(/.*)?$!) {
                         my $host = $1;
                         unless ($host =~ /\Q$LJ::DOMAIN\E$/i) {
                             $hash->{rel} = "nofollow";
@@ -2186,10 +2186,11 @@ sub clean_message
 }
 
 sub clean_userbio {
-    my $ref = shift;
+    my ($ref, %opts) = @_;
+    
     return undef unless ref $ref;
 
-    clean($ref, {
+    my %final_opts = (
         'wordlength' => 100,
         'addbreaks' => 1,
         'attrstrip' => [qw[style]],
@@ -2200,7 +2201,10 @@ sub clean_userbio {
         'remove' => $userbio_remove,
         'autoclose' => \@userbio_close,
         'cleancss' => 1,
-    });
+        %opts,
+    );
+
+    clean($ref, \%final_opts);
 }
 
 sub clean_s1_style

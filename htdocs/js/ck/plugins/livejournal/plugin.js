@@ -12,7 +12,10 @@
 
 
 	/*
-	 * Save current caret using span element with '__rte_focus' id
+	 * Update 'editor.editdataWithFocus' with
+	 * data + focus (as span element with id '__rte_focus')
+	 *
+	 * Used for focus transtition between rte and html modes
 	 * (only when range is collapsed)
 	 */
 	CKEDITOR.editor.prototype.insertCaret = function() {
@@ -30,6 +33,10 @@
 		span.setText('|');
 
 		range.insertNode(span);
+
+		this.dataWithFocus = this.getData();
+
+		span.remove();
 	};
 
 
@@ -613,7 +620,6 @@
 						var parent = node.getParent();
 						if (node.is('img') && !node.hasAttribute('data-user') && parent.getParent() && !parent.getParent().hasAttribute('data-user')) {
 							attr = 'LJImage';
-							console.log('ii');
 							node.setAttribute('lj-cmd', attr);
 						} else if (node.is('a') && !node.hasAttribute('data-user') && !parent.hasAttribute('lj:user')) {
 							attr = 'LJLink2';
@@ -761,11 +767,15 @@
 
 					// focus transformations
 					var position = Site.page.__htmlLast;
-					if (html && html.length > 0 && (typeof position === 'number')) {
-						html = moveToken(
-							insertAt(html, position, focusToken),
-							focusToken
-						).replace(focusToken, focusTransformed);
+					if (typeof position === 'number') {
+						if (html.length > 0) {
+							html = moveToken(
+								insertAt(html, position, focusToken),
+								focusToken
+							).replace(focusToken, focusTransformed);
+						} else {
+							html = focusTransformed;
+						}
 					}
 					
 					html = html.replace(/<lj [^>]*?>/gi, closeTag)

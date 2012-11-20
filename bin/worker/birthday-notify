@@ -135,14 +135,19 @@ sub work {
         next unless $u->should_fire_birthday_notif;
 
         debug("Firing off notification for " . $u->user);
-        LJ::Event::Birthday->new($u)->fire;
+
+        # add a random dealy to prevent one-time occurrence of thousands of jobs,
+        # it makes jobs to appear evenly throughout the hour
+        my $delay = int rand 3600;
+
+        LJ::Event::Birthday->new($u, time + $delay)->fire;
 
         my $notify = DateTime->from_epoch( epoch => $bdays->{$u->id} );
         $notify->set_second(0);
         $notify->set_minute(0);
         $notify->set_hour($notify->hour % 12);
 
-        LJ::Event::Birthday->new($u, $notify->epoch)->fire;
+        LJ::Event::Birthday->new($u, $notify->epoch + $delay)->fire;
         $ct++;
     }
 

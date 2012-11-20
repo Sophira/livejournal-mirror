@@ -213,6 +213,16 @@ register_setter("disable_nudge", sub {
     return 1;
 });
 
+register_setter("check_suspicious", sub {
+    my ($u, $key, $value, $err) = @_;
+    unless ($value =~ /^(?:yes|no)$/) {
+        $$err = "Illegal value. Must be 'yes' or 'no'";
+        return 0;
+    }
+    $u->set_prop("check_suspicious", $value);
+    return 1;
+});
+
 register_setter("trusted_s1", sub {
     my ($u, $key, $value, $err) = @_;
 

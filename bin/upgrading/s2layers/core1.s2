@@ -258,6 +258,7 @@ class UserLink
     var readonly bool is_heading "Is this link a heading or category name?  If so, it has no url and a list of children.";
     var readonly string title "The title or label for the link";
     var readonly string url "The url to which the link points";
+    var readonly string attributes "The link attributes for 'a' tag";
     var readonly UserLink[] children "Not Implemented: An array of child UserLink objects.";
 }
 
@@ -2616,7 +2617,7 @@ function Page::print_linklist() {
             if ($l.is_heading) {
                 "<b>$l.title</b>";
             } else {
-                "<a href='$l.url'>$l.title</a>";
+                "<a href='$l.url' $l.attributes>$l.title</a>";
             }
         }
         "<br />";

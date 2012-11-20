@@ -395,13 +395,14 @@ sub create_view_rss {
         my $entry = shift @$objs;
         my $itemid = $it->{itemid};
         my $ditemid = $it->{ditemid};
-
+        my $url  = $entry->url;
+        
         $ret .= "<item>\n";
-        $ret .= "  <guid isPermaLink='true'>$journalinfo->{link}$ditemid.html</guid>\n";
+        $ret .= "  <guid isPermaLink='true'>$url</guid>\n";
         $ret .= "  <pubDate>" . LJ::TimeUtil->time_to_http($it->{createtime}) . "</pubDate>\n";
         $ret .= "  <title>" . LJ::exml($it->{subject}) . "</title>\n" if $it->{subject};
         $ret .= "  <author>" . LJ::exml($journalinfo->{email}) . "</author>" if $journalinfo->{email};
-        $ret .= "  <link>" . $entry->url . "</link>\n";
+        $ret .= "  <link>$url</link>\n";
         # omit the description tag if we're only syndicating titles
         #   note: the $event was also emptied earlier, in make_feed
         unless ($u->{'opt_synlevel'} eq 'title') {

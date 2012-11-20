@@ -40,9 +40,9 @@ sub RecentPage
 
         $p->{'tagfilter_active'} = 1;
         $p->{'tagfilter_mode'}   = $opts->{'tagmode'};
-        while ( my ( $tagname, $tagid ) = each %{ $opts->{'tagmap'} } ) {
+        while ( my ( $tagname, $tagids ) = each %{ $opts->{'tagmap'} } ) {
             push @{ $p->{'tagfilter_tags'} },
-                LJ::S2::Tag( $u, $tagid, $tagname );
+                LJ::S2::Tag( $u, $tagids->[0], $tagname );
         }
     }
 
@@ -112,7 +112,7 @@ sub RecentPage
         'poster'  => $get->{'poster'} || '',
         'show_sticky_on_top' => 1,
     }) if ($itemshow >= 0) ;
-    
+
     my $is_prev_exist = scalar @items - $itemshow > 0 ? 1 : 0;
     if ($is_prev_exist) {
         if ( scalar(@items) > $itemshow ) {        

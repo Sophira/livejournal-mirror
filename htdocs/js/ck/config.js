@@ -53,6 +53,7 @@ CKEDITOR.editorConfig = function(config) {
 	if (Site.page.ljpost) {
 		config.contentsCss = '/js/ck/contents_new.css?t=' + Site.version;
 		config.styleText = Site.statprefix + '/js/ck/contents_new.css?t=' + Site.version;
+		config.bodyClass = 'lj-main-body';
 	} else {
 		config.contentsCss = '/js/ck/contents.css?t=' + Site.version;
 		config.styleText = Site.statprefix + '/js/ck/contents.css?t=' + Site.version;

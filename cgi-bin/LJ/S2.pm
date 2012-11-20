@@ -2136,7 +2136,11 @@ sub Page
     $stylemodtime = $style->{'modtime'} if $style->{'modtime'} > $stylemodtime;
 
     my $linkobj = LJ::Links::load_linkobj($u);
-    my $linklist = [ map { UserLink($_) } @$linkobj ];
+
+    my $rel     = !($u->get_cap('paid') || $u->get_cap('trynbuy')) ? { rel => 'nofollow' }  : {};
+    my $opts    = { attributes => $rel  };
+
+    my $linklist = [ map { UserLink($_, $opts ) } @$linkobj ];
 
     my $remote = LJ::get_remote();
 
@@ -2162,6 +2166,7 @@ sub Page
             'friends'  => "$base_url/friends",
             'tags'     => "$base_url/tag",
         },
+        'nofollow' => 1,
         'linklist' => $linklist,
         'views_order' => [ 'recent', 'archive', 'friends', 'userinfo' ],
         'global_title' =>  LJ::ehtml($u->{'journaltitle'} || $u->{'name'}),
@@ -2321,16 +2326,25 @@ sub User
 
 sub UserLink
 {
-    my $link = shift; # hashref
+    my ($link, $options) = @_;
 
     # a dash means pass to s2 as blank so it will just insert a blank line
     $link->{'title'} = '' if $link->{'title'} eq "-";
+    my $attributes_text = '';
+    
+    if ($options && $options->{attributes}) {
+        my $attr_data = $options->{attributes};
+        my @attr = keys %{$options->{attributes}};
+        $attributes_text = join(' ', 
+                            map { "$_=\"" .  $attr_data->{$_} . "\"" } @attr);
+    }
 
     return {
         '_type' => 'UserLink',
         'is_heading' => $link->{'url'} ? 0 : 1,
         'url' => LJ::ehtml($link->{'url'}),
         'title' => LJ::ehtml($link->{'title'}),
+        'attributes' => $attributes_text,
         'children' => $link->{'children'} || [], # TODO: implement parent-child relationships
     };
 }
