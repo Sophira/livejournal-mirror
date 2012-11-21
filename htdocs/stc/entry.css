@@ -946,10 +946,13 @@ td.tabs {
 .b-updatepage-paidrepost {
 	}
 	#entryform-paid_repost-wrapper {
-		display: inline-block;
+		display: none;
 		padding: 5px 10px;
 		background: #DDD;
 		}
+		#entryform-paid_repost-wrapper.b-updatepage-paidrepost-enabled {
+			display: inline-block;
+			}
 	.b-updatepage-paidrepost-agreement {
 		display: none;
 		padding: 0 0 5px 0;

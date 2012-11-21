@@ -538,7 +538,7 @@ function print_module_links(string title) {
             $box_open = true;
         }
         if (not $link.is_heading and $link.title != "") {
-            $items[size $items] = """<a href="$link.url">$link.title</a>""";
+            $items[size $items] = """<a href="$link.url"  $link.attributes>$link.title</a>""";
         }
     }
     if ($box_open) {

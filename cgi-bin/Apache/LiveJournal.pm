@@ -1584,7 +1584,11 @@ sub userpic_content
 
     # Load the user object and pic and make sure the picture is viewable
     my $u = LJ::load_userid($userid);
-    return LJ::Request::NOT_FOUND unless $u && $u->{'statusvis'} !~ /[XS]/;
+    if ($u && $u->{'statusvis'} =~ /[XS]/) {
+        LJ::Request->pnotes ('error' => 'e404');
+        LJ::Request->pnotes ('remote' => LJ::get_remote());
+        return LJ::Request::NOT_FOUND;
+    }
 
     my %upics;
     LJ::load_userpics(\%upics, [ $u, $picid ]);
@@ -1673,8 +1677,8 @@ sub userpic_content
         my $path = LJ::Blob::get_rel_path( $root, $u, "userpic", $fmt, $picid );
 
         LJ::Request->header_out( 'X-REPROXY-FILE', $path );
-        $send_headers->();
 
+        $send_headers->();
         return LJ::Request::OK
     }
 

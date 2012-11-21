@@ -167,7 +167,7 @@ sub lastfm_geolocation_width {
 
     my $ret_width = 0;
     $ret_width = 32 if $self->should_show_geolocation;
-    $ret_width = 45 if $self->should_show_lastfm || $self->should_show_trava;
+    $ret_width = 40 if $self->should_show_lastfm || $self->should_show_trava;
 
     return ('style' => "width: $ret_width\%;");
 }
