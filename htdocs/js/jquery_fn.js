@@ -473,9 +473,25 @@ jQuery.fn.selectFix = function () {
 	 * @return {Object}      jQuery node
 	 */
 	function parse(node) {
-		var html = node.html();
+		var html = node.html(),
+			// regexp for removing _tmplitem attribute
+			tmplRegexp = /_tmplitem=['"]\d+['"]/mig;
 
+		// uncomment like buttons
 		html = $.trim( html.replace(/<!--([\s\S]*?)-->/mig, '$1') );
+
+		/**
+		 * Clean _tmplitem attributes
+		 *
+		 * It's a quirk for jquery templates possible bug with commented nodes
+		 * and double applying jquery templates.
+		 * _tmplitem attributes are not removed after compilation.
+		 * Fix for #LJSUP-14149
+		 */
+		if ( tmplRegexp.test(html) ) {
+			html = html.replace(tmplRegexp, '');
+		}
+
 		LiveJournal.parseLikeButtons( node.html(html) );
 
 		return node;
