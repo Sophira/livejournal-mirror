@@ -6,15 +6,14 @@
 CKEDITOR.editorConfig = function(config) {
 	'use strict';
 
-	CKEDITOR.plugins.addExternal( 'ljcolor', 'plugins/lj/ljcolor/plugin.js' );
-	CKEDITOR.plugins.addExternal( 'ljlink', 'plugins/lj/ljlink/plugin.js' );
-	CKEDITOR.plugins.addExternal( 'ljfont', 'plugins/lj/ljfont/plugin.js' );
-	CKEDITOR.plugins.addExternal( 'ljcut2', 'plugins/lj/ljcut/plugin.js' );
-	CKEDITOR.plugins.addExternal( 'ljuser2', 'plugins/lj/ljuser/plugin.js' );
+	CKEDITOR.plugins.addExternal( 'ljcolor',    'plugins/lj/ljcolor/plugin.js'    );
+	CKEDITOR.plugins.addExternal( 'ljlink',     'plugins/lj/ljlink/plugin.js'     );
+	CKEDITOR.plugins.addExternal( 'ljfont',     'plugins/lj/ljfont/plugin.js'     );
+	CKEDITOR.plugins.addExternal( 'ljcut2',     'plugins/lj/ljcut/plugin.js'      );
+	CKEDITOR.plugins.addExternal( 'ljuser2',    'plugins/lj/ljuser/plugin.js'     );
 	CKEDITOR.plugins.addExternal( 'ljautogrow', 'plugins/lj/ljautogrow/plugin.js' );
 
-	var ljplugins = [/*'ljspell', */ (Site.page.ljpost) ? 'livejournal' : 'livejournal_old', 'ljcolor', 'ljlink'],
-		plugins = [
+	var plugins = [
 			'ajax',
 			'basicstyles',
 			'bidi',
@@ -37,11 +36,22 @@ CKEDITOR.editorConfig = function(config) {
 			'undo',
 			'wysiwygarea',
 			'onchange'
-		];
+		],
+		ljplugins = [];
 
 	if (Site.page.ljpost) {
-		ljplugins.push('ljautogrow', 'ljspell', 'ljfont', 'ljcut2', 'ljuser2');
+		ljplugins.push(
+			'livejournal',
+			'ljcolor',
+			'ljlink',
+			'ljautogrow',
+			'ljspell',
+			'ljfont',
+			'ljcut2',
+			'ljuser2'
+		);
 	} else {
+		ljplugins.push('livejournal_old');
 		plugins.push('dialog', 'image', 'link', 'font');
 	}
 

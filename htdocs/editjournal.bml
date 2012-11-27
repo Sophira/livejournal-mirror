@@ -382,6 +382,10 @@ body<=
                 # Delete
                 $req{'event'} = '' if $POST{'action:delete'} || $POST{'action:deletespam'};
 
+                unless ($req{'event'} || $POST{'action:delete'} || $POST{'action:deletespam'}) {
+                    return "<?h1 $ML{'Error'} h1?><?p $ML{'/update.bml.error.noentry'} p?>";
+                }
+
                 # mark as spam, if need be
                 if ( $POST{'action:deletespam'} && $entry_obj->is_delayed ) {
                       LJ::mark_entry_as_spam($usejournal_u, $itemid);

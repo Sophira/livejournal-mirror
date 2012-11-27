@@ -58,7 +58,8 @@ LiveJournal.initPage = function () {
 	LiveJournal.initSpoilers();
 	LiveJournal.initResizeHelper();
 
-	//ljuniq cookie is checked in PageStats/Omniture.pm now
+	//ljuniq cookie is checked here now instead of PageStats/Omniture.pm
+	LiveJournal.checkLjUniq();
 
 	// run other hooks
 	LiveJournal.run_hook('page_load');

@@ -1742,7 +1742,7 @@ sub render_ljphoto_block {
 
                 my $res = $photo ? {
                     photo_desc  => $photo->prop('description'),
-                    photo_title => $photo->prop('title'),
+                    photo_title => LJ::ehtml($photo->prop('title')),
                     photo_url   => $photo->image_url( 'size' => @photos > 1 ? 100 : 600 ),
                     photo_id    => $photo->photo_id_displayed,
                 } : undef;

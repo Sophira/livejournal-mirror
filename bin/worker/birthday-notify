@@ -140,7 +140,7 @@ sub work {
         # it makes jobs to appear evenly throughout the hour
         my $delay = int rand 3600;
 
-        LJ::Event::Birthday->new($u, time + $delay)->fire;
+        LJ::Event::Birthday->new($u)->fire;
 
         my $notify = DateTime->from_epoch( epoch => $bdays->{$u->id} );
         $notify->set_second(0);

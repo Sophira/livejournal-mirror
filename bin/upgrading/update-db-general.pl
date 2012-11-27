@@ -347,6 +347,24 @@ CREATE TABLE `commenturls` (
 )
 EOC
 
+register_tablecreate('commenturlsext', <<'EOC');
+CREATE TABLE `commenturlsext` (
+  `posterid` INT(10) UNSIGNED NOT NULL DEFAULT '0',
+  `journalid` INT(10) UNSIGNED NOT NULL DEFAULT '0',
+  `jtalkid` INT(10) UNSIGNED NOT NULL DEFAULT '0',
+  `timecreate` INT(10) UNSIGNED NOT NULL DEFAULT '0',
+  `host` VARCHAR(255) NULL DEFAULT '',
+  `crc_host` INT(10) UNSIGNED NOT NULL DEFAULT '0',
+  `url` VARCHAR(255) NOT NULL DEFAULT '',
+  `crc_url` INT(10) UNSIGNED NOT NULL DEFAULT '0',
+  `ip` VARCHAR(15) NULL DEFAULT NULL,
+  `status` CHAR(1) NULL DEFAULT '',
+  KEY `host` (`crc_host`, `timecreate`),
+  KEY `status` (`status`, `timecreate`),
+  KEY `url` (`crc_url`, `timecreate`)
+)
+EOC
+
 register_tablecreate('comminterests', <<'EOC');
 CREATE TABLE `comminterests` (
   `userid` int(10) unsigned NOT NULL DEFAULT '0',
@@ -3508,6 +3526,7 @@ register_tabledrop("userpic_comment");
 register_tabledrop("events");
 register_tabledrop("randomuserset");
 register_tabledrop("antispam");
+register_tabledrop("commenturls2");
 
 ### changes
 

@@ -1,6 +1,15 @@
 package LJ::Talk;
 use strict;
 
+#########################
+# Types of state:
+# A - active
+# S - screened
+# D - deleted
+# B - spam
+# F - frozen
+#########################
+
 use Captcha::reCAPTCHA;
 use Carp qw(croak);
 use MIME::Words;

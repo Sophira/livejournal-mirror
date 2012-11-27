@@ -254,162 +254,6 @@
 		}
 	};
 
-	var ljUsers = {};
-
-	function createNote(editor) {
-		var timer,
-			state,
-			currentData,
-			tempData,
-			noteNode = document.createElement('lj-note'),
-			isIE = typeof(document.body.style.opacity) != 'string';
-
-		var animate = (function() {
-			var fps = 60, totalTime = 100, steps = totalTime * fps / 1000, timeOuts = [], type, parentContainer = document.getElementById('draft-container') || document.body;
-
-			function apply() {
-				var data = timeOuts.shift();
-				var currentStep = (type ? data.time / totalTime : -(data.time / totalTime - 1)).toFixed(1);
-
-				if (!timeOuts.length) {
-					currentStep = type ? 1 : 0;
-				}
-
-				if (isIE) {
-					noteNode.style.filter = (currentStep >= 1) ? null : 'progid:DXImageTransform.Microsoft.Alpha(opacity=' + (currentStep * 100) + ')';
-				} else {
-					noteNode.style.opacity = currentStep;
-				}
-
-				if (currentStep == 0 && noteNode && noteNode.parentNode) {
-					noteNode.parentNode.removeChild(noteNode);
-				}
-			}
-
-			return function(animateType) {
-				type = animateType;
-
-				if (type && noteNode.parentNode) {
-					if (isIE) {
-						noteNode.style.filter = null;
-					} else {
-						noteNode.style.opacity = 1;
-					}
-				} else {
-					for (var i = 1; i <= steps; i++) {
-						var time = Math.floor(1000 / fps) * i;
-						timeOuts.push({
-							time: time,
-							timer: setTimeout(apply, time)
-						});
-					}
-				}
-
-				parentContainer.appendChild(noteNode);
-				noteNode.style.marginTop = -noteNode.offsetHeight / 2 + 'px';
-				noteNode.style.marginLeft = -noteNode.offsetWidth / 2 + 'px';
-			}
-		})();
-
-		noteNode.className = 'note-popup';
-
-		noteNode.onmouseout = function() {
-			if (!currentData || !currentData.cmd) {
-				// CKEDITOR.note.hide();
-			}
-		};
-
-		noteNode.onmouseover = function() {
-			if (timer && !state) {
-				state = 1;
-				timer = clearTimeout(timer);
-			}
-		};
-
-		if (isIE) {
-			noteNode.style.filter = 'progid:DXImageTransform.Microsoft.Alpha(opacity=0)';
-		} else {
-			noteNode.style.opacity = 0;
-		}
-
-		function callCmd() {
-			var cmd = this.getAttribute('lj-cmd');
-			if (currentData.hasOwnProperty(cmd)) {
-				ljTagsData[cmd].node = currentData[cmd].node;
-				var selection = new CKEDITOR.dom.selection(editor.document);
-				selection.selectElement(ljTagsData[cmd].node);
-				editor.execFromEditor = true;
-				editor.execCommand(cmd);
-				// CKEDITOR.note.hide(true);
-			}
-
-			return false;
-		}
-
-		function applyNote() {
-			if (!window.switchedRteOn) {
-				// CKEDITOR.note.hide(true);
-			}
-
-			if (state) {
-				currentData = tempData;
-				tempData = null;
-
-				var html = '';
-				for (var cmd in currentData) {
-					if (currentData.hasOwnProperty(cmd)) {
-						html += '<div class="noteItem">' + currentData[cmd].content + '</div>';
-					}
-				}
-
-				noteNode.innerHTML = decodeURIComponent(html);
-
-				var links = noteNode.getElementsByTagName('a');
-				for (var i = 0, l = links.length; i < l; i++) {
-					var link = links[i];
-					if (ljTagsData.hasOwnProperty(link.getAttribute('lj-cmd'))) {
-						link.onclick = callCmd;
-					}
-				}
-			} else {
-				currentData = null;
-			}
-
-			animate(state);
-
-			timer = null;
-		}
-
-		CKEDITOR.note = {
-			show: function(data, isNow) {
-				if ((!isNow && data == tempData) || !window.switchedRteOn) {
-					return;
-				}
-
-				if (timer) {
-					timer = clearTimeout(timer);
-				}
-
-				state = 1;
-				tempData = data;
-				isNow === true ? applyNote() : timer = setTimeout(applyNote, 1000);
-			},
-			hide: function(isNow) {
-				if (state) {
-					state = 0;
-
-					if (timer) {
-						timer = clearTimeout(timer);
-					}
-
-					if (noteNode.parentNode) {
-						isNow === true ? applyNote() : timer = setTimeout(applyNote, 500);
-					}
-				}
-			}
-		};
-	}
-
 	var dtd = CKEDITOR.dtd;
 
 	dtd.$block['lj-template'] = 1;
@@ -547,11 +391,18 @@
 			}
 
 			function updateFrames() {
-				var frames = editor.document.getElementsByTag('iframe'), length = frames.count(), frame, cmd, frameWin, doc, ljStyle;
+				var frames = editor.document.getElementsByTag('iframe'),
+					length = frames.count(), frame,
+					cmd, frameWin, doc, ljStyle;
+				
 				editor.execFromEditor = false;
 
 				while (length--) {
-					frame = frames.getItem(length), cmd = frame.getAttribute('lj-cmd'), frameWin = frame.$.contentWindow, doc = frameWin.document, ljStyle = frame.getAttribute('lj-style') || '';
+					frame = frames.getItem(length),
+					cmd = frame.getAttribute('lj-cmd'),
+					frameWin = frame.$.contentWindow,
+					doc = frameWin.document,
+					ljStyle = frame.getAttribute('lj-style') || '';
 					
 					if (frame.getAttribute('data-update') === 'false') {
 						continue;
@@ -572,7 +423,16 @@
 			}
 			editor.updateFrames = updateFrames;
 
+			/*
+			 * only Firefox needs this (frames are not updated when
+			 * switching from HTML to visual editor) for the first time
+			 */
+			editor.on('dataReady', function() {
+				setTimeout(updateFrames, 100);
+			});
+
 			function findLJTags(evt) {
+				editor.fire('updateSnapshot');
 				if (editor.onSwitch === true) {
 					delete editor.onSwitch;
 					return;
@@ -651,8 +511,7 @@
 						}
 					}
 				}
-
-				// noteData ? CKEDITOR.note.show(noteData) : CKEDITOR.note.hide();
+				editor.fire('updateSnapshot');
 			}
 
 			// Configure editor
@@ -838,10 +697,6 @@
 			editor.on('dialogHide', updateFrames);
 
 			editor.on('dataReady', function() {
-				// if (!CKEDITOR.note) {
-				// 	createNote(editor);
-				// }
-
 				if (CKEDITOR.env.ie) {
 					editor.document.getBody().on('dragend', updateFrames);
 					editor.document.getBody().on('paste', function () {
@@ -851,7 +706,6 @@
 
 				if (!Site.page.disabled_input) {
 					editor.document.on('click', findLJTags);
-					// editor.document.on('mouseout', CKEDITOR.note.hide);
 					editor.document.on('mouseover', findLJTags);
 					editor.document.getBody().on('keyup', onKeyUp);
 					updateFrames();
@@ -1292,10 +1146,7 @@
 						editor.fire('updateSnapshot');
 						updateFrames();
 					}
-
-					// CKEDITOR.note && CKEDITOR.note.hide(true);
 				}
-
 			}
 
 			// LJ Map

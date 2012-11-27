@@ -1,6 +1,7 @@
 package LJ::Talk::Post;
 use strict;
 
+use LJ::Admin::Spam::Urls;
 use LJ::EventLogRecord::NewComment;
 
 sub indent {
@@ -181,25 +182,16 @@ sub enter_comment {
     }
 
     # record up to 25 (or $LJ::TALK_MAX_URLS) urls from a comment
-    my (%urls, $dbh);
-    if ($LJ::TALK_MAX_URLS &&
-        ( %urls = map { $_ => 1 } LJ::get_urls($comment->{body}) ) &&
-        ( $dbh = LJ::get_db_writer() )) # don't log if no db available
-    {
-        my (@bind, @vals);
-        my $ip = LJ::get_remote_ip();
-        while (my ($url, undef) = each %urls) {
-            push @bind, '(?,?,?,?,UNIX_TIMESTAMP(),?)';
-            push @vals, $posterid, $journalu->{userid}, $ip, $jtalkid, $url;
-            last if @bind >= $LJ::TALK_MAX_URLS;
-        }
-        my $bind = join(',', @bind);
-        my $sql = qq{
-            INSERT INTO commenturls
-                (posterid, journalid, ip, jtalkid, timecreate, url)
-            VALUES $bind
-        };
-        $dbh->do($sql, undef, @vals);
+    if ($LJ::TALK_MAX_URLS) {
+        my %urls = map { $_ => 1 } LJ::get_urls($comment->{body});
+
+        LJ::Admin::Spam::Urls::insert(
+            $posterid,
+            $journalu->{userid},
+            $jtalkid,
+            $comment->{state} eq 'B' ? 'S' : '',
+            keys %urls
+        );
     }
 
     # update the "replycount" summary field of the log table
