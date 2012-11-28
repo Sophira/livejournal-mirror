@@ -967,4 +967,31 @@ sub _mod_rel_multi
     return $ret;
 }
 
+sub find_relation_attributes {
+    my $class  = shift;
+    my $u      = shift;
+    my $friend = shift;
+    my $type   = shift;
+    my %opts   = @_;
+
+    return undef unless $type eq 'F';
+
+    return undef unless $u && $friend;
+ 
+    my $jid = LJ::want_userid($u);
+    my $fid = LJ::want_userid($friend);
+    return undef unless $jid && $fid;
+
+    my $dbr = LJ::get_db_reader();
+    die "No database reader available" unless $dbr;
+
+    my $fr = $dbr->selectrow_hashref("
+        SELECT groupmask, fgcolor, bgcolor 
+        FROM friends 
+        WHERE userid=? 
+          AND friendid=?
+    ", { Slice => {} }, $u->userid, $friend->userid);
+    return $fr;
+}
+
 1;

@@ -184,9 +184,18 @@ DonateButton = {
 // Share at some S2 styles
 jQuery(document).click(function(e)
 {
-	var a = e.target,
-		href = a.href,
-		args;
+	'use strict';
+
+	var a, href, args;
+
+	// exit if sharing widget is on the page
+	if (jQuery.fn.share) {
+		return;
+	}
+
+	a = e.target;
+	href = a.href;
+
 	if (href && !a.shareClickIgnore) {
 		if (href.indexOf('http://www.facebook.com/sharer.php') === 0) {
 			LJShare.entry({url: decodeURIComponent(LiveJournal.parseGetArgs(href).u)})

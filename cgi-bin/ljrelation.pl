@@ -269,7 +269,12 @@ sub check_rel
     my ($userid, $targetid, $type) = @_;
     return undef unless $type && $userid && $targetid;
 
-    my $result = LJ::RelationService->is_relation_to($userid, $targetid, $type);
+    my $result;
+    if ( ref $type eq 'ARRAY' ) {
+        $result = LJ::RelationService->is_relation_type_to($userid, $targetid, $type);
+    } else {
+        $result = LJ::RelationService->is_relation_to($userid, $targetid, $type);
+    }
     return $result;
 }
 

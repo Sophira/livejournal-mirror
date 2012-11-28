@@ -321,4 +321,27 @@ sub set_rel_multi {
     return $interface->set_rel_multi($edges);
 }
 
+sub find_relation_attributes {
+    my $class  = shift;
+    my $u      = shift;
+    my $friend = shift;
+    my $type   = shift;
+    my %opts   = @_;
+    
+    $u = LJ::want_user($u);
+    $friend = LJ::want_user($friend);
+    
+    return undef unless $u && $friend && $type;
+
+    if ($class->_load_alt_api('read', $type)) {
+        my $alt = $class->alt_api($u);
+        if ($alt) {
+            $alt->find_relation_attributes($u, $friend, $type, %opts);
+        }
+    }
+
+    my $interface = $class->relation_api($u);
+    return $interface->find_relation_attributes($u, $friend, $type, %opts);    
+}
+
 1;

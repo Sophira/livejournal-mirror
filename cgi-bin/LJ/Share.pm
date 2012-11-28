@@ -17,9 +17,11 @@ use LJ::JSON;
 use LJ::Text;
 
 sub request_resources {
+    my ( $class, %opts ) = @_;
+
     return if $LJ::REQ_GLOBAL{'sharing_resources_requested'}++;
 
-    LJ::need_res( qw( js/share.js stc/share.css ) );
+    LJ::need_res( 'stc/share.css' );
 
     my $services = {
         'livejournal' => {
@@ -71,7 +73,13 @@ sub request_resources {
 
     my $params_out = LJ::JSON->to_json($params);
 
-    LJ::include_raw( 'js' => "LJShare.init($params_out)" );
+    my $include_type = $opts{'include_type'} || 'init';
+    if ( $include_type eq 'init' ) {
+        LJ::need_res( 'js/share.js' );
+        LJ::include_raw( 'js' => "LJShare.init($params_out)" );
+    } elsif ( $include_type eq 'define' ) {
+        LJ::include_raw( 'js' => "Site.LJShareParams = $params_out;" );
+    }
 }
 
 sub render_js {

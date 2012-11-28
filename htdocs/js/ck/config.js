@@ -1,244 +1,238 @@
-﻿/*
- Copyright (c) 2003-2011, CKSource - Frederico Knabben. All rights reserved.
- For licensing, see LICENSE.html or http://ckeditor.com/license
- */
+﻿CKEDITOR.editorConfig = function(config) {
+    'use strict';
 
-CKEDITOR.editorConfig = function(config) {
-	'use strict';
+    var extraPlugins,
+        pluginName;
 
-	CKEDITOR.plugins.addExternal( 'ljcolor',    'plugins/lj/ljcolor/plugin.js'    );
-	CKEDITOR.plugins.addExternal( 'ljlink',     'plugins/lj/ljlink/plugin.js'     );
-	CKEDITOR.plugins.addExternal( 'ljfont',     'plugins/lj/ljfont/plugin.js'     );
-	CKEDITOR.plugins.addExternal( 'ljcut2',     'plugins/lj/ljcut/plugin.js'      );
-	CKEDITOR.plugins.addExternal( 'ljuser2',    'plugins/lj/ljuser/plugin.js'     );
-	CKEDITOR.plugins.addExternal( 'ljautogrow', 'plugins/lj/ljautogrow/plugin.js' );
+    if (Site.page.ljpost) {
+        extraPlugins = {
+            'livejournal': 'plugins/livejournal/plugin.js'  ,
+            'ljcolor'    : 'plugins/lj/ljcolor/plugin.js'   ,
+            'ljlink'     : 'plugins/lj/ljlink/plugin.js'    ,
+            'ljfont'     : 'plugins/lj/ljfont/plugin.js'    ,
+            'ljcut'      : 'plugins/lj/ljcut/plugin.js'     ,
+            'ljuser2'    : 'plugins/lj/ljuser/plugin.js'    ,
+            'ljautogrow' : 'plugins/lj/ljautogrow/plugin.js',
+            'ljspell'    : 'plugins/ljspell/plugin.js'
+        };
+    } else {
+        extraPlugins = {
+            'livejournal_old': 'plugins/livejournal_old/plugin.js'
+        };
+    }
+    
+    for (pluginName in extraPlugins) {
+        CKEDITOR.plugins.addExternal(pluginName, extraPlugins[pluginName]);
+    }
 
-	var plugins = [
-			'ajax',
-			'basicstyles',
-			'bidi',
-			'blockquote',
-			'button',
-			'colorbutton',
-			'colordialog',
-			'enterkey',
-			'entities',
-			'format',
-			'htmldataprocessor',
-			'keystrokes',
-			'list',
-			'liststyle',
-			'pastefromword',
-			'specialchar',
-			'tab',
-			'table',
-			'toolbar',
-			'undo',
-			'wysiwygarea',
-			'onchange'
-		],
-		ljplugins = [];
+    var plugins = [
+        'ajax',
+        'basicstyles',
+        'bidi',
+        'blockquote',
+        'button',
+        'colorbutton',
+        'colordialog',
+        'enterkey',
+        'entities',
+        'format',
+        'htmldataprocessor',
+        'keystrokes',
+        'list',
+        'liststyle',
+        'pastefromword',
+        'specialchar',
+        'tab',
+        'table',
+        'toolbar',
+        'undo',
+        'wysiwygarea',
+        'onchange'
+    ];
 
-	if (Site.page.ljpost) {
-		ljplugins.push(
-			'livejournal',
-			'ljcolor',
-			'ljlink',
-			'ljautogrow',
-			'ljspell',
-			'ljfont',
-			'ljcut2',
-			'ljuser2'
-		);
-	} else {
-		ljplugins.push('livejournal_old');
-		plugins.push('dialog', 'image', 'link', 'font');
-	}
+    if (!Site.page.ljpost) {
+        plugins.push('dialog', 'image', 'link', 'font');
+    }
 
-	config.language = 'ru';
-	config.autoParagraph = false;
-	config.autoUpdateElement = false;
-	config.docType = '<!DOCTYPE html>';
+    /* Livejournal files on dev servers should be loaded as external plugins */
+    config.extraPlugins = Object.keys(extraPlugins).join(',');
+    if (Site.is_dev_server) {
+        console.warn('Development server, loading plugins as external files');
+        for (pluginName in extraPlugins) {
+            delete CKEDITOR.plugins.registered[pluginName];
+            CKEDITOR.plugins.addExternal(pluginName, extraPlugins[pluginName]);
+        }
+    }
+    config.plugins = plugins.join(',');
 
-	if (Site.page.ljpost) {
-		config.contentsCss = '/js/ck/contents_new.css?t=' + Site.version;
-		config.styleText = Site.statprefix + '/js/ck/contents_new.css?t=' + Site.version;
-		config.bodyClass = 'lj-main-body';
-	} else {
-		config.contentsCss = '/js/ck/contents.css?t=' + Site.version;
-		config.styleText = Site.statprefix + '/js/ck/contents.css?t=' + Site.version;
-	}
+    config.language = 'ru';
+    config.autoParagraph = false;
+    config.autoUpdateElement = false;
+    config.docType = '<!DOCTYPE html>';
 
-	//config.scayt_autoStartup = true;
+    if (Site.page.ljpost) {
+        config.contentsCss = '/js/ck/contents_new.css?t=' + Site.version;
+        config.styleText = Site.statprefix + '/js/ck/contents_new.css?t=' + Site.version;
+        config.bodyClass = 'lj-main-body';
+    } else {
+        config.contentsCss = '/js/ck/contents.css?t=' + Site.version;
+        config.styleText = Site.statprefix + '/js/ck/contents.css?t=' + Site.version;
+    }
 
-	config.fillEmptyBlocks = false;
+    config.contentsLangDirection = 'ltr';
+    config.fillEmptyBlocks = false;
+    config.tabIndex = 41;
+    config.tabSpaces = 2;
+    config.startupShowBorders = false;
+    config.toolbarCanCollapse = false;
 
-	/* Livejournal files on dev servers should be loaded as external plugins */
-	if (Site.is_dev_server) {
-		config.extraPlugins = ljplugins.join(',');
-	} else {
-		Array.prototype.push.apply(plugins, ljplugins);
-	}
+    config.disableNativeSpellChecker = Site.page.ljpost ? true : false;
 
-	config.plugins = plugins.join(',');
+    var toolbar = [];
 
-	// if (jQuery.browser.msie || jQuery.browser.opera) { //show context menu only in internet explorer as it was in previous version of editor
-	// 	config.plugins += ',contextmenu';
-	// }
+    function ifEnabled(condition, what) {
+        return condition ? what : undefined;
+    }
 
-	config.contentsLangDirection = 'ltr';
-	config.fillEmptyBlocks = false;
-	config.tabIndex = 41;
-	config.tabSpaces = 2;
-	config.startupShowBorders = false;
-	config.toolbarCanCollapse = false;
+    if (Site.page.ljpost) {
+        toolbar = [
+            'Bold', 'Italic', 'Underline', 'Strike', 'LJFont', 'LJColor',
 
-	config.disableNativeSpellChecker = Site.page.ljpost ? true : false;
+            '-',
 
-	var toolbar = [];
+            'LJLink2', 'LJUser2',
 
-	function ifEnabled(condition, what) {
-		return condition ? what : undefined;
-	}
+            '-',
 
-	if (Site.page.ljpost) {
-		toolbar = [
-			'Bold', 'Italic', 'Underline', 'Strike', 'LJFont', 'LJColor',
+            'LJImage',
+            ifEnabled(Site.media_embed_enabled, 'LJEmbedLink'),
 
-			'-',
+            'LJCut',
+            'LJSpoiler',
 
-			'LJLink2', 'LJUser2',
+            'LJMap',
+            'LJLike',
 
-			'-',
+            'LJPollLink',
+            'NumberedList',
+            'BulletedList',
 
-			'LJImage',
-			ifEnabled(Site.media_embed_enabled, 'LJEmbedLink'),
+            'LJJustifyLeft',
+            'LJJustifyCenter',
+            'LJJustifyRight',
 
-			// 'LJCut',
-			'LJCut2',
-			'LJSpoiler',
+            'LJSpell',
 
-			'LJMap',
-			'LJLike',
+            'Undo',
+            'Redo'
+        ];
+    } else {
+        toolbar = [
+            'Bold',
+            'Italic',
+            'Underline',
+            'Strike',
+            'TextColor',
+            'FontSize',
 
-			'LJPollLink',
-			'NumberedList',
-			'BulletedList',
+            '-',
 
-			'LJJustifyLeft',
-			'LJJustifyCenter',
-			'LJJustifyRight',
+            'LJLink',
+            'LJUserLink',
+            'image',
+            ifEnabled(Site.media_embed_enabled, 'LJEmbedLink'),
 
-			'LJSpell',
+            'LJPollLink',
+            'LJCutLink',
+            'LJCut',
+            'LJLike',
+            'LJSpoiler',
 
-			'Undo',
-			'Redo'
-		];
-	} else {
-		toolbar = [
-			'Bold',
-			'Italic',
-			'Underline',
-			'Strike',
-			'TextColor',
-			'FontSize',
+            '-',
 
-			'-',
+            'UnorderedList',
+            'OrderedList',
+            'NumberedList',
+            'BulletedList',
 
-			'LJLink',
-			'LJUserLink',
-			'image',
-			ifEnabled(Site.media_embed_enabled, 'LJEmbedLink'),
+            '-',
 
-			'LJPollLink',
-			'LJCutLink',
-			'LJCut',
-			'LJLike',
-			'LJSpoiler',
+            'LJJustifyLeft',
+            'LJJustifyCenter',
+            'LJJustifyRight',
 
-			'-',
+            '-',
 
-			'UnorderedList',
-			'OrderedList',
-			'NumberedList',
-			'BulletedList',
+            'Undo',
+            'Redo'
+        ];
+    }
 
-			'-',
+    config.toolbar_Full = [
+        toolbar.filter(function(el) { return el; })
+    ];
 
-			'LJJustifyLeft',
-			'LJJustifyCenter',
-			'LJJustifyRight',
+    config.enterMode = CKEDITOR.ENTER_BR;
+    config.shiftEnterMode = CKEDITOR.ENTER_P;
 
-			'-',
+    config.keystrokes = [
+        [ CKEDITOR.SHIFT + 121 /*F10*/, 'contextMenu' ],
 
-			'Undo',
-			'Redo'
-		];
-	}
+        [ CKEDITOR.CTRL + 90 /*Z*/, 'undo' ],
+        [ CKEDITOR.CTRL + 89 /*Y*/, 'redo' ],
+        [ CKEDITOR.CTRL + CKEDITOR.SHIFT + 90 /*Z*/, 'redo' ],
 
-	config.toolbar_Full = [
-		toolbar.filter(function(el) { return el; })
-	];
+        [ CKEDITOR.CTRL + 76 /*L*/, 'LJLink2' ],
 
-	config.enterMode = CKEDITOR.ENTER_BR;
-	config.shiftEnterMode = CKEDITOR.ENTER_P;
+        [ CKEDITOR.CTRL + 66 /*B*/, 'bold' ],
+        [ CKEDITOR.CTRL + 73 /*I*/, 'italic' ],
+        [ CKEDITOR.CTRL + 85 /*U*/, 'underline' ]
+    ];
 
-	config.keystrokes = [
-		[ CKEDITOR.SHIFT + 121 /*F10*/, 'contextMenu' ],
+    config.colorButton_colors = '000000,993300,333300,003300,003366,000080,333399,333333,800000,FF6600,808000,808080,008080,0000FF,666699,808080,FF0000,FF9900,99CC00,339966,33CCCC,3366FF,800080,999999,FF00FF,FFCC00,FFFF00,00FF00,00FFFF,00CCFF,993366,C0C0C0,FF99CC,FFCC99,FFFF99,CCFFCC,CCFFFF,99CCFF,CC99FF,FFFFFF';
+    config.fontSize_sizes = 'smaller;larger;xx-small;x-small;small;medium;large;x-large;xx-large';
+    config.disableObjectResizing = true;
+    config.format_tags = 'p;h1;h2;h3;h4;h5;h6;pre;address';
+    config.removeFormatTags = 'b,big,code,del,dfn,em,font,i,ins,kbd,q,samp,small,span,strike,strong,sub,sup,tt,u,var';
+    config.removeFormatAttributes = 'class,style,lang,width,height,align,hspace,valign';
+    config.coreStyles_bold = {
+        element: 'b',
+        overrides: 'strong'
+    };
+    config.coreStyles_italic = {
+        element: 'i',
+        overrides:'em'
+    };
 
-		[ CKEDITOR.CTRL + 90 /*Z*/, 'undo' ],
-		[ CKEDITOR.CTRL + 89 /*Y*/, 'redo' ],
-		[ CKEDITOR.CTRL + CKEDITOR.SHIFT + 90 /*Z*/, 'redo' ],
+    config.indentClasses = [];
+    config.indentOffset = 0;
 
-		[ CKEDITOR.CTRL + 76 /*L*/, 'LJLink2' ],
+    config.pasteFromWordRemoveFontStyles = false;
+    config.pasteFromWordRemoveStyles = false;
 
-		[ CKEDITOR.CTRL + 66 /*B*/, 'bold' ],
-		[ CKEDITOR.CTRL + 73 /*I*/, 'italic' ],
-		[ CKEDITOR.CTRL + 85 /*U*/, 'underline' ]
-	];
+    if (!Site.page.ljpost) {
+        config.protectedSource.push(/<lj-poll-\d+\s*\/?>/gi); // created lj polls;
+    }
 
-	config.colorButton_colors = '000000,993300,333300,003300,003366,000080,333399,333333,800000,FF6600,808000,808080,008080,0000FF,666699,808080,FF0000,FF9900,99CC00,339966,33CCCC,3366FF,800080,999999,FF00FF,FFCC00,FFFF00,00FF00,00FFFF,00CCFF,993366,C0C0C0,FF99CC,FFCC99,FFFF99,CCFFCC,CCFFFF,99CCFF,CC99FF,FFFFFF';
-	config.fontSize_sizes = 'smaller;larger;xx-small;x-small;small;medium;large;x-large;xx-large';
-	config.disableObjectResizing = true;
-	config.format_tags = 'p;h1;h2;h3;h4;h5;h6;pre;address';
-	config.removeFormatTags = 'b,big,code,del,dfn,em,font,i,ins,kbd,q,samp,small,span,strike,strong,sub,sup,tt,u,var';
-	config.removeFormatAttributes = 'class,style,lang,width,height,align,hspace,valign';
-	config.coreStyles_bold = {
-		element: 'b',
-		overrides: 'strong'
-	};
-	config.coreStyles_italic = {
-		element: 'i',
-		overrides:'em'
-	};
+    config.LJFontDefault = 'normal';
 
-	config.indentClasses = [];
-	config.indentOffset = 0;
+    config.LJFontStyle = {
+        element: 'span',
+        styles: { 'font-size' : '#(size)' },
+        overrides: [ { element : 'font', attributes : { 'size' : null } } ]
+    };
 
-	config.pasteFromWordRemoveFontStyles = false;
-	config.pasteFromWordRemoveStyles = false;
+    config.LJFontSize = {
+        tiny: '0.7em',
+        small: '0.9em',
+        normal: '1.0em',
+        large: '1.4em',
+        huge: '1.8em'
+    };
 
-	if (!Site.page.ljpost) {
-		config.protectedSource.push(/<lj-poll-\d+\s*\/?>/gi); // created lj polls;
-	}
-
-	config.LJFontDefault = 'normal';
-
-	config.LJFontStyle = {
-		element: 'span',
-		styles: { 'font-size' : '#(size)' },
-		overrides: [ { element : 'font', attributes : { 'size' : null } } ]
-	};
-
-	config.LJFontSize = {
-		tiny: '0.7em',
-		small: '0.9em',
-		normal: '1.0em',
-		large: '1.4em',
-		huge: '1.8em'
-	};
-
-	config.protectedSource.push(/<lj-replace name="first_post"\s*\/?>/gi);
+    config.protectedSource.push(/<lj-replace name="first_post"\s*\/?>/gi);
 };
 
-CKEDITOR.editorConfig(CKEDITOR.config);
+if (!Site.is_dev_server) {
+    CKEDITOR.editorConfig(CKEDITOR.config);
+}
