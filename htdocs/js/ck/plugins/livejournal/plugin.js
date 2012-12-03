@@ -551,31 +551,6 @@
 					return '<iframe class="lj-repost-wrap" lj-class="lj-repost" frameborder="0" allowTransparency="true" lj-text="' + text + '" lj-button="' + buttonTitle + '" lj-content="' + content + '"></iframe>';
 				}
 
-				// dom walker
-				function walk(node, callback) {
-					var skip,
-						tmp,
-						depth = 0;
-
-					do {
-						if (!skip) {
-							skip = callback.call(node, depth) === false;
-						}
-
-						if (!skip && (tmp = node.firstChild)) {
-							depth++;
-						} else if (tmp = node.nextSibling) {
-							skip = false;
-						} else {
-							tmp = node.parentNode;
-							depth--;
-							skip = true;
-						}
-
-						node = tmp;
-					} while ( depth > 0 );
-				}
-
 				/*
 				 * Find and move token out from markup
 				 */
@@ -715,106 +690,6 @@
 			});
 
 			// LJ Buttons
-
-			// LJ Font
-			(function () {
-				var button = 'LJFont',
-					config = editor.config,
-					hooked = false,
-					styles = {},
-					defaultFont = 'normal',  // This value probably should not be hardcoded
-					currentFont = config.LJFontDefault,
-					sizes = config.LJFontSize,
-					style = config.LJFontStyle,
-					selectedItem = 'b-fontsize-select-item-active',
-					i, part, vars, name, $items = jQuery();
-
-				for (name in sizes) {
-					styles[name] = new CKEDITOR.style(style, { size: sizes[name] });
-					styles[name]._.definition.name = name;
-				}
-
-				function setValue(value) {
-					currentFont = value;
-
-					$items
-						.removeClass(selectedItem)
-						.filter('.b-fontsize-select-item-' + currentFont)
-						.addClass(selectedItem);
-				}
-
-				editor.addCommand(button, {
-					exec: function(editor) {
-						editor.rteButton(button, 'font');
-
-						if (!hooked) {
-							$items = jQuery('.b-fontsize-select-item');
-							LiveJournal.register_hook('font_response', function (font) {
-								editor.focus();
-								editor.fire('saveSnapshot');
-
-								var style = styles[font],
-									s, selection, selected;
-
-								if (currentFont === font) {
-									style.remove(editor.document);
-								} else {
-									selection = editor.getSelection();
-									selected = parseFloat(style._.definition.styles['font-size']);
-
-									for (s in styles) {
-										styles[s].remove(editor.document);
-									}
-
-									style.apply(editor.document);
-								}
-
-								editor.fire('saveSnapshot');
-							});
-							hooked = true;
-
-							var command = editor.getCommand(button);
-							command.setState(CKEDITOR.TRISTATE_ON);
-
-							setValue(currentFont);
-						}
-					}
-				});
-
-				editor.ui.addButton(button, {
-					label: CKLang[button],
-					command: button
-				});
-
-				editor.on('selectionChange', function (ev) {
-					var elementPath = ev.data.path,
-						elements = elementPath.elements,
-						command = editor.getCommand(button),
-						i, element, value;
-
-					// For each element into the elements path.
-					for (i = 0; i < elements.length; i++) {
-						element = elements[i];
-
-						// Check if the element is removable by any of
-						// the styles.
-						for (value in styles) {
-							if (styles[value].checkElementRemovable(element, true)) {
-								if (value !== currentFont) {
-									setValue(value);
-									command.setState(CKEDITOR.TRISTATE_ON);
-								}
-
-								return;
-							}
-						}
-					}
-
-					setValue(defaultFont);
-					command.setState(CKEDITOR.TRISTATE_OFF);
-					return;
-				});
-			}());
 
 			// LJ Image
 			(function() {

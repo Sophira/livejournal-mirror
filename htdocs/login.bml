@@ -391,8 +391,8 @@
             my $exptype = ($POST{'expire'} eq "never" || $POST{'remember_me'}) ? "long" : "short";
             my $bindip  = ($POST{'bindip'} eq "yes") ? BML::get_remote_ip() : "";
 
-            $u->make_login_session($exptype, $bindip);
             LJ::run_hooks('user_login', $u);
+            $u->make_login_session($exptype, $bindip);
             $cursess = $u->session;
 
             return if $want_success_redirect->();

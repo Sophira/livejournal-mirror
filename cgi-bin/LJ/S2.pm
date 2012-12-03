@@ -2138,9 +2138,9 @@ sub Page
     my $linkobj = LJ::Links::load_linkobj($u);
 
     my $rel     = !($u->get_cap('paid') || $u->get_cap('trynbuy')) ? { rel => 'nofollow' }  : {};
-    my $opts    = { attributes => $rel  };
+    my $linklist_opts    = { attributes => $rel  };
 
-    my $linklist = [ map { UserLink($_, $opts ) } @$linkobj ];
+    my $linklist = [ map { UserLink($_, $linklist_opts ) } @$linkobj ];
 
     my $remote = LJ::get_remote();
 
