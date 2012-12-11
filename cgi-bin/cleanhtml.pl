@@ -739,7 +739,7 @@ sub clean {
                 my $link_text = sub {
                     my $text =  LJ::Lang::ml('fcklang.readmore');
                     $text = Encode::decode_utf8($text) if $text;
-                    if ($attr->{'text'}) {
+                    if (exists $attr->{'text'} && length $attr->{'text'}) {
                         $text = $attr->{'text'};
                         $text =~ s/</&lt;/g;
                         $text =~ s/>/&gt;/g;
@@ -1106,6 +1106,17 @@ sub clean {
 
                     if ($opts->{'extractimages'}) { $img_bad = 1; }
 
+                    if ( my $maxwidth = $opts->{'maximgwidth'} ) {
+                        my $width = $hash->{'width'};
+                        if ( $width && $width !~ /\%$/ ) {
+                            $width =~ s/[^\d.]//g;
+                            if ( int $width > $maxwidth ) {
+                                delete $hash->{'width'};
+                                delete $hash->{'height'};
+                            }
+                        }
+                    }
+
                     # don't use placeholders for small images
                     if ( $opts->{'img_placeholders'} ) {
                         if ( exists $hash->{style} ) {
@@ -1118,7 +1129,7 @@ sub clean {
                             }
                         }
 
-                        if ( exists $hash->{width} && $hash->{width} =~ /^\d+$/ && exists $hash->{height} && $hash->{height} =~ /^\d+$/ ) {
+                        if ( exists $hash->{width} && $hash->{width} =~ /^[\d.]+$/ && exists $hash->{height} && $hash->{height} =~ /^[\d.]+$/ ) {
                             if ( $hash->{'width'} > 140 && $hash->{'height'} > 37 ) {
                                 $img_bad = 1;
                             }
@@ -1131,20 +1142,6 @@ sub clean {
                             delete $hash->{height} if exists $hash->{height};
                             $img_bad = 1;
                         }
-
-                    } elsif ( my $maxwidth = $opts->{'maximgwidth'} ) {
-                        $img_bad = 0;
-
-                        my $width = $hash->{'width'};
-                        if ( $width && $width !~ /\%$/ ) {
-                            $width =~ s/\D//g;
-                            if ( int $width > $maxwidth ) {
-                                delete $hash->{'width'};
-                                delete $hash->{'height'};
-                            }
-                        }
-
-                        #$img_bad = 1 if ( $opts->{'img_placeholders'} );
                     } else {
                         $img_bad = 0;
                     }
