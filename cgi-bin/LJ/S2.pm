@@ -593,7 +593,7 @@ sub get_layers_of_user
                             "FROM s2layers l, s2info i ".
                             "WHERE l.userid=? AND l.s2lid=i.s2lid AND ".
                             "i.infokey IN ($extrainfo 'type', 'name', 'langcode', ".
-                            "'majorversion', '_previews')");
+                            "'majorversion', '_previews', 'is_buyable')");
     $sth->execute($userid);
     die $dbr->errstr if $dbr->err;
     while (my ($key, $val, $id, $bid, $type) = $sth->fetchrow_array) {
@@ -603,6 +603,7 @@ sub get_layers_of_user
         $key = "uniq" if $key eq "redist_uniq";
         $layers{$id}->{$key} = $val;
     }
+
 
     foreach (keys %layers) {
         # setup uniq alias.

@@ -185,16 +185,20 @@ sub make_authas_select {
     my @list = LJ::get_authas_list($u, $opts);
 
     # only do most of form if there are options to select from
+    shift @list if @list > 1 && $opts->{'remove_self'};
     if (@list > 1 || $list[0] ne $u->{'user'}) {
         my $ret;
         my $label = $BML::ML{'web.authas.label'};
         $label = $BML::ML{'web.authas.label.comm'} if ($opts->{'type'} eq "C");
         $ret = ($opts->{'label'} || $label) . " ";
+        my %select_id = $opts->{'id'} ? ( id => $opts->{'id'} ) : ();
         $ret .= LJ::html_select({ 'name' => 'authas',
                                  'selected' => $opts->{'authas'} || $u->{'user'},
                                  'class' => 'hideable',
+                                 %select_id,
                                  },
-                                 map { $_, $_ } @list) . " ";
+                                 ## We loaded all users in LJ::get_authas_list(). Here we use their singletons.
+                                 (map { my $u = LJ::load_user ($_); ($_, $u->display_name) } @list), @{$opts->{'add_fields'}} ) . " ";
         $ret .= $opts->{'button_tag'} . LJ::html_submit(undef, $opts->{'button'} || $BML::ML{'web.authas.btn'}) . $opts->{'button_close_tag'};
         return $ret;
     }

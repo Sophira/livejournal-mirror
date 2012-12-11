@@ -1747,10 +1747,10 @@ sub bday_string {
     if ($opts{'format'}) {
         if ($u->can_show_full_bday && $day > 0 && $mon > 0 && $year > 0) {
             $mon = LJ::Lang::ml(LJ::Lang::month_long_genitive_langcode($mon)); 
-            $bday_string = sprintf("%02d %s %04d", $day, $mon, $year);
+            $bday_string = sprintf("%2d %s %04d", $day, $mon, $year);
         } elsif ($u->can_show_bday && $day > 0 && $mon > 0) {
             $mon = LJ::Lang::ml(LJ::Lang::month_long_genitive_langcode($mon)); 
-            $bday_string = sprintf("%02d %s", $day, $mon);
+            $bday_string = sprintf("%2d %s", $day, $mon);
         } elsif ($u->can_show_bday_year && $year > 0) {
             $bday_string = $year;
         }
@@ -2108,13 +2108,13 @@ sub profile_url {
             $url .= "&mode=full" if $opts{full};
         } else {
             $url = "$LJ::SITEROOT/profile";
-            $url .= "/friendlist" if $opts{'friendlist'};
+            $url .= "/".$opts{'friends_page'} if $opts{'friends_page'};
             $url .= "?userid=$u->{'userid'}&t=I";
             $url .= "&mode=full" if $opts{full};
         }
     } else {
         $url = $u->journal_base . "/profile";
-        $url .= "/friendlist" if $opts{'friendlist'};
+        $url .= "/".$opts{'friends_page'} if $opts{'friends_page'};
         $url .= "?mode=full" if $opts{full};
     }
     return $url;

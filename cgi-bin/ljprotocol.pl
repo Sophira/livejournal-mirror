@@ -1337,6 +1337,8 @@ sub getfriendspage
             $entry = $original_entry;
         }
 
+        $entry->normalize_props() unless $flags->{'noauth'};
+
         # Add more data for public posts
         foreach my $method (@attrs) {
             $h{$method} = $entry->$method;
@@ -4317,7 +4319,7 @@ sub getevents {
         #
         # There is using final_ variabled to get correct link
         #
-        $evt->{'url'}         = LJ::item_link($final_ownerid, 
+        $evt->{'url'}         = LJ::item_link(LJ::load_userid($final_ownerid), 
                                               $final_itemid, 
                                               $final_anum);
 
@@ -4368,8 +4370,23 @@ sub getevents {
             $evt->{'props'} = {};
 
             foreach my $name (keys %{$props{$itemid}}) {
+
                 my $value = $props{$itemid}->{$name};
                 $value =~ s/\n/ /g;
+
+                # normalize props
+                unless ($flags->{'noauth'}) {
+                    my $prop  = LJ::get_prop("log", $name);
+                    my $ptype = $prop->{'datatype'};
+                
+                    if ($ptype eq "bool" && $value !~ /^[01]$/) {
+                        $value = $value ? 1 : 0;
+                    }
+                    if ($ptype eq "num" && $value =~ /[^\d]/) {
+                        $value = int $value;
+                    }
+                }
+
                 $evt->{'props'}->{$name} = $value;
             }
 

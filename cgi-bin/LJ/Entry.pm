@@ -556,6 +556,28 @@ sub set_prop {
     return 1;
 }
 
+sub normalize_props {
+    my $self = shift;
+
+    return unless $self->{_loaded_props};
+
+    foreach my $pname ( keys %{$self->{props}} ) {
+        my $pval  = $self->{props}{$pname};
+        
+        next unless defined $pval;
+
+        my $prop  = LJ::get_prop("log", $pname);
+        my $ptype = $prop->{'datatype'};
+        
+        if ($ptype eq "bool" && $pval !~ /^[01]$/) {
+            $self->{props}{$pname} = $pval ? 1 : 0;
+        } 
+
+        if ($ptype eq "num" && $pval =~ /[^\d]/) {
+            $self->{props}{$pname} = int $pval;
+        }
+    }
+}
 
 # called automatically on $event->comments
 # returns the same data as LJ::get_talk_data, with the addition
