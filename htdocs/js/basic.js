@@ -1746,7 +1746,7 @@ LJ.siteMessage = (function ($) {
 		get: function () {
 			var that = this;
 
-			LJ.Api.call('sitemessage.get_message', {}, function (content) {
+			LJ.Api.call('sitemessage.get_message', { locale: Site.locale }, function (content) {
 				that.show(content);
 			});
 		},
