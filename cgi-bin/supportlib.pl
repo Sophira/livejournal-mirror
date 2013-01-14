@@ -13,6 +13,7 @@ use lib "$ENV{LJHOME}/cgi-bin";
 require "sysban.pl";
 use LJ::TimeUtil;
 use LJ::Support::Request::Tag;
+use LJ::Event::SupportRequest;
 
 # Constants
 my $SECONDS_IN_DAY  = 3600 * 24;
@@ -161,8 +162,9 @@ sub is_poster {
 sub can_see_helper
 {
     my ($sp, $remote) = @_;
-    if ($sp->{_cat}->{'hide_helpers'}) {
-        if (can_help($sp, $remote)) {
+    my $spcat = $sp->{_cat};
+    if ($spcat->{'hide_helpers'}) {
+        if (can_help($spcat, $remote)) {
             return 1;
         }
         if (LJ::check_priv($remote, "supportviewinternal", $sp->{_cat}->{'catkey'})) {
@@ -221,11 +223,12 @@ sub can_reopen {
 sub can_append
 {
     my ($sp, $remote, $auth) = @_;
+    my $spcat = $sp->{_cat};
     if (is_poster($sp, $remote, $auth)) { return 1; }
     return 0 unless $remote;
     return 0 unless $remote->{'statusvis'} eq "V";
-    if ($sp->{_cat}->{'allow_screened'}) { return 1; }
-    if (can_help($sp, $remote)) { return 1; }
+    if ($spcat->{'allow_screened'}) { return 1; }
+    if (can_help($spcat, $remote)) { return 1; }
     return 0;
 }
 
@@ -265,11 +268,11 @@ sub unlock
 #      argument = local, priv applies in that category only if it's public or user has supportread
 sub support_check_priv
 {
-    my ($sp, $remote, $priv) = @_;
-    return 1 if can_help($sp, $remote);
-    return 0 unless can_read_cat($sp->{_cat}, $remote);
-    return 1 if LJ::check_priv($remote, $priv, '') && $sp->{_cat}->{public_read};
-    return 1 if LJ::check_priv($remote, $priv, $sp->{_cat}->{catkey});
+    my ($cat, $remote, $priv) = @_;
+    return 1 if can_help($cat, $remote);
+    return 0 unless can_read_cat($cat, $remote);
+    return 1 if LJ::check_priv($remote, $priv, '') && $cat->{public_read};
+    return 1 if LJ::check_priv($remote, $priv, $cat->{catkey});
     return 0;
 }
 
@@ -277,9 +280,9 @@ sub support_check_priv
 # extended supportread (with a plus sign at the end of the category key)
 sub can_read_internal
 {
-    my ($sp, $remote) = @_;
-    return 1 if LJ::Support::support_check_priv($sp, $remote, 'supportviewinternal');
-    return 1 if LJ::check_priv($remote, "supportread", $sp->{_cat}->{catkey}."+");
+    my ($cat, $remote) = @_;
+    return 1 if LJ::Support::support_check_priv($cat, $remote, 'supportviewinternal');
+    return 1 if LJ::check_priv($remote, "supportread", $cat->{catkey}."+");
     return 0;
 }
 
@@ -310,14 +313,14 @@ sub can_see_stocks
 
 sub can_help
 {
-    my ($sp, $remote) = @_;
-    if ($sp->{_cat}->{'public_read'}) {
-        if ($sp->{_cat}->{'public_help'}) {
+    my ($cat, $remote) = @_;
+    if ($cat->{'public_read'}) {
+        if ($cat->{'public_help'}) {
             return 1;
         }
         if (LJ::check_priv($remote, "supporthelp", "")) { return 1; }
     }
-    my $catkey = $sp->{_cat}->{'catkey'};
+    my $catkey = $cat->{'catkey'};
     if (LJ::check_priv($remote, "supporthelp", $catkey)) { return 1; }
     return 0;
 }
@@ -450,22 +453,23 @@ sub get_answer_types
 {
     my ($sp, $remote, $auth) = @_;
     my @ans_type;
+    my $spcat = $sp->{_cat};
 
     if (is_poster($sp, $remote, $auth)) {
         push @ans_type, ("comment", "More information");
         return @ans_type;
     }
 
-    if (can_help($sp, $remote)) {
+    if (can_help($spcat, $remote)) {
         push @ans_type, ("screened" => "Screened Response",
                          "answer" => "Answer",
                          "comment" => "Comment or Question");
-    } elsif ($sp->{_cat}->{'allow_screened'}) {
+    } elsif ($spcat->{'allow_screened'}) {
         push @ans_type, ("screened" => "Screened Response");
     }
 
-    if (can_make_internal($sp, $remote) &&
-        ! $sp->{_cat}->{'public_help'})
+    if (can_make_internal($spcat, $remote) &&
+        ! $spcat->{'public_help'})
     {
         push @ans_type, ("internal" => "Internal Comment / Action");
     }
@@ -582,7 +586,7 @@ sub file_request
         }
     }
 
-    my ($urlauth, $url, $spid, $closeurl);  # used at the bottom
+    my $spid;
 
     my $sql = "INSERT INTO support (spid, reqtype, requserid, reqname, reqemail, state, authcode, spcatid, subject, timecreate, timetouched, timeclosed, timelasthelp) VALUES (NULL, $qreqtype, $qrequserid, $qreqname, $qreqemail, 'open', $qauthcode, $qspcatid, $qsubject, UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), 0, 0)";
     $sth = $dbh->prepare($sql);
@@ -633,7 +637,7 @@ sub file_request
         LJ::ContentFlag->set_supportid($o->{flagid}, $spid);
     }
 
-    my $miniauth = mini_auth({ 'authcode' => $authcode });
+my $miniauth = mini_auth({ 'authcode' => $authcode });
     $url = "$LJ::SITEROOT/support/see_request.bml?id=$spid";
     $urlauth = "$url&auth=$miniauth";
     $closeurl = "$LJ::SITEROOT/support/act.bml?close;$spid;$authcode";
@@ -1280,7 +1284,7 @@ sub work {
     my $spid = $a->{spid}+0;
     my $load_body = $type eq 'new' ? 1 : 0;
     my $sp = LJ::Support::load_request($spid, $load_body, { force => 1 }); # force from master
-
+    my $cat = $sp->{_cat};
     # we're only going to be reading anyway, but these jobs
     # sometimes get processed faster than replication allows,
     # causing the message not to load from the reader
@@ -1289,7 +1293,7 @@ sub work {
     # now branch a bit to select the right user information
     my $level = $type eq 'new' ? "'new', 'all'" : "'all'";
     my $data = $dbr->selectcol_arrayref("SELECT userid FROM supportnotify " .
-                                        "WHERE spcatid=? AND level IN ($level)", undef, $sp->{_cat}{spcatid});
+                                        "WHERE spcatid=? AND level IN ($level)", undef, $cat->{spcatid});
     my $userids = LJ::load_userids(@$data);
 
     # prepare the email
@@ -1299,7 +1303,7 @@ sub work {
     my $req_subject = LJ::Text->fix_utf8($sp->{'subject'});
     if ($type eq 'new') {
         $body = "A $LJ::SITENAME support request has been submitted regarding the following:\n\n";
-        $body .= "Category: $sp->{_cat}{catname}\n";
+        $body .= "Category: $cat->{catname}\n";
         $body .= "Subject:  $req_subject\n\n";
         $body .= "You can track its progress or add information here:\n\n";
         $body .= "$LJ::SITEROOT/support/see_request.bml?id=$spid";
@@ -1335,9 +1339,9 @@ sub work {
             next unless $u->{status} eq "A";
             next if $posterid == $u->id;
             next if $rtype eq 'screened' &&
-                !LJ::Support::can_read_screened($sp, $u);
+                !LJ::Support::can_read_screened($cat, $u);
             next if $rtype eq 'internal' &&
-                !LJ::Support::can_read_internal($sp, $u);
+                !LJ::Support::can_read_internal($cat, $u);
             push @emails, $u->email_raw;
         }
     }
