@@ -56,6 +56,7 @@ Please note that there are two possible uses for LJ::Event object:
 package LJ::Event;
 use strict;
 no warnings 'uninitialized';
+use Data::Dumper;
 
 use Carp qw(confess);
 use LJ::ESN;
@@ -114,13 +115,14 @@ sub new_from_raw_params {
 # my ($etypeid, $journalid, $arg1, $arg2) = @$params;
 sub raw_params {
     my $self = shift;
-
-    my $ju = $self->event_journal or
-        Carp::confess("Event $self has no journal: " . Dumper($self));
-
+    
+    my $ju = $self->event_journal;
+    warn "This event has no journal: " . Dumper($self) if $ju && $ENV{DEBUG};
+    my $uid = $ju ?  $ju->id : 0 ;
+    
     my @params = map { $_ || 0 } (
         $self->etypeid,
-        $ju->id,
+        $uid, 
         @{$self->{args}},
     );
     return wantarray ? @params : \@params;
@@ -443,7 +445,7 @@ sub as_web_notification {
              content => $self->as_string($u),
              tag     => '',
              icon    => '',
-             url     => '' };             
+             url     => '' };
 }
 
 # return a string representing an email subject of an email notification sent
@@ -565,7 +567,7 @@ sub fire {
         return 0;
 
     $job->priority($self->priority);
- 
+
     my $h = $sclient->insert($job);
     return $h ? 1 : 0;
 }
