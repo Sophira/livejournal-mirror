@@ -35,7 +35,7 @@ body<=
     my %canview; # spcatid => 0/1
     foreach my $cat (values %$cats) {
         $canview{$cat->{spcatid}} = 1
-            if LJ::Support::support_check_priv({ _cat => $cat }, $remote, 'supportviewstocks');
+            if LJ::Support::support_check_priv($cat, $remote, 'supportviewstocks');
     }
     return "<?h1 $ML{'.error'} h1?><?p $ML{'.not.have.access.to.view.answers'} p?>"
         unless %canview;

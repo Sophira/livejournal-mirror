@@ -186,6 +186,7 @@ body<=
 
     my $spid = $FORM{'id'}+0;
     my $sp = LJ::Support::load_request($spid);
+    my $spcat = $sp->{_cat};
     my $props = LJ::Support::load_props($spid);
     my $cats = LJ::Support::load_cats();
     my $remote = LJ::get_remote();
@@ -201,7 +202,7 @@ body<=
         }
         my $spcatand = '';
         if ($sp && ($find eq 'cnext' || $find eq 'cprev')) {
-            my $spcatid = $sp->{_cat}->{'spcatid'} + 0;
+            my $spcatid = $spcat->{'spcatid'} + 0;
             $spcatand = "AND spcatid=$spcatid";
         } else {
             my @filter_cats = LJ::Support::filter_cats($remote, $cats);
@@ -287,8 +288,8 @@ body<=
     }
 
     # load category this request is in
-    my $problemarea = $sp->{_cat}->{'catname'};
-    my $catkey = $sp->{_cat}->{'catkey'};
+    my $problemarea = $spcat->{'catname'};
+    my $catkey = $spcat->{'catkey'};
 
     unless (LJ::Support::can_read($sp, $remote, $auth)) {
         return "<?h1 $ML{'.error'} h1?><?p $ML{'.nothaveprivilege'} p?>";
@@ -297,8 +298,8 @@ body<=
     # helper variables for commonly called methods
     my $can_close = LJ::Support::can_close($sp, $remote, $auth) ? 1 : 0;
     my $can_reopen = LJ::Support::can_reopen($sp, $remote, $auth) ? 1 : 0;
-    my $helper_mode = LJ::Support::can_help($sp, $remote) ? 1 : 0;
-    my $stock_mode = LJ::Support::can_see_stocks($sp, $remote) ? 1 : 0;
+    my $helper_mode = LJ::Support::can_help($spcat, $remote) ? 1 : 0;
+    my $stock_mode = LJ::Support::can_see_stocks($spcat, $remote) ? 1 : 0;
     my $is_poster = LJ::Support::is_poster($sp, $remote, $auth) ? 1 : 0;
 
     # fix up the subject if needed
@@ -351,7 +352,7 @@ body<=
 
         my %show_history = (
                             user  => $has_sh,
-                            email => ($has_fu || ($has_sh && !$sp->{_cat}->{public_read})),
+                            email => ($has_fu || ($has_sh && !$spcat->{public_read})),
                             );
 
         if ($show_history{user} || $show_history{email}) {
@@ -561,8 +562,8 @@ body<=
     }
 
     $ret .= "<tr><td align='right' nowrap='nowrap'><b>$ML{'.supportcategory'}:</b></td><td>";
-    if (LJ::Support::can_read_cat($sp->{_cat}, $remote)) {
-        $ret .= "<a href='$LJ::SITEROOT/support/help.bml?cat=$sp->{_cat}->{'catkey'}'>$problemarea</a>";
+    if (LJ::Support::can_read_cat($spcat, $remote)) {
+        $ret .= "<a href='$LJ::SITEROOT/support/help.bml?cat=$spcat->{'catkey'}'>$problemarea</a>";
         $ret .= " [<a href='$LJ::SITEROOT/support/see_request.bml?id=$sp->{'spid'}&amp;find=cprev'>$ML{'.previous'}</a>|";
         $ret .= "<a href='$LJ::SITEROOT/support/see_request.bml?id=$sp->{'spid'}&amp;find=cnext'>$ML{'.next'}</a>]";
     } else {
@@ -671,7 +672,7 @@ body<=
 
     # put in a "this is private!" box if this is a private request and the user viewing
     # this page is the person who opened the request
-    if (!$sp->{_cat}->{public_read} && $is_poster) {
+    if (!$spcat->{public_read} && $is_poster) {
         $ret .= "<div style='margin-top: 15px; margin-bottom: 15px; padding: 5px; " .
                 "text-align: center; background-color: #ffff00; border: solid 2px red;'>" .
                 $ML{'.private.request'}."</div>";
@@ -689,9 +690,9 @@ body<=
             $most_recent_tier = $le->{tier};
         }
 
-        next if ($le->{'type'} eq "internal" && ! (LJ::Support::can_read_internal($sp, $remote) ||
+        next if ($le->{'type'} eq "internal" && ! (LJ::Support::can_read_internal($spcat, $remote) ||
                                                    ($remote && $remote->{'userid'} == $le->{'userid'} )));
-        next if ($le->{'type'} eq "screened" && ! (LJ::Support::can_read_screened($sp, $remote) ||
+        next if ($le->{'type'} eq "screened" && ! (LJ::Support::can_read_screened($spcat, $remote) ||
                                                    ($remote && $remote->{'userid'} == $le->{'userid'} )));
 
         my $up = LJ::load_userid($le->{'userid'});
@@ -906,7 +907,7 @@ body<=
     }
 
     # helpers can do actions:
-    if (LJ::Support::can_perform_actions($sp, $remote) && ! $is_poster)
+    if (LJ::Support::can_perform_actions($spcat, $remote) && ! $is_poster)
     {
         $ret .= "<tr><td align='right'></td><td>\n";
 
@@ -940,7 +941,7 @@ body<=
     my $lang_ret;
     my $tier_ret;
 
-    if (LJ::is_enabled("support_request_language") && LJ::Support::can_read_internal($sp, $remote) && ! $is_poster) {
+    if (LJ::is_enabled("support_request_language") && LJ::Support::can_read_internal($spcat, $remote) && ! $is_poster) {
         # language
         my %langs;
         my @lang_codes;
@@ -962,7 +963,7 @@ body<=
         $lang_ret .= "</td>";
     }
 
-    if (LJ::is_enabled("support_response_tier") && LJ::Support::can_perform_actions($sp, $remote) && ! $is_poster && $helper_mode) {
+    if (LJ::is_enabled("support_response_tier") && LJ::Support::can_perform_actions($spcat, $remote) && ! $is_poster && $helper_mode) {
         my @valid_tiers = (
             tier1 => $ML{'.tier.1'},
             tier2 => $ML{'.tier.2'},
@@ -985,7 +986,7 @@ body<=
         $ret .= "</td></tr>\n";
     }
 
-    if (LJ::Support::can_perform_actions($sp, $remote) && ! $is_poster) {
+    if (LJ::Support::can_perform_actions($spcat, $remote) && ! $is_poster) {
         if ($sp->{'timelasthelp'} > ($sp->{'timetouched'}+5)) {
             $ret .= "<tr><td align='right'>$ML{'.put.in.queue'}:</td><td>";
             $ret .= LJ::html_check({ 'type' => 'checkbox', 'name' => 'touch',
@@ -999,7 +1000,7 @@ body<=
             $ret .= "<?de $ML{'.use.this.to.change.awaiting'} de?>\n";
             $ret .= "</td></tr>\n";
         }
-        if (LJ::Support::can_change_summary($sp, $remote)) {
+        if (LJ::Support::can_change_summary($spcat, $remote)) {
             $ret .= "<tr><td align='right'>$ML{'.change.summary'}:</td><td>";
             $ret .= LJ::html_check({ 'type' => 'checkbox', 'name' => 'changesum', id => 'changesum', 'onClick' => 'doSummaryClick();' });
             $ret .= LJ::html_text({ 'type' => 'text', 'name' => 'summary', 'size' => '50', 'maxlength' => '80', 'value' => $sp->{'subject'}, 'onchange' => 'doSummaryChanged();', 'onkeyup' => 'doSummaryChanged();' });
@@ -1010,7 +1011,7 @@ body<=
         }
     }
     
-    if (LJ::Support::can_read_internal($sp, $remote) && !$is_poster) {
+    if (LJ::Support::can_read_internal($spcat, $remote) && !$is_poster) {
         $ret .= '<tr>';
         $ret .= '<td align="right">'.$ML{'.change.tags'}.'</td>';
         $ret .= '<td>';
@@ -1032,7 +1033,7 @@ body<=
         $ret .= '</td>';
         $ret .= '</tr>';
         $ret .= '<tr><td></td><td><p><em>'.$ML{'.tags.only.sh.can.add'}.
-            '</em></p></td></tr>' unless LJ::Support::can_help($sp, $remote);
+            '</em></p></td></tr>' unless LJ::Support::can_help($spcat, $remote);
     }
 
     # Prefill an e-mail validation nag, if needed.
@@ -1047,7 +1048,7 @@ body<=
     # add in canned answers if there are any for this category and the user can use them
     if ($stock_mode && ! $is_poster) {
         # if one category's stock answers exactly matches another's
-        my $stock_spcatid = $LJ::SUPPORT_STOCKS_OVERRIDE{$sp->{_cat}->{catkey}} || $sp->{_cat}->{spcatid};
+        my $stock_spcatid = $LJ::SUPPORT_STOCKS_OVERRIDE{$spcat->{catkey}} || $spcat->{spcatid};
         my $rows = $dbr->selectall_arrayref('SELECT subject, body FROM support_answers WHERE spcatid = ? ORDER BY subject',
                                             undef, $stock_spcatid);
 

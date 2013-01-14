@@ -76,21 +76,21 @@ body<=
 
     ## can we do the action we want?
     return LJ::bad_input($ML{'.internal.approve'})
-        if $FORM{'approveans'} && ($type ne "internal" || ! LJ::Support::can_help($sp, $remote));
+        if $FORM{'approveans'} && ($type ne "internal" || ! LJ::Support::can_help($scat, $remote));
 
     return LJ::bad_input($ML{'.internal.changecat'})
-        if $FORM{'changecat'} && ($type ne "internal" || ! LJ::Support::can_perform_actions($sp, $remote));
+        if $FORM{'changecat'} && ($type ne "internal" || ! LJ::Support::can_perform_actions($scat, $remote));
 
     return LJ::bad_input($ML{'.internal.changelanguage'})
-        if LJ::is_enabled("support_request_language") && $FORM{'changelanguage'} && ($type ne "internal" || ! LJ::Support::can_read_internal($sp, $remote));
+        if LJ::is_enabled("support_request_language") && $FORM{'changelanguage'} && ($type ne "internal" || ! LJ::Support::can_read_internal($scat, $remote));
 
     # make sure that the tier/answer combination is valid
     my $tier;
     my $require_tier = 0; # tier isn't required for now
     if (LJ::is_enabled("support_response_tier")) {
-        my $is_answer = $type eq "answer" && LJ::Support::can_help($sp, $remote) ? 1 : 0;
-        my $is_approval = $type eq "internal" && LJ::Support::can_help($sp, $remote) && $FORM{approveans} && $FORM{approveas} eq "answer" ? 1 : 0;
-        my $is_internal = $type eq "internal" && LJ::Support::can_make_internal($sp, $remote) ? 1 : 0;
+        my $is_answer = $type eq "answer" && LJ::Support::can_help($scat, $remote) ? 1 : 0;
+        my $is_approval = $type eq "internal" && LJ::Support::can_help($scat, $remote) && $FORM{approveans} && $FORM{approveas} eq "answer" ? 1 : 0;
+        my $is_internal = $type eq "internal" && LJ::Support::can_make_internal($scat, $remote) ? 1 : 0;
 
         if ($FORM{settier}) {
             return LJ::bad_input($ML{'.internal.settier'})
@@ -109,13 +109,13 @@ body<=
 
     return LJ::bad_input($ML{'.internal.touch'})
         if ($FORM{'touch'} || $FORM{'untouch'}) &&
-            ($type ne "internal" || ! LJ::Support::can_perform_actions($sp, $remote));
+            ($type ne "internal" || ! LJ::Support::can_perform_actions($scat, $remote));
 
     return LJ::bad_input($ML{'.internal.changesum'})
-        if $FORM{'changesum'} && ($type ne "internal" || ! LJ::Support::can_change_summary($sp, $remote));
+        if $FORM{'changesum'} && ($type ne "internal" || ! LJ::Support::can_change_summary($scat, $remote));
 
     return LJ::bad_input($ML{'.internal.changetags'})
-        if $FORM{'changetags'} && ($type ne "internal" || ! LJ::Support::can_read_internal($sp, $remote));
+        if $FORM{'changetags'} && ($type ne "internal" || ! LJ::Support::can_read_internal($scat, $remote));
 
     return LJ::bad_input($ML{'.invalid.blank'})
         if $FORM{'body'} !~ /\S/ && !$FORM{'approveans'} && !$FORM{'changecat'} && !$FORM{'changelanguage'} && (!$FORM{'settier'} || $type eq "answer") &&
@@ -296,7 +296,7 @@ body<=
         foreach my $newtag (@newtags) {
             my $tagid = LJ::Support::Request::Tag::tag_name_to_id(
                 $newtag, $spcatid,
-                !LJ::Support::can_help($sp, $remote)
+                !LJ::Support::can_help($scat, $remote)
             );
 
             if (defined($tagid)) {
