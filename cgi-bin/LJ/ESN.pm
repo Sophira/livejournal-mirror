@@ -553,7 +553,8 @@ sub work {
     return $job->completed unless $subsc;
 
     # if the user deleted their account (or otherwise isn't visible), bail
-    return $job->completed unless $u->is_visible || $evt->is_significant;
+    # but email unauthorised recipients
+    return $job->completed if $u && !($u->is_visible || $evt->is_significant);
 
     my %opts;
     if ($LJ::DEBUG{esn_email_headers}) {
