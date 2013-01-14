@@ -58,6 +58,20 @@ sub jobs_of_unique_matching_subs {
     }
     
     foreach my $s (@subs_filtered) {
+        # We are skipping uniqueness check for emails to non-registered users
+        if ($s->userid == 0) {
+            push @subjobs, TheSchwartz::Job->new(
+                funcname => 'LJ::Worker::ProcessSub',
+                priority => $evt->priority,
+                arg      => {
+                    'userid'    => $s->userid + 0,
+                    'subdump'   => $s->dump,
+                    'e_params'  => $params,
+                    %$debug_args,
+                },
+            );
+            next;
+        }
         next if $has_done{$s->unique}++;
         push @subjobs, TheSchwartz::Job->new(
             funcname => 'LJ::Worker::ProcessSub',
