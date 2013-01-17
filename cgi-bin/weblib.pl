@@ -1620,7 +1620,6 @@ sub res_includes {
             $comm_access{'membership'} = $c_acc[0] if scalar @c_acc;
         }
 
-        my (undef, $country) = LJ::GeoLocation->ip_class ();
         my $ljentry = LJ::Request->notes('ljentry') || ''; # url
         my %site = (
                 imgprefix                => "$imgprefix",
@@ -1648,7 +1647,6 @@ sub res_includes {
                 locale                   => $locale,
                 pics_production          => LJ::is_enabled('pics_production'),
                 v                        => stc_0_modtime($now),
-                country                  => $country,
                 %comm_access,
         );
         $site{default_copyright} = $default_copyright if LJ::is_enabled('default_copyright', $remote);
