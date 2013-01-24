@@ -369,6 +369,61 @@ sub set_prop
     return 1;
 }
 
+# The following 3 subroutines are working with splid' meta-data from
+# supportlogprop table. 
+#  
+# prop         : value desc
+# --------------------------------------------------------------------------
+# approved     : splid of approved answer
+# moved_from   : catid of a category support request has been moved from
+# moved_to     : catid of a category support request has been moved to
+# tags_added   : comma separated list of tags being added to the request
+# tags_removed : comma separated list of tags being removed from the request
+#
+sub load_response_props {
+    my $splid = shift;
+    return unless $splid;
+
+    my %props = (); # prop => value
+
+    my $dbr = LJ::get_db_reader();
+    my $sth = $dbr->prepare("SELECT prop, value FROM supportlogprop WHERE splid=?");
+    $sth->execute($splid);
+    while (my ($prop, $value) = $sth->fetchrow_array) {
+        $props{$prop} = $value;
+    }
+
+    return \%props;
+}
+
+sub response_prop {
+    my ($splid, $propname) = @_;
+
+    my $props = LJ::Support::load_response_props($splid);
+
+    return $props->{$propname} || undef;
+}
+
+
+# LJ::Support::set_response_prop($splid,'approved',$appsplid);
+sub set_response_prop {
+    my ($splid, $propname, $propval) = @_;
+
+    # TODO:
+    # -- delete on 'undef' propval
+    # -- allow setting of multiple
+
+    my $dbh = LJ::get_db_writer()
+        or die "couldn't contact global master";
+
+    $dbh->do("REPLACE INTO supportlogprop (splid, prop, value) VALUES (?,?,?)",
+             undef, $splid, $propname, $propval);
+    die $dbh->errstr if $dbh->err;
+
+    return 1;
+}
+
+
 # $loadreq is used by /abuse/report.bml and
 # ljcmdbuffer.pl to signify that the full request
 # should not be loaded.  To simplify code going live,
@@ -655,6 +710,7 @@ sub append_request
     # $re->{'remote'}  (remote if known)
     # $re->{'uniq'}    (uniq of remote)
     # $re->{'tier'}    (tier of response if type is answer or internal)
+    # $re->{'props'}   (meta-data for supportlogprop)
 
     my $remote = $re->{'remote'};
     my $posterid = $remote ? $remote->{'userid'} : 0;
@@ -701,6 +757,14 @@ sub append_request
     }
     $dbh->do($sql);
     my $splid = $dbh->{'mysql_insertid'};
+    my $props = $re->{'props'};
+    if ($splid) {
+        foreach my $prop (keys %$props) {
+            if ($prop) {
+                LJ::Support::set_response_prop($splid,$prop,$props->{$prop});
+            }
+        }
+    }
 
     if ($posterid) {
         # add to our index of recently replied to support requests per-user.
@@ -722,7 +786,9 @@ sub append_request
         }
     }
 
-    support_notify({ spid => $spid, splid => $splid, type => 'update' });
+    #LJ::Event::SupportResponse->new($spid, $splid)->fire;
+    
+    # support_notify({ spid => $spid, splid => $splid, type => 'update' });
 
     return $splid;
 }
@@ -1177,6 +1243,50 @@ sub get_touch_supportlogs_by_user_and_date {
 
     return \%result_hash;
 }
+
+# <LJFUNC>
+# name: LJ::Support::get_previous_screeded_replies
+# des: Get screened replies between approved one and the recent answer
+# args: splid
+# splid: newly approved reply
+# returns: arrayref of splids
+# </LJFUNC>
+sub get_previous_screeded_replies {
+    my $splid = shift;
+    
+    my $resp = LJ::Support::load_response($splid);
+    my $spid = $resp->{spid};
+    
+    
+    
+    my $dbr = LJ::get_db_reader(); 
+    my $touches = $dbr->selectall_arrayref(
+                            qq{
+                                SELECT   splid, type
+                                FROM     supportlog
+                                WHERE    spid = ? AND
+                                         splid < ?
+                                ORDER BY splid DESC
+                            }, 
+                            { Slice => {} },
+                            $spid,
+                            $splid
+                        );
+    my @res;
+    foreach my $touch (@$touches) {
+        if ($touch->{type} eq 'screened') {
+            push @res, $touch->{splid};
+        }
+        elsif ($touch->{type} eq 'internal') {
+            next;
+        } esle {
+            last;
+        }
+    }
+    
+    return @res;
+}
+
 
 sub support_notify {
     my $params = shift;
