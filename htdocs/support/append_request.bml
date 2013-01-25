@@ -232,11 +232,13 @@ body<=
             .$successlinks;
     }
 
-    $dbh->do("UPDATE support SET state='open', timetouched=UNIX_TIMESTAMP(), timeclosed=0 WHERE spid=$spid")
-        if LJ::Support::is_poster($sp, $remote, $FORM{'auth'});
-
     ## time to define props since we are ready for actions    
     my %props;
+
+    if (LJ::Support::is_poster($sp, $remote, $FORM{'auth'})) {
+        $dbh->do("UPDATE support SET state='open', timetouched=UNIX_TIMESTAMP(), timeclosed=0 WHERE spid=$spid");
+        $props{'regreen'} = 1;
+    }
 
     ## change category
     if ($FORM{'changecat'}) {

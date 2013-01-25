@@ -786,9 +786,9 @@ sub append_request
         }
     }
 
-    #LJ::Event::SupportResponse->new($spid, $splid)->fire;
+    LJ::Event::SupportResponse->new($remote, $spid, $splid)->fire;
     
-    # support_notify({ spid => $spid, splid => $splid, type => 'update' });
+    support_notify({ spid => $spid, splid => $splid, type => 'update' });
 
     return $splid;
 }
@@ -1245,24 +1245,25 @@ sub get_touch_supportlogs_by_user_and_date {
 }
 
 # <LJFUNC>
-# name: LJ::Support::get_previous_screeded_replies
-# des: Get screened replies between approved one and the recent answer
+# name: LJ::Support::get_previous_screened_replies
+# des: Get screened replies between approve one and the previous answer
 # args: splid
 # splid: newly approved reply
-# returns: arrayref of splids
+# returns: hashref  {splid => userid}
 # </LJFUNC>
-sub get_previous_screeded_replies {
+sub get_previous_screened_replies {
     my $splid = shift;
     
-    my $resp = LJ::Support::load_response($splid);
-    my $spid = $resp->{spid};
+    my $resp           = LJ::Support::load_response($splid);
+    my $approved_splid = LJ::Support::response_prop($splid, 'approved');
+    my $spid           = $resp->{spid};
     
     
     
     my $dbr = LJ::get_db_reader(); 
     my $touches = $dbr->selectall_arrayref(
                             qq{
-                                SELECT   splid, type
+                                SELECT   splid, type, userid
                                 FROM     supportlog
                                 WHERE    spid = ? AND
                                          splid < ?
@@ -1272,20 +1273,54 @@ sub get_previous_screeded_replies {
                             $spid,
                             $splid
                         );
-    my @res;
+    my %res;
     foreach my $touch (@$touches) {
         if ($touch->{type} eq 'screened') {
-            push @res, $touch->{splid};
+            $res{$touch->{splid}} = $touch->{userid};
         }
-        elsif ($touch->{type} eq 'internal') {
+        elsif (($touch->{type} eq 'internal') || 
+               ($touch->{splid} == $approved_splid)) {
             next;
         } esle {
             last;
         }
     }
     
-    return @res;
+    return \%res;
 }
+
+# <LJFUNC>
+# name:     LJ::Support::get_touches_by_type
+# des:      Get support request replies of particular type
+# args:     spid, type
+# des-spid: support request id
+# des-type: reply type
+# returns:  hashref  {splid => userid}
+# </LJFUNC>
+sub get_touches_by_type {
+    my ($spid,$type) = @_;
+    
+    my $dbr = LJ::get_db_reader(); 
+    my $touches = $dbr->selectall_arrayref(
+                            qq{
+                                SELECT   splid, userid
+                                FROM     supportlog
+                                WHERE    spid = ? AND
+                                         type = '?'
+                                ORDER BY splid DESC
+                            }, 
+                            { Slice => {} },
+                            $spid,
+                            $type
+                        );
+    my %res;
+    foreach my $touch (@$touches) {
+        $res{$touch->{splid}} = $touch->{userid};
+    }
+    
+    return \%res;
+}
+
 
 
 sub support_notify {
