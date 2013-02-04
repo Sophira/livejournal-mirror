@@ -398,6 +398,8 @@ class Entry extends EntryLite
     "Is my voice already counted by the system.";
     function builtin truncate_text( int limit ) : string
     "Truncates entry text to limit chars and adds ellipsis";
+    function builtin get_lj_embeds () : string[]
+    "Returns an array of tags <lj-embed>";
 }
 
 class Comment extends EntryLite
@@ -637,6 +639,9 @@ class Page
 
     function builtin get_entry_by_id(int id) : Entry
     "Returns entry by the specified id";
+
+    function builtin get_entries_by_ids(int[] ids) : Entry{}
+    "Returns entries by the specified ids";
 
     function builtin get_alien_post( string url ) : Entry
     "Returns any public entry from any journal having give_posts_to_alien prop. Recipient must have get_alien_posts prop";

@@ -4406,6 +4406,19 @@ sub Entry__get_eventrates
     ];
 }
 
+sub Entry__get_lj_embeds
+{
+    my ($ctx, $this) = @_;
+
+    my $entry = LJ::Entry->new_from_url($this->{'permalink_url'});
+
+    return [] unless $entry;
+
+    my @embeds = $entry->event_text() =~ m/(<lj\-embed\sid="\d+"\s*?\/>)/g; 
+
+    return \@embeds;
+}
+
 sub Entry__is_myvoice
 {
     my ($ctx, $this) = @_;
@@ -4826,6 +4839,23 @@ sub Page__get_entry_by_id {
         });
 }
 
+sub Page__get_entries_by_ids {
+   my ( $ctx, $this, $ref_list_ids ) = @_;
+      
+   my %ret;
+            
+   if (ref $ref_list_ids eq 'ARRAY') {
+       for my $entry_id (@$ref_list_ids) {
+           if (my $entry = Page__get_entry_by_id($ctx, $this, $entry_id)) {
+               $ret{$entry_id} = $entry;
+           }
+       }
+   } else {
+       return undef;
+   }
+   return \%ret;
+}
+ 
 sub Page__get_last_entries {
     my ( $ctx, $this, $ljuser, $count ) = @_;
 
