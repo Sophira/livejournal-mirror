@@ -9268,6 +9268,9 @@ sub add_friend
     my $notify = !$LJ::DISABLED{esn} && !$opts->{nonotify}
                  && $friender->is_visible && $friender->is_person;
 
+
+    # load all users at once
+    LJ::load_userids(@add_ids);
     foreach my $add_id (@add_ids) {
         LJ::RelationService->create_relation_to(
             $friender, $add_id, 'F', 
@@ -9276,11 +9279,13 @@ sub add_friend
             bgcolor   => $bgcol,
         );
 
+        my $friendee = LJ::load_userid($add_id);
+        LJ::add_to_friend_list($friender, $friendee);
+
         if ($sclient) {
             my @jobs;
 
             # only fire event if the friender is a person and not banned and visible
-            my $friendee = LJ::load_userid($add_id);
             if ($notify && !$friendee->is_banned($friender)) {
                 require LJ::Event::BefriendedDelayed;
                 LJ::Event::BefriendedDelayed->send($friendee, $friender);
@@ -9342,10 +9347,13 @@ sub remove_friend {
     foreach my $del_id (@del_ids) {
         LJ::RelationService->remove_relation_to( $u, $del_id, 'F' );
     }
-    
+
+    LJ::load_userids(@del_ids); 
     # delete friend-of memcache keys for anyone who was removed
     foreach my $fid (@del_ids) {
         my $friendee = LJ::load_userid($fid);
+
+        LJ::remove_from_friend_list($u, $friendee);
         if ($sclient) {
             my @jobs;
 
@@ -11052,13 +11060,21 @@ sub get_friends_with_type {
 
     my %allow_list = map { $_ => 1 } @$types;
    
+    #
+    # Exclude some friends types to type  P.
+    #
     if ($allow_list{'P'}) {
         my %types_data = map { $_ => 1 } @$types;
 
-        my @types = ('I', 'Y', 'N', 'C');
+        my @types_list = ('I', 'Y', 'N', 'C');
         my @types_to_load = ();
-        foreach my $type (@types) {
-            push @types_to_load, $type;
+
+        #
+        # May do not need to exclude  all friends
+        #
+        foreach my $type (@types_list) {
+            push @types_to_load, $type 
+                unless $types_data{$type};
         }
 
         my @exclude = get_friends_with_type($u, { types => \@types_to_load,
@@ -11100,9 +11116,32 @@ sub get_friends_with_type {
     foreach my $type (keys %cache) {
         my $key = "u:fl:" . $u->userid . ":$type";
         $redis->sadd($key, @{$cache{$type}});    
+        $redis->expire($key, time() + 24 * 60 * 60);
     }
 
     return @typed_journals;
+}
+
+sub remove_from_friend_list {
+    my ($u, $friend) = @_;
+
+    my $type = $friend->journaltype;
+    my $key  = "u:fl:" . $u->userid . ":$type";
+    my $redis = LJ::Redis->get_connection();
+    
+    $redis->sdelete($key);
+}
+
+sub add_to_friend_list {
+    my ($u, $friend) = @_;
+
+    my $type = $friend->journaltype;
+    my $key  = "u:fl:" . $u->userid . ":$type";
+    my $redis = LJ::Redis->get_connection();
+
+    if ($redis->exists($key)) {
+        $redis->sadd($key, $friend);
+    }
 }
 
 sub get_journal_short_info_multi {
@@ -11151,11 +11190,12 @@ sub get_journal_short_info_multi {
             $final_result{$userid} = \%user_result;
 
             my $cache = join(':', $status, $cid, $type);
-            LJ::MemCache::set("u:s:$userid", $cache, 60*60*24*30);
+            my $expire_time = time + 60*60*24*30;
+            LJ::MemCache::set("u:s:$userid", $cache, $expire_time);
         }
     }  
 
     return \%final_result;
 }
-    
+
 1;
