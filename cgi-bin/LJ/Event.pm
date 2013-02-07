@@ -958,6 +958,7 @@ sub as_email_to {
 }
 
 sub as_email_from {
+    my ($self, $u) = @_;
     return $LJ::BOGUS_EMAIL;
 }
 

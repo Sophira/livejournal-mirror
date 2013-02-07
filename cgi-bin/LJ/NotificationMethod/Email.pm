@@ -99,7 +99,7 @@ sub notify {
         }
         
         # we should email unauthorised person about particular event
-        if (!$u && ref($ev) =~ /SupportRequest/) {
+        if (!$u && ref($ev) =~ /SupportRe(quest|sponse)/) {
             warn "Prepare notification for unauthorized requester!\n\n" if $ENV{DEBUG};
             my $plain_body = $ev->as_email_string() or next;
             my %headers = (
@@ -111,7 +111,7 @@ sub notify {
             my $email_subject = $ev->as_email_subject();
             LJ::send_mail({
                 to       => $ev->sprequest->{reqemail},
-                from     => $LJ::BOGUS_EMAIL,
+                from     => $ev->as_email_from($u),
                 fromname => "$LJ::SITENAMESHORT Support",
                 wrap     => 1,
                 charset  => 'utf-8',
@@ -139,7 +139,7 @@ sub notify {
             if ($u->{opt_htmlemail} eq 'N') {
                 LJ::send_mail({
                     to       => $u->email_raw,
-                    from     => $LJ::BOGUS_EMAIL,
+                    from     => $ev->as_email_from($u),
                     fromname => scalar($ev->as_email_from_name($u)),
                     wrap     => 1,
                     charset  => $u->mailencoding || 'utf-8',
@@ -155,7 +155,7 @@ sub notify {
 
                 LJ::send_mail({
                     to       => $u->email_raw,
-                    from     => $LJ::BOGUS_EMAIL,
+                    from     => $ev->as_email_from($u),
                     fromname => scalar($ev->as_email_from_name($u)),
                     wrap     => 1,
                     charset  => $u->mailencoding || 'utf-8',
