@@ -36,6 +36,7 @@ use LJ::User::PropStorage;
 use LJ::User::Userlog;
 use LJ::Response::CachedTemplate;
 use LJ::PersonalStats::DB;
+use LJ::Redis;
 
 # TODO: get rid of Class::Autouse, maybe? it's pretty useless
 # in web context and leads to some nasty bugs otherwise, so probably
@@ -11114,7 +11115,11 @@ sub get_friends_with_type {
     my @typed_journals;   
     my %cache = ();
     foreach my $friend (@friends) {
-        my $type = $friends_data->{$friend}->{journaltype};
+        my $friend_info = $friends_data->{$friend};
+        next if $friend_info->{statusvis} eq 'X' ||
+                $friend_info->{clusterid} == 0; 
+   
+        my $type = $friend_info->{journaltype}; 
         next unless $allow_list{$type};
         push @{$cache{$type}}, $friend;
         push @typed_journals, $friend;
@@ -11136,7 +11141,7 @@ sub remove_from_friend_list {
     my $key  = "u:fl:" . $u->userid . ":$type";
     my $redis = LJ::Redis->get_connection();
     
-    $redis->sdelete($key);
+    $redis->srem($key, $friend);
 }
 
 sub add_to_friend_list {
