@@ -1,5 +1,5 @@
 <?page
-title=><?_ml .title _ml?> 
+title=><?_ml .title _ml?>
 body<=
 
 <?_code
@@ -215,7 +215,7 @@ body<=
                                             "WHERE spid=? ORDER BY splid LIMIT 1",
                                             undef, $sp->{'spid'});
 
-        LJ::send_mail({ 
+        LJ::send_mail({
             'to' => join(", ", @emails),
             'from' => $sp->{'reqemail'},
             'fromname' => $sp->{'reqname'},
@@ -232,7 +232,7 @@ body<=
             .$successlinks;
     }
 
-    ## time to define props since we are ready for actions    
+    ## time to define props since we are ready for actions
     my %props;
 
     if (LJ::Support::is_poster($sp, $remote, $FORM{'auth'})) {
@@ -252,7 +252,7 @@ body<=
         # $newcat, $cats defined above
         $dbh->do("UPDATE support SET spcatid=$newcat WHERE spid=$spid");
         $status .= "Changing from $catkey => $cats->{$newcat}->{'catkey'}\n\n";
-        
+
         $props{'moved_from'} = $sp->{'spcatid'};
         $props{'moved_to'}   = $newcat;
         $sp->{'spcatid'}     = $newcat; # update category so IC e-mail goes to right place
@@ -278,8 +278,13 @@ body<=
             $status .= "(Approving $FORM{'approveas'} \#$splid)\n\n";
         }
         $tier = undef; # we don't want the approval IC to have a tier, so delete this.
-        
-        LJ::Support::mail_response_to_user($sp, $splid);
+
+        my $author = LJ::load_userid($sp->{spid});
+        LJ::Event::SupportResponse->new($author, $sp->{spid}, $splid)->fire;
+        if ($type eq "answer") {
+            $dbh->do("UPDATE support SET timelasthelp=UNIX_TIMESTAMP() WHERE spid=$spid");
+        }
+        #LJ::Support::mail_response_to_user($sp, $splid);
     }
 
     ## change summary
@@ -320,7 +325,7 @@ body<=
 
         my $dump_tags = sub {
             my @tagids = @_;
-            my @tagnames = 
+            my @tagnames =
                 map { LJ::Support::Request::Tag::tag_id_to_name($_) }
                 @tagids;
             return join(', ', @tagnames);
@@ -335,7 +340,7 @@ body<=
             my @added = @{$res->{'added'}};
             my @removed = @{$res->{'removed'}};
 
-            
+
             if (scalar(@added)) {
                 push @info_parts, "added: " . $dump_tags->(@added);
                 $props{'tags_added'} = $dump_tags->(@added);

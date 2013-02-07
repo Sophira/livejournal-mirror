@@ -370,8 +370,8 @@ sub set_prop
 }
 
 # The following 3 subroutines are working with splid' meta-data from
-# supportlogprop table. 
-#  
+# supportlogprop table.
+#
 # prop         : value desc
 # --------------------------------------------------------------------------
 # approved     : splid of approved answer
@@ -764,6 +764,9 @@ sub append_request
                 LJ::Support::set_response_prop($splid,$prop,$props->{$prop});
             }
         }
+        if ($re->{type} eq 'answer') {
+            LJ::Support::set_response_prop($splid,'approved', $splid);
+        }
     }
 
     if ($posterid) {
@@ -787,7 +790,7 @@ sub append_request
     }
 
     LJ::Event::SupportResponse->new($remote, $spid, $splid)->fire;
-    
+
     support_notify({ spid => $spid, splid => $splid, type => 'update' });
 
     return $splid;
@@ -1060,9 +1063,7 @@ sub mail_response_to_user
         });
     }
 
-    if ($type eq "answer") {
-        $dbh->do("UPDATE support SET timelasthelp=UNIX_TIMESTAMP() WHERE spid=$spid");
-    }
+
 }
 
 sub mini_auth
@@ -1253,14 +1254,14 @@ sub get_touch_supportlogs_by_user_and_date {
 # </LJFUNC>
 sub get_previous_screened_replies {
     my $splid = shift;
-    
+
     my $resp           = LJ::Support::load_response($splid);
     my $approved_splid = LJ::Support::response_prop($splid, 'approved');
     my $spid           = $resp->{spid};
-    
-    
-    
-    my $dbr = LJ::get_db_reader(); 
+
+
+
+    my $dbr = LJ::get_db_reader();
     my $touches = $dbr->selectall_arrayref(
                             qq{
                                 SELECT   splid, type, userid
@@ -1268,7 +1269,7 @@ sub get_previous_screened_replies {
                                 WHERE    spid = ? AND
                                          splid < ?
                                 ORDER BY splid DESC
-                            }, 
+                            },
                             { Slice => {} },
                             $spid,
                             $splid
@@ -1278,16 +1279,44 @@ sub get_previous_screened_replies {
         if ($touch->{type} eq 'screened') {
             $res{$touch->{splid}} = $touch->{userid};
         }
-        elsif (($touch->{type} eq 'internal') || 
+        elsif (($touch->{type} eq 'internal') ||
                ($touch->{splid} == $approved_splid)) {
             next;
-        } esle {
+        } else {
             last;
         }
     }
-    
+
     return \%res;
 }
+
+# <LJFUNC>
+# name: LJ::Support::get_latest_screen
+# des: Get screened replies between approve one and the previous answer
+# args: splid, userid
+# splid: id of response we are looking after
+# userid: userid of the author
+# returns: splid or undef
+# </LJFUNC>
+use Data::Dumper;
+
+
+sub get_latest_screen {
+    my ($splid, $userid) = @_;
+
+    my $screens = LJ::Support::get_previous_screened_replies($splid);
+
+    foreach my $key (sort {$b <=> $a} keys %$screens) {
+        if ($screens->{$key} eq $userid) {
+            warn "\n\nYour screen: " . Dumper($key) . "\n";
+            return $key;
+        }
+    }
+
+    return undef;
+}
+
+
 
 # <LJFUNC>
 # name:     LJ::Support::get_touches_by_type
@@ -1299,16 +1328,16 @@ sub get_previous_screened_replies {
 # </LJFUNC>
 sub get_touches_by_type {
     my ($spid,$type) = @_;
-    
-    my $dbr = LJ::get_db_reader(); 
+
+    my $dbr = LJ::get_db_reader();
     my $touches = $dbr->selectall_arrayref(
                             qq{
                                 SELECT   splid, userid
                                 FROM     supportlog
                                 WHERE    spid = ? AND
-                                         type = '?'
+                                         type = ?
                                 ORDER BY splid DESC
-                            }, 
+                            },
                             { Slice => {} },
                             $spid,
                             $type
@@ -1317,11 +1346,39 @@ sub get_touches_by_type {
     foreach my $touch (@$touches) {
         $res{$touch->{splid}} = $touch->{userid};
     }
-    
+
     return \%res;
 }
 
+# <LJFUNC>
+# name:     LJ::Support::is_helper
+# des:      Check if user answered to the request
+# args:     u, spid
+# des-spid: support request id
+# des-u:    LJ::user object
+# returns:  boolean
+# </LJFUNC>
+sub is_helper {
+    my ($u,$spid) = @_;
 
+    my $dbr = LJ::get_db_reader();
+    my ($splid) = $dbr->selectrow_array(
+                                    qq{
+                                        SELECT splid
+                                        FROM   supportlog
+                                        WHERE  spid = ? AND
+                                               userid = ? AND
+                                               type='answer'
+                                    },
+                                    undef,
+                                    $spid,
+                                    $u->id,
+    );
+
+    return 1 if $splid;
+
+    return 0;
+}
 
 sub support_notify {
     my $params = shift;
