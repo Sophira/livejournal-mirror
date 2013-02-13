@@ -44,10 +44,10 @@ unless (($list   && (($banid && ! $an_opt) || (! $banid && $an_opt)) ||
 
 # now load in the beast
 use lib "$ENV{'LJHOME'}/cgi-bin/";
-require "ljlib.pl";
+require "ljdb.pl";
+print "BEAST LOADED";
 require "sysban.pl";
 use LJ::TimeUtil;
-
 my $dbh = LJ::get_db_writer();
 
 # list bands
@@ -65,7 +65,6 @@ if ($list) {
         push @where, ("note=" . $dbh->quote($note)) if $note;
         $where = join(" AND ", @where);
     }
-
     my $sth = $dbh->prepare("SELECT * FROM sysban WHERE $where ORDER BY bandate ASC");
     $sth->execute;
     my $ct;
