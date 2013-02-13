@@ -45,7 +45,6 @@ unless (($list   && (($banid && ! $an_opt) || (! $banid && $an_opt)) ||
 # now load in the beast
 use lib "$ENV{'LJHOME'}/cgi-bin/";
 require "ljdb.pl";
-print "BEAST LOADED";
 require "sysban.pl";
 use LJ::TimeUtil;
 my $dbh = LJ::get_db_writer();
