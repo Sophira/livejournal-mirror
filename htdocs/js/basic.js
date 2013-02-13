@@ -1766,8 +1766,10 @@ LJ.siteMessage = (function ($) {
 		get: function () {
 			var that = this;
 
-			LJ.Api.call('sitemessage.get_message', { locale: Site.locale, country: Site.country }, function (content) {
-				that.show(content);
+			LJ.Api.call('sitemessage.get_message', { locale: Site.locale, country: Site.country }, function (data) {
+				if (!data.error) {
+					that.show(data.message);
+				}
 			});
 		},
 
