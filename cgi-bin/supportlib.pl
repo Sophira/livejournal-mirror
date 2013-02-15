@@ -841,14 +841,15 @@ sub close_request_with_points {
         'WHERE spid=? AND type="answer" '.
         'ORDER BY timelogged DESC LIMIT 1', undef, $spid);
 
+    my $res;
     unless (defined $response) {
-        my $res = $dbh->do(
+        $res = $dbh->do(
             'INSERT INTO supportlog '.
             '(spid, timelogged, type, userid, message) VALUES '.
             '(?, UNIX_TIMESTAMP(), "internal", ?, ?)', undef,
             $spid, LJ::want_userid($remote),
             "(Request has been closed as part of mass closure)");
-        return;
+        return $res;
     }
 
     my $points = LJ::Support::calc_points(
@@ -861,7 +862,7 @@ sub close_request_with_points {
 
     my $username = LJ::want_user($response->{'userid'})->display_name;
 
-    $dbh->do(
+    $res = $dbh->do(
         'INSERT INTO supportlog '.
         '(spid, timelogged, type, userid, message) VALUES '.
         '(?, UNIX_TIMESTAMP(), "internal", ?, ?)', undef,
@@ -869,6 +870,7 @@ sub close_request_with_points {
         "(Request has been closed as part of mass closure, ".
         "granting $points points to $username ".
         "for response #".$response->{'splid'}.")");
+    return $res;
 }
 
 sub touch_request

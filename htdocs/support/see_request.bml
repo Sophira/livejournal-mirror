@@ -303,6 +303,8 @@ body<=
     my $is_poster = LJ::Support::is_poster($sp, $remote, $auth) ? 1 : 0;
 
     # fix up the subject if needed
+    # this logic have been copied into bin/worker/incoming-email so, here
+    # it is needed only for backward compatibility with old emailed requests 
     eval {
         if ($sp->{'subject'} =~ /^=\?(utf-8)?/i) {
             my @subj_data;
