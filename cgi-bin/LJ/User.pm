@@ -11098,22 +11098,24 @@ sub get_friends_with_type {
     #mnenonic User:FriendsList:
     my @keys = map { "u:fl:" . $u->userid . ":$_"} @$types ;
 
-    my $redis = LJ::Redis->get_connection();
-    my @list = ();
-    foreach my $key (@keys) {
-        my @result = $redis->smembers($key);
-        push @list, @result if @result;;
-    }
+    my $redis = LJ::Redis->get_connection(); 
+    if ($redis) {
+        my @list = ();
+        foreach my $key (@keys) {
+            my @result = $redis->smembers($key);
+            push @list, @result if @result;
+        }
 
-    return @list if @list;
+        return @list if @list;
+    }
 
     # get and set a list
 
     my @friends = $u->friend_uids();
     my $friends_data = LJ::get_journal_short_info_multi(@friends);
 
-    my @typed_journals;   
-    my %cache = ();
+    my @typed_journals = ();   
+    my %put_in_cache = ();
     foreach my $friend (@friends) {
         my $friend_info = $friends_data->{$friend};
         next if $friend_info->{statusvis} eq 'X' ||
@@ -11121,14 +11123,17 @@ sub get_friends_with_type {
    
         my $type = $friend_info->{journaltype}; 
         next unless $allow_list{$type};
-        push @{$cache{$type}}, $friend;
+
+        push @{$put_in_cache{$type}}, $friend if $redis;
         push @typed_journals, $friend;
     } 
 
-    foreach my $type (keys %cache) {
-        my $key = "u:fl:" . $u->userid . ":$type";
-        $redis->sadd($key, @{$cache{$type}});    
-        $redis->expire($key, time() + 24 * 60 * 60);
+    if ($redis) {
+        foreach my $type (keys %put_in_cache) {
+            my $key = "u:fl:" . $u->userid . ":$type";
+            $redis->sadd($key, @{$put_in_cache{$type}});    
+            $redis->expire($key, time() + 60 * 60);
+        }
     }
 
     return @typed_journals;
@@ -11140,8 +11145,9 @@ sub remove_from_friend_list {
     my $type = $friend->journaltype;
     my $key  = "u:fl:" . $u->userid . ":$type";
     my $redis = LJ::Redis->get_connection();
-    
-    $redis->srem($key, $friend);
+    if ($redis) { 
+        $redis->srem($key, $friend);
+    }
 }
 
 sub add_to_friend_list {
@@ -11151,14 +11157,16 @@ sub add_to_friend_list {
     my $key  = "u:fl:" . $u->userid . ":$type";
     my $redis = LJ::Redis->get_connection();
 
-    if ($redis->exists($key)) {
+    if ($redis && $redis->exists($key)) {
         $redis->sadd($key, $friend);
     }
 }
 
 sub get_journal_short_info_multi {
+    my @userids = @_;
     my @keys = ();
-    foreach my $userid (@_) {
+    
+    foreach my $userid (@userids) {
         push @keys, "u:s:$userid";
     }
 
@@ -11167,7 +11175,7 @@ sub get_journal_short_info_multi {
     my $result = LJ::MemCache::get_multi(@keys);
 
     my @users_to_load = ();
-    foreach my $userid (@_) {
+    foreach my $userid (@userids) {
         my $data = delete $result->{"u:s:$userid"};
         unless ($data) {
             push @users_to_load, $userid;
