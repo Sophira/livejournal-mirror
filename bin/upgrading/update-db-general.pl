@@ -4562,6 +4562,20 @@ register_alter(sub {
 
 });
 
+register_alter(sub {
+
+    my $dbh = shift;
+    my $runsql = shift;
+
+    unless (column_type("supportpoints", "timeclosed")) {
+        do_alter( "supportpoints",
+                  "ALTER TABLE supportpoints" .
+                  "ADD timeclosed int(11) NOT NULL DEFAULT 0,".
+                  "ADD INDEX (timeclosed)");
+    }
+
+});
+
 
 
 1; # return true

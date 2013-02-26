@@ -796,6 +796,33 @@ sub append_request
     return $splid;
 }
 
+#get a sum of support points for the specified period from now
+sub get_sum_points {
+    my ($userid, $period) = @_;
+    
+    my $to   = time() - time()%86400;
+    my $from = $to - $period; 
+    my $dbh  = LJ::get_db_writer();
+    
+    
+    my ($sum) = $dbh->selectrow_array(
+                                    qq{
+                                        SELECT sum(points)
+                                        FROM   supportpoints
+                                        WHERE  userid = ? AND
+                                               timeclosed BETWEEN
+                                               ? AND ?
+                                    },
+                                    undef,
+                                    $userid,
+                                    $from,
+                                    $to
+    );
+    
+    return $sum;
+}
+
+
 # userid may be undef/0 in the setting to zero case
 sub set_points
 {
@@ -803,8 +830,8 @@ sub set_points
 
     my $dbh = LJ::get_db_writer();
     if ($points) {
-        $dbh->do("REPLACE INTO supportpoints (spid, userid, points) ".
-                 "VALUES (?,?,?)", undef, $spid, $userid, $points);
+        $dbh->do("REPLACE INTO supportpoints (spid, userid, points, timeclosed) ".
+                 "VALUES (?,?,?,UNIX_TIMESTAMP())", undef, $spid, $userid, $points);
     } else {
         $userid ||= $dbh->selectrow_array("SELECT userid FROM supportpoints WHERE spid=?",
                                           undef, $spid);
@@ -849,13 +876,14 @@ sub close_request_with_points {
             '(?, UNIX_TIMESTAMP(), "internal", ?, ?)', undef,
             $spid, LJ::want_userid($remote),
             "(Request has been closed as part of mass closure)");
-        return $res;
+        return 0;
     }
 
+    my $helperid = $response->{'userid'};
     my $points = LJ::Support::calc_points(
         $sp, $response->{'timelogged'} - $sp->{'timecreate'}, $spcat);
 
-    LJ::Support::set_points($spid, $response->{'userid'}, $points);
+    LJ::Support::set_points($spid, $helperid, $points);
 
     # deliberately not using LJ::Support::append_request
     # to avoid sysban checks etc.; this sub is supposed to be fast.
@@ -870,7 +898,7 @@ sub close_request_with_points {
         "(Request has been closed as part of mass closure, ".
         "granting $points points to $username ".
         "for response #".$response->{'splid'}.")");
-    return $res;
+    return $helperid;
 }
 
 sub touch_request

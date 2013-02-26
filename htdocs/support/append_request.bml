@@ -281,7 +281,7 @@ body<=
 
         my $author = LJ::load_userid($sp->{spid});
         LJ::Event::SupportResponse->new($author, $sp->{spid}, $splid)->fire;
-        if ($type eq "answer") {
+        if ($FORM{'approveas'} eq "answer") {
             $dbh->do("UPDATE support SET timelasthelp=UNIX_TIMESTAMP() WHERE spid=$spid");
         }
         #LJ::Support::mail_response_to_user($sp, $splid);
