@@ -763,6 +763,9 @@ sub append_request
             if ($prop) {
                 LJ::Support::set_response_prop($splid,$prop,$props->{$prop});
             }
+            if ($prop eq 'tags_added') {
+                LJ::Event::SupportTagAdd->new($remote, $splid)->fire;
+            }
         }
         if ($re->{type} eq 'answer') {
             LJ::Support::set_response_prop($splid,'approved', $splid);
