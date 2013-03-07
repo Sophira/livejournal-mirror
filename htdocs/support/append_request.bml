@@ -343,12 +343,12 @@ body<=
 
             if (scalar(@added)) {
                 push @info_parts, "added: " . $dump_tags->(@added);
-                $props{'tags_added'} = $dump_tags->(@added);
+                $props{'tags_added'} = join(', ', @added);
             }
 
             if (scalar(@removed)) {
                 push @info_parts, "removed: " . $dump_tags->(@removed);
-                $props{'tags_removed'} = $dump_tags->(@removed);
+                $props{'tags_removed'} = join(', ', @removed);
             }
 
             push @info_parts, "couldn't add: " . join(', ', @cannot_add)
