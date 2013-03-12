@@ -416,7 +416,13 @@ sub tag_name_to_id {
         $name, $spcatid
     );
 
-    return $dbh->{'mysql_insertid'};
+    my $tagid = $dbh->{'mysql_insertid'};
+    
+    if ($tagid) {
+        LJ::Event::SupportTagCreate->new($tagid)->fire;
+    }
+    
+    return $tagid;
 }
 
 # tag_id_to_name(): gets a name assigned to a given tag
@@ -447,6 +453,35 @@ sub tag_id_to_name {
 
     return $name;
 }
+
+# get_cat_by_tagid() : get a category specified tagid is belonged to 
+# returns a hashref 
+sub get_cat_by_tagid {
+
+    my ($sptagid) = @_;
+
+    my $dbh = LJ::get_db_writer();
+    my $res = $dbh->selectrow_hashref(
+                            qq(
+                                SELECT spcatid
+                                FROM   supporttag
+                                WHERE  sptagid = ?
+                               ),
+                            undef,
+                            $sptagid
+                    );
+
+                    
+                    
+    my $catid = $res->{spcatid};
+    use Data::Dumper;
+    warn "catid: " . Dumper($catid) . "\n";
+    
+    my $cat = LJ::Support::load_cats()->{$catid};
+    return $cat;  
+}
+
+
 
 # get_cats_tag_names(): gets sorted and unique tag names that exist
 # in the given cats.
