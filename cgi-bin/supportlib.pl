@@ -178,6 +178,25 @@ sub can_see_helper
     return 1;
 }
 
+sub can_see_response {
+    my ($splid, $u) = @_;
+    
+    my $response = load_response($splid);
+    my $type     = $response->{type};
+    my $spid     = $response->{spid};
+    my $sp       = load_request($spid);
+    my $cat      = load_cats()->{ $sp->{spcatid} };
+    
+    my $PRIVS_BY_TYPE = {
+        answer   => can_read_cat($cat, $u),
+        comment  => can_read_cat($cat, $u),
+        screened => can_read_screened($cat, $u),
+        internal => can_read_internal($cat, $u),
+    };
+    
+    return $PRIVS_BY_TYPE->{$type};
+}
+
 sub can_read
 {
     my ($sp, $remote, $auth) = @_;
