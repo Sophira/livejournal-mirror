@@ -130,11 +130,13 @@ body<=
                  my $secold = $timelogged - $sp->{'timecreate'};
                  my $points = LJ::Support::calc_points($sp, $secold);
                  LJ::Support::set_points($spid, $userid, $points);
-                 
-                 LJ::Event::SupportClose->new($remote, $spid, 2)->fire; #????
              }
          }
          $dbh->do("UPDATE support SET state='closed', timeclosed=UNIX_TIMESTAMP() WHERE spid=$spid");
+         
+         if (LJ::Support::is_poster($sp, $remote, $auth)) {
+            LJ::Event::SupportClose->new($remote, $spid, 2)->fire;
+         }
      }
 
      my $remote = LJ::get_remote();
