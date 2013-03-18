@@ -813,8 +813,6 @@ sub append_request
 
     LJ::Event::SupportResponse->new($remote, $spid, $splid)->fire;
 
-    support_notify({ spid => $spid, splid => $splid, type => 'update' });
-
     return $splid;
 }
 
