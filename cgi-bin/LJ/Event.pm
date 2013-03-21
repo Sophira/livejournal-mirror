@@ -882,7 +882,9 @@ sub is_subscription_ntype_visible_to { 1 }
 sub is_subscription_ntype_disabled_for {
     my ($self, $ntypeid, $u) = @_;
 
-    return 1 unless $self->available_for_user($u);
+    if ($self->class !~ /Support/) {
+        return 1 unless $self->available_for_user($u);
+    }
 
     my $nclass = LJ::NotificationMethod->class($ntypeid);
     return 1 unless $nclass->configured_for_user($u);

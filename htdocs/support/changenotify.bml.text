@@ -41,3 +41,5 @@
 .available_subs=Available support notifications
 
 .current_tracks=Currently tracking support notifications
+
+.not_enough_privs_to_be_notified=You don't have the necessary privilege to be notified about this event
