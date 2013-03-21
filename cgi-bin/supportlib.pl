@@ -288,8 +288,8 @@ sub unlock
 sub support_check_priv
 {
     my ($cat, $remote, $priv) = @_;
-    return 1 if can_help($cat, $remote);
     return 0 unless can_read_cat($cat, $remote);
+    return 1 if can_help($cat, $remote);
     return 1 if LJ::check_priv($remote, $priv, '') && $cat->{public_read};
     return 1 if LJ::check_priv($remote, $priv, $cat->{catkey});
     return 0;
