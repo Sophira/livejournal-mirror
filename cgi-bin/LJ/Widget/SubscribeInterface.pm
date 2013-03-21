@@ -100,7 +100,7 @@ sub render_body {
         else {
             my $event_html = $group->event_as_html($field_num, (exists $group->{'check_rel'} && $group->{'check_rel'} ? 1 : 0));
 
-            if ($self->{'allow_delete'} && $group->is_tracking) {
+            if ($self->{'allow_delete'} && $group->is_tracking && !$opts->{is_select}) {
                 my $link;
                 my $frozen = $group->freeze;
 
