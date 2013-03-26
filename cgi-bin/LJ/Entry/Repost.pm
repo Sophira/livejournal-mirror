@@ -711,6 +711,9 @@ sub create {
 sub substitute_content {
     my ($class, $entry_obj, $opts, $props) = @_;
 
+    my $domain = LJ::Lang::get_dom("general");
+    my $lang = LJ::Lang::get_effective_lang();
+
     my $remote = LJ::get_remote();
     my $original_entry_obj = $entry_obj->original_post;
 
@@ -725,8 +728,10 @@ sub substitute_content {
             
             my $fake_entry = LJ::Entry->new( $journal, jitemid => $org_jitemid);
 
-            my $subject = LJ::Lang::ml( 'entry.reference.journal.delete.subject' );   
-            my $event   = LJ::Lang::ml( 'entry.reference.journal.delete',
+            my $subject = LJ::Lang::get_text($lang, 'entry.reference.journal.delete.subject', $domain->{'dmid'} );   
+            my $event   = LJ::Lang::ml($lang,
+                                        'entry.reference.journal.delete', 
+                                         $domain->{'dmid'}, 
                                         'datetime'     => $entry_obj->eventtime_mysql, 
                                         'url'          => $fake_entry->url);
 
@@ -830,12 +835,14 @@ sub substitute_content {
                                                                         'entry.reference.journal.guest';
             }
 
-            my $event =  LJ::Lang::ml($text_var,  
-                                        { 'author'          => LJ::ljuser($original_entry_obj->poster),
-                                          'reposter'        => LJ::ljuser($entry_obj->poster),
-                                          'communityname'   => LJ::ljuser($original_entry_obj->journal),
-                                          'datetime'        => $entry_obj->eventtime_mysql,
-                                          'text'            => $event_text, });
+            my $event =  LJ::Lang::get_text( $lang,
+                                             $text_var,
+                                             $domain->{'dmid'},
+                                            { 'author'          => $original_entry_obj->poster->display_username,
+                                              'reposter'        => $entry_obj->poster->display_username,
+                                              'communityname'   => $original_entry_obj->journal->display_username,
+                                              'datetime'        => $entry_obj->eventtime_mysql,
+                                              'text'            => $event_text, });
             ${$opts->{'event'}} = $event;
         } else {
             ${$opts->{'event'}} = $event_text;
@@ -857,12 +864,15 @@ sub substitute_content {
                                                                         'entry.reference.journal.guest';
             }
 
-            my $event =  LJ::Lang::ml($text_var,  
-                                        { 'author'          => LJ::ljuser($original_entry_obj->poster),
-                                          'reposter'        => LJ::ljuser($entry_obj->poster),
-                                          'communityname'   => LJ::ljuser($original_entry_obj->journal),,
+            my $event =  LJ::Lang::ml(  $lang,
+                                        $text_var,  
+                                        $domain->{'dmid'},
+                                        { 'author'          => $original_entry_obj->poster->display_username,
+                                          'reposter'        => $entry_obj->poster->display_username,
+                                          'communityname'   => $original_entry_obj->journal->display_username,
                                           'datetime'        => $entry_obj->eventtime_mysql,
                                           'text'            => "", });
+
             ${$opts->{'head_mob'}} = $event;
         }
     }
@@ -878,12 +888,15 @@ sub substitute_content {
 
             $text_var .= LJ::u_equals($remote, $entry_obj->poster) ? '.owner' : '.guest';
     
-            my $event = LJ::Lang::ml($text_var, 
-                                       { 'author'           => LJ::ljuser($original_entry_obj->poster),
-                                         'communityname'    => LJ::ljuser($original_entry_obj->journal),
-                                         'reposter'         => LJ::ljuser($entry_obj->poster),
+            my $event = LJ::Lang::ml(  $lang,
+                                       $text_var, 
+                                       $domain->{'dmid'},
+                                       { 'author'           => $original_entry_obj->poster->display_username,
+                                         'communityname'    => $original_entry_obj->journal->display_username,
+                                         'reposter'         => $entry_obj->poster->display_username,
                                          'datetime'         => $entry_obj->eventtime_mysql,
                                          'text'             => $event_text, });
+
 
             ${$opts->{'event_friend'}} = $event;
         } else {
