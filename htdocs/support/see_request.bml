@@ -170,6 +170,36 @@ head<=
 
 // -->
 </script>
+<style type="text/css">   
+    .b-controls-track,
+    .b-controls-track_active,
+    .b-controls-track_inactive {
+        display: inline !important;
+        }
+    .b-controls-bg {
+		position: absolute;
+		top: -3px;
+		left: 0;
+        
+		width: 24px;
+		height: 24px;
+		margin: 0;
+		padding: 0;
+		font: 0/0 serif;
+		background-image: url(<?_code return $LJ::IMGPREFIX _code?>/btn_actions.png);
+		background-repeat: no-repeat;
+		cursor: pointer;
+		}
+    .b-controls-track .b-controls-bg {
+		background-position: 0 -24px;
+		}
+    .b-controls-track_inactive .b-controls-bg {
+		background-position: -24px -24px;
+		}    
+    .b-controls-track_active .b-controls-bg {
+		background-position: -48px -24px;
+		}
+</style>
 <=head
 bodyopts=>onLoad="check_replytype();updateFaqLink();"
 body<=
@@ -618,7 +648,7 @@ body<=
         $state .= " (<b>$winner->{'points'}</b> point$s to ";
         $state .= LJ::ljuser($wuser, { 'full' => 1 }) . ")";
     }
-    $ret .= "<tr><td align='right'><b>$ML{'.status'}:</b></td><td>$state";
+    $ret .= "<tr><td style='height: 24px;' align='right'><b>$ML{'.status'}:</b></td><td>$state";
     if ($can_close || $can_reopen) {
         if ($sp->{'state'} eq "open" && $can_close) {
             $ret .= ", <a href='act.bml?close;$sp->{'spid'};$sp->{'authcode'}'><b>$ML{'.close.without.credit'}</b></a>";
@@ -633,6 +663,42 @@ body<=
             }
         }
     }
+    # add "Track(ing) button
+    my $etypeid = LJ::Event->event_to_etypeid("SupportResponse");
+    my $sub_id = $etypeid ."-". $spid ."-7";
+    if (my $subs = $remote->has_subscription(
+                                    etypeid => $etypeid,
+                                    arg1    => $spid,
+                                    arg2    => 7,
+                                  )) {
+            # sub is inactive
+            if  ($subs < 2) {
+                my $tracking_btn_title = LJ::Lang::ml('.img.track_inactive');
+                $ret .=  '&nbsp;&nbsp;<a href="' . $LJ::SITEROOT . 
+                        '/support/changenotify.bml#' . $sub_id . 
+                        '" rel="nofollow" title="' . $tracking_btn_title . 
+                        '" class="b-controls b-controls-track_inactive">' .
+                        '<i class="b-controls-bg"></i></a>';
+            }
+            # sub is active
+            else {
+                my $tracking_btn_title = LJ::Lang::ml('.img.track_active');
+                $ret .=  '&nbsp;&nbsp;<a href="' . $LJ::SITEROOT . 
+                        '/support/changenotify.bml#' . $sub_id . 
+                        '" rel="nofollow" title="' . $tracking_btn_title . 
+                        '" class="b-controls b-controls-track_active">' .
+                        '<i class="b-controls-bg"></i></a>';
+            }
+    }
+    elsif (LJ::Support::can_read_internal($spcat, $remote)) {
+            my $track_btn_title = LJ::Lang::ml('img.track');
+            $ret .=  '&nbsp;&nbsp;<a href="' . $LJ::SITEROOT . 
+                     '/support/changenotify.bml?spid=' . $spid .  '#' . $sub_id . 
+                     '" rel="nofollow" title="' . $track_btn_title . 
+                     '" class="b-controls b-controls-track">' .
+                     '<i class="b-controls-bg"></i></a>';
+    }
+    
     $ret .= "</td></tr>\n";
     
     my $tags_string;

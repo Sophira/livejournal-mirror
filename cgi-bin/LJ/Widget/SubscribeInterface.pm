@@ -92,7 +92,13 @@ sub render_body {
         push @classes, "disabled" if $interface->{'disabled'};
         my $field_num = $self->{'field_num'}++;
 
-        $ret .= '<tr class="'.join(' ', @classes).'">';
+        if ($group->event->class =~ /Support/) {
+            my $group_id = $group->etypeid ."-". $group->arg1 ."-". $group->arg2;
+            $ret .= '<tr id="' . $group_id . '" class="'.join(' ', @classes).'">';
+        }
+        else {
+            $ret .= '<tr class="'.join(' ', @classes).'">';
+        }
 
         if ( exists $group->{'separator'} && $group->{'separator'} ) {
             $ret .= '<td class="separator" colspan="' . (int(@ntypes) + 1) . '"><hr/></td>';
