@@ -170,7 +170,7 @@ head<=
 
 // -->
 </script>
-<style type="text/css">   
+<style type="text/css">
     .b-controls-track,
     .b-controls-track_active,
     .b-controls-track_inactive {
@@ -180,7 +180,7 @@ head<=
 		position: absolute;
 		top: -3px;
 		left: 0;
-        
+
 		width: 24px;
 		height: 24px;
 		margin: 0;
@@ -195,7 +195,7 @@ head<=
 		}
     .b-controls-track_inactive .b-controls-bg {
 		background-position: -24px -24px;
-		}    
+		}
     .b-controls-track_active .b-controls-bg {
 		background-position: -48px -24px;
 		}
@@ -249,7 +249,7 @@ body<=
         if ($foundspid) {
             return BML::redirect("see_request.bml?id=$foundspid");
         } else {
-            my $goback = ''; 
+            my $goback = '';
             $goback = BML::ml('.goback.text', {request_link=>"href='see_request.bml?id=$spid'", spid=>$spid}) if $sp;
             my $what = $find eq 'next' || $find eq 'cnext' ? $ML{'.next'} : $ML{'.previous'};
             my $cat = '';
@@ -334,7 +334,7 @@ body<=
 
     # fix up the subject if needed
     # this logic have been copied into bin/worker/incoming-email so, here
-    # it is needed only for backward compatibility with old emailed requests 
+    # it is needed only for backward compatibility with old emailed requests
     eval {
         if ($sp->{'subject'} =~ /^=\?(utf-8)?/i) {
             my @subj_data;
@@ -356,7 +356,7 @@ body<=
     my $ret = "";
     $ret .= "<table>\n";
     $ret .= "<tr><td valign='bottom' align='right'><b>$ML{'.from'}</b></td><td>";
-    
+
     if ($u->{'defaultpicid'} && !$u->is_suspended) {
         my %pic;
         my $picid = $u->{'defaultpicid'};
@@ -366,7 +366,7 @@ body<=
             "height='$pic{$picid}->{'height'}' align='absmiddle' hspace='3' border='0' alt='$u->{'user'}' />";
         $ret .= "</a>";
     }
-    
+
     # show requester name + email
     {
         my $visemail = $email;
@@ -406,7 +406,7 @@ body<=
     # uniq
     if (LJ::check_priv($remote, 'sysban', 'uniq') ||
         LJ::check_priv($remote, "canview", "userlog") ||
-        LJ::check_priv($remote, 'canview', 'uniq')) { 
+        LJ::check_priv($remote, 'canview', 'uniq')) {
           my $uniq = $props->{'uniq'} || "<i>$ML{'.none'}</i>";
           $ret .= "<tr><td valign='bottom' align='right'><b>$ML{'.uniq'}</b></td><td><a href='$LJ::SITEROOT/admin/uniq.bml?what=$uniq'>$uniq</a></td></tr>\n";
     }
@@ -417,7 +417,7 @@ body<=
     $ret .= LJ::name_caps($u->{'caps'}) || "<i>$ML{'.unknown'}</i>";
     $ret .= "</td></tr>\n";
 
-    if ($u->{'userid'}) {   
+    if ($u->{'userid'}) {
         my $username = $u->username;
 
         $ret .= "<tr valign='top'><td align='right'><b>$LJ::SITENAMESHORT:</b></td><td>";
@@ -569,11 +569,11 @@ body<=
     }
 
     ## Has JS?
-    my $has_js =    ($props->{'has_js'} && $props->{'has_js'} eq 'Y') ? 'yes' : 
+    my $has_js =    ($props->{'has_js'} && $props->{'has_js'} eq 'Y') ? 'yes' :
                     ($props->{'has_js'} && $props->{'has_js'} eq 'N') ? 'no' : '(unknown)';
     $ret .= "<tr><td align='right' nowrap='nowrap'><b>$ML{'.has_js'}:</b></td>";
     $ret .= "<td>$has_js</td></tr>";
-    
+
     # Is problem occurred on Prod or Beta?
     my $is_beta = $props->{'is_beta'};
     $ret .= "<tr><td align='right' nowrap='nowrap'><b>$ML{'.is_beta'}:</b></td>";
@@ -664,45 +664,47 @@ body<=
         }
     }
     # add "Track(ing) button
-    my $etypeid = LJ::Event->event_to_etypeid("SupportResponse");
-    my $sub_id = $etypeid ."-". $spid ."-7";
-    if (my $subs = $remote->has_subscription(
-                                    etypeid => $etypeid,
-                                    arg1    => $spid,
-                                    arg2    => 7,
-                                  )) {
-            # sub is inactive
-            if  ($subs < 2) {
-                my $tracking_btn_title = LJ::Lang::ml('.img.track_inactive');
-                $ret .=  '&nbsp;&nbsp;<a href="' . $LJ::SITEROOT . 
-                        '/support/changenotify.bml#' . $sub_id . 
-                        '" rel="nofollow" title="' . $tracking_btn_title . 
-                        '" class="b-controls b-controls-track_inactive">' .
+    if ($remote) {
+        my $etypeid = LJ::Event->event_to_etypeid("SupportResponse");
+        my $sub_id = $etypeid ."-". $spid ."-7";
+        if (my $subs = $remote->has_subscription(
+                                        etypeid => $etypeid,
+                                        arg1    => $spid,
+                                        arg2    => 7,
+                                    )) {
+                # sub is inactive
+                if  ($subs < 2) {
+                    my $tracking_btn_title = LJ::Lang::ml('.img.track_inactive');
+                    $ret .=  '&nbsp;&nbsp;<a href="' . $LJ::SITEROOT .
+                            '/support/changenotify.bml#' . $sub_id .
+                            '" rel="nofollow" title="' . $tracking_btn_title .
+                            '" class="b-controls b-controls-track_inactive">' .
+                            '<i class="b-controls-bg"></i></a>';
+                }
+                # sub is active
+                else {
+                    my $tracking_btn_title = LJ::Lang::ml('.img.track_active');
+                    $ret .=  '&nbsp;&nbsp;<a href="' . $LJ::SITEROOT .
+                            '/support/changenotify.bml#' . $sub_id .
+                            '" rel="nofollow" title="' . $tracking_btn_title .
+                            '" class="b-controls b-controls-track_active">' .
+                            '<i class="b-controls-bg"></i></a>';
+                }
+        }
+        elsif (LJ::Support::can_read_internal($spcat, $remote)) {
+                my $track_btn_title = LJ::Lang::ml('img.track');
+                $ret .=  '&nbsp;&nbsp;<a href="' . $LJ::SITEROOT .
+                        '/support/changenotify.bml?spid=' . $spid .  '#' . $sub_id .
+                        '" rel="nofollow" title="' . $track_btn_title .
+                        '" class="b-controls b-controls-track">' .
                         '<i class="b-controls-bg"></i></a>';
-            }
-            # sub is active
-            else {
-                my $tracking_btn_title = LJ::Lang::ml('.img.track_active');
-                $ret .=  '&nbsp;&nbsp;<a href="' . $LJ::SITEROOT . 
-                        '/support/changenotify.bml#' . $sub_id . 
-                        '" rel="nofollow" title="' . $tracking_btn_title . 
-                        '" class="b-controls b-controls-track_active">' .
-                        '<i class="b-controls-bg"></i></a>';
-            }
+        }
     }
-    elsif (LJ::Support::can_read_internal($spcat, $remote)) {
-            my $track_btn_title = LJ::Lang::ml('img.track');
-            $ret .=  '&nbsp;&nbsp;<a href="' . $LJ::SITEROOT . 
-                     '/support/changenotify.bml?spid=' . $spid .  '#' . $sub_id . 
-                     '" rel="nofollow" title="' . $track_btn_title . 
-                     '" class="b-controls b-controls-track">' .
-                     '<i class="b-controls-bg"></i></a>';
-    }
-    
+
     $ret .= "</td></tr>\n";
-    
+
     my $tags_string;
-    
+
     if (
         LJ::check_priv($remote, 'supportviewinternal') ||
         LJ::check_priv($remote, 'supporthelp')
@@ -724,7 +726,7 @@ body<=
             $ret .= '</tr>';
         }
     }
-    
+
     $ret .= "<tr><td align='right'><b>$ML{'.summary'}:</b></td><td><span style='font-size: 1.1em'><b>" . LJ::ehtml($sp->{'subject'}) . "</b></span></td></tr>\n";
     $ret .= "</table>\n";
 
@@ -901,7 +903,7 @@ body<=
     # form
     $ret .= "<table border='0'>\n";
     $ret .= "<tr valign='middle'><td align='right'>$ML{'.from'}</td><td>";
-    
+
     if ($remote && $remote->{'userid'}) {
         $ret .= "<?ljuser $remote->{'user'} ljuser?>";
     } else {
@@ -1078,7 +1080,7 @@ body<=
             $ret .= "</td></tr>\n";
         }
     }
-    
+
     if (LJ::Support::can_read_internal($spcat, $remote) && !$is_poster) {
         $ret .= '<tr>';
         $ret .= '<td align="right">'.$ML{'.change.tags'}.'</td>';
@@ -1169,14 +1171,14 @@ _code?>
     use strict;
     use vars qw(%FORM);
     return '' if $FORM{'find'};
-    
+
     my $spid = $FORM{'id'}+0;
     my $ret;
-    
+
     $ret .= BML::ml('.see.preview', {preview_link=>"href='$LJ::SITEROOT/support/see_request.bml?id=$spid&amp;find=prev'"});
     $ret .= BML::ml('.see.next', {next_link=>"href='$LJ::SITEROOT/support/see_request.bml?id=$spid&amp;find=next'"});
-    
-    return $ret; 
+
+    return $ret;
 }
 _code?>
 <br>
