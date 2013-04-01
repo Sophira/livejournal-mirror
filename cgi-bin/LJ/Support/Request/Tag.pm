@@ -111,7 +111,7 @@ sub rename_tag {
     if ( !$sptagid || !$spcatid || !$new_name ) {
         return 0;
     }
-    
+
     warn "rename everywhere : $everywhere";
 
     # do we need to rename everywhery ?
@@ -132,7 +132,7 @@ sub __rename_tag_everywhere {
 
     my $sptagid     = $opts->{'sptagid'};
     my $spcatid     = $opts->{'spcatid'};
-    # The new name for tag 
+    # The new name for tag
     my $new_name    = $opts->{'new_name'};
 
     # The merge flag that says about merge possibility
@@ -140,13 +140,13 @@ sub __rename_tag_everywhere {
 
     my $dbh = LJ::get_db_writer();
 
-    # Get curret name 
+    # Get curret name
     my $old_name = LJ::Support::Request::Tag::tag_id_to_name($sptagid);
     if (!$old_name) {
         return;
     }
-    
-    return if $old_name eq $new_name; 
+
+    return if $old_name eq $new_name;
 
     #
     # Receive all categories where rename will be done
@@ -170,14 +170,14 @@ sub __rename_tag_everywhere {
                                    'spcatid',
                                    undef,
                                    $new_name );
-                                   
+
     warn LJ::D($destination);
     warn LJ::D($source);
 
     # Does name exist already?
     if (!$destination || !%$destination) {
 
-        # Just rename 
+        # Just rename
         $dbh->do( "UPDATE supporttag SET name=? WHERE name=?",
                   undef,
                   $new_name,
@@ -220,7 +220,7 @@ sub __rename_tag_everywhere {
                               undef,
                               $spid,
                               $destination_id );
-                };               
+                };
             }
         }
 
@@ -228,7 +228,7 @@ sub __rename_tag_everywhere {
             my $source_hash = $source->{$spcatid};
             my $source_id   = $source_hash->{'sptagid'};
 
-            $dbh->do( 'UPDATE supporttag ' . 
+            $dbh->do( 'UPDATE supporttag ' .
                       'SET name=? ' .
                       "WHERE sptagid = ?",
                       undef,
@@ -244,7 +244,7 @@ sub __rename_tag_everywhere {
             my $source_hash = delete $source->{$spcatid};
             my $source_id   = $source_hash->{'sptagid'};
 
-            $dbh->do( 'UPDATE supporttag ' . 
+            $dbh->do( 'UPDATE supporttag ' .
                       'SET name=? ' .
                       "WHERE sptagid = ?",
                       undef,
@@ -416,7 +416,13 @@ sub tag_name_to_id {
         $name, $spcatid
     );
 
-    return $dbh->{'mysql_insertid'};
+    my $tagid = $dbh->{'mysql_insertid'};
+    
+    if ($tagid) {
+        LJ::Event::SupportTagCreate->new($tagid)->fire;
+    }
+    
+    return $tagid;
 }
 
 # tag_id_to_name(): gets a name assigned to a given tag
@@ -447,6 +453,35 @@ sub tag_id_to_name {
 
     return $name;
 }
+
+# get_cat_by_tagid() : get a category specified tagid is belonged to 
+# returns a hashref 
+sub get_cat_by_tagid {
+
+    my ($sptagid) = @_;
+
+    my $dbh = LJ::get_db_writer();
+    my $res = $dbh->selectrow_hashref(
+                            qq(
+                                SELECT spcatid
+                                FROM   supporttag
+                                WHERE  sptagid = ?
+                               ),
+                            undef,
+                            $sptagid
+                    );
+
+                    
+                    
+    my $catid = $res->{spcatid};
+    use Data::Dumper;
+    warn "catid: " . Dumper($catid) . "\n";
+    
+    my $cat = LJ::Support::load_cats()->{$catid};
+    return $cat;  
+}
+
+
 
 # get_cats_tag_names(): gets sorted and unique tag names that exist
 # in the given cats.
@@ -486,6 +521,34 @@ sub get_cats_tags {
     );
 
     return @$res;
+}
+
+# get_cat_tags_with_names(): gets sorted pairs tagid=>tagname
+# for the specified cat.
+# calling format:
+# get_cats_tag_names($spcatid)
+# returns an array of hashrefs.
+sub get_cat_tags_with_names {
+    my ($spcatid) = @_;
+
+    return () if $spcatid eq '';
+
+    my $dbh = LJ::get_db_writer();
+    my $rows = $dbh->selectall_arrayref(
+                        qq(
+                            SELECT sptagid, name FROM supporttag
+                            WHERE spcatid = ?
+                            ORDER BY name
+                          ),
+                        { slice => {} },
+                        $spcatid
+    );
+
+    #foreach my $row ( @$rows ) {
+    #  push @res, {$row->{sptagid} => $row->{name}} ;
+    #}
+
+    return @$rows;
 }
 
 # drop_tags(): removes all information about the given tag from the database

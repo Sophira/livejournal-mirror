@@ -57,6 +57,20 @@ sub jobs_of_unique_matching_subs {
     }
     
     foreach my $s (@subs_filtered) {
+        # We are skipping uniqueness check for emails to non-registered users
+        if ($s->userid == 0) {
+            push @subjobs, TheSchwartz::Job->new(
+                funcname => 'LJ::Worker::ProcessSub',
+                priority => $evt->priority,
+                arg      => {
+                    'userid'    => $s->userid + 0,
+                    'subdump'   => $s->dump,
+                    'e_params'  => $params,
+                    %$debug_args,
+                },
+            );
+            next;
+        }
         next if $has_done{$s->unique}++;
 
         my $params_sub   = $evt->raw_params;
@@ -544,7 +558,8 @@ sub work {
     return $job->completed unless $subsc;
 
     # if the user deleted their account (or otherwise isn't visible), bail
-    return $job->completed unless $u->is_visible || $evt->is_significant;
+    # but email unauthorised recipients
+    return $job->completed if $u && !($u->is_visible || $evt->is_significant);
 
     my %opts;
     if ($LJ::DEBUG{esn_email_headers}) {

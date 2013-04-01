@@ -3,6 +3,7 @@ package LJ::NotificationMethod::Email;
 use strict;
 use Carp qw/ croak /;
 use base 'LJ::NotificationMethod';
+use Data::Dumper;
 
 use lib "$ENV{LJHOME}/cgi-bin";
 require "weblib.pl";
@@ -16,11 +17,12 @@ sub new {
     croak "no args passed"
         unless @_;
 
-    my $u = shift;
-    croak "invalid user object passed"
-        unless LJ::isu($u);
-
+    my $u    = shift;
     my $subs = shift;
+    
+    warn "No user object passed"
+        unless LJ::isu($u);
+    
     my $self = { u => $u, subs => $subs };
 
     return bless $self, $class;
@@ -62,12 +64,11 @@ sub notify {
 
     my $u = $self->u;
 
-    if (LJ::sysban_check('email_domain', $u->email_raw)){
+    if ($u && LJ::sysban_check('email_domain', $u->email_raw)){
         #warn "Not issuing job for " . $u->email_raw . " [banned]";
         return 1;
     }
 
-    my $lang = $u->prop('browselang');
     my $vars = {
         sitenameshort => $LJ::SITENAMESHORT,
         sitename      => $LJ::SITENAME,
@@ -96,6 +97,31 @@ sub notify {
                 next;
             }
         }
+        
+        # we should email unauthorised person about particular event
+        if (!$u && ref($ev) =~ /SupportRe(quest|sponse)/) {
+            warn "Prepare notification for unauthorized requester!\n\n" if $ENV{DEBUG};
+            my $plain_body = $ev->as_email_string() or next;
+            my %headers = (
+                "X-LJ-Recipient" => "Unknown",
+                %{$ev->as_email_headers() || {}},
+                %{$opts->{_debug_headers}   || {}}
+            );
+
+            my $email_subject = $ev->as_email_subject();
+            LJ::send_mail({
+                to       => $ev->sprequest->{reqemail},
+                from     => $ev->as_email_from($u),
+                fromname => "$LJ::SITENAMESHORT Support",
+                wrap     => 1,
+                charset  => 'utf-8',
+                subject  => $email_subject,
+                headers  => \%headers,
+                body     => $plain_body,
+            }) or die "unable to send notification email";
+            warn "\n\n\nAnd it seems to be sent!!!\n\n\n" if $ENV{DEBUG};
+            return 1;
+        }
 
         if (LJ::run_hook('esn_send_email', $self, $opts, $ev)) {
             ## do nothing, hook did the job
@@ -113,7 +139,7 @@ sub notify {
             if ($u->{opt_htmlemail} eq 'N') {
                 LJ::send_mail({
                     to       => $u->email_raw,
-                    from     => $LJ::BOGUS_EMAIL,
+                    from     => $ev->as_email_from($u),
                     fromname => scalar($ev->as_email_from_name($u)),
                     wrap     => 1,
                     charset  => $u->mailencoding || 'utf-8',
@@ -129,7 +155,7 @@ sub notify {
 
                 LJ::send_mail({
                     to       => $u->email_raw,
-                    from     => $LJ::BOGUS_EMAIL,
+                    from     => $ev->as_email_from($u),
                     fromname => scalar($ev->as_email_from_name($u)),
                     wrap     => 1,
                     charset  => $u->mailencoding || 'utf-8',
@@ -159,6 +185,9 @@ sub configured_for_user {
     # override requiring user to have an email specified and be active if testing
     return 1 if $LJ::_T_EMAIL_NOTIFICATION;
 
+    #email unauthorised recipient
+    return 1 unless $u;
+    
     return 0 unless length $u->email_raw;
 
     # don't send out emails unless the user's email address is active
