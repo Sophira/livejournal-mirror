@@ -268,7 +268,7 @@ sub __rename_tag_in_category {
     my $dbh = LJ::get_db_writer();
     my $old_name = LJ::Support::Request::Tag::tag_id_to_name($sptagid);
 
-    #does exist tag name?
+    # does exist tag name?
     my ($exists_stagid)
             = $dbh->selectrow_array( "SELECT sptagid FROM supporttag " .
                                      "WHERE name=? AND spcatid = ?",
@@ -285,7 +285,7 @@ sub __rename_tag_in_category {
                   $new_name,
                   $sptagid );
     } elsif ($name_exists && $allowmerge) {
-        #recv. current spid for tag id
+        # recv. current spid for tag id
         my ($current_spid) = $dbh->selectrow_array( 'SELECT spid ' .
                                                     'FROM supporttagmap ' .
                                                     'WHERE sptagid = ?',
@@ -446,10 +446,6 @@ sub tag_id_to_name {
     return undef unless $tag;
     LJ::MemCache::set("sptagid:$id", $tag->{'name'}, 86400) unless ($LJ::IS_DEV_SERVER);
     my $name = $tag->{'name'};
-    #if ($LJ::IS_DEV_SERVER) {
-    #    my $spcats = LJ::Support::load_cats($tag->{'spcatid'});
-    #    $name .= ' ('.$spcats->{$tag->{'spcatid'}}->{'catkey'}.')';
-    #}
 
     return $name;
 }
@@ -474,8 +470,6 @@ sub get_cat_by_tagid {
                     
                     
     my $catid = $res->{spcatid};
-    use Data::Dumper;
-    warn "catid: " . Dumper($catid) . "\n";
     
     my $cat = LJ::Support::load_cats()->{$catid};
     return $cat;  
@@ -543,10 +537,6 @@ sub get_cat_tags_with_names {
                         { slice => {} },
                         $spcatid
     );
-
-    #foreach my $row ( @$rows ) {
-    #  push @res, {$row->{sptagid} => $row->{name}} ;
-    #}
 
     return @$rows;
 }

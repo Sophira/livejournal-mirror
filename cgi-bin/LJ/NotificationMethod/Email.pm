@@ -3,7 +3,6 @@ package LJ::NotificationMethod::Email;
 use strict;
 use Carp qw/ croak /;
 use base 'LJ::NotificationMethod';
-use Data::Dumper;
 
 use lib "$ENV{LJHOME}/cgi-bin";
 require "weblib.pl";
@@ -65,7 +64,7 @@ sub notify {
     my $u = $self->u;
 
     if ($u && LJ::sysban_check('email_domain', $u->email_raw)){
-        #warn "Not issuing job for " . $u->email_raw . " [banned]";
+        # warn "Not issuing job for " . $u->email_raw . " [banned]";
         return 1;
     }
 
@@ -98,8 +97,11 @@ sub notify {
             }
         }
         
-        # we should email unauthorised person about particular event
-        if (!$u && ref($ev) =~ /SupportRe(quest|sponse)/) {
+        if (LJ::run_hook('esn_send_email', $self, $opts, $ev)) {
+            ## do nothing, hook did the job
+        }
+        # email unauthorised person about particular event
+        elsif (!$u && $ev->allow_emails_to_unauthorised) {
             warn "Prepare notification for unauthorized requester!\n\n" if $ENV{DEBUG};
             my $plain_body = $ev->as_email_string() or next;
             my %headers = (
@@ -121,10 +123,6 @@ sub notify {
             }) or die "unable to send notification email";
             warn "\n\n\nAnd it seems to be sent!!!\n\n\n" if $ENV{DEBUG};
             return 1;
-        }
-
-        if (LJ::run_hook('esn_send_email', $self, $opts, $ev)) {
-            ## do nothing, hook did the job
         }
         else {
             my $plain_body = $ev->as_email_string($u) or next;
@@ -185,7 +183,7 @@ sub configured_for_user {
     # override requiring user to have an email specified and be active if testing
     return 1 if $LJ::_T_EMAIL_NOTIFICATION;
 
-    #email unauthorised recipient
+    # email unauthorised recipient
     return 1 unless $u;
     
     return 0 unless length $u->email_raw;

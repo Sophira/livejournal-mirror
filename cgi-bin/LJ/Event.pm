@@ -56,7 +56,6 @@ Please note that there are two possible uses for LJ::Event object:
 package LJ::Event;
 use strict;
 no warnings 'uninitialized';
-use Data::Dumper;
 
 use Carp qw(confess);
 use LJ::ESN;
@@ -99,7 +98,7 @@ sub new_from_raw_params {
     my $evt     = LJ::Event->new($journal, @args);
 
     # Store etypeid in instance to check it faster
-    $evt->{'etypeid'} = $etypeid; 
+    $evt->{'etypeid'} = $etypeid;
 
     # bless into correct class
     bless $evt, $class;
@@ -115,14 +114,16 @@ sub new_from_raw_params {
 # my ($etypeid, $journalid, $arg1, $arg2) = @$params;
 sub raw_params {
     my $self = shift;
-    
+
     my $ju = $self->event_journal;
-    warn "This event has no journal: " . Dumper($self) if $ju && $ENV{DEBUG};
+    Carp::confess("Event $self has no journal")
+        unless $ju || $self->allow_emails_to_unauthorised;
+
     my $uid = $ju ?  $ju->id : 0 ;
-    
+
     my @params = map { $_ || 0 } (
         $self->etypeid,
-        $uid, 
+        $uid,
         @{$self->{args}},
     );
     return wantarray ? @params : \@params;
@@ -293,7 +294,7 @@ sub format_options {
     my ($self, $is_html, $lang, $vars, $urls, $extra) = @_;
 
     my ($tag_p, $tag_np, $tag_li, $tag_nli, $tag_ul, $tag_nul, $tag_br) = ('','','','','','',"\n");
- 
+
     if ($is_html) {
         $tag_p  = '<p>';    $tag_np  = '</p>';
         $tag_li = '<li>';   $tag_nli = '</li>';
@@ -332,7 +333,7 @@ sub format_options {
 
     $options .= $extra if $extra;
 
-    $options .= $tag_nul . $tag_br; 
+    $options .= $tag_nul . $tag_br;
 
     return $options;
 }
@@ -815,6 +816,14 @@ sub subscription_as_html {
     return $class . " arg1: $arg1 arg2: $arg2 user: $user";
 }
 
+# return a boolean indicating that event could be emailed to unauthorized users
+# it is required for SupportRequest and SupportResponse events,
+# since support requests could be created by non-users
+sub allow_emails_to_unauthorised { 0 }
+
+# return a boolean indicating relation of the event to Support
+sub is_support_class { 0 }
+
 # return a boolean value indicating whether a user is able to subscribe to
 # this event and receive notifications.
 #
@@ -905,7 +914,7 @@ sub is_subscription_ntype_disabled_for {
 # this is a virtual function; base class function returns 0 for "no".
 #
 # $value = $disabled ?
-#     $event->get_subscription_ntype_force($ntype, $u) : 
+#     $event->get_subscription_ntype_force($ntype, $u) :
 #     $sub->is_active;
 sub get_subscription_ntype_force { 0 }
 

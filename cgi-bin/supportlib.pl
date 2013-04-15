@@ -1007,7 +1007,7 @@ sub mail_response_to_user
                   );
     }
 
-    #preparing [[closeable]] param
+    # preparing [[closeable]] param
     my $closeable='';
     if ($sp->{_cat}->{user_closeable}) {
         my $closeurl = "$LJ::SITEROOT/support/act.bml?" .
@@ -1348,9 +1348,6 @@ sub get_previous_screened_replies {
 # userid: userid of the author
 # returns: splid or undef
 # </LJFUNC>
-use Data::Dumper;
-
-
 sub get_latest_screen {
     my ($splid, $userid) = @_;
 
@@ -1358,7 +1355,6 @@ sub get_latest_screen {
 
     foreach my $key (sort {$b <=> $a} keys %$screens) {
         if ($screens->{$key} eq $userid) {
-            warn "\n\nYour screen: " . Dumper($key) . "\n";
             return $key;
         }
     }

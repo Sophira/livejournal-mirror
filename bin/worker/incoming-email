@@ -40,6 +40,7 @@ use base 'TheSchwartz::Worker';
 
 use MIME::Parser;
 use File::Temp ();
+use LJ::ConvUTF8;
 my $last_job;
 
 sub max_retries {   5 }
@@ -109,12 +110,13 @@ sub work {
     # fix up the subject if needed
     eval {
         if ($subject =~ /^=\?(utf-8)?/i) {
+            my $encoding = $1;
             my @subj_data;
             require MIME::Words;
             @subj_data = MIME::Words::decode_mimewords($subject);
             if (scalar(@subj_data)) {
-                if (!$1) {
-                    $subject = Unicode::MapUTF8::to_utf8({-string=>$subj_data[0][0], -charset=>$subj_data[0][1]});
+                if (!$encoding) {
+                    $subject = LJ::ConvUTF8->to_utf8($subj_data[0][1], $subj_data[0][0]);
                 } else {
                     $subject = $subj_data[0][0];
                 }
@@ -231,7 +233,9 @@ sub work {
     if ($type =~ /multipart/) {
         foreach my $ent_part ($entity->parts) {
             if ($ent_part->mime_type eq 'text/plain') {
-                $content_type = $ent_part->head->get('Content-type:');
+                if (my $ent_head = $ent_part->head) {
+                    $content_type = $ent_head->get('Content-type:');
+                }
                 last;
             }
         }
@@ -368,12 +372,9 @@ sub convert_to_utf8 {
 
     if (   defined($charset)
         && $charset !~ /^UTF-?8$/i
-        && Unicode::MapUTF8::utf8_supported_charset($charset) )
+        && LJ::ConvUTF8->supported_charset($charset) )
     {
-        $text =
-          Unicode::MapUTF8::to_utf8(
-            { -string => $text, -charset => $charset } );
-
+        $text = LJ::ConvUTF8->to_utf8($charset, $text);
     }
 
     return $text;

@@ -322,7 +322,7 @@ sub get_interface_status {
 
     my $evt = $self->event;
 
-    if ($self->event_class =~ /Support/) {
+    if ($evt->is_support_class) {
         return $evt->get_interface_status($u, $self->arg1, $self->arg2);
     }
     
@@ -334,7 +334,7 @@ sub get_ntype_interface_status {
 
     my $evt = $self->event;
 
-    if ($self->event_class =~ /Support/) {
+    if ($evt->is_support_class) {
         return $evt->get_ntype_interface_status($ntypeid, $u, $self->arg1, $self->arg2);
     }
     
@@ -360,7 +360,7 @@ sub enabled {
     
     my $evt = $self->event;
     
-    if ($self->event_class =~ /Support/) {
+    if ($evt->is_support_class) {
         return $evt->check_sub_availability($u, $self->arg1, $self->arg2);
     }
     

@@ -92,7 +92,7 @@ sub render_body {
         push @classes, "disabled" if $interface->{'disabled'};
         my $field_num = $self->{'field_num'}++;
 
-        if ($group->event->class =~ /Support/) {
+        if ($group->event->is_support_class) {
             my $group_id = $group->etypeid ."-". $group->arg1 ."-". $group->arg2;
             $ret .= '<tr id="' . $group_id . '" class="'.join(' ', @classes).'">';
         }

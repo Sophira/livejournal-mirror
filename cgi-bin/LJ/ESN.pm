@@ -41,8 +41,8 @@ sub jobs_of_unique_matching_subs {
     $debug_args ||= {};
     my @subjobs;
 
+    my $params = $evt->raw_params;
     if ($ENV{DEBUG}) {
-        my $params = $evt->raw_params;
         warn "jobs of unique subs (@$subs) matching event (@$params)\n";
     }
 
@@ -57,21 +57,10 @@ sub jobs_of_unique_matching_subs {
     }
     
     foreach my $s (@subs_filtered) {
+        my $s_uid = $s->userid + 0;
+
         # We are skipping uniqueness check for emails to non-registered users
-        if ($s->userid == 0) {
-            push @subjobs, TheSchwartz::Job->new(
-                funcname => 'LJ::Worker::ProcessSub',
-                priority => $evt->priority,
-                arg      => {
-                    'userid'    => $s->userid + 0,
-                    'subdump'   => $s->dump,
-                    'e_params'  => $params,
-                    %$debug_args,
-                },
-            );
-            next;
-        }
-        next if $has_done{$s->unique}++;
+        next if $s_uid && $has_done{$s->unique}++;
 
         my $params_sub   = $evt->raw_params;
         $params_sub->[0] = $s->etypeid if $s->etypeid;
@@ -80,9 +69,9 @@ sub jobs_of_unique_matching_subs {
             funcname => 'LJ::Worker::ProcessSub',
             priority => $evt->priority,
             arg      => {
-                'userid'    => $s->userid + 0,
+                'userid'    => $s_uid,
                 'subdump'   => $s->dump,
-                'e_params'  => $params_sub,
+                'e_params'  => $s_uid ? $params_sub : $params,
                 %$debug_args,
             },
         );
