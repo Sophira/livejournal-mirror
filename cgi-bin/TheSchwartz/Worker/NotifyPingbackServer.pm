@@ -12,6 +12,8 @@ sub work {
 
     send_ping(uri  => $args->{uri},
               mode => $args->{mode},
+              comment => $args->{comment},
+              comment_data => $args->{comment_data},
               );
 
     $job->completed;
@@ -23,6 +25,8 @@ sub send_ping {
 
     my $source_uri = $args{uri};
     my $mode = $args{mode};
+    my $comment = $args{comment};
+    my $comment_data = $args{comment_data};
 
     # return unless $mode =~ m/^[LO]$/; # (L)ivejournal only, (O)pen.
 
@@ -40,11 +44,15 @@ sub send_ping {
             return if $weight_data->{reader_weight} < $antispam_params->{min_reader_weight};
         }
     }
-
-    my @links = ExtractLinksWithContext->do_parse($source_entry->event_raw);
+    my @links = ExtractLinksWithContext->do_parse($source_entry->event_raw) if $mode =~ m/^[LOE]$/;
+    my @users;
+    if ( $mode =~ m/^[LOU]$/ ) {
+        my $contents = $comment ? $comment_data->{body} : $source_entry->event_raw;
+        @users = ExtractLinksWithContext->find_userlink($contents);
+    }
     # use Data::Dumper;
     # warn "Links: " . Dumper(\@links);
-    return unless @links;
+    return unless (@links || @users);
     
     foreach my $link (@links){
         my $target_entry = LJ::Entry->new_from_url($link->{uri});
@@ -63,6 +71,12 @@ sub send_ping {
                     title     => $source_entry->subject_raw,
                     ); # returns LJ::Comment object on success or error string otherwise.
         drop_relation($source_entry, $target_entry) unless ref $res;
+    }
+    
+    foreach my $aUser (@users){
+        my $user = LJ::load_user($aUser->{user_name});
+        next unless $user;
+        LJ::PingBack->notify_about_reference( user => $user, source_uri => $source_uri, context => $aUser->{context}, comment => $comment );
     }
 
     return 1;
@@ -148,7 +162,10 @@ use Data::Dumper;
 # if needed this vars easily can be moved to $parser object as its properties.
 my $prev_link_end = 0;
 my @links = ();
+my @users = ();
+my @used_users = ();
 my $res = '';
+my $orig = '';
 
 
 sub do_parse {
@@ -209,6 +226,22 @@ sub do_parse {
         @links;
 }
 
+sub find_userlink {
+    my $class = shift;
+    my $text  = shift;
+    $orig = $text;
+    
+    @users = ();
+    
+    my $parser = HTML::Parser->new(
+        api_version => 3,
+        start_h     => [ \&tag_start, "tagname,text,attr" ],
+    );
+    $parser->parse($text);
+    
+    return @users;
+}
+
 sub tag_start {
     my $tag_name = shift;
     my $text     = shift;
@@ -218,12 +251,13 @@ sub tag_start {
         parse_a ($text, $attr)
     } elsif ($tag_name =~ m/(br|p|table|hr|object)/) {
         $res .= ' ' if substr($res, -1, 1) ne ' ';
+    } elsif ($tag_name eq 'lj') {
+    	parse_lj ($text, $attr);
     }
-
 }
 sub tag_end {
     my $tag_name = shift;
-    if ($tag_name eq 'a'){
+    if ( ($tag_name eq 'a') || ($tag_name eq 'lj') ){
         my $context = substr $res, (length($res) - 100 < $prev_link_end ? $prev_link_end : -100); # last 100 or less unused chars
         
         if ( length($res) > length($context) ){ # context does not start from the text begining.
@@ -253,6 +287,17 @@ sub parse_a {
     my $context = $text;
 
     push @links => { uri => $uri->as_string, context => $context };
+    return;
+}
+
+sub parse_lj {
+	my $text = shift;
+    my $attr = shift;
+    
+    unless( my $found = grep $_ eq $attr->{user}, @used_users ) { # exclude repeat users
+        push @users => { user_name => $attr->{user}, context => $orig };
+        push @used_users, $attr->{user};
+    }
     return;
 }
 
