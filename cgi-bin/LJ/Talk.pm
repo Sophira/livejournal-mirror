@@ -185,23 +185,16 @@ sub link_bar
 
     if ( LJ::is_enabled('sharing') && $entry->is_public && !$entry->is_delayed ) {
         my $title = LJ::Lang::ml('talk.'. 'share');
-        my $entryurl = '';
-        my $entrytitle = '';
-        my $entryhashtags = '';
-
-        if ($entry) {
-            $entryurl = $entry->url;
-            $entrytitle = $entry->subject_text;
-            $entryhashtags = join ',' , grep {s/^#//} $entry->tags;
-        }
+        
+        my $attrs = $entry->sharing_attributes(); 
 
         LJ::Share->request_resources();
 
         push @linkele, sprintf '
-            <a href="#" rel="nofollow" title="%s" class="b-controls b-controls-share js-lj-share" data-url="%s" data-title="%s" data-hashtags="%s">
+            <a href="#" rel="nofollow" title="%s" class="b-controls b-controls-share js-lj-share" data-url="%s" data-title="%s" data-hashtags="%s" data-text="%s" >
                 <i class="b-controls-bg"></i>%s
             </a>
-        ', $title, $entryurl, $entrytitle,  LJ::eurl($entryhashtags), $title;
+        ', $title, $attrs->{'data-url'}, $attrs->{'data-title'},  $attrs->{'data-hashtags'}, $attrs->{'data-text'}, $title;
     }
 
     if ($remote && $remote->can_use_esn && !$entry->is_delayed) {

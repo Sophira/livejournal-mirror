@@ -182,7 +182,11 @@ sub render_posts {
             $vertical = LJ::Vertical->new ( vert_id => $entry_href->{'vert_id'} );
         }
 
+        my $attrs              = $entry->sharing_attributes();
+        my $sharing_attributes = join ' ', map {$_.'="'.$attrs->{$_}.'"'} keys %$attrs;
+
         push @temp_array_post, {
+            sharing_attributes => $sharing_attributes,
             subject         => $trimmed_subj,
             is_subject_trimmed => $subject ne $trimmed_subj ? 1 : 0,
             userpic         => $userpic ? $userpic->url : '',
@@ -477,16 +481,14 @@ sub render_body {
             next unless $entry->valid;
             my $userpic = $entry->userpic;
             my $poster = $entry->poster;
-            my $hashtags = join ',' , grep {s/^#//} $entry->tags;
+
             push @top_posts, {
-                url             => $entry->url,
-                hashtags        => LJ::eurl($hashtags),
-                subject         => $entry->subject_text || '***',
-                userpic         => $userpic ? $userpic->url : '',
-                updated_ago     => LJ::TimeUtil->ago_text($entry->logtime_unix),
-                comments_count  => $entry->reply_count,
-                ljuser          => $poster ? LJ::ljuser($poster) : '?',
-                url_to_post     => $entry->url,
+                subject            => $entry->subject_text || '***',
+                userpic            => $userpic ? $userpic->url : '',
+                updated_ago        => LJ::TimeUtil->ago_text($entry->logtime_unix),
+                comments_count     => $entry->reply_count,
+                ljuser             => $poster ? LJ::ljuser($poster) : '?',
+                url_to_post        => $entry->url,
             };
         }
     }

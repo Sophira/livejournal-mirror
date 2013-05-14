@@ -2122,6 +2122,9 @@ sub Entry
             $e->{'tags'}     = [];
         }
 
+        $e->{$_} = $entry->prop("ljart_$_")
+            for (qw{event event_town event_location event_paid event_price event_type event_image event_desc});
+
      } else {
         my $entry = LJ::DelayedEntry->get_entry_by_id( $e->{journal}->{_u}, 
                                                        $e->{delayedid} );
@@ -2132,6 +2135,10 @@ sub Entry
         }
         $e->{'delayed'} = 1;
         $e->{'delayed_icon'} = Image_std("delayed-entry");
+
+        $e->{$_} = $entry->prop("ljart_$_")
+            for (qw{event event_town event_location event_paid event_price event_type event_image event_desc});
+
     }
     $e->{'_preview'} = $arg->{'_preview'};
     return $e;
@@ -2385,6 +2392,33 @@ sub UserExtended
     return $o;
 }
 
+sub Event
+{
+    my ($u) = @_;
+    my $o = UserLite($u);
+
+    $u->preload_props(qw{
+        ljart_event
+        ljart_event_location
+        ljart_event_town 
+        ljart_event_type
+        ljart_event_paid
+        ljart_event_price
+        ljart_event_organizer
+    });
+
+    $o->{'_type'} = "Event";
+    $o->{'event'}           = $u->{'ljart_event'};
+    $o->{'event_location'}  = $u->{'ljart_event_location'};
+    $o->{'event_town'}      = $u->{'ljart_event_town'}; 
+    $o->{'event_type'}      = $u->{'ljart_event_type'};
+    $o->{'event_paid'}      = $u->{'ljart_event_paid'};
+    $o->{'event_price'}     = $u->{'ljart_event_price'};
+    $o->{'event_organizer'} = $u->{'ljart_event_organizer'};
+
+    return $o;
+}
+
 sub UserLink
 {
     my ($link, $options) = @_;
@@ -2501,6 +2535,12 @@ sub UserExtended {
     my ($ctx,$username) = @_;
     my $u = LJ::load_user($username);
     return LJ::S2::UserExtended($u);
+}
+
+sub Event {
+    my ($ctx,$username) = @_;
+    my $u = LJ::load_user($username);
+    return LJ::S2::Event($u);
 }
 
 sub start_css {
@@ -3995,6 +4035,7 @@ sub UserLite__ljuser
 
 *User__ljuser = \&UserLite__ljuser;
 *UserExtended__ljuser = \&UserLite__ljuser;
+*Event__ljuser = \&UserLite__ljuser;
 
 sub UserLite__get_link
 {
@@ -4045,6 +4086,7 @@ sub UserLite__get_link
 }
 *User__get_link = \&UserLite__get_link;
 *UserExtended__get_link = \&UserLite__get_link;
+*Event__get_link = \&UserLite__get_link;
 
 sub EntryLite__get_link
 {
@@ -4190,21 +4232,17 @@ sub _Entry__get_link
         return $null_link
             unless LJ::is_enabled('sharing') && $entry->is_public;
 
-        my $url = $entry->url;
-        my $title = $entry->subject_text;
-        my $hashtags = join ',' , grep {s/^#//} $entry->tags;
+        my $attrs  = $entry->sharing_attributes();
 
         my $link_text  = $ctx->[S2::PROPS]->{'text_share'};
         my %link_extra = (
             'class' => 'js-lj-share',
-            'data-url' => $url,
-            'data-title' => LJ::eurl($title),
-            'data-hashtags' =>  LJ::eurl($hashtags) || "",
+            %$attrs
         );
 
         my $link_image = LJ::S2::Image( "$LJ::IMGPREFIX/btn_sharethis.gif?v=2", 24, 24, '');
         my $link = LJ::S2::Link(
-            $url . '?title=' . LJ::eurl($title) . '&hashtags=' . (LJ::eurl($hashtags) || ''),
+            $attrs->{'data-url'} . '?title=' . $attrs->{'data-title'} . '&hashtags=' . $attrs->{'data-hashtags'} . "&text=" . $attrs->{'data-text'},
             $link_text,
             $link_image,
             %link_extra
@@ -4222,7 +4260,7 @@ sub _Entry__get_link
         my $post_id = $entry->journalid . ':' . $entry->ditemid;
         my $entry_url = LJ::eurl($entry->url);
         my $entry_title = LJ::eurl($entry->subject_text);
-        my $hashtags = LJ::eurl(join ',' , grep {s/^#//} $entry->tags) || ""; 
+        my $hashtags = $entry->twitter_hashtags; 
         my $link = LJ::S2::Link("http://twitter.com/share?url=$entry_url&text=$entry_title&hashtags=$hashtags", $ctx->[S2::PROPS]->{"text_share_twitter"}, LJ::S2::Image("$LJ::IMGPREFIX/twitter.gif", 24, 24));
         return $link;
     } elsif ($key eq "share_email") {
@@ -5284,6 +5322,7 @@ sub UserLite__equals
 }
 *User__equals = \&UserLite__equals;
 *UserExtended__equals = \&UserLite__equals;
+*Event__equals = \&UserLite__equals;
 *Friend__equals = \&UserLite__equals;
 
 sub string__substr
