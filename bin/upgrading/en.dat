@@ -699,9 +699,11 @@ create.cap.year|staleness=1
 create.cap.year=per year
 
 create.event.subhead=Header
+
 create.event.subhead.login=Header
 
 create.event.extracontent=Content content
+
 create.event.extracontent.login=Content content
 
 create.features.comments|staleness=1
@@ -1816,13 +1818,19 @@ entryunit.hide=Hide author
 
 entryunit.read=Mark entry as read
 
+entryunit.show=Bring author back
+
 entryunit.toggle.collapse=Collapse
 
 entryunit.toggle.expand=Expand
 
 entryunit.updown=This entry has changed its position in the rating
 
+entryunits.empty=Sorry, there is no available entries to display
+
 entryunits.more=Show more 25 entries
+
+entryunits.stat.hidehidden=Hide all hidden entries back
 
 entryunits.stat.showhidden=Show all hidden entries
 
@@ -4245,15 +4253,57 @@ lynx.nav.siteopts=Browse Options
 
 lynx.nav.update=Update Journal
 
+main.banner.close=Close banner for today
+
+main.banner.title=Advertising
+
+main.editors.events=Events and Stories
+
+main.editors.hour=Entry of the hour
+
+main.editors.recommends=LiveJournal Recommends
+
+main.editors.main=Main Entry
+
+main.featured.ljmaps.title=LiveJournal Maps
+
+main.featured.title=Interesting Journal
+
+main.follow.facebook=Follow this rating on Facebook ([[facebook_name]])
+
+main.follow.livejournal=Follow this rating on LiveJournal ([[ljuser_name]])
+
+main.follow.livejournal.undo=Unfollow this rating on LiveJournal ([[ljuser_name]])
+
+main.follow.twitter=Follow this rating on Twitter ([[twitter_name]])
+
+main.follow.vk=Follow this rating on VK.com ([[vk_name]])
+
 main.intro.different.hide=Hide different posts from one user
 
+main.intro.different.hide.title=Hide two or three different posts from one user or community
+
 main.intro.different.show=Show different posts from one user
+
+main.intro.different.show.title=Show two or three different posts from one user or community
 
 main.intro.follow=Follow
 
 main.intro.friends.hide=Hide friends posts in rating
 
+main.intro.friends.hide.title=Hide your friends or communities posts from rating
+
 main.intro.friends.show=Show friends posts in rating
+
+main.intro.friends.show.title=Show your friends or communities posts in rating
+
+main.intro.hidden.hide=Hide back hidden posts from rating
+
+main.intro.hidden.hide.title=Hide back marked as read posts and posts from blocked users from rating
+
+main.intro.hidden.show=Show hidden posts in rating
+
+main.intro.hidden.show.title=Show marked as read posts and posts from blocked users in rating
 
 main.intro.length.full=Full Posts
 
@@ -4269,9 +4319,17 @@ main.intro.location.int=International
 
 main.intro.location.ukr=UKR
 
+main.intro.mystat.close=Close
+
 main.intro.mystat.collapse=Hide my posts and communities positions
 
+main.intro.mystat.community=Your community [[my_community]] at [[my_comm_place]] place in the rating of communities
+
 main.intro.mystat.expand=Show my posts and communities positions
+
+main.intro.mystat.oncategory=Your post “<a href="[[entry_url]]">[[subject]]</a>” has won [[place]] place at the <a href="[[category_url]]">[[category]]</a> category
+
+main.intro.mystat.ontop=Your post “<a href="[[entry_url]]">[[subject]]</a>” has won [[place]] place at the common top
 
 main.intro.mystat.you=[[user_display]] you on [[position]] position on the users top
 
@@ -4280,6 +4338,10 @@ main.goods.all=All goods
 main.goods.shuffle=Shuffle Goods
 
 main.goods.title=LiveJournal Goods
+
+main.ljtoday.next=Next journal
+
+main.ljtoday.prev=Previous journal
 
 main.promo.empty.calendarpromo=Promote your entry here for 5 000 tokens
 
@@ -4295,11 +4357,17 @@ main.promo.nav.next=Next Item
 
 main.promo.nav.prev=Previous Item
 
+main.menu.editors=Editors
+
 main.menu.index=Home
 
 main.menu.switch=Switch to old version
 
 main.mustread.head=Recommended
+
+main.search.search=Search
+
+main.search.placeholder=LiveJournal Search
 
 main.top.aday=A Day
 
@@ -4322,6 +4390,104 @@ main.top.promo.stat=You can take this place for [[buyout]] [[?buyout|token|token
 main.top.updown=This user has changed its position in the top
 
 main.top.users=Users Top
+
+main.tour.feature0.text=Welcome
+
+main.tour.feature0.title=Take a Look at New Features of The Homepage
+
+main.tour.feature1.text=First column of the Infromation panel
+
+main.tour.feature1.title=Your Recent Common Events
+
+main.tour.feature2.text=Second column of the infromation panel
+
+main.tour.feature2.title=Recent Comments on Your Blog
+
+main.tour.feature3.text=Third column of the information panel
+
+main.tour.feature3.title=Updates on The Blogs That You Often Read
+
+main.tour.feature4.text="Subscription to TOP 15" in the title panel
+
+main.tour.feature4.title=Get the Latest Posts from Rating on Facebook or Twitter
+
+main.tour.feature5.text=The inscription about a user place in the TOP and the button "Rating of my entries and communities" under the title
+
+main.tour.feature5.title=Position of Your Profile, Posts and Community on Rating
+
+main.tour.feature6.text=Filters in the title panel
+
+main.tour.feature6.title=Set Rating to Your Taste
+
+main.tour.feature7.text.ru=	Menu at the left side
+
+main.tour.feature7.title.ru=We Distributed Posts by Rubrics for You
+
+main.tour.feature7.text.en=Users TOP at the left sidebar. Communities + Users  entries rating
+
+main.tour.feature7.title.en=Watch Users in The Rating
+
+main.tour.nav.close=Close tour
+
+main.tour.nav.finish=Start Using New Homepage
+
+main.tour.nav.next=Next feature
+
+main.tour.nav.prev=Previous feature
+
+main.updates.comments=[[comments_count]] <a href="[[comments_url]]">new [[?comments_count|comment|comments]]</a>
+
+main.updates.comments.at=at
+
+main.updates.comments.clear=Clear
+
+main.updates.comments.clear.title=Remove all messages about comments
+
+main.updates.comments.comments=[[comments_count]] [[?comments_count|comment|comments]]
+
+main.updates.comments.empty=Sorry, there is currently no comments to display
+
+main.updates.comments.empty.title=No new comments
+
+main.updates.comments.more=[[comments_count]] more [[?comments_count|comment|comments]]
+
+main.updates.common=[[items_count]] new [[?items_count|event|events]]
+
+main.updates.common.allbirthdays=All birthdays
+
+main.updates.common.birthday=[[ljuser]] has a <a href="[[birthday_url]]">birthday</a> tomorrow
+
+main.updates.common.clear=Clear
+
+main.updates.common.clear.title=Remove all messages about new events
+
+main.updates.common.empty=Sorry, there is currently no events to display
+
+main.updates.common.empty.title=No new events
+
+main.updates.common.feed=[[feed_count]] new [[?feed_count|post|posts]] on <a href="[[feed_url]]">friends feed</a>
+
+main.updates.common.friend=[[ljuser]] added you as friend
+
+main.updates.common.gift=[[ljuser]] sent you <a href="[[gift_url]]">a gift</a>
+
+main.updates.common.messages=[[messages_count]] <a href="[[messages_url]]">unread [[?messages_count|message|messages]]</a>
+
+main.updates.recent=[[entries_count]] [[?entries_count|user|users]] you often read
+
+main.updates.recent.clear=Clear
+
+main.updates.recent.clear.title=Remove all messages about new posts
+
+main.updates.recent.empty=Sorry, there is currently no recent posts to display
+
+main.updates.recent.empty.title=No recent posts
+
+main.updates.remove=Remove item from updates list
+
+main.updates.toggle.collapse=Collapse
+
+main.updates.toggle.expand=Expand
 
 mediaplaceholder.link|staleness=1
 mediaplaceholder.link=Link

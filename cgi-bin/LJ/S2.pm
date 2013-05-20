@@ -2392,6 +2392,7 @@ sub UserExtended
     $o->{'last_entry_time'} = DateTime_unix( $u->last_public_entry_time );
     $o->{'friends_count'} = LJ::API::Friend->friends_personal_count($u);
     $o->{'friendof_count'} = LJ::API::Friend->friendof_count($u);
+    $o->{'social_capital'} = $u->get_social_capital;
     return $o;
 }
 
@@ -3128,7 +3129,7 @@ sub style_is_active {
 
 sub ljart_event_types {
     my ($ctx) = @_;
-    return [values %{ LJ::Lang::get_text_multi('ru', undef, [qw{
+    return [sort {$a cmp $b} values %{ LJ::Lang::get_text_multi('ru', undef, [qw{
         ljart.update.event.type.esplanade
         ljart.update.event.type.exhibitions
         ljart.update.event.type.music

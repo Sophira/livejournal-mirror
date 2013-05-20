@@ -2451,7 +2451,6 @@ BODY div .b-helplink:active {
 .b-pager {
 	position: relative;
 	margin: 0;
-	//zoom: expression(runtimeStyle.zoom = 1, insertAdjacentHTML('beforeEnd', '<i class="b-pager-pages-after"></i>'));
 	}
 .b-pager-prev,
 .b-pager-next {
@@ -2704,8 +2703,7 @@ BODY div .b-helplink:active {
 	z-index: 3;
 	}
 	.b-dropover {
-		display: none;
-		position: absolute;
+		position: relative;
 		top: 0;
 		left: 0;
 		z-index: 2;
@@ -2728,7 +2726,11 @@ BODY div .b-helplink:active {
 		background: -ms-linear-gradient(top, #FAFCFE 0%,#E2E3E7 25%,#FAFAFA 100%);
 		background: linear-gradient(top, #FAFCFE 0%,#E2E3E7 25%,#FAFAFA 100%);
 		}
-	.b-dropover-open .b-dropover {
+	#js .b-dropover {
+		display: none;
+		position: absolute;
+		}
+	#js .b-dropover-open .b-dropover {
 		display: block;
 		}
 	.b-dropover-close {
@@ -3172,4 +3174,55 @@ HTML BODY .i-ljuser {
 	margin-top: 2em;
 	text-align: center;
 	}
+
+/* LJ Spoiler
+----------------------------------- */
+.lj-spoiler {
+	position: static;
+	top: auto;
+	left: auto;
+	display: inline-block;
+	width: auto;
+	height: auto;
+	margin: 0;
+	padding: 0;
+	}
+	.lj-spoiler .lj-spoiler-head {
+		position: static;
+		top: auto;
+		left: auto;
+		display: none;
+		width: auto;
+		height: auto;
+		margin: 0;
+		padding: 0;
+		}
+	.lj-spoiler .lj-spoiler-body {
+		position: static;
+		top: auto;
+		left: auto;
+		display: block;
+		width: auto;
+		height: auto;
+		margin: 0;
+		padding: 0;
+		}
+	#js .lj-spoiler .lj-spoiler-head {
+		display: block;
+		}
+	#js .lj-spoiler .lj-spoiler-body {
+		display: none;
+		}
+	#js .lj-spoiler.lj-spoiler-opened > .lj-spoiler-head {
+		display: none;
+		}
+	#js .lj-spoiler.lj-spoiler-opened  > .lj-spoiler-body {
+		display: block;
+		}
+		#js .lj-spoiler.lj-spoiler-opened .lj-spoiler-body BR:first-child,
+		#js .lj-spoiler.lj-spoiler-opened .lj-spoiler-body BR:last-child {
+			display: none;
+			}
+
+
 
