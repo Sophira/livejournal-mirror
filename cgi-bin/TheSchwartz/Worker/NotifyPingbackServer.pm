@@ -51,21 +51,32 @@ sub send_ping {
         next unless LJ::PingBack->should_entry_recieve_pingback($target_entry);
         next unless log_ping($source_entry, $target_entry);
 
-        # on success returns LJ::Comment.
-        my $res =
+        # returns LJ::Comment object on success or error string otherwise.
+        my $res = eval {
             LJ::PingBack->ping_post(
                     sourceURI => $source_uri,
                     targetURI => $link->{uri},
                     context   => $link->{context},
                     title     => $source_entry->subject_raw,
-                    ); # returns LJ::Comment object on success or error string otherwise.
+                    );
+        };
+
+        # delete log item if not comment posted
         drop_relation($source_entry, $target_entry) unless ref $res;
     }
     
     foreach my $aUser (@users){
         my $user = LJ::load_user($aUser->{user_name});
         next unless $user;
-        LJ::PingBack->notify_about_reference( user => $user, source_uri => $source_uri, context => $aUser->{context}, comment => $comment );
+
+        eval {
+            LJ::PingBack->notify_about_reference(
+                user       => $user,
+                source_uri => $source_uri,
+                context    => $aUser->{context},
+                comment    => $comment,
+            );
+        };
     }
 
     return 1;
@@ -81,15 +92,20 @@ sub log_ping {
         unless $dbh;
 
     my $sth = $dbh->prepare("
-        INSERT IGNORE INTO pingrel
+        INSERT INTO pingrel
             (suid, sjid, tuid, tjid)
         VALUES
             (?, ?, ?, ?)
     ");
-    $sth->execute(
-        $source_entry->posterid, $source_entry->jitemid,
-        $target_entry->posterid, $target_entry->jitemid
-        ) or return 0;
+
+    eval {
+        $sth->execute(
+            $source_entry->posterid, $source_entry->jitemid,
+            $target_entry->posterid, $target_entry->jitemid
+        );
+    };
+
+    return 0 if $@;
 
     return 1;
 }
