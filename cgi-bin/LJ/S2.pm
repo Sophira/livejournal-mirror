@@ -2136,8 +2136,8 @@ sub Entry
             $e->{'tags'}     = [];
         }
 
-        $e->{$_} = $entry->prop("ljart_$_")
-            for (qw{event event_town event_location event_paid event_price event_type event_image event_desc});
+        $e->{$_} = LJ::ehtml($entry->prop("ljart_$_"))
+            for (qw{event event_town event_location event_paid event_price event_type event_image event_desc portfolio portfolio_thumbnail});
 
         ($e->{event_date_from}, $e->{event_date_to}) = $entry->prop('ljart_event_date') =~ m/^(.*?)(?:-(.*?))?$/;
         ($e->{event_time_from}, $e->{event_time_to}) = $entry->prop('ljart_event_time') =~ m/^(.*?)(?:-(.*?))?$/;
@@ -2426,6 +2426,7 @@ sub Event
     });
 
     $o->{'_type'} = "Event";
+    $o->{'default_pic'} = Image_userpic($u, $u->{'defaultpicid'});
     $o->{'event'}           = $u->{'ljart_event'};
     $o->{'event_location'}  = $u->{'ljart_event_location'};
     $o->{'event_town'}      = $u->{'ljart_event_town'}; 
@@ -2436,6 +2437,22 @@ sub Event
 
     return $o;
 }
+
+sub Person
+{
+    my ($u) = @_;
+    my $o = UserLite($u);
+
+    my $row = LJ::LJArt::Artist->artist_row(
+        userid => $u->{'userid'}
+    );
+
+    for my $field (qw{ name specialization town photo }) {
+        $o->{"person_$field"} = $row->{$field};    
+    }
+
+    return $o;
+}    
 
 sub UserLink
 {
@@ -2559,6 +2576,12 @@ sub Event {
     my ($ctx,$username) = @_;
     my $u = LJ::load_user($username);
     return LJ::S2::Event($u);
+}
+
+sub Person {
+    my ($ctx,$username) = @_;
+    my $u = LJ::load_user($username);
+    return LJ::S2::Person($u);
 }
 
 sub start_css {
@@ -4102,6 +4125,7 @@ sub UserLite__ljuser
 *User__ljuser = \&UserLite__ljuser;
 *UserExtended__ljuser = \&UserLite__ljuser;
 *Event__ljuser = \&UserLite__ljuser;
+*Person__ljuser = \&UserLite__ljuser;
 
 sub UserLite__get_link
 {
@@ -4153,6 +4177,7 @@ sub UserLite__get_link
 *User__get_link = \&UserLite__get_link;
 *UserExtended__get_link = \&UserLite__get_link;
 *Event__get_link = \&UserLite__get_link;
+*Person__get_link = \&UserLite__get_link;
 
 sub EntryLite__get_link
 {
@@ -4171,6 +4196,46 @@ sub EntryLite__get_link
 }
 *Entry__get_link = \&EntryLite__get_link;
 *Comment__get_link = \&EntryLite__get_link;
+
+# return list of communities, 
+# where user is member and community is ljart event
+sub Person__get_events
+{
+    my ($ctx, $this) = @_;
+
+    my $u = $this->{'_u'}; 
+    return unless $u;
+
+    my $list = LJ::MemCache::get('ljart:s2:artist:events:uid:'.$u->userid);
+    return $list if $list;
+
+    my @friendof_uids = $u->friendof_uids();
+
+    my $rel_user = LJ::load_rel_user($u, 'B');
+    my %rel_user_hash = map {$_ => 1} @$rel_user; 
+ 
+    @friendof_uids = grep { !$rel_user_hash{$_} } @friendof_uids;
+
+    my $friendof_users = LJ::load_userids(@friendof_uids);
+
+    @$list = map  { LJ::S2::Event($_) } 
+             grep { 
+                    $_ && ( 
+                        $_->{journaltype} eq "C" || 
+                        $_->{journaltype} eq "S" || 
+                        $_->{journaltype} eq "N" 
+                    ) && !(
+                        $_->{statusvis} eq 'X' || 
+                        $_->{clusterid} == 0
+                    ) && 
+                    $_->prop('ljart_event')
+                  }
+             map  { $friendof_users->{$_} } @friendof_uids;
+
+    LJ::MemCache::set('ljart:s2:artist:events:uid:'.$u->userid, $list, 60*60);
+
+    return $list;
+}
 
 # method for smart converting raw subject to html-link
 sub Entry__formatted_subject {
@@ -5386,6 +5451,7 @@ sub UserLite__equals
 *User__equals = \&UserLite__equals;
 *UserExtended__equals = \&UserLite__equals;
 *Event__equals = \&UserLite__equals;
+*Person__equals = \&UserLite__equals;
 *Friend__equals = \&UserLite__equals;
 
 sub string__substr
