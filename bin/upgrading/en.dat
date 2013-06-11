@@ -63,6 +63,8 @@ admin.homepage.cat.help=help text
 
 admin.homepage.cat.name=Category name:
 
+admin.homepage.cat.pretty_name=Name in URL:
+
 admin.homepage.cat.twitter=Twitter:
 
 admin.homepage.cat.user=LJ User:
@@ -1865,6 +1867,8 @@ entryunit.show=Bring author back
 entryunit.toggle.collapse=Collapse
 
 entryunit.toggle.expand=Expand
+
+entryunit.unread=Mark entry as unread
 
 entryunit.updown=This entry has changed its position in the rating
 
@@ -4321,6 +4325,8 @@ main.follow.twitter=Follow this rating on Twitter ([[twitter_name]])
 
 main.follow.vk=Follow this rating on VK.com ([[vk_name]])
 
+main.gotop=Scroll to top
+
 main.intro.different.hide=Hide different posts from one user
 
 main.intro.different.hide.title=Hide two or three different posts from one user or community
@@ -4328,6 +4334,8 @@ main.intro.different.hide.title=Hide two or three different posts from one user 
 main.intro.different.show=Show different posts from one user
 
 main.intro.different.show.title=Show two or three different posts from one user or community
+
+main.intro.editors=Editors
 
 main.intro.follow=Follow
 
@@ -4405,6 +4413,8 @@ main.promo.nav.next=Next Item
 
 main.promo.nav.prev=Previous Item
 
+main.menu.categories=Categories
+
 main.menu.editors=Editors
 
 main.menu.index=Home
@@ -4416,6 +4426,8 @@ main.mustread.head=Recommended
 main.search.search=Search
 
 main.search.placeholder=LiveJournal Search
+
+main.settings=Rating Settings
 
 main.top.aday=A Day
 
@@ -4433,7 +4445,9 @@ main.top.promo.empty.users=Promote your journal here for 100 tokens
 
 main.top.promo.empty.communities=Promote your community here for 100 tokens
 
-main.top.promo.stat=You can take this place for [[buyout]] [[?buyout|token|tokens]]
+main.top.promo.stat.users=This user will be at promo for another [[timeleft_hours]] [[?timeleft_hours|hour|hours]] and [[timeleft_minutes]] [[?timeleft_minutes|minute|minutes]], take for [[buyout]] [[?buyout|token|tokens]]
+
+main.top.promo.stat.communities=This community will be at promo for another [[timeleft_hours]] [[?timeleft_hours|hour|hours]] and [[timeleft_minutes]] [[?timeleft_minutes|minute|minutes]], take for [[buyout]] [[?buyout|token|tokens]]
 
 main.top.updown=This user has changed its position in the top
 
@@ -4461,7 +4475,11 @@ main.tour.feature4.title=Get the Latest Posts from Rating on Facebook or Twitter
 
 main.tour.feature5.text=The inscription about a user place in the TOP and the button "Rating of my entries and communities" under the title
 
+main.tour.feature5.text.position=The inscription about a user place in the TOP and the button "Rating of my entries and communities" under the title
+
 main.tour.feature5.title=Position of Your Profile, Posts and Community on Rating
+
+main.tour.feature5.title.position=True Position of Your Profile, Posts and Community on Rating
 
 main.tour.feature6.text=Filters in the title panel
 
