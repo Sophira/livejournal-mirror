@@ -1856,6 +1856,8 @@ entryunit.badge.fridayvideo=Friday Video
 
 entryunit.comments=[[reply_count]] [[?reply_count|comment|comments]]
 
+entryunit.comments.none=Leave a comment
+
 entryunit.expromo=This entry has been promoted
 
 entryunit.hide=Hide author
@@ -4349,11 +4351,19 @@ main.intro.friends.show.title=Show your friends or communities posts in rating
 
 main.intro.hidden.hide=Hide back hidden posts from rating
 
+main.intro.hidden.hide.anon=Hide back hidden posts from rating
+
 main.intro.hidden.hide.title=Hide back marked as read posts and posts from blocked users from rating
+
+main.intro.hidden.hide.title.anon=Hide back marked as read posts from rating
 
 main.intro.hidden.show=Show hidden posts in rating
 
+main.intro.hidden.show.anon=Show hidden posts in rating
+
 main.intro.hidden.show.title=Show marked as read posts and posts from blocked users in rating
+
+main.intro.hidden.show.title.anon=Show marked as read posts in rating
 
 main.intro.length.full=Full Posts
 

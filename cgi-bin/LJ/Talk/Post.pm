@@ -5,8 +5,9 @@ use warnings;
 use Encode;
 
 # Internal modules
-use LJ::SpamFilter;
+use LJ::AntiSpam;
 use LJ::Admin::Spam::Urls;
+use LJ::AntiSpam::Suspender;
 use LJ::EventLogRecord::NewComment;
 
 sub indent {
@@ -201,26 +202,10 @@ sub enter_comment {
         );
     }
 
-    # update the "spam_counter" if URL is in TOP of spam URLs for the last 24 hour
-    # and comment mark as spam
+    # If comment was marked as suspicios, then try to determine
+    # is user is spamer or not and suspend it if need
     if ($comment->{state} eq 'B') {
-        my $change = 0;
-
-        foreach my $url (@$urls) {
-            next unless $url;
-
-            if ($url->{url}) {
-                if (LJ::Admin::Spam::Urls::is_url_in_top_of_spam($url->{url}->as_string)) {
-                    $change++;
-                }
-            }
-        }
-
-        if ($change) {
-            if (my $u = $comment->{u}) {
-                $u->incr_spam_counter($change);
-            }
-        }
+        LJ::AntiSpam::Suspender::do_for_comment($comment);
     }
 
     # update the "replycount" summary field of the log table
@@ -525,11 +510,11 @@ sub init {
         $state = 'A' if LJ::Talk::can_unscreen($up, $journalu, $init->{entryu}, $init->{entryu}{user});
     }
 
-    my $parsed_comment  = LJ::SpamFilter::Utils::parse_text($form->{body});
+    my $parsed_comment  = LJ::AntiSpam::Utils::parse_text($form->{body});
     my $can_mark_spam   = LJ::Talk::can_mark_spam($up, $journalu, $init->{entryu}, $init->{entryu}{user});
-    my $need_spam_check = LJ::SpamFilter->need_spam_check_comment($journalu, $up, $state);
+    my $need_spam_check = LJ::AntiSpam->need_spam_check_comment($journalu, $up, $state);
     if ($need_spam_check && !$can_mark_spam) {
-        if (LJ::SpamFilter->is_spam_comment($journalu, $up, $parsed_comment)) {
+        if (LJ::AntiSpam->is_spam_comment($journalu, $up, $parsed_comment)) {
             $state = 'B';
         }
     }
