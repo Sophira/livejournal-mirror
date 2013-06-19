@@ -1241,6 +1241,7 @@ sub reset_cache {
         unless ($jitemid) {
             delete $LJ::REQ_CACHE_USERTAGS{$u->{userid}};
             LJ::MemCache::delete([ $u->{userid}, "tags2:$u->{userid}" ]);
+            LJ::MemCache::delete([ $u->{userid}, "tags3:$u->{userid}" ]);
         }
 
         # now, cleanup entries if necessary
