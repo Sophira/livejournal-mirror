@@ -2354,7 +2354,7 @@ sub start_request
 {
     handle_caches();
     # TODO: check process growth size
- 
+
     # clean sigletons
     __clean_singletons();
 
@@ -3297,7 +3297,7 @@ sub note_recent_action {
         or return undef;
 
     # append to recentactions table
-    $dbcm->do("INSERT INTO recentactions VALUES (?)", undef, $action);
+    $dbcm->do("INSERT INTO recentactions (what) VALUES (?)", undef, $action);
     return undef if $dbcm->err;
 
     return 1;
