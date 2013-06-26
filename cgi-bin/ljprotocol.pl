@@ -2143,7 +2143,7 @@ sub common_event_validation
             # Allow syn_links and syn_ids the full width of the prop, to avoid truncating long URLS
             if ($_ eq 'syn_link' || $_ eq 'syn_id') {
                 $req->{'props'}->{$_} = LJ::text_trim($req->{'props'}->{$_}, LJ::BMAX_PROP);
-            } elsif ( $_ eq 'current_music' ) {
+            } elsif ( $_ eq 'current_music' || $_ eq 'current_location' ) {
                 $req->{'props'}->{$_} = LJ::text_trim($req->{'props'}->{$_}, LJ::CMMAX_PROP);
             } else {
                 $req->{'props'}->{$_} = LJ::text_trim($req->{'props'}->{$_}, LJ::BMAX_PROP, LJ::CMAX_PROP);
@@ -3825,11 +3825,11 @@ sub getevents {
     my $dbr = LJ::get_db_reader();
     my $sth;
 
-    my $dbcr =  LJ::get_cluster_reader($uowner);
-    return fail($err, 502) unless $dbcr && $dbr;
-
     # can't pull events from deleted/suspended journal
     return fail($err, 307) unless $uowner->{'statusvis'} eq "V" || $uowner->is_readonly;
+
+    my $dbcr =  LJ::get_cluster_reader($uowner);
+    return fail($err, 502) unless $dbcr && $dbr;
 
     my $reject_code = $LJ::DISABLE_PROTOCOL{getevents};
 
@@ -4406,10 +4406,12 @@ sub getevents {
              $evt->{'repost_props'}  = $entry->props;
              $evt->{'original_entry_url'} = $entry->url,
              $evt->{'repostername'} = $repost_entry->poster->username;
-             $evt->{'postername'} = $entry->poster->username;
-	     $evt->{'journalname'} = $entry->journal->username;
-	     my $userpic = $entry->userpic;
-	     $evt->{'poster_userpic_url'} = $userpic && $userpic->url;
+             $evt->{'journalname'} = $entry->journal->username if $entry->journal;
+             if ($entry->poster) {
+                 $evt->{'postername'} = $entry->poster->username;
+                 my $userpic = $entry->userpic;
+                 $evt->{'poster_userpic_url'} = $userpic && $userpic->url;
+             }
         }
 
         # now my own post, so need to check for suspended prop
