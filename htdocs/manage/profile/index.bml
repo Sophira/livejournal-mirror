@@ -677,7 +677,7 @@ body<=
 
         $ret .= "</table>\n";
 
-        unless ( $LJ::DISABLED{'trava'} ) {
+        unless ( $LJ::DISABLED{'trava'} || $LJ::DISABLED{'userplaylist'} ) {
 
         # Playlist
         my $trava_uid = $u->prop('trava_uid');
@@ -716,6 +716,7 @@ body<=
             $ret .= "</td>";
             $ret .= "</table>\n";
         }
+
         }
 
         # Extra
