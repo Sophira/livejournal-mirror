@@ -81,6 +81,19 @@ sub notify {
     foreach my $ev (@events) {
         croak "invalid event passed" unless ref $ev;
 
+        # LJSV-2718: Do not send e-mail notification if the comment/message is suspicious and authors weight<10
+        if ($ev->etypeid == LJ::Event::UserMessageRecvd->etypeid) {
+            if (my $msg = $ev->load_message) {
+                if (my $ou = $msg->_rcpt_u) {
+                    if ($msg->is_spam) {
+                        if ($ou->get_reader_weight() < $LJ::MIN_READER_WEIGHT) {
+                            next;
+                        }
+                    }
+                }
+            }
+        }
+
         # LJSUP-6332
         # Unsubscribe form [ru-]news subscription users who has not logins in 6 months
         if ( ref($ev) =~ /OfficialPost/ ) {

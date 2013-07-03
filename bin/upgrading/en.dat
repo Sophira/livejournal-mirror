@@ -1958,11 +1958,15 @@ entryunit.expromo=This entry has been promoted
 entryunit.hide|staleness=1
 entryunit.hide=Hide author
 
+entryunit.hide.community=Hide community from rating
+
 entryunit.read|staleness=1
 entryunit.read=Mark entry as read
 
 entryunit.show|staleness=1
 entryunit.show=Bring author back
+
+entryunit.show.community=Bring community back to rating
 
 entryunit.toggle.collapse|staleness=1
 entryunit.toggle.collapse=Collapse
@@ -4666,6 +4670,8 @@ main.promo.footer.calendarpromo=Promote your entry at calendar promo for [[overb
 main.promo.footer.selfpromo|staleness=1
 main.promo.footer.selfpromo=This etnry will be at promo for another [[timeleft_hours]] [[?timeleft_hours|hour|hours]] and [[timeleft_minutes]] [[?timeleft_minutes|minute|minutes]], take for [[overbet]] [[?overbet|token|tokens]]
 
+main.promo.footer.selfpromo.ua=This etnry will be at promo for another [[timeleft_hours]] [[?timeleft_hours|hour|hours]] and [[timeleft_minutes]] [[?timeleft_minutes|minute|minutes]], take for [[overbet]] [[?overbet|token|tokens]]
+
 main.promo.head|staleness=1
 main.promo.head=Promo
 
@@ -4719,7 +4725,11 @@ main.top.promo.stat=You can take this place for [[buyout]] [[?buyout|token|token
 main.top.promo.stat.communities|staleness=1
 main.top.promo.stat.communities=This community will be at promo for another [[timeleft_hours]] [[?timeleft_hours|hour|hours]] and [[timeleft_minutes]] [[?timeleft_minutes|minute|minutes]], take for [[buyout]] [[?buyout|token|tokens]]
 
+main.top.promo.stat.communities.ua=This community will be at promo for another [[timeleft_hours]] [[?timeleft_hours|hour|hours]] and [[timeleft_minutes]] [[?timeleft_minutes|minute|minutes]], take for [[buyout]] [[?buyout|token|tokens]]
+
 main.top.promo.stat.users=This user will be at promo for [[timeleft_hours]] [[?timeleft_hours|hour|hours]] and [[timeleft_minutes]] [[?timeleft_minutes|minute|minutes]], <a href="http://www.livejournal.com/shop/selfpromo.bml?type=journal" target="_blank">take </a> for [[buyout]] [[?buyout|token|tokens]]
+
+main.top.promo.stat.users.ua=This user will be at promo for [[timeleft_hours]] [[?timeleft_hours|hour|hours]] and [[timeleft_minutes]] [[?timeleft_minutes|minute|minutes]], <a href="http://www.livejournal.com/shop/selfpromo.bml?type=journal" target="_blank">take </a> for [[buyout]] [[?buyout|token|tokens]]
 
 main.top.updown|staleness=1
 main.top.updown=This user has changed its position in the top

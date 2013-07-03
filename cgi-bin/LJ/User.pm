@@ -2924,7 +2924,7 @@ sub get_reader_weight {
 
     LJ::MemCache::set( $memkey, $reader_weight, 60);
 
-    return $reader_weight;
+    return $reader_weight || -1;
 }
 
 # <LJFUNC>
@@ -4646,6 +4646,11 @@ sub is_renamed {
 sub caps {
     my $u = shift;
     return $u->{caps};
+}
+
+sub is_sup {
+    my $u = shift;
+    return $u->in_class('sup_user') && !$u->in_class('sup_optout');
 }
 
 *get_post_count = \&number_of_posts;
@@ -7517,11 +7522,13 @@ sub get_shared_journals
 ## my $text = LJ::ljuser_alias($u)
 ## returns note text (former 'alias') for current remote user
 sub ljuser_alias {
-    my $user = shift;
 
     return if $LJ::DISABLED{'aliases'};
 
-    my $remote = LJ::get_remote();
+    my $user = shift;
+    my $remote = shift;
+    $remote = LJ::get_remote() unless isu($remote);
+
     return unless $remote;
     return unless $remote->get_cap('aliases');
 
@@ -7602,7 +7609,7 @@ sub get_all_aliases {
 
     return if $LJ::DISABLED{'aliases'};
 
-    my $remote = LJ::get_remote();
+    my $remote = shift || LJ::get_remote();
     return unless $remote and $remote->get_cap('aliases');
 
     if (!$remote->{_aliases}) {

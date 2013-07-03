@@ -3043,6 +3043,15 @@ sub postevent {
 
     # PubSubHubbub Support
     LJ::Feed::generate_hubbub_jobs($uowner, \@jobs) unless $uowner->is_syndicated;
+    if (LJ::is_enabled('new_homepage_oftenread')) {
+        push @jobs, TheSchwartz::Job->new(
+            'funcname' => 'TheSchwartz::Worker::OftenRead',
+            'arg'      => {
+                'journalid' => $uowner->userid,
+                'jitemid'   => $jitemid,
+            },
+        );
+    }
 
     my $sclient = LJ::theschwartz();
     if ($sclient && @jobs) {

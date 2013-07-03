@@ -6,6 +6,7 @@ use Encode;
 
 # Internal modules
 use LJ::AntiSpam;
+use LJ::AntiSpam::Utils;
 use LJ::Admin::Spam::Urls;
 use LJ::AntiSpam::Suspender;
 use LJ::EventLogRecord::NewComment;
@@ -228,11 +229,16 @@ sub enter_comment {
 
     # fire events
     unless ($LJ::DISABLED{esn}) {
+        my $state  = $comment->{state};
+        my $poster = $comment->{u};
         my $cmtobj = LJ::Comment->new($journalu, jtalkid => $jtalkid);
 
         # Dont send notification for some reason
         {
-            last if ! $posterid && $comment->{state} eq 'B';
+            # Dont send notification if poster is anonymous and comment is suspicious
+            last if $state eq 'B' && ! $poster;
+            # Dont send notification if poster reader weight < MIN and comment is suspicious
+            last if $state eq 'B' && $poster && $poster->get_reader_weight() < $LJ::MIN_READER_WEIGHT;
 
             LJ::Event::JournalNewComment->new($cmtobj)->fire;
         }

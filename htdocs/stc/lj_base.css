@@ -227,25 +227,6 @@ IFRAME.lj_embedcontent {
 	text-decoration:none;
 	}
 
-/* Link to current LJ.com version 
------------------------------------- */
-DL.current-version {
-	margin: 10px 0;
-	padding: 0;
-	border: 0;
-	text-align: left;
-	}
-	DL.current-version DT,
-	DL.current-version DD {
-		display: inline;
-		margin: 0;
-		padding: 0 3px 0 0;
-		text-align: left;
-		white-space: nowrap;
-		font-size: 11px !important;
-		font-weight: normal;
-		}
-
 .lj_ippu_titlebar {
 	text-align:left;
 	}
@@ -2260,9 +2241,14 @@ BODY div .b-helplink:active {
 	}
 .b-massaction-fixed {
 	position: fixed;
-	bottom: 24px;
+	bottom: 0;
 	width: 100%;
 	}
+.b-singlepost .b-massaction-fixed,
+.p-ljtimes .b-massaction-fixed {
+	bottom: 24px;	
+	}
+
 .s-horizon.p-footer-lite .b-massaction-fixed {
 	margin-bottom: 0;
 	}	
@@ -2502,6 +2488,22 @@ BODY div .b-helplink:active {
 		text-decoration: none;
 		cursor: default;
 		}
+	.b-reset .b-pager-strong A:link,
+	.b-reset .b-pager-strong A:visited {
+		color: #0051B7 !important;
+		}
+	.b-reset .b-pager-strong A:hover,
+	.b-reset .b-pager-strong A:active {
+		color: #C00 !important;
+		}
+		.b-reset .b-pager-strong .b-pager-page-active A:link,
+		.b-reset .b-pager-strong .b-pager-page-active A:visited,
+		.b-reset .b-pager-strong .b-pager-page-active A:hover,
+		.b-reset .b-pager-strong .b-pager-page-active A:active {
+			text-decoration: none;
+			color: #FFF !important;
+			}
+	
 .b-pager-prev {
 	margin-right: 10px;
 	text-align: right;
