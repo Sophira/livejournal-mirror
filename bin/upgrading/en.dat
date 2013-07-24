@@ -4664,6 +4664,8 @@ main.promo.empty.calendarpromo=Promote your entry here for 5 000 tokens
 main.promo.empty.selfpromo|staleness=1
 main.promo.empty.selfpromo=Promote your entry here for 2 000 tokens
 
+main.promo.empty.selfpromo.head=Here could be your post
+
 main.promo.footer.calendarpromo|staleness=1
 main.promo.footer.calendarpromo=Promote your entry at calendar promo for [[overbet]] [[?overbet|token|tokens]]
 
@@ -4874,7 +4876,7 @@ main.updates.common2=[[items_count]] new [[?count|event|events|events]]
 
 main.updates.entries=[[items_count]] new [[?count|entry|entries|entries]]
 
-main.updates.entries.item=[[ljuser]] - <a href="[[url]]">[[subject]]</a> [[date]]
+main.updates.entries.item=[[ljuser]] - <a href="[[url]]">[[subject]]</a>
 
 main.updates.entries.clear=Clear
 
