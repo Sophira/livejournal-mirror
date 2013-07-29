@@ -4,6 +4,8 @@ use Class::Autouse qw(LJ::Entry LJ::HTML::Template LJ::TimeUtil);
 use Carp qw(croak);
 use base 'LJ::Event';
 
+my %cached = ();
+
 sub new {
     my ($class, $entry) = @_;
     croak "No entry" unless $entry;
@@ -15,6 +17,12 @@ sub entry {
     my $self = shift;
     my $ditemid = $self->arg1;
     return LJ::Entry->new($self->event_journal, ditemid => $ditemid);
+}
+
+sub cache_key {
+    my ($self, $lang) = @_;
+    my $ditemid = $self->arg1;
+    return join ':', $self->event_journal->userid, $ditemid, $lang;
 }
 
 sub content {
@@ -63,11 +71,19 @@ sub as_email_subject {
 sub as_email_html {
     my $self = shift;
     my $u = shift;
+    
+    return '' unless $u;
 
     unless  ( LJ::is_enabled('news_mail_redisign') ) {
         return sprintf "%s<br />\n<br />\n%s", $self->as_html($u), $self->content;
     } else {
+        my $lang  = $u->prop("browselang");
         
+        my $cachekey = $self->cache_key($lang);
+        if ( my $cached = $cached{$cachekey}  ) {
+            return $cached->{value} if time - $cached->{time} < 60;
+        }
+
         my $entry = $self->entry or return "(Invalid entry)";
 
         my $template = LJ::HTML::Template->new(
@@ -75,8 +91,6 @@ sub as_email_html {
             filename => "$ENV{'LJHOME'}" . '/templates/ESN/OfficialPost/email_html.tmpl',
             die_on_bad_params => 0,
         );
-
-        my $lang = $u->prop("browselang");
 
         $template->param({
             date    => LJ::TimeUtil->fancy_time_format($entry->logtime_unix, 'day', $u->prop('timezone'), {lang => $lang}),
@@ -86,7 +100,11 @@ sub as_email_html {
             lang    => $lang,
         });
 
-        return $template->output();
+        my $result = $template->output();
+        
+        $cached{$cachekey} = {time => time(), value => $result};
+
+        return $result;
     }
 }
 
@@ -94,7 +112,8 @@ sub as_email_string {
     my $self = shift;
     my $u = shift;
 
-    my $text = $self->content;
+    my $text = $self->as_email_html($u);
+
     $text =~ s/\n+/ /g;
     $text =~ s/\s*<\s*br\s*\/?>\s*/\n/g;
     $text = LJ::strip_html($text);
