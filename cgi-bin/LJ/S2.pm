@@ -4373,15 +4373,18 @@ sub _Entry__get_link
 
         my $attrs  = $entry->sharing_attributes();
 
+        my $blocked = LJ::RegionBlockedContent::blocked_entry_content($entry) || 
+                      LJ::RegionBlockedContent::region_block($entry);
+
         my $link_text  = $ctx->[S2::PROPS]->{'text_share'};
         my %link_extra = (
-            'class' => 'js-lj-share',
+            'class' => $blocked ? '' : 'js-lj-share',
             %$attrs
         );
 
         my $link_image = LJ::S2::Image( "$LJ::IMGPREFIX/btn_sharethis.gif?v=18499", 24, 24, '');
         my $link = LJ::S2::Link(
-            $entry->url() . '?title=' . $attrs->{'data-title'} . '&hashtags=' . $attrs->{'data-hashtags'} . "&text=" . $attrs->{'data-text'},
+            $entry->url() . ($blocked ? '' : '?title=' . $attrs->{'data-title'} . '&hashtags=' . $attrs->{'data-hashtags'} . "&text=" . $attrs->{'data-text'}),
             $link_text,
             $link_image,
             %link_extra
