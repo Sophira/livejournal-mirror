@@ -7290,7 +7290,7 @@ sub check_priv {
 # class:
 # des: Return users with a certain privilege.
 # args: priv, arg?
-# des-args: user privilege to searching. arg can be "*" for all args.
+# des-args: user privilege to searching (if undefined, search for all args)
 # return: Userids or empty list.
 # TODO Add store to MemCache
 sub users_by_priv {
@@ -7300,12 +7300,18 @@ sub users_by_priv {
     return unless $dbr;
 
     return unless $priv;
-    $arg ||= '*';
+    
+    my $where = "pl.prlid = pm.prlid AND privcode = ?";
+    my @bind  = ($priv);
+    
+    if (defined $arg) {
+        $where .= " AND arg = ?";
+        push @bind, $arg;
+    }
+
     my $users = $dbr->selectcol_arrayref ("SELECT userid FROM priv_list pl, priv_map pm
-                                           WHERE pl.prlid = pm.prlid 
-                                                AND privcode = ?
-                                                AND arg = ?
-                                        ", undef, $priv, $arg);
+                                           WHERE $where",
+                                          undef, @bind);
 
     return unless ref $users eq 'ARRAY';
     return $users;
