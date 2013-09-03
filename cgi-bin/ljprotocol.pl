@@ -3816,7 +3816,7 @@ sub editevent {
 
     LJ::EventLogRecord::EditEntry->new($entry)->fire;
     my @jobs; # jobs to insert into TheSchwartz
-    LJ::run_hooks("editpost", $entry, \@jobs);
+    LJ::run_hooks("editpost", $entry, $oldevent, \@jobs);
 
     # PubSubHubbub Support
     LJ::Feed::generate_hubbub_jobs($uowner, \@jobs) unless $uowner->is_syndicated;
