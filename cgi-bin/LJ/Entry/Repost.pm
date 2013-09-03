@@ -775,6 +775,15 @@ sub create {
     );
 
     if ($reposted_obj) {
+        # create new repost: $cost > 0 => paid
+        LJ::PackedLogSink::Hooks->repost( {
+            type              => 'link',
+            source_entry      => $source_entry,
+            repost_journal_id => $journalu->userid,
+            repost_ditem_id   => $reposted_obj->{'ditemid'},
+            cost              => $cost || 0,
+        } );
+
         my $count = __get_count( $source_journal, $source_jitemid );
 
         $result->{'result'} = { 'count' => $count };
