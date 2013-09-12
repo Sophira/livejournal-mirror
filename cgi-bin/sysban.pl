@@ -57,6 +57,24 @@ sub sysban_check {
         return $LJ::IP_BANNED{$value};
     
     }
+    elsif ($what eq 'ip_captcha'){
+        my $now = time();
+        my $ip_ban_delay = $LJ::SYSBAN_IP_REFRESH || 120; 
+
+        # check memcache first if not loaded
+        unless ($LJ::IP_CAPTCHA_BANNED_LOADED + $ip_ban_delay > $now) {
+            my $memval = LJ::MemCache::get("sysban:ip_captcha");
+            if ($memval) {
+                *LJ::IP_CAPTCHA_BANNED = $memval;
+                $LJ::IP_CAPTCHA_BANNED_LOADED = $now;
+            } else {
+                $LJ::IP_CAPTCAHA_BANNED_LOADED = 0;
+            }
+            return exists $LJ::IP_CAPTCHA_BANNED{$value} 
+                ? $LJ::IP_CAPTCHA_BANNED{$value}
+                : undef;
+        }
+    }
     # cache if uniq ban
     elsif ($what eq 'uniq') {
 
@@ -338,17 +356,21 @@ sub sysban_create {
 
     my $dbh = LJ::get_db_writer();
 
-    my $banuntil = "NULL";
+    my $status = $opts{status} eq 'expired' ? 'expired' : 'active';
+
+    my $banuntil = $opts{banuntil} ? $dbh->quote($opts{banuntil}) : "NULL";
     if ($opts{'bandays'}) {
         $banuntil = "NOW() + INTERVAL " . $dbh->quote($opts{'bandays'}) . " DAY";
     }
+
+    my $bandate  = $opts{bandate} ? $dbh->quote($opts{bandate}) : 'NOW()';
 
     # strip out leading/trailing whitespace
     $opts{'value'} = LJ::trim($opts{'value'});
 
     # do insert
-    $dbh->do("INSERT INTO sysban (what, value, note, bandate, banuntil) VALUES (?, ?, ?, NOW(), $banuntil)",
-             undef, $opts{'what'}, $opts{'value'}, $opts{'note'});
+    $dbh->do("INSERT INTO sysban (status, what, value, note, bandate, banuntil) VALUES (?, ?, ?, ?, $bandate, $banuntil)",
+             undef, $status, $opts{'what'}, $opts{'value'}, $opts{'note'});
     return $dbh->errstr if $dbh->err;
     my $banid = $dbh->{'mysql_insertid'};
 
@@ -377,8 +399,8 @@ sub sysban_create {
     my $remote = LJ::get_remote();
     $banuntil = $opts{'bandays'} ? LJ::TimeUtil->mysql_time($exptime) : "forever";
 
-    LJ::statushistory_add(0, $remote, 'sysban_add',
-                              "banid=$banid; status=active; " .
+    LJ::statushistory_add(0, $remote || 0, 'sysban_add',
+                              "banid=$banid; status=$status; " .
                               "bandate=" . LJ::TimeUtil->mysql_time() . "; banuntil=$banuntil; " .
                               "what=$opts{'what'}; value=$opts{'value'}; " .
                               "note=$opts{'note'};");
